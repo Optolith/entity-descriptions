@@ -17,7 +17,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "../lib",
-    "sourceMap": true,
     "strict": true,
     "target": "ESNext",
     "useUnknownInCatchVariables": true,
