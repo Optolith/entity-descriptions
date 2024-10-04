@@ -4,6 +4,9 @@
   "description": "An interface for generating descriptions for The Dark Eye entities.",
   "main": "lib/index.js",
   "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "release": "standard-version",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -15,5 +18,10 @@
   "bugs": {
     "url": "https://github.com/Optolith/entity-descriptions/issues"
   },
-  "homepage": "https://github.com/Optolith/entity-descriptions#readme"
+  "homepage": "https://github.com/Optolith/entity-descriptions#readme",
+  "dependencies": {
+    "optolith-database-schema": "^0.17.0",
+    "standard-version": "^9.5.0",
+    "typescript": "^5.6.2"
+  }
 }
