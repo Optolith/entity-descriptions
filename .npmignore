@@ -7,3 +7,5 @@ libtest
 src
 test
 tsconfig.json
+*.test.js
+*.test.d.ts
