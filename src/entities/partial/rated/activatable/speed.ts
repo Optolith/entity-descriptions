@@ -17,10 +17,10 @@ export enum Speed {
  * Returns a common value for a skill modification level depending on the speed.
  */
 export const getModifiableBySpeed = <T>(
-  level: SkillModificationLevel,
-  speed: Speed,
   fast: (config: FastSkillModificationLevelConfig) => T,
-  slow: (config: SlowSkillModificationLevelConfig) => T
+  slow: (config: SlowSkillModificationLevelConfig) => T,
+  speed: Speed,
+  level: SkillModificationLevel
 ): T => {
   switch (speed) {
     case Speed.Fast:

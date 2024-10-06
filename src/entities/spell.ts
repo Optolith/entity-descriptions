@@ -16,18 +16,18 @@ import {
   createLibraryEntryCreator,
   LibraryEntryContent,
 } from "../libraryEntry.js"
-import { getTextForCantripDuration } from "./partial/rated/activatable/duration.js"
+import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
 import {
-  getTextForFastOneTimePerformanceParameters,
-  getTextForFastSustainedPerformanceParameters,
-  getTextForSlowOneTimePerformanceParameters,
-  getTextForSlowSustainedPerformanceParameters,
+  getFastOneTimePerformanceParametersTranslations,
+  getFastSustainedPerformanceParametersTranslations,
+  getSlowOneTimePerformanceParametersTranslations,
+  getSlowSustainedPerformanceParametersTranslations,
 } from "./partial/rated/activatable/index.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { getTextForCantripRange } from "./partial/rated/activatable/range.js"
-import { getTextForTargetCategory } from "./partial/rated/activatable/targetCategory.js"
+import { getTargetCategoryTranslation } from "./partial/rated/activatable/targetCategory.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 import { getTextForCheck } from "./partial/rated/skillCheck.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
@@ -124,7 +124,8 @@ export const getCantripLibraryEntry = createLibraryEntryCreator<
         getCurriculumById,
       }
     ) =>
-    ({ translate, translateMap, localeCompare }) => {
+    (locale) => {
+      const { translate, translateMap, compare: localeCompare } = locale
       const translation = translateMap(entry.translations)
 
       if (translation === undefined) {
@@ -132,19 +133,15 @@ export const getCantripLibraryEntry = createLibraryEntryCreator<
       }
 
       const range = getTextForCantripRange(
-        { translate },
-        entry.parameters.range,
-        {
-          responsiveText: ResponsiveTextSize.Full,
-        }
+        locale,
+        ResponsiveTextSize.Full,
+        entry.parameters.range
       )
 
-      const duration = getTextForCantripDuration(
-        { translate, translateMap },
-        entry.parameters.duration,
-        {
-          responsiveText: ResponsiveTextSize.Full,
-        }
+      const duration = getDurationTranslationForCantrip(
+        locale,
+        ResponsiveTextSize.Full,
+        entry.parameters.duration
       )
 
       return {
@@ -169,8 +166,9 @@ export const getCantripLibraryEntry = createLibraryEntryCreator<
                 ? `***${duration}*** (${translation.duration})`
                 : duration,
           },
-          getTextForTargetCategory(
-            { translate, translateMap, getTargetCategoryById },
+          getTargetCategoryTranslation(
+            getTargetCategoryById,
+            locale,
             entry.target
           ),
           getTextForProperty(
@@ -266,7 +264,8 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
         getMagicalTraditionById,
       }
     ) =>
-    ({ translate, translateMap, localeCompare }) => {
+    (locale) => {
+      const { translate, translateMap, compare: localeCompare } = locale
       const translation = translateMap(entry.translations)
 
       if (translation === undefined) {
@@ -276,31 +275,21 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
       const { castingTime, cost, range, duration } = (() => {
         switch (entry.parameters.tag) {
           case "OneTime":
-            return getTextForFastOneTimePerformanceParameters(
-              {
-                getSkillModificationLevelById,
-                translate,
-                translateMap,
-              },
-              entry.parameters.one_time,
-              {
-                entity: Entity.Spell,
-                responsiveText: ResponsiveTextSize.Full,
-              }
+            return getFastOneTimePerformanceParametersTranslations(
+              getSkillModificationLevelById,
+              locale,
+              Entity.Spell,
+              ResponsiveTextSize.Full,
+              entry.parameters.one_time
             )
 
           case "Sustained":
-            return getTextForFastSustainedPerformanceParameters(
-              {
-                getSkillModificationLevelById,
-                translate,
-                translateMap,
-              },
-              entry.parameters.sustained,
-              {
-                entity: Entity.Spell,
-                responsiveText: ResponsiveTextSize.Full,
-              }
+            return getFastSustainedPerformanceParametersTranslations(
+              getSkillModificationLevelById,
+              locale,
+              Entity.Spell,
+              ResponsiveTextSize.Full,
+              entry.parameters.sustained
             )
 
           default:
@@ -322,7 +311,7 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
               getToughness,
             }
           ),
-          ...getTextForEffect(translation.effect, translate),
+          ...getTextForEffect(locale, translation.effect),
           {
             label: translate("Casting Time"),
             value:
@@ -351,8 +340,9 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
                 ? `***${duration}*** (${translation.duration.full})`
                 : duration,
           },
-          getTextForTargetCategory(
-            { translate, translateMap, getTargetCategoryById },
+          getTargetCategoryTranslation(
+            getTargetCategoryById,
+            locale,
             entry.target
           ),
           getTextForProperty(
@@ -397,7 +387,8 @@ export const getRitualLibraryEntry = createLibraryEntryCreator<
         getMagicalTraditionById,
       }
     ) =>
-    ({ translate, translateMap, localeCompare }) => {
+    (locale) => {
+      const { translate, translateMap, compare: localeCompare } = locale
       const translation = translateMap(entry.translations)
 
       if (translation === undefined) {
@@ -407,31 +398,21 @@ export const getRitualLibraryEntry = createLibraryEntryCreator<
       const { castingTime, cost, range, duration } = (() => {
         switch (entry.parameters.tag) {
           case "OneTime":
-            return getTextForSlowOneTimePerformanceParameters(
-              {
-                getSkillModificationLevelById,
-                translate,
-                translateMap,
-              },
-              entry.parameters.one_time,
-              {
-                entity: Entity.Ritual,
-                responsiveText: ResponsiveTextSize.Full,
-              }
+            return getSlowOneTimePerformanceParametersTranslations(
+              getSkillModificationLevelById,
+              locale,
+              Entity.Ritual,
+              ResponsiveTextSize.Full,
+              entry.parameters.one_time
             )
 
           case "Sustained":
-            return getTextForSlowSustainedPerformanceParameters(
-              {
-                getSkillModificationLevelById,
-                translate,
-                translateMap,
-              },
-              entry.parameters.sustained,
-              {
-                entity: Entity.Ritual,
-                responsiveText: ResponsiveTextSize.Full,
-              }
+            return getSlowSustainedPerformanceParametersTranslations(
+              getSkillModificationLevelById,
+              locale,
+              Entity.Ritual,
+              ResponsiveTextSize.Full,
+              entry.parameters.sustained
             )
 
           default:
@@ -453,7 +434,7 @@ export const getRitualLibraryEntry = createLibraryEntryCreator<
               getToughness,
             }
           ),
-          ...getTextForEffect(translation.effect, translate),
+          ...getTextForEffect(locale, translation.effect),
           {
             label: translate("Ritual Time"),
             value:
@@ -482,8 +463,9 @@ export const getRitualLibraryEntry = createLibraryEntryCreator<
                 ? `***${duration}*** (${translation.duration.full})`
                 : duration,
           },
-          getTextForTargetCategory(
-            { translate, translateMap, getTargetCategoryById },
+          getTargetCategoryTranslation(
+            getTargetCategoryById,
+            locale,
             entry.target
           ),
           getTextForProperty(

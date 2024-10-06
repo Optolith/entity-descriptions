@@ -3,6 +3,7 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
   CastingTime,
   CastingTimeDuringLovemaking,
+  CastingTimeIncludingLovemaking,
   FastCastingTime,
   FastSkillNonModifiableCastingTime,
   ModifiableCastingTime,
@@ -10,188 +11,179 @@ import {
   SlowSkillNonModifiableCastingTime,
 } from "optolith-database-schema/types/_ActivatableSkillCastingTime"
 import { GetById } from "../../../../helpers/getTypes.js"
-import { Translate } from "../../../../helpers/translate.js"
+import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { ResponsiveTextSize } from "../../responsiveText.js"
+import { formatTimeSpan } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { Entity } from "./entity.js"
-import { ModifiableParameter } from "./modifiableParameter.js"
-import { getTextForNonModifiableSuffix } from "./nonModifiable.js"
-import { Speed } from "./speed.js"
-import { formatTimeSpan } from "./units.js"
+import {
+  getNonModifiableSuffixTranslation,
+  ModifiableParameter,
+} from "./nonModifiableSuffix.js"
+import { getModifiableBySpeed, Speed } from "./speed.js"
 
-const getTextForModifiableCastingTime = (
-  deps: {
-    getSkillModificationLevelById: GetById.Static.SkillModificationLevel
-    translate: Translate
-  },
-  value: ModifiableCastingTime,
-  env: {
-    speed: Speed
-    responsiveText: ResponsiveTextSize
-  }
+const getModifiableCastingTimeTranslation = (
+  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  locale: LocaleEnvironment,
+  speed: Speed,
+  responsiveTextSize: ResponsiveTextSize,
+  value: ModifiableCastingTime
 ): string =>
   mapNullable(
-    deps.getSkillModificationLevelById(value.initial_modification_level),
-    ({
-      fast: { casting_time: fastTime },
-      slow: { casting_time: slowTime },
-    }) => {
-      switch (env.speed) {
-        case Speed.Fast:
-          return formatTimeSpan(
-            deps.translate,
-            env.responsiveText,
+    getSkillModificationLevelById(value.initial_modification_level),
+    (modificationLevel) =>
+      getModifiableBySpeed(
+        (config) =>
+          formatTimeSpan(
+            locale,
+            responsiveTextSize,
             "Actions",
-            fastTime
-          )
-        case Speed.Slow:
-          return formatTimeSpan(
-            deps.translate,
-            env.responsiveText,
-            slowTime.unit,
-            slowTime.value
-          )
-        default:
-          return assertExhaustive(env.speed)
-      }
-    }
+            config.casting_time
+          ),
+        (config) =>
+          formatTimeSpan(
+            locale,
+            responsiveTextSize,
+            config.casting_time.unit,
+            config.casting_time.value
+          ),
+        speed,
+        modificationLevel
+      )
   ) ?? MISSING_VALUE
 
-const getTextForFastSkillNonModifiableCastingTime = (
-  deps: {
-    translate: Translate
-  },
-  value: FastSkillNonModifiableCastingTime,
-  env: {
-    entity: Entity
-    responsiveText: ResponsiveTextSize
-  }
+const getFastSkillNonModifiableCastingTimeTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: FastSkillNonModifiableCastingTime
 ): string =>
-  formatTimeSpan(deps.translate, env.responsiveText, "Actions", value.actions) +
-  getTextForNonModifiableSuffix(
-    deps.translate,
-    env.entity,
-    ModifiableParameter.CastingTime,
-    env.responsiveText
-  )
+  formatTimeSpan(locale, responsiveTextSize, "Actions", value.actions)
 
-const getTextForSlowSkillNonModifiableCastingTime = (
-  deps: {
-    translate: Translate
-  },
-  value: SlowSkillNonModifiableCastingTime,
-  env: {
-    entity: Entity
-    responsiveText: ResponsiveTextSize
-  }
-): string =>
-  formatTimeSpan(deps.translate, env.responsiveText, value.unit, value.value) +
-  getTextForNonModifiableSuffix(
-    deps.translate,
-    env.entity,
-    ModifiableParameter.CastingTime,
-    env.responsiveText
-  )
+const getSlowSkillNonModifiableCastingTimeTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: SlowSkillNonModifiableCastingTime
+): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
 
-const getTextForCastingTime = <NonModifiable extends object>(
-  deps: {
-    getSkillModificationLevelById: GetById.Static.SkillModificationLevel
-    translate: Translate
-  },
-  value: CastingTime<NonModifiable>,
-  env: {
-    speed: Speed
-    responsiveText: ResponsiveTextSize
-  },
-  getTextForNonModifiableCastingTime: (value: NonModifiable) => string
+const getCastingTimeTranslation = <NonModifiable extends object>(
+  getNonModifiableCastingTimeTranslation: (value: NonModifiable) => string,
+  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  locale: LocaleEnvironment,
+  speed: Speed,
+  entity: Entity,
+  responsiveTextSize: ResponsiveTextSize,
+  value: CastingTime<NonModifiable>
 ): string => {
   switch (value.tag) {
     case "Modifiable":
-      return getTextForModifiableCastingTime(deps, value.modifiable, env)
+      return getModifiableCastingTimeTranslation(
+        getSkillModificationLevelById,
+        locale,
+        speed,
+        responsiveTextSize,
+        value.modifiable
+      )
     case "NonModifiable":
-      return getTextForNonModifiableCastingTime(value.non_modifiable)
+      return (
+        getNonModifiableCastingTimeTranslation(value.non_modifiable) +
+        getNonModifiableSuffixTranslation(
+          locale,
+          entity,
+          ModifiableParameter.CastingTime,
+          responsiveTextSize
+        )
+      )
     default:
       return assertExhaustive(value)
   }
 }
 
-const getTextForCastingTimeDuringLovemaking = (
-  deps: {
-    translate: Translate
-  },
-  value: CastingTimeDuringLovemaking,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
-): string =>
-  formatTimeSpan(deps.translate, env.responsiveText, value.unit, value.value)
+const getCastingTimeDuringLovemakingTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: CastingTimeDuringLovemaking
+): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
+
+const getCastingTimeIncludingLovemakingTranslation = <
+  NonModifiable extends object
+>(
+  getNonModifiableCastingTimeTranslation: (value: NonModifiable) => string,
+  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  locale: LocaleEnvironment,
+  speed: Speed,
+  entity: Entity,
+  responsiveTextSize: ResponsiveTextSize,
+  value: CastingTimeIncludingLovemaking<NonModifiable>
+) =>
+  [
+    mapNullable(value.default, (def) =>
+      getCastingTimeTranslation(
+        getNonModifiableCastingTimeTranslation,
+        getSkillModificationLevelById,
+        locale,
+        speed,
+        entity,
+        responsiveTextSize,
+        def
+      )
+    ),
+    mapNullable(value.during_lovemaking, (duringLovemaking) =>
+      getCastingTimeDuringLovemakingTranslation(
+        locale,
+        responsiveTextSize,
+        duringLovemaking
+      )
+    ),
+  ]
+    .filter(isNotNullish)
+    .join(" / ")
 
 /**
  * Get the text for the casting time of a fast activatable skill.
  */
-export const getTextForFastCastingTime = (
-  deps: {
-    getSkillModificationLevelById: GetById.Static.SkillModificationLevel
-    translate: Translate
-  },
-  value: FastCastingTime,
-  env: {
-    entity: Entity
-    responsiveText: ResponsiveTextSize
-  }
+export const getFastCastingTimeTranslation = (
+  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  locale: LocaleEnvironment,
+  entity: Entity,
+  responsiveTextSize: ResponsiveTextSize,
+  value: FastCastingTime
 ): string =>
-  [
-    mapNullable(value.default, (def) =>
-      getTextForCastingTime(
-        deps,
-        def,
-        { ...env, speed: Speed.Fast },
-        (nonModifiableValue) =>
-          getTextForFastSkillNonModifiableCastingTime(
-            deps,
-            nonModifiableValue,
-            env
-          )
-      )
-    ),
-    mapNullable(value.during_lovemaking, (duringLovemaking) =>
-      getTextForCastingTimeDuringLovemaking(deps, duringLovemaking, env)
-    ),
-  ]
-    .filter(isNotNullish)
-    .join(" / ")
+  getCastingTimeIncludingLovemakingTranslation(
+    (nonModifiableValue) =>
+      getFastSkillNonModifiableCastingTimeTranslation(
+        locale,
+        responsiveTextSize,
+        nonModifiableValue
+      ),
+    getSkillModificationLevelById,
+    locale,
+    Speed.Fast,
+    entity,
+    responsiveTextSize,
+    value
+  )
 
 /**
  * Get the text for the casting time of a slow activatable skill.
  */
-export const getTextForSlowCastingTime = (
-  deps: {
-    getSkillModificationLevelById: GetById.Static.SkillModificationLevel
-    translate: Translate
-  },
-  value: SlowCastingTime,
-  env: {
-    entity: Entity
-    responsiveText: ResponsiveTextSize
-  }
+export const getSlowCastingTimeTranslation = (
+  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  locale: LocaleEnvironment,
+  entity: Entity,
+  responsiveTextSize: ResponsiveTextSize,
+  value: SlowCastingTime
 ): string =>
-  [
-    mapNullable(value.default, (def) =>
-      getTextForCastingTime(
-        deps,
-        def,
-        { ...env, speed: Speed.Slow },
-        (nonModifiableValue) =>
-          getTextForSlowSkillNonModifiableCastingTime(
-            deps,
-            nonModifiableValue,
-            env
-          )
-      )
-    ),
-    mapNullable(value.during_lovemaking, (duringLovemaking) =>
-      getTextForCastingTimeDuringLovemaking(deps, duringLovemaking, env)
-    ),
-  ]
-    .filter(isNotNullish)
-    .join(" / ")
+  getCastingTimeIncludingLovemakingTranslation(
+    (nonModifiableValue) =>
+      getSlowSkillNonModifiableCastingTimeTranslation(
+        locale,
+        responsiveTextSize,
+        nonModifiableValue
+      ),
+    getSkillModificationLevelById,
+    locale,
+    Speed.Slow,
+    entity,
+    responsiveTextSize,
+    value
+  )

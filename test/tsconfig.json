@@ -5,6 +5,7 @@
     "forceConsistentCasingInFileNames": true,
     "lib": ["esnext"],
     "module": "NodeNext",
+    "noEmit": true,
     "noEmitHelpers": true,
     "noErrorTruncation": true,
     "noFallthroughCasesInSwitch": true,
@@ -17,9 +18,11 @@
     "noUncheckedSideEffectImports": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "outDir": "../lib",
     "strict": true,
     "target": "ESNext",
     "useUnknownInCatchVariables": true,
-  }
+  },
+  "references": [
+    { "path": "../src" },
+  ]
 }

@@ -1,7 +1,6 @@
 import { filterNonNullable } from "@optolith/helpers/array"
-import { Compare } from "@optolith/helpers/compare"
 import { PublicationRefs } from "optolith-database-schema/types/source/_PublicationRef"
-import { Translate, TranslateMap } from "./helpers/translate.js"
+import { LocaleEnvironment } from "./helpers/locale.js"
 
 /**
  * Creates a function that creates the JSON representation of the rules text for
@@ -40,11 +39,9 @@ export type LibraryEntryCreator<T, A = undefined, R = LibraryEntry> = (
  * A function that is already configures for a specific entity and returns the
  * JSON representation of the rules text for a ibrary entry.
  */
-export type LibraryEntryConfiguredCreator<R = LibraryEntry> = (params: {
-  translate: Translate
-  translateMap: TranslateMap
-  localeCompare: Compare<string>
-}) => R | undefined
+export type LibraryEntryConfiguredCreator<R = LibraryEntry> = (
+  locale: LocaleEnvironment
+) => R | undefined
 
 /**
  * A JSON representation of the rules text for a library entry.

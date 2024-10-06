@@ -7,9 +7,9 @@ import {
 } from "optolith-database-schema/types/_ActivatableSkillCheckResultBased"
 import { Translate } from "../../../../helpers/translate.js"
 
-const getCheckResultBaseValue = (
-  baseValue: CheckResultValue,
-  translate: Translate
+const getCheckResultBaseValueTranslation = (
+  translate: Translate,
+  baseValue: CheckResultValue
 ) => {
   switch (baseValue) {
     case "QualityLevels":
@@ -36,11 +36,11 @@ const getArithmeticSymbol = (arithmetic: CheckResultArithmetic) => {
  * Returns the value text for a check-result-based parameter of an activatable
  * skill.
  */
-export const getTextForCheckResultBased = (
-  value: CheckResultBased,
-  translate: Translate
+export const getCheckResultBasedValueTranslation = (
+  translate: Translate,
+  value: CheckResultBased
 ): string =>
-  getCheckResultBaseValue(value.base, translate) +
+  getCheckResultBaseValueTranslation(translate, value.base) +
   mapNullableDefault(
     value.modifier,
     (modifier) => getArithmeticSymbol(modifier.arithmetic) + modifier.value,

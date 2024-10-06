@@ -1,59 +1,92 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { TargetCategory } from "optolith-database-schema/types/_ActivatableSkillTargetCategory"
+import {
+  TargetCategory,
+  TargetCategoryIdentifier,
+} from "optolith-database-schema/types/_ActivatableSkillTargetCategory"
+import { TargetCategoryReference } from "optolith-database-schema/types/_SimpleReferences"
 import { GetById } from "../../../../helpers/getTypes.js"
-import { Translate, TranslateMap } from "../../../../helpers/translate.js"
+import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { LibraryEntryContent } from "../../../../libraryEntry.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { appendInParens } from "./parensIf.js"
+import { appendInParensIfNotEmpty } from "./parensIf.js"
+
+const getSelfTranslation = (locale: LocaleEnvironment) =>
+  locale.translate("Self")
+
+const getZoneTranslation = (locale: LocaleEnvironment) =>
+  locale.translate("Zone")
+
+const getLiturgicalChantsAndCeremoniesTranslation = (
+  locale: LocaleEnvironment
+) => locale.translate("Liturgical Chants and Ceremonies")
+
+const getCantripsTranslation = (locale: LocaleEnvironment) =>
+  locale.translate("Cantrips")
+
+const getPredefinedTranslation = (
+  getTargetCategoryById: GetById.Static.TargetCategory,
+  locale: LocaleEnvironment,
+  value: TargetCategoryReference
+) => {
+  const numericId = value.id.target_category
+  const specificTargetCategory = getTargetCategoryById(numericId)
+
+  return (
+    mapNullable(
+      locale.translateMap(specificTargetCategory?.translations),
+      (translation) => translation.name
+    ) ?? MISSING_VALUE
+  )
+}
+
+const getTargetCategoryTranslationByType = (
+  getTargetCategoryById: GetById.Static.TargetCategory,
+  locale: LocaleEnvironment,
+  id: TargetCategoryIdentifier
+) => {
+  switch (id.tag) {
+    case "Self":
+      return getSelfTranslation(locale)
+    case "Zone":
+      return getZoneTranslation(locale)
+    case "LiturgicalChantsAndCeremonies":
+      return getLiturgicalChantsAndCeremoniesTranslation(locale)
+    case "Cantrips":
+      return getCantripsTranslation(locale)
+    case "Predefined":
+      return getPredefinedTranslation(
+        getTargetCategoryById,
+        locale,
+        id.predefined
+      )
+    default:
+      return assertExhaustive(id)
+  }
+}
 
 /**
  * Get the text for the target category.
  */
-export const getTextForTargetCategory = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-    getTargetCategoryById: GetById.Static.TargetCategory
-  },
+export const getTargetCategoryTranslation = (
+  getTargetCategoryById: GetById.Static.TargetCategory,
+  locale: LocaleEnvironment,
   values: TargetCategory
 ): LibraryEntryContent => ({
-  label: deps.translate("Target Category"),
+  label: locale.translate("Target Category"),
   value:
     values.length === 0
-      ? deps.translate("all")
+      ? locale.translate("all")
       : values
-          .map(({ id, translations }) => {
-            const mainName = (() => {
-              switch (id.tag) {
-                case "Self":
-                  return deps.translate("Self")
-                case "Zone":
-                  return deps.translate("Zone")
-                case "LiturgicalChantsAndCeremonies":
-                  return deps.translate("Liturgical Chants and Ceremonies")
-                case "Cantrips":
-                  return deps.translate("Cantrips")
-                case "Predefined": {
-                  const numericId = id.predefined.id.target_category
-                  const specificTargetCategory =
-                    deps.getTargetCategoryById(numericId)
-                  return (
-                    mapNullable(
-                      deps.translateMap(specificTargetCategory?.translations),
-                      (translation) => translation.name
-                    ) ?? MISSING_VALUE
-                  )
-                }
-                default:
-                  return assertExhaustive(id)
-              }
-            })()
-
-            return appendInParens(
-              mainName,
-              deps.translateMap(translations)?.note
+          .map(({ id, translations }) =>
+            appendInParensIfNotEmpty(
+              locale.translateMap(translations)?.note,
+              getTargetCategoryTranslationByType(
+                getTargetCategoryById,
+                locale,
+                id
+              )
             )
-          })
+          )
           .join(", "),
 })

@@ -1,176 +1,165 @@
-import { mapNullableDefault } from "@optolith/helpers/nullable"
+import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { CastingTimeDuringLovemaking } from "optolith-database-schema/types/_ActivatableSkillCastingTime"
 import {
   CheckResultBasedDuration,
   DurationForOneTime,
   DurationForSustained,
   FixedDuration,
   Immediate,
+  IndefiniteDuration,
   PermanentDuration,
 } from "optolith-database-schema/types/_ActivatableSkillDuration"
 import { BlessingDuration } from "optolith-database-schema/types/Blessing"
 import { CantripDuration } from "optolith-database-schema/types/Cantrip"
-import { Translate, TranslateMap } from "../../../../helpers/translate.js"
+import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import {
   getResponsiveText,
   replaceTextIfRequested,
   responsive,
   ResponsiveTextSize,
 } from "../../responsiveText.js"
-import { getTextForCheckResultBased } from "./checkResultBased.js"
-import { getTextForIsMaximum } from "./isMaximum.js"
-import { formatTimeSpan } from "./units.js"
+import { formatTimeSpan } from "../../units/timeSpan.js"
+import { getCheckResultBasedValueTranslation } from "./checkResultBased.js"
+import { wrapAsMaximum, wrapIfMaximum } from "./isMinimumMaximum.js"
+import { appendInParensIfNotEmpty } from "./parensIf.js"
 
-const getTextForImmediateDuration = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-  },
-  value: Immediate,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
+const getImmediateDurationTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: Immediate
 ): string => {
-  const text =
-    deps.translate("Immediate") +
-    mapNullableDefault(
-      value.maximum,
-      (max) => {
-        const maxText = formatTimeSpan(
-          deps.translate,
-          env.responsiveText,
-          max.unit,
-          max.value
-        )
+  const text = appendInParensIfNotEmpty(
+    mapNullable(value.maximum, (max) => {
+      const maxText = formatTimeSpan(
+        locale,
+        responsiveTextSize,
+        max.unit,
+        max.value
+      )
 
-        return responsive(
-          env.responsiveText,
-          () => deps.translate(" (no more than {0})", maxText),
-          () => deps.translate(" (max. {0})", maxText)
-        )
-      },
-      ""
-    )
+      return responsive(
+        responsiveTextSize,
+        () => locale.translate("no more than {0}", maxText),
+        () => locale.translate("max. {0}", maxText)
+      )
+    }),
+    locale.translate("Immediate")
+  )
 
   return replaceTextIfRequested(
+    "replacement",
     value.translations,
-    text,
-    deps.translateMap,
-    env.responsiveText
+    locale.translateMap,
+    responsiveTextSize,
+    text
   )
 }
 
-const getTextForPermanentDuration = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-  },
-  value: PermanentDuration,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
-): string => {
-  const translation = deps.translateMap(value.translations)
-  const text = deps.translate("Permanent")
-
-  if (translation?.replacement !== undefined) {
-    return getResponsiveText(
-      translation.replacement,
-      env.responsiveText
-    ).replace("$1", text)
-  } else {
-    return text
-  }
-}
-
-const getTextForFixedDuration = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-  },
-  value: FixedDuration,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
-): string => {
-  const isMaximum = getTextForIsMaximum(
-    value.is_maximum,
-    deps.translate,
-    env.responsiveText
+const getPermanentDurationTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: PermanentDuration
+): string =>
+  replaceTextIfRequested(
+    "replacement",
+    value.translations,
+    locale.translateMap,
+    responsiveTextSize,
+    locale.translate("Permanent")
   )
-  const unitValue = formatTimeSpan(
-    deps.translate,
-    env.responsiveText,
+
+const getFixedDurationTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: FixedDuration
+): string => {
+  const duration = formatTimeSpan(
+    locale,
+    responsiveTextSize,
     value.unit,
     value.value
   )
-  const text = isMaximum + unitValue
-  const translation = deps.translateMap(value.translations)
 
-  if (translation?.replacement !== undefined) {
-    return getResponsiveText(
-      translation.replacement,
-      env.responsiveText
-    ).replace("$1", text)
-  } else {
-    return text
-  }
-}
-
-const getTextForCheckResultBasedDuration = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-  },
-  value: CheckResultBasedDuration,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
-): string => {
-  const isMaximum = getTextForIsMaximum(
+  const durationWrappedIfMaximum = wrapIfMaximum(
+    locale,
+    responsiveTextSize,
     value.is_maximum,
-    deps.translate,
-    env.responsiveText
+    duration
   )
 
-  return formatTimeSpan(
-    deps.translate,
-    env.responsiveText,
-    value.unit,
-    isMaximum + getTextForCheckResultBased(value, deps.translate)
+  return replaceTextIfRequested(
+    "replacement",
+    value.translations,
+    locale.translateMap,
+    responsiveTextSize,
+    durationWrappedIfMaximum
   )
 }
+
+const getCheckResultBasedDurationTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: CheckResultBasedDuration
+): string => {
+  const duration = formatTimeSpan(
+    locale,
+    responsiveTextSize,
+    value.unit,
+    getCheckResultBasedValueTranslation(locale.translate, value)
+  )
+
+  return wrapIfMaximum(locale, responsiveTextSize, value.is_maximum, duration)
+}
+
+const getIndefiniteDurationTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: IndefiniteDuration
+) =>
+  getResponsiveText(
+    locale.translateMap(value.translations)?.description,
+    responsiveTextSize
+  )
 
 /**
  * Returns the text for the duration of a one-time activatable skill.
  */
-export const getTextForDurationForOneTime = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-  },
-  value: DurationForOneTime,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
+export const getDurationForOneTimeTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: DurationForOneTime
 ): string => {
   switch (value.tag) {
     case "Immediate":
-      return getTextForImmediateDuration(deps, value.immediate, env)
+      return getImmediateDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.immediate
+      )
     case "Permanent":
-      return getTextForPermanentDuration(deps, value.permanent, env)
+      return getPermanentDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.permanent
+      )
     case "Fixed":
-      return getTextForFixedDuration(deps, value.fixed, env)
+      return getFixedDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.fixed
+      )
     case "CheckResultBased":
-      return getTextForCheckResultBasedDuration(
-        deps,
-        value.check_result_based,
-        env
+      return getCheckResultBasedDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.check_result_based
       )
     case "Indefinite":
-      return getResponsiveText(
-        deps.translateMap(value.indefinite.translations)?.description,
-        env.responsiveText
+      return getIndefiniteDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.indefinite
       )
     default:
       return assertExhaustive(value)
@@ -180,61 +169,67 @@ export const getTextForDurationForOneTime = (
 /**
  * Returns the text for the duration of a sustained activatable skill.
  */
-export const getTextForDurationForSustained = (
-  deps: { translate: Translate },
-  value: DurationForSustained | undefined,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
+export const getDurationForSustainedTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: DurationForSustained | undefined
 ): string =>
   value === undefined
     ? responsive(
-        env.responsiveText,
-        () => deps.translate("Sustained"),
-        () => deps.translate("(S)")
+        responsiveTextSize,
+        () => locale.translate("Sustained"),
+        () => locale.translate("(S)")
       )
-    : responsive(
-        env.responsiveText,
-        () => deps.translate("no more than "),
-        () => deps.translate("max. ")
-      ) +
-      formatTimeSpan(
-        deps.translate,
-        env.responsiveText,
-        value.maximum.unit,
-        value.maximum.value
+    : wrapAsMaximum(
+        locale,
+        responsiveTextSize,
+        formatTimeSpan(
+          locale,
+          responsiveTextSize,
+          value.maximum.unit,
+          value.maximum.value
+        )
       )
+
+const getDurationDuringLovemakingTranslation = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: CastingTimeDuringLovemaking
+): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
 
 /**
  * Returns the text for the duration of a cantrip.
  */
-export const getTextForCantripDuration = (
-  deps: { translate: Translate; translateMap: TranslateMap },
-  value: CantripDuration,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
+export const getDurationTranslationForCantrip = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: CantripDuration
 ): string => {
   switch (value.tag) {
     case "Immediate":
-      return getTextForImmediateDuration(deps, value.immediate, env)
+      return getImmediateDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.immediate
+      )
     case "Fixed":
-      return getTextForFixedDuration(deps, value.fixed, env)
+      return getFixedDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.fixed
+      )
     case "Indefinite":
-      return getResponsiveText(
-        deps.translateMap(value.indefinite.translations)?.description,
-        env.responsiveText
+      return getIndefiniteDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.indefinite
       )
-    case "DuringLovemaking": {
-      const { value: lovemakingValue, unit: lovemakingUnit } =
+    case "DuringLovemaking":
+      return getDurationDuringLovemakingTranslation(
+        locale,
+        responsiveTextSize,
         value.during_lovemaking
-      return formatTimeSpan(
-        deps.translate,
-        env.responsiveText,
-        lovemakingUnit,
-        lovemakingValue
       )
-    }
     default:
       return assertExhaustive(value)
   }
@@ -243,22 +238,29 @@ export const getTextForCantripDuration = (
 /**
  * Returns the text for the duration of a blessing.
  */
-export const getTextForBlessingDuration = (
-  deps: { translate: Translate; translateMap: TranslateMap },
-  value: BlessingDuration,
-  env: {
-    responsiveText: ResponsiveTextSize
-  }
+export const getDurationTranslationForBlessing = (
+  locale: LocaleEnvironment,
+  responsiveTextSize: ResponsiveTextSize,
+  value: BlessingDuration
 ): string => {
   switch (value.tag) {
     case "Immediate":
-      return getTextForImmediateDuration(deps, value.immediate, env)
+      return getImmediateDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.immediate
+      )
     case "Fixed":
-      return getTextForFixedDuration(deps, value.fixed, env)
+      return getFixedDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.fixed
+      )
     case "Indefinite":
-      return getResponsiveText(
-        deps.translateMap(value.indefinite.translations)?.description,
-        env.responsiveText
+      return getIndefiniteDurationTranslation(
+        locale,
+        responsiveTextSize,
+        value.indefinite
       )
     default:
       return assertExhaustive(value)

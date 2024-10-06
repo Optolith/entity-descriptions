@@ -9,8 +9,10 @@ export const parensIf = (text: string | undefined): string =>
  * Appends a string in parentheses with a leading space if it is not empty or
  * `undefined`.
  */
-export const appendInParens = (
-  text: string,
-  append: string | undefined
+export const appendInParensIfNotEmpty = (
+  textToAppend: string | undefined,
+  text: string
 ): string =>
-  append === undefined || append === "" ? text : `${text} (${append})`
+  textToAppend === undefined || textToAppend === ""
+    ? text
+    : `${text} (${textToAppend})`

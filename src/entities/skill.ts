@@ -21,7 +21,7 @@ export const getSkillLibraryEntry = createLibraryEntryCreator<
   }
 >(
   (entry, { getAttributeById, blessedTraditions, diseases, regions, cache }) =>
-    ({ translate, translateMap, localeCompare }) => {
+    ({ translate, translateMap, compare: localeCompare }) => {
       const translation = translateMap(entry.translations)
 
       if (translation === undefined) {
