@@ -1,6 +1,8 @@
 import { filterNonNullable } from "@optolith/helpers/array"
 import { PublicationRefs } from "optolith-database-schema/types/source/_PublicationRef"
+import { GetById } from "./helpers/getTypes.js"
 import { LocaleEnvironment } from "./helpers/locale.js"
+import { getReferencesTranslation } from "./references/index.js"
 
 /**
  * Creates a function that creates the JSON representation of the rules text for
@@ -15,14 +17,25 @@ export const createEntityDescriptionCreator =
       return () => undefined
     }
 
-    return (params) => {
-      const rawEntry = fn(entry, ...args)(params)
+    return (locale, getPublicationById) => {
+      const rawEntry = fn(entry, ...args)(locale, getPublicationById)
 
       if (rawEntry === undefined) {
         return undefined
       }
 
-      return { ...rawEntry, body: filterNonNullable(rawEntry.body) }
+      return {
+        ...rawEntry,
+        body: filterNonNullable(rawEntry.body),
+        references:
+          rawEntry.references === undefined
+            ? undefined
+            : getReferencesTranslation(
+                getPublicationById,
+                locale,
+                rawEntry.references
+              ),
+      }
     }
   }
 
@@ -44,7 +57,8 @@ export type EntityDescriptionCreator<
  * JSON representation of the rules text for a ibrary entry.
  */
 export type EntityDescriptionConfiguredCreator<R = EntityDescription> = (
-  locale: LocaleEnvironment
+  locale: LocaleEnvironment,
+  getPublicationById: GetById.Static.Publication
 ) => R | undefined
 
 /**
@@ -55,7 +69,7 @@ export type EntityDescription = {
   subtitle?: string
   className: string
   body: EntityDescriptionSection[]
-  references?: PublicationRefs
+  references?: string
 }
 
 /**
