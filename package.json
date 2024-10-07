@@ -3,6 +3,10 @@
   "version": "0.1.1",
   "description": "An interface for generating descriptions for The Dark Eye entities.",
   "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./entities/*": "./lib/entities/*.js"
+  },
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc -b -w",
