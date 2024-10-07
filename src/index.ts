@@ -9,56 +9,46 @@ import { getReferencesTranslation } from "./references/index.js"
  * a library entry.
  */
 export const createEntityDescriptionCreator =
-  <T, A = undefined>(
+  <T, A extends object = Record<string, never>>(
     fn: EntityDescriptionCreator<T, A, RawEntityDescription>
   ): EntityDescriptionCreator<T | undefined, A> =>
-  (entry, ...args) => {
+  (databaseAccessors, locale, entry) => {
     if (entry === undefined) {
-      return () => undefined
+      return undefined
     }
 
-    return (locale, getPublicationById) => {
-      const rawEntry = fn(entry, ...args)(locale, getPublicationById)
+    const rawEntry = fn(databaseAccessors, locale, entry)
 
-      if (rawEntry === undefined) {
-        return undefined
-      }
+    if (rawEntry === undefined) {
+      return undefined
+    }
 
-      return {
-        ...rawEntry,
-        body: filterNonNullable(rawEntry.body),
-        references:
-          rawEntry.references === undefined
-            ? undefined
-            : getReferencesTranslation(
-                getPublicationById,
-                locale,
-                rawEntry.references
-              ),
-      }
+    return {
+      ...rawEntry,
+      body: filterNonNullable(rawEntry.body),
+      references:
+        rawEntry.references === undefined
+          ? undefined
+          : getReferencesTranslation(
+              databaseAccessors.getPublicationById,
+              locale,
+              rawEntry.references
+            ),
     }
   }
 
 /**
  * A function that creates the JSON representation of the rules text for a
- * library entry if given further params to the returned function.
+ * library entry.
  */
 export type EntityDescriptionCreator<
   T,
-  A = undefined,
+  A extends object = Record<string, never>,
   R = EntityDescription
 > = (
-  entry: T,
-  ...args: A extends undefined ? [] : [A]
-) => EntityDescriptionConfiguredCreator<R>
-
-/**
- * A function that is already configures for a specific entity and returns the
- * JSON representation of the rules text for a ibrary entry.
- */
-export type EntityDescriptionConfiguredCreator<R = EntityDescription> = (
+  databaseAccessors: A & { getPublicationById: GetById.Static.Publication },
   locale: LocaleEnvironment,
-  getPublicationById: GetById.Static.Publication
+  entry: T
 ) => R | undefined
 
 /**

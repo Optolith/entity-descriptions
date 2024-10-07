@@ -14,7 +14,7 @@ export const getCloseCombatTechniqueLibraryEntry =
     {
       getAttributeById: GetById.Static.Attribute
     }
-  >((entry, { getAttributeById }) => ({ translate, translateMap }) => {
+  >(({ getAttributeById }, { translate, translateMap }, entry) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -54,7 +54,7 @@ export const getRangedCombatTechniqueLibraryEntry =
     {
       getAttributeById: GetById.Static.Attribute
     }
-  >((entry, { getAttributeById }) => ({ translate, translateMap }) => {
+  >(({ getAttributeById }, { translate, translateMap }, entry) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {

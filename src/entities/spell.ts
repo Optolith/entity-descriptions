@@ -116,125 +116,125 @@ export const getCantripLibraryEntry = createEntityDescriptionCreator<
   }
 >(
   (
-      entry,
-      {
-        getTargetCategoryById,
-        getPropertyById,
-        getMagicalTraditionById,
-        getCurriculumById,
-      }
-    ) =>
-    (locale) => {
-      const { translate, translateMap, compare: localeCompare } = locale
-      const translation = translateMap(entry.translations)
+    {
+      getTargetCategoryById,
+      getPropertyById,
+      getMagicalTraditionById,
+      getCurriculumById,
+    },
+    locale,
+    entry
+  ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
+    const translation = translateMap(entry.translations)
 
-      if (translation === undefined) {
-        return undefined
-      }
-
-      const range = getTextForCantripRange(
-        locale,
-        ResponsiveTextSize.Full,
-        entry.parameters.range
-      )
-
-      const duration = getDurationTranslationForCantrip(
-        locale,
-        ResponsiveTextSize.Full,
-        entry.parameters.duration
-      )
-
-      return {
-        title: translation.name,
-        className: "cantrip",
-        body: [
-          {
-            label: translate("Effect"),
-            value: translation.effect,
-          },
-          {
-            label: translate("Range"),
-            value:
-              range !== translation.range
-                ? `***${range}*** (${translation.range})`
-                : range,
-          },
-          {
-            label: translate("Duration"),
-            value:
-              duration !== translation.duration
-                ? `***${duration}*** (${translation.duration})`
-                : duration,
-          },
-          getTargetCategoryTranslation(
-            getTargetCategoryById,
-            locale,
-            entry.target
-          ),
-          getTextForProperty(
-            { translate, translateMap, getPropertyById },
-            entry.property
-          ),
-          mapNullable(entry.note, (note) => ({
-            label: translate("Note"),
-            value: (() => {
-              switch (note.tag) {
-                case "Common":
-                  return note.common.list
-                    .map((academyOrTradition) => {
-                      switch (academyOrTradition.tag) {
-                        case "Academy":
-                          return translateMap(
-                            getCurriculumById(
-                              academyOrTradition.academy.id.curriculum
-                            )?.translations
-                          )?.name
-                        case "Tradition": {
-                          return mapNullable(
-                            getTraditionNameForArcaneSpellworksById(
-                              academyOrTradition.tradition,
-                              getMagicalTraditionById,
-                              translateMap
-                            ),
-                            (name) =>
-                              name +
-                              parensIf(
-                                translateMap(
-                                  academyOrTradition.tradition.translations
-                                )?.note
-                              )
-                          )
-                        }
-                        default:
-                          return assertExhaustive(academyOrTradition)
-                      }
-                    })
-                    .filter(isNotNullish)
-                    .sort(localeCompare)
-                    .join(", ")
-
-                case "Exclusive":
-                  return note.exclusive.traditions
-                    .map((tradition) =>
-                      getTraditionNameForArcaneSpellworksById(
-                        tradition,
-                        getMagicalTraditionById,
-                        translateMap
-                      )
-                    )
-                    .filter(isNotNullish)
-                    .sort(localeCompare)
-                    .join(", ")
-
-                default:
-                  return assertExhaustive(note)
-              }
-            })(),
-          })),
-        ],
-        references: entry.src,
-      }
+    if (translation === undefined) {
+      return undefined
     }
+
+    const range = getTextForCantripRange(
+      locale,
+      ResponsiveTextSize.Full,
+      entry.parameters.range
+    )
+
+    const duration = getDurationTranslationForCantrip(
+      locale,
+      ResponsiveTextSize.Full,
+      entry.parameters.duration
+    )
+
+    return {
+      title: translation.name,
+      className: "cantrip",
+      body: [
+        {
+          label: translate("Effect"),
+          value: translation.effect,
+        },
+        {
+          label: translate("Range"),
+          value:
+            range !== translation.range
+              ? `***${range}*** (${translation.range})`
+              : range,
+        },
+        {
+          label: translate("Duration"),
+          value:
+            duration !== translation.duration
+              ? `***${duration}*** (${translation.duration})`
+              : duration,
+        },
+        getTargetCategoryTranslation(
+          getTargetCategoryById,
+          locale,
+          entry.target
+        ),
+        getTextForProperty(
+          { translate, translateMap, getPropertyById },
+          entry.property
+        ),
+        mapNullable(entry.note, (note) => ({
+          label: translate("Note"),
+          value: (() => {
+            switch (note.tag) {
+              case "Common":
+                return note.common.list
+                  .map((academyOrTradition) => {
+                    switch (academyOrTradition.tag) {
+                      case "Academy":
+                        return translateMap(
+                          getCurriculumById(
+                            academyOrTradition.academy.id.curriculum
+                          )?.translations
+                        )?.name
+                      case "Tradition": {
+                        return mapNullable(
+                          getTraditionNameForArcaneSpellworksById(
+                            academyOrTradition.tradition,
+                            getMagicalTraditionById,
+                            translateMap
+                          ),
+                          (name) =>
+                            name +
+                            parensIf(
+                              translateMap(
+                                academyOrTradition.tradition.translations
+                              )?.note
+                            )
+                        )
+                      }
+                      default:
+                        return assertExhaustive(academyOrTradition)
+                    }
+                  })
+                  .filter(isNotNullish)
+                  .sort(localeCompare)
+                  .join(", ")
+
+              case "Exclusive":
+                return note.exclusive.traditions
+                  .map((tradition) =>
+                    getTraditionNameForArcaneSpellworksById(
+                      tradition,
+                      getMagicalTraditionById,
+                      translateMap
+                    )
+                  )
+                  .filter(isNotNullish)
+                  .sort(localeCompare)
+                  .join(", ")
+
+              default:
+                return assertExhaustive(note)
+            }
+          })(),
+        })),
+      ],
+      references: entry.src,
+    }
+  }
 )
 
 /**
@@ -253,111 +253,111 @@ export const getSpellLibraryEntry = createEntityDescriptionCreator<
   }
 >(
   (
-      entry,
-      {
-        getAttributeById,
-        getSpirit,
-        getToughness,
-        getSkillModificationLevelById,
-        getTargetCategoryById,
-        getPropertyById,
-        getMagicalTraditionById,
-      }
-    ) =>
-    (locale) => {
-      const { translate, translateMap, compare: localeCompare } = locale
-      const translation = translateMap(entry.translations)
+    {
+      getAttributeById,
+      getSpirit,
+      getToughness,
+      getSkillModificationLevelById,
+      getTargetCategoryById,
+      getPropertyById,
+      getMagicalTraditionById,
+    },
+    locale,
+    entry
+  ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
+    const translation = translateMap(entry.translations)
 
-      if (translation === undefined) {
-        return undefined
-      }
-
-      const { castingTime, cost, range, duration } = (() => {
-        switch (entry.parameters.tag) {
-          case "OneTime":
-            return getFastOneTimePerformanceParametersTranslations(
-              getSkillModificationLevelById,
-              locale,
-              Entity.Spell,
-              ResponsiveTextSize.Full,
-              entry.parameters.one_time
-            )
-
-          case "Sustained":
-            return getFastSustainedPerformanceParametersTranslations(
-              getSkillModificationLevelById,
-              locale,
-              Entity.Spell,
-              ResponsiveTextSize.Full,
-              entry.parameters.sustained
-            )
-
-          default:
-            return assertExhaustive(entry.parameters)
-        }
-      })()
-
-      return {
-        title: translation.name,
-        className: "spell",
-        body: [
-          getTextForCheck(
-            { translate, translateMap, getAttributeById },
-            entry.check,
-            {
-              value: entry.check_penalty,
-              responsiveText: ResponsiveTextSize.Full,
-              getSpirit,
-              getToughness,
-            }
-          ),
-          ...getTextForEffect(locale, translation.effect),
-          {
-            label: translate("Casting Time"),
-            value:
-              castingTime !== translation.casting_time.full
-                ? `***${castingTime}*** (${translation.casting_time.full})`
-                : castingTime,
-          },
-          {
-            label: translate("AE Cost"),
-            value:
-              cost !== translation.cost.full
-                ? `***${cost}*** (${translation.cost.full})`
-                : cost,
-          },
-          {
-            label: translate("Range"),
-            value:
-              range !== translation.range.full
-                ? `***${range}*** (${translation.range.full})`
-                : range,
-          },
-          {
-            label: translate("Duration"),
-            value:
-              duration !== translation.duration.full
-                ? `***${duration}*** (${translation.duration.full})`
-                : duration,
-          },
-          getTargetCategoryTranslation(
-            getTargetCategoryById,
-            locale,
-            entry.target
-          ),
-          getTextForProperty(
-            { translate, translateMap, getPropertyById },
-            entry.property
-          ),
-          getTextForTraditions(
-            { translate, translateMap, localeCompare, getMagicalTraditionById },
-            entry.traditions
-          ),
-          createImprovementCost(translate, entry.improvement_cost),
-        ],
-        references: entry.src,
-      }
+    if (translation === undefined) {
+      return undefined
     }
+
+    const { castingTime, cost, range, duration } = (() => {
+      switch (entry.parameters.tag) {
+        case "OneTime":
+          return getFastOneTimePerformanceParametersTranslations(
+            getSkillModificationLevelById,
+            locale,
+            Entity.Spell,
+            ResponsiveTextSize.Full,
+            entry.parameters.one_time
+          )
+
+        case "Sustained":
+          return getFastSustainedPerformanceParametersTranslations(
+            getSkillModificationLevelById,
+            locale,
+            Entity.Spell,
+            ResponsiveTextSize.Full,
+            entry.parameters.sustained
+          )
+
+        default:
+          return assertExhaustive(entry.parameters)
+      }
+    })()
+
+    return {
+      title: translation.name,
+      className: "spell",
+      body: [
+        getTextForCheck(
+          { translate, translateMap, getAttributeById },
+          entry.check,
+          {
+            value: entry.check_penalty,
+            responsiveText: ResponsiveTextSize.Full,
+            getSpirit,
+            getToughness,
+          }
+        ),
+        ...getTextForEffect(locale, translation.effect),
+        {
+          label: translate("Casting Time"),
+          value:
+            castingTime !== translation.casting_time.full
+              ? `***${castingTime}*** (${translation.casting_time.full})`
+              : castingTime,
+        },
+        {
+          label: translate("AE Cost"),
+          value:
+            cost !== translation.cost.full
+              ? `***${cost}*** (${translation.cost.full})`
+              : cost,
+        },
+        {
+          label: translate("Range"),
+          value:
+            range !== translation.range.full
+              ? `***${range}*** (${translation.range.full})`
+              : range,
+        },
+        {
+          label: translate("Duration"),
+          value:
+            duration !== translation.duration.full
+              ? `***${duration}*** (${translation.duration.full})`
+              : duration,
+        },
+        getTargetCategoryTranslation(
+          getTargetCategoryById,
+          locale,
+          entry.target
+        ),
+        getTextForProperty(
+          { translate, translateMap, getPropertyById },
+          entry.property
+        ),
+        getTextForTraditions(
+          { translate, translateMap, localeCompare, getMagicalTraditionById },
+          entry.traditions
+        ),
+        createImprovementCost(translate, entry.improvement_cost),
+      ],
+      references: entry.src,
+    }
+  }
 )
 
 /**
@@ -376,109 +376,109 @@ export const getRitualLibraryEntry = createEntityDescriptionCreator<
   }
 >(
   (
-      entry,
-      {
-        getAttributeById,
-        getSpirit,
-        getToughness,
-        getSkillModificationLevelById,
-        getTargetCategoryById,
-        getPropertyById,
-        getMagicalTraditionById,
-      }
-    ) =>
-    (locale) => {
-      const { translate, translateMap, compare: localeCompare } = locale
-      const translation = translateMap(entry.translations)
+    {
+      getAttributeById,
+      getSpirit,
+      getToughness,
+      getSkillModificationLevelById,
+      getTargetCategoryById,
+      getPropertyById,
+      getMagicalTraditionById,
+    },
+    locale,
+    entry
+  ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
+    const translation = translateMap(entry.translations)
 
-      if (translation === undefined) {
-        return undefined
-      }
-
-      const { castingTime, cost, range, duration } = (() => {
-        switch (entry.parameters.tag) {
-          case "OneTime":
-            return getSlowOneTimePerformanceParametersTranslations(
-              getSkillModificationLevelById,
-              locale,
-              Entity.Ritual,
-              ResponsiveTextSize.Full,
-              entry.parameters.one_time
-            )
-
-          case "Sustained":
-            return getSlowSustainedPerformanceParametersTranslations(
-              getSkillModificationLevelById,
-              locale,
-              Entity.Ritual,
-              ResponsiveTextSize.Full,
-              entry.parameters.sustained
-            )
-
-          default:
-            return assertExhaustive(entry.parameters)
-        }
-      })()
-
-      return {
-        title: translation.name,
-        className: "ritual",
-        body: [
-          getTextForCheck(
-            { translate, translateMap, getAttributeById },
-            entry.check,
-            {
-              value: entry.check_penalty,
-              responsiveText: ResponsiveTextSize.Full,
-              getSpirit,
-              getToughness,
-            }
-          ),
-          ...getTextForEffect(locale, translation.effect),
-          {
-            label: translate("Ritual Time"),
-            value:
-              castingTime !== translation.casting_time.full
-                ? `***${castingTime}*** (${translation.casting_time.full})`
-                : castingTime,
-          },
-          {
-            label: translate("AE Cost"),
-            value:
-              cost !== translation.cost.full
-                ? `***${cost}*** (${translation.cost.full})`
-                : cost,
-          },
-          {
-            label: translate("Range"),
-            value:
-              range !== translation.range.full
-                ? `***${range}*** (${translation.range.full})`
-                : range,
-          },
-          {
-            label: translate("Duration"),
-            value:
-              duration !== translation.duration.full
-                ? `***${duration}*** (${translation.duration.full})`
-                : duration,
-          },
-          getTargetCategoryTranslation(
-            getTargetCategoryById,
-            locale,
-            entry.target
-          ),
-          getTextForProperty(
-            { translate, translateMap, getPropertyById },
-            entry.property
-          ),
-          getTextForTraditions(
-            { translate, translateMap, localeCompare, getMagicalTraditionById },
-            entry.traditions
-          ),
-          createImprovementCost(translate, entry.improvement_cost),
-        ],
-        references: entry.src,
-      }
+    if (translation === undefined) {
+      return undefined
     }
+
+    const { castingTime, cost, range, duration } = (() => {
+      switch (entry.parameters.tag) {
+        case "OneTime":
+          return getSlowOneTimePerformanceParametersTranslations(
+            getSkillModificationLevelById,
+            locale,
+            Entity.Ritual,
+            ResponsiveTextSize.Full,
+            entry.parameters.one_time
+          )
+
+        case "Sustained":
+          return getSlowSustainedPerformanceParametersTranslations(
+            getSkillModificationLevelById,
+            locale,
+            Entity.Ritual,
+            ResponsiveTextSize.Full,
+            entry.parameters.sustained
+          )
+
+        default:
+          return assertExhaustive(entry.parameters)
+      }
+    })()
+
+    return {
+      title: translation.name,
+      className: "ritual",
+      body: [
+        getTextForCheck(
+          { translate, translateMap, getAttributeById },
+          entry.check,
+          {
+            value: entry.check_penalty,
+            responsiveText: ResponsiveTextSize.Full,
+            getSpirit,
+            getToughness,
+          }
+        ),
+        ...getTextForEffect(locale, translation.effect),
+        {
+          label: translate("Ritual Time"),
+          value:
+            castingTime !== translation.casting_time.full
+              ? `***${castingTime}*** (${translation.casting_time.full})`
+              : castingTime,
+        },
+        {
+          label: translate("AE Cost"),
+          value:
+            cost !== translation.cost.full
+              ? `***${cost}*** (${translation.cost.full})`
+              : cost,
+        },
+        {
+          label: translate("Range"),
+          value:
+            range !== translation.range.full
+              ? `***${range}*** (${translation.range.full})`
+              : range,
+        },
+        {
+          label: translate("Duration"),
+          value:
+            duration !== translation.duration.full
+              ? `***${duration}*** (${translation.duration.full})`
+              : duration,
+        },
+        getTargetCategoryTranslation(
+          getTargetCategoryById,
+          locale,
+          entry.target
+        ),
+        getTextForProperty(
+          { translate, translateMap, getPropertyById },
+          entry.property
+        ),
+        getTextForTraditions(
+          { translate, translateMap, localeCompare, getMagicalTraditionById },
+          entry.traditions
+        ),
+        createImprovementCost(translate, entry.improvement_cost),
+      ],
+      references: entry.src,
+    }
+  }
 )

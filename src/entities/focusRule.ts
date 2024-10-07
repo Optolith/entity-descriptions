@@ -9,7 +9,7 @@ import { createEntityDescriptionCreator } from "../index.js"
 export const getFocusRuleLibraryEntry = createEntityDescriptionCreator<
   FocusRule,
   { getSubjectById: GetById.Static.Subject }
->((entry, { getSubjectById }) => ({ translateMap }) => {
+>(({ getSubjectById }, { translateMap }, entry) => {
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
