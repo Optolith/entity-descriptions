@@ -420,14 +420,15 @@ const getNonModifiableSustainedCostTranslation = (
       return { countable: "", minimumTotal: "" }
     }
 
-    const countable = responsive(
+    const countable = getResponsiveText(
+      locale.translateMap(value.per.translations)?.countable,
       responsiveTextSize,
-      entity => locale.translate(" per {0}", entity),
-      entity => locale.translate("/{0}", entity),
-      getResponsiveText(
-        locale.translateMap(value.per.translations)?.countable,
-        responsiveTextSize,
-      ),
+    )
+
+    const perCountable = responsive(
+      responsiveTextSize,
+      () => locale.translate(" per {0}", countable),
+      () => locale.translate("/{0}", countable),
     )
 
     const minimumTotal =
@@ -438,7 +439,7 @@ const getNonModifiableSustainedCostTranslation = (
           )
         : ""
 
-    return { countable, minimumTotal }
+    return { countable: perCountable, minimumTotal }
   })()
 
   const interval = formatTimeSpan(

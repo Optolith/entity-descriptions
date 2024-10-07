@@ -27,12 +27,17 @@
     "@optolith/helpers": "^0.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.12.0",
     "@types/node": "^22.7.4",
     "commit-and-tag-version": "^12.4.4",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jsdoc": "^50.3.1",
     "glob": "^11.0.0",
+    "globals": "^15.10.0",
     "optolith-database-schema": "^0.17.2",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.1"
   },
   "type": "module"
 }

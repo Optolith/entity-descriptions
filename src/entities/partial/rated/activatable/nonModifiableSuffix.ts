@@ -15,9 +15,9 @@ export enum ModifiableParameter {
 }
 
 const translationKeyForNonModifiableSuffix: {
-  [key in Entity]:
+  [entityKey in Entity]:
     | {
-        [key in ModifiableParameter]: keyof UI
+        [paramKey in ModifiableParameter]: keyof UI
       }
     | undefined
 } = {

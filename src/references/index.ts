@@ -16,6 +16,9 @@ import {
   printPageRanges,
 } from "./pageRange.js"
 
+/**
+ * Returns the translation of the references.
+ */
 export const getReferencesTranslation = (
   getPublicationById: GetById.Static.Publication,
   locale: LocaleEnvironment,

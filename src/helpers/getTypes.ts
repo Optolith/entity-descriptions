@@ -153,23 +153,23 @@ import { config as animalShapePathConfig } from "optolith-database-schema/types/
 import { config as animalShapeSizeConfig } from "optolith-database-schema/types/traditionArtifacts/sub/AnimalShapeSize"
 import { config as brewConfig } from "optolith-database-schema/types/traditionArtifacts/sub/Brew"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IdFromConfig<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Config extends { id: (data: any, filePath: string) => string | number },
 > = ReturnType<Config["id"]>
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TypeFromConfig<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Config extends { id: (data: any, filePath: string) => string | number },
 > = Parameters<Config["id"]>[0]
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GetByIdFromConfig<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Config extends { id: (data: any, filePath: string) => string | number },
 > = (id: IdFromConfig<Config>) => TypeFromConfig<Config> | undefined
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AllFromConfig<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Config extends { id: (data: any, filePath: string) => string | number },
 > = TypeFromConfig<Config>[]
 
