@@ -13,9 +13,9 @@ import { Traditions } from "optolith-database-schema/types/_Spellwork"
 import { GetById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import {
-  createLibraryEntryCreator,
-  LibraryEntryContent,
-} from "../libraryEntry.js"
+  createEntityDescriptionCreator,
+  EntityDescriptionSection,
+} from "../index.js"
 import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
@@ -39,7 +39,7 @@ const getTextForProperty = (
     getPropertyById: GetById.Static.Property
   },
   value: PropertyReference
-): LibraryEntryContent => {
+): EntityDescriptionSection => {
   const text = (() => {
     const staticEntry = deps.getPropertyById(value.id.property)
     const staticEntryTranslation = deps.translateMap(staticEntry?.translations)
@@ -65,7 +65,7 @@ const getTextForTraditions = (
     getMagicalTraditionById: GetById.Static.MagicalTradition
   },
   value: Traditions
-): LibraryEntryContent => {
+): EntityDescriptionSection => {
   const text = (() => {
     switch (value.tag) {
       case "General":
@@ -106,7 +106,7 @@ const getTraditionNameForArcaneSpellworksById = (
 /**
  * Get a JSON representation of the rules text for a cantrip.
  */
-export const getCantripLibraryEntry = createLibraryEntryCreator<
+export const getCantripLibraryEntry = createEntityDescriptionCreator<
   Cantrip,
   {
     getTargetCategoryById: GetById.Static.TargetCategory
@@ -147,7 +147,7 @@ export const getCantripLibraryEntry = createLibraryEntryCreator<
       return {
         title: translation.name,
         className: "cantrip",
-        content: [
+        body: [
           {
             label: translate("Effect"),
             value: translation.effect,
@@ -232,7 +232,7 @@ export const getCantripLibraryEntry = createLibraryEntryCreator<
             })(),
           })),
         ],
-        src: entry.src,
+        references: entry.src,
       }
     }
 )
@@ -240,7 +240,7 @@ export const getCantripLibraryEntry = createLibraryEntryCreator<
 /**
  * Get a JSON representation of the rules text for a skill.
  */
-export const getSpellLibraryEntry = createLibraryEntryCreator<
+export const getSpellLibraryEntry = createEntityDescriptionCreator<
   Spell,
   {
     getAttributeById: GetById.Static.Attribute
@@ -300,7 +300,7 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
       return {
         title: translation.name,
         className: "spell",
-        content: [
+        body: [
           getTextForCheck(
             { translate, translateMap, getAttributeById },
             entry.check,
@@ -355,7 +355,7 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
           ),
           createImprovementCost(translate, entry.improvement_cost),
         ],
-        src: entry.src,
+        references: entry.src,
       }
     }
 )
@@ -363,7 +363,7 @@ export const getSpellLibraryEntry = createLibraryEntryCreator<
 /**
  * Get a JSON representation of the rules text for a ritual.
  */
-export const getRitualLibraryEntry = createLibraryEntryCreator<
+export const getRitualLibraryEntry = createEntityDescriptionCreator<
   Ritual,
   {
     getAttributeById: GetById.Static.Attribute
@@ -423,7 +423,7 @@ export const getRitualLibraryEntry = createLibraryEntryCreator<
       return {
         title: translation.name,
         className: "ritual",
-        content: [
+        body: [
           getTextForCheck(
             { translate, translateMap, getAttributeById },
             entry.check,
@@ -478,7 +478,7 @@ export const getRitualLibraryEntry = createLibraryEntryCreator<
           ),
           createImprovementCost(translate, entry.improvement_cost),
         ],
-        src: entry.src,
+        references: entry.src,
       }
     }
 )

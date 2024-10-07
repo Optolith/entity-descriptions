@@ -1,11 +1,11 @@
 import { ExperienceLevel } from "optolith-database-schema/types/ExperienceLevel"
-import { createLibraryEntryCreator } from "../libraryEntry.js"
+import { createEntityDescriptionCreator } from "../index.js"
 
 /**
  * Get a JSON representation of the rules text for an experience level.
  */
 export const getExperienceLevelLibraryEntry =
-  createLibraryEntryCreator<ExperienceLevel>(
+  createEntityDescriptionCreator<ExperienceLevel>(
     (entry) =>
       ({ translate, translateMap }) => {
         const translation = translateMap(entry.translations)
@@ -17,7 +17,7 @@ export const getExperienceLevelLibraryEntry =
         return {
           title: translation.name,
           className: "experience-level",
-          content: [
+          body: [
             {
               label: translate("Adventure Points"),
               value: entry.adventure_points,

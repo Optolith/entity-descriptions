@@ -10,9 +10,9 @@ import { AspectReference } from "optolith-database-schema/types/_SimpleReference
 import { GetById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import {
-  createLibraryEntryCreator,
-  LibraryEntryContent,
-} from "../libraryEntry.js"
+  createEntityDescriptionCreator,
+  EntityDescriptionSection,
+} from "../index.js"
 import { getDurationTranslationForBlessing } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
@@ -37,7 +37,7 @@ const getTextForTraditions = (
     getAspectById: GetById.Static.Aspect
   },
   values: SkillTradition[]
-): LibraryEntryContent => {
+): EntityDescriptionSection => {
   const getAspectName = (ref: AspectReference) =>
     deps.translateMap(deps.getAspectById(ref.id.aspect)?.translations)?.name
 
@@ -87,7 +87,7 @@ const getTextForTraditions = (
 /**
  * Get a JSON representation of the rules text for a blessing.
  */
-export const getBlessingLibraryEntry = createLibraryEntryCreator<
+export const getBlessingLibraryEntry = createEntityDescriptionCreator<
   Blessing,
   {
     getTargetCategoryById: GetById.Static.TargetCategory
@@ -115,7 +115,7 @@ export const getBlessingLibraryEntry = createLibraryEntryCreator<
   return {
     title: translation.name,
     className: "blessing",
-    content: [
+    body: [
       {
         label: translate("Effect"),
         value: translation.effect,
@@ -136,14 +136,14 @@ export const getBlessingLibraryEntry = createLibraryEntryCreator<
       },
       getTargetCategoryTranslation(getTargetCategoryById, locale, entry.target),
     ],
-    src: entry.src,
+    references: entry.src,
   }
 })
 
 /**
  * Get a JSON representation of the rules text for a liturgical chant.
  */
-export const getLiturgicalChantLibraryEntry = createLibraryEntryCreator<
+export const getLiturgicalChantLibraryEntry = createEntityDescriptionCreator<
   LiturgicalChant,
   {
     getAttributeById: GetById.Static.Attribute
@@ -203,7 +203,7 @@ export const getLiturgicalChantLibraryEntry = createLibraryEntryCreator<
       return {
         title: translation.name,
         className: "liturgical-chant",
-        content: [
+        body: [
           getTextForCheck(
             { translate, translateMap, getAttributeById },
             entry.check,
@@ -260,7 +260,7 @@ export const getLiturgicalChantLibraryEntry = createLibraryEntryCreator<
           ),
           createImprovementCost(translate, entry.improvement_cost),
         ],
-        src: entry.src,
+        references: entry.src,
       }
     }
 )
@@ -268,7 +268,7 @@ export const getLiturgicalChantLibraryEntry = createLibraryEntryCreator<
 /**
  * Get a JSON representation of the rules text for a ceremony.
  */
-export const getCeremonyLibraryEntry = createLibraryEntryCreator<
+export const getCeremonyLibraryEntry = createEntityDescriptionCreator<
   Ceremony,
   {
     getAttributeById: GetById.Static.Attribute
@@ -328,7 +328,7 @@ export const getCeremonyLibraryEntry = createLibraryEntryCreator<
       return {
         title: translation.name,
         className: "ceremony",
-        content: [
+        body: [
           getTextForCheck(
             { translate, translateMap, getAttributeById },
             entry.check,
@@ -385,7 +385,7 @@ export const getCeremonyLibraryEntry = createLibraryEntryCreator<
           ),
           createImprovementCost(translate, entry.improvement_cost),
         ],
-        src: entry.src,
+        references: entry.src,
       }
     }
 )

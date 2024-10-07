@@ -6,7 +6,7 @@ import {
 import { DerivedCharacteristic } from "optolith-database-schema/types/DerivedCharacteristic"
 import { GetById } from "../../../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../../../helpers/translate.js"
-import { LibraryEntryContent } from "../../../libraryEntry.js"
+import { EntityDescriptionSection } from "../../../index.js"
 import { responsive, ResponsiveTextSize } from "../responsiveText.js"
 
 /**
@@ -25,7 +25,7 @@ export const getTextForCheck = (
     getSpirit: () => DerivedCharacteristic | undefined
     getToughness: () => DerivedCharacteristic | undefined
   }
-): LibraryEntryContent => ({
+): EntityDescriptionSection => ({
   label: deps.translate("Check"),
   value:
     check

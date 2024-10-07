@@ -1,6 +1,6 @@
 import { ImprovementCost as RawImprovementCost } from "optolith-database-schema/types/_ImprovementCost"
 import { Translate } from "../../../helpers/translate.js"
-import { LibraryEntryContent } from "../../../libraryEntry.js"
+import { EntityDescriptionSection } from "../../../index.js"
 
 /**
  * Returns the improvement cost as an inline library property.
@@ -8,7 +8,7 @@ import { LibraryEntryContent } from "../../../libraryEntry.js"
 export const createImprovementCost = (
   translate: Translate,
   improvementCost: RawImprovementCost
-): LibraryEntryContent => ({
+): EntityDescriptionSection => ({
   label: translate("Improvement Cost"),
   value: improvementCost,
 })

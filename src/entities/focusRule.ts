@@ -1,12 +1,12 @@
 import { romanize } from "@optolith/helpers/roman"
 import { FocusRule } from "optolith-database-schema/types/rule/FocusRule"
 import { GetById } from "../helpers/getTypes.js"
-import { createLibraryEntryCreator } from "../libraryEntry.js"
+import { createEntityDescriptionCreator } from "../index.js"
 
 /**
  * Get a JSON representation of the rules text for a focus rule.
  */
-export const getFocusRuleLibraryEntry = createLibraryEntryCreator<
+export const getFocusRuleLibraryEntry = createEntityDescriptionCreator<
   FocusRule,
   { getSubjectById: GetById.Static.Subject }
 >((entry, { getSubjectById }) => ({ translateMap }) => {
@@ -22,7 +22,7 @@ export const getFocusRuleLibraryEntry = createLibraryEntryCreator<
       getSubjectById(entry.subject.id.subject)?.translations
     )?.name,
     className: "focus-rule",
-    content: [{ value: translation.description }],
-    src: entry.src,
+    body: [{ value: translation.description }],
+    references: entry.src,
   }
 })

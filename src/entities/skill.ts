@@ -3,14 +3,14 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { NewApplicationsAndUsesCache } from "optolith-database-schema/cache/newApplicationsAndUses"
 import { Skill } from "optolith-database-schema/types/Skill"
 import { All, GetById } from "../helpers/getTypes.js"
-import { createLibraryEntryCreator } from "../libraryEntry.js"
+import { createEntityDescriptionCreator } from "../index.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 import { getTextForCheck } from "./partial/rated/skillCheck.js"
 
 /**
  * Get a JSON representation of the rules text for a skill.
  */
-export const getSkillLibraryEntry = createLibraryEntryCreator<
+export const getSkillLibraryEntry = createEntityDescriptionCreator<
   Skill,
   {
     getAttributeById: GetById.Static.Attribute
@@ -77,7 +77,7 @@ export const getSkillLibraryEntry = createLibraryEntryCreator<
       return {
         title: translation.name,
         className: "skill",
-        content: [
+        body: [
           newApplications.length === 0
             ? undefined
             : {

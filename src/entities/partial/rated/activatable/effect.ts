@@ -3,7 +3,7 @@ import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Effect } from "optolith-database-schema/types/_ActivatableSkillEffect"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { LibraryEntryContent } from "../../../../libraryEntry.js"
+import { EntityDescriptionSection } from "../../../../index.js"
 
 const getContentPartsForQualityLevels = (
   getQualityLevelString: (index: number) => string | number,
@@ -13,7 +13,7 @@ const getContentPartsForQualityLevels = (
     quality_levels: string[]
     text_after?: string
   }
-): LibraryEntryContent[] =>
+): EntityDescriptionSection[] =>
   filterNonNullable([
     {
       label: locale.translate("Effect"),
@@ -35,7 +35,7 @@ const getContentPartsForQualityLevels = (
 export const getTextForEffect = (
   locale: LocaleEnvironment,
   effect: Effect
-): LibraryEntryContent[] => {
+): EntityDescriptionSection[] => {
   switch (effect.tag) {
     case "Plain":
       return [

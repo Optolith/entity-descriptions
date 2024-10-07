@@ -7,7 +7,7 @@ import {
 import { TargetCategoryReference } from "optolith-database-schema/types/_SimpleReferences"
 import { GetById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { LibraryEntryContent } from "../../../../libraryEntry.js"
+import { EntityDescriptionSection } from "../../../../index.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
@@ -72,7 +72,7 @@ export const getTargetCategoryTranslation = (
   getTargetCategoryById: GetById.Static.TargetCategory,
   locale: LocaleEnvironment,
   values: TargetCategory
-): LibraryEntryContent => ({
+): EntityDescriptionSection => ({
   label: locale.translate("Target Category"),
   value:
     values.length === 0
