@@ -1,6 +1,6 @@
 {
   "name": "@optolith/entity-descriptions",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "An interface for generating descriptions for The Dark Eye entities.",
   "main": "lib/index.js",
   "exports": {
