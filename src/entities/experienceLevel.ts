@@ -4,7 +4,7 @@ import { createEntityDescriptionCreator } from "../index.js"
 /**
  * Get a JSON representation of the rules text for an experience level.
  */
-export const getExperienceLevelLibraryEntry =
+export const getExperienceLevelEntityDescription =
   createEntityDescriptionCreator<ExperienceLevel>(
     (_, { translate, translateMap }, entry) => {
       const translation = translateMap(entry.translations)

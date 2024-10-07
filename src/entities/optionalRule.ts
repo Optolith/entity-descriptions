@@ -4,7 +4,7 @@ import { createEntityDescriptionCreator } from "../index.js"
 /**
  * Get a JSON representation of the rules text for an optional rule.
  */
-export const getOptionalRuleLibraryEntry =
+export const getOptionalRuleEntityDescription =
   createEntityDescriptionCreator<OptionalRule>((_, { translateMap }, entry) => {
     const translation = translateMap(entry.translations)
 

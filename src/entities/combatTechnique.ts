@@ -8,7 +8,7 @@ import { createImprovementCost } from "./partial/rated/improvementCost.js"
 /**
  * Get a JSON representation of the rules text for a close combat technique.
  */
-export const getCloseCombatTechniqueLibraryEntry =
+export const getCloseCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
     CloseCombatTechnique,
     {
@@ -48,7 +48,7 @@ export const getCloseCombatTechniqueLibraryEntry =
 /**
  * Get a JSON representation of the rules text for a ranged combat technique.
  */
-export const getRangedCombatTechniqueLibraryEntry =
+export const getRangedCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
     RangedCombatTechnique,
     {

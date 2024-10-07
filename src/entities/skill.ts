@@ -10,7 +10,7 @@ import { getTextForCheck } from "./partial/rated/skillCheck.js"
 /**
  * Get a JSON representation of the rules text for a skill.
  */
-export const getSkillLibraryEntry = createEntityDescriptionCreator<
+export const getSkillEntityDescription = createEntityDescriptionCreator<
   Skill,
   {
     getAttributeById: GetById.Static.Attribute

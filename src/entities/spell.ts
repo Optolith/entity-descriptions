@@ -106,7 +106,7 @@ const getTraditionNameForArcaneSpellworksById = (
 /**
  * Get a JSON representation of the rules text for a cantrip.
  */
-export const getCantripLibraryEntry = createEntityDescriptionCreator<
+export const getCantripEntityDescription = createEntityDescriptionCreator<
   Cantrip,
   {
     getTargetCategoryById: GetById.Static.TargetCategory
@@ -240,7 +240,7 @@ export const getCantripLibraryEntry = createEntityDescriptionCreator<
 /**
  * Get a JSON representation of the rules text for a skill.
  */
-export const getSpellLibraryEntry = createEntityDescriptionCreator<
+export const getSpellEntityDescription = createEntityDescriptionCreator<
   Spell,
   {
     getAttributeById: GetById.Static.Attribute
@@ -363,7 +363,7 @@ export const getSpellLibraryEntry = createEntityDescriptionCreator<
 /**
  * Get a JSON representation of the rules text for a ritual.
  */
-export const getRitualLibraryEntry = createEntityDescriptionCreator<
+export const getRitualEntityDescription = createEntityDescriptionCreator<
   Ritual,
   {
     getAttributeById: GetById.Static.Attribute

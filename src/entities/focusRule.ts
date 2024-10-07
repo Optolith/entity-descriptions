@@ -6,7 +6,7 @@ import { createEntityDescriptionCreator } from "../index.js"
 /**
  * Get a JSON representation of the rules text for a focus rule.
  */
-export const getFocusRuleLibraryEntry = createEntityDescriptionCreator<
+export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
   FocusRule,
   { getSubjectById: GetById.Static.Subject }
 >(({ getSubjectById }, { translateMap }, entry) => {
