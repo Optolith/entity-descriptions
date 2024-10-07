@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.1](https://github.com/Optolith/entity-descriptions/compare/v0.2.0...v0.2.1) (2024-10-07)
+
+
+### Bug Fixes
+
+* default database accessors type always throws error when function is called ([31bcb85](https://github.com/Optolith/entity-descriptions/commit/31bcb850a7d962417a65c4517090fb9c9d581fef))
+
 ## [0.2.0](https://github.com/Optolith/entity-descriptions/compare/v0.1.1...v0.2.0) (2024-10-07)
 
 
