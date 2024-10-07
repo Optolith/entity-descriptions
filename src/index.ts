@@ -9,7 +9,7 @@ import { getReferencesTranslation } from "./references/index.js"
  * a library entry.
  */
 export const createEntityDescriptionCreator =
-  <T, A extends object = Record<string, never>>(
+  <T, A extends object = object>(
     fn: EntityDescriptionCreator<T, A, RawEntityDescription>
   ): EntityDescriptionCreator<T | undefined, A> =>
   (databaseAccessors, locale, entry) => {
@@ -43,7 +43,7 @@ export const createEntityDescriptionCreator =
  */
 export type EntityDescriptionCreator<
   T,
-  A extends object = Record<string, never>,
+  A extends object = object,
   R = EntityDescription
 > = (
   databaseAccessors: A & { getPublicationById: GetById.Static.Publication },
