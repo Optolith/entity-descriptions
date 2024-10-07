@@ -18,13 +18,13 @@ export const formatLength = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   unit: LengthUnit,
-  value: number | string
+  value: number | string,
 ) => {
   const [fullKey, compressedKey] = lengthUnitTranslationKeys[unit]
 
   return responsive(
     responsiveTextSize,
     () => locale.translate(fullKey, value),
-    () => locale.translate(compressedKey, value)
+    () => locale.translate(compressedKey, value),
   )
 }

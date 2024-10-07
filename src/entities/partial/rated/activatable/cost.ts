@@ -39,16 +39,16 @@ const getModifiableOneTimeCostTranslation = (
   responsiveTextSize: ResponsiveTextSize,
   entity: Entity,
   speed: Speed,
-  value: ModifiableOneTimeCost
+  value: ModifiableOneTimeCost,
 ): string =>
   mapNullable(
     getSkillModificationLevelById(value.initial_modification_level),
-    (modificationLevel) => {
+    modificationLevel => {
       const cost = getModifiableBySpeed(
-        (config) => config.cost,
-        (config) => config.cost,
+        config => config.cost,
+        config => config.cost,
         speed,
-        modificationLevel
+        modificationLevel,
       )
 
       return replaceTextIfRequested(
@@ -56,32 +56,32 @@ const getModifiableOneTimeCostTranslation = (
         value.translations,
         locale.translateMap,
         responsiveTextSize,
-        formatEnergyByEntity(locale, entity, cost)
+        formatEnergyByEntity(locale, entity, cost),
       )
-    }
+    },
   ) ?? MISSING_VALUE
 
 const getNonModifiableOneTimeCostPerCountableTranslation = (
   formatCost: (x: number | string) => string,
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: NonModifiableOneTimeCostPerCountable | undefined
+  value: NonModifiableOneTimeCostPerCountable | undefined,
 ) =>
-  mapNullable(value, (perCountable) => {
+  mapNullable(value, perCountable => {
     const entity = getResponsiveText(
       locale.translateMap(perCountable.translations)?.countable,
-      responsiveTextSize
+      responsiveTextSize,
     )
 
     const countableText = responsive(
       responsiveTextSize,
       () => locale.translate(" per {0}", entity),
-      () => locale.translate("/{0}", entity)
+      () => locale.translate("/{0}", entity),
     )
 
     const minimumTotalText =
-      mapNullable(perCountable.minimum_total, (minimumTotal) =>
-        locale.translate(", minimum of {0}", formatCost(minimumTotal))
+      mapNullable(perCountable.minimum_total, minimumTotal =>
+        locale.translate(", minimum of {0}", formatCost(minimumTotal)),
       ) ?? ""
 
     return countableText + minimumTotalText
@@ -90,21 +90,21 @@ const getNonModifiableOneTimeCostPerCountableTranslation = (
 const getPermanentValueTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  permanentValue: number | undefined
+  permanentValue: number | undefined,
 ) =>
   permanentValue === undefined
     ? ""
     : responsive(
         responsiveTextSize,
         () => locale.translate(", {0} of which are permanent", permanentValue),
-        () => locale.translate(" ({0} perm.)", permanentValue)
+        () => locale.translate(" ({0} perm.)", permanentValue),
       )
 
 const getNonModifiableOneTimeCostTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: NonModifiableOneTimeCost
+  value: NonModifiableOneTimeCost,
 ): string => {
   const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
 
@@ -112,20 +112,20 @@ const getNonModifiableOneTimeCostTranslation = (
     formatCostP,
     locale,
     responsiveTextSize,
-    value.per
+    value.per,
   )
 
   const permanentValue = getPermanentValueTranslation(
     locale,
     responsiveTextSize,
-    value.permanent_value
+    value.permanent_value,
   )
 
   const costWrappedIfMinimum = wrapIfMinimum(
     locale,
     responsiveTextSize,
     value.is_minimum,
-    formatCostP(value.value) + perCountable + permanentValue
+    formatCostP(value.value) + perCountable + permanentValue,
   )
 
   const withNote = appendNoteIfRequested(
@@ -133,14 +133,14 @@ const getNonModifiableOneTimeCostTranslation = (
     value.translations,
     locale.translateMap,
     responsiveTextSize,
-    costWrappedIfMinimum
+    costWrappedIfMinimum,
   )
 
   const cannotModify = getNonModifiableSuffixTranslation(
     locale,
     entity,
     ModifiableParameter.Cost,
-    responsiveTextSize
+    responsiveTextSize,
   )
 
   return withNote + cannotModify
@@ -150,17 +150,17 @@ const getIndefiniteOneTimeCostTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: IndefiniteOneTimeCost
+  value: IndefiniteOneTimeCost,
 ): string =>
   getResponsiveText(
     locale.translateMap(value.translations)?.description,
-    responsiveTextSize
+    responsiveTextSize,
   ) +
   getNonModifiableSuffixTranslation(
     locale,
     entity,
     ModifiableParameter.Cost,
-    responsiveTextSize
+    responsiveTextSize,
   )
 
 const getSingleOneTimeCostTranslation = (
@@ -169,7 +169,7 @@ const getSingleOneTimeCostTranslation = (
   speed: Speed,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: SingleOneTimeCost
+  value: SingleOneTimeCost,
 ): string => {
   switch (value.tag) {
     case "Modifiable":
@@ -179,21 +179,21 @@ const getSingleOneTimeCostTranslation = (
         responsiveTextSize,
         entity,
         speed,
-        value.modifiable
+        value.modifiable,
       )
     case "NonModifiable":
       return getNonModifiableOneTimeCostTranslation(
         locale,
         entity,
         responsiveTextSize,
-        value.non_modifiable
+        value.non_modifiable,
       )
     case "Indefinite":
       return getIndefiniteOneTimeCostTranslation(
         locale,
         entity,
         responsiveTextSize,
-        value.indefinite
+        value.indefinite,
       )
     default:
       return assertExhaustive(value)
@@ -207,28 +207,28 @@ const getMultipleOneTimeCostsTranslation = (
   speed: Speed,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: MultipleOneTimeCosts
+  value: MultipleOneTimeCosts,
 ): string => {
-  const modifiable = !value.every((part) => part.tag === "Modifiable")
+  const modifiable = !value.every(part => part.tag === "Modifiable")
     ? getNonModifiableSuffixTranslation(
         locale,
         entity,
         ModifiableParameter.Cost,
-        responsiveTextSize
+        responsiveTextSize,
       )
     : ""
 
   return (
     value
-      .map((part) =>
+      .map(part =>
         getSingleOneTimeCostTranslation(
           getSkillModificationLevelById,
           locale,
           speed,
           entity,
           responsiveTextSize,
-          part
-        )
+          part,
+        ),
       )
       .join(
         (() => {
@@ -237,18 +237,18 @@ const getMultipleOneTimeCostsTranslation = (
               return responsive(
                 responsiveTextSize,
                 () => locale.translate(" and "),
-                () => locale.translate(" + ")
+                () => locale.translate(" + "),
               )
             case "disjunction":
               return responsive(
                 responsiveTextSize,
                 () => locale.translate(" or "),
-                () => locale.translate(" / ")
+                () => locale.translate(" / "),
               )
             default:
               return assertExhaustive(type)
           }
-        })()
+        })(),
       ) + modifiable
   )
 }
@@ -257,7 +257,7 @@ const getCostMapTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: CostMap
+  value: CostMap,
 ): string => {
   const translation = locale.translateMap(value.translations)
 
@@ -271,17 +271,17 @@ const getCostMapTranslation = (
 
   const labels = value.options
     .map(
-      (option) =>
-        locale.translateMap(option.translations)?.label ?? MISSING_VALUE
+      option =>
+        locale.translateMap(option.translations)?.label ?? MISSING_VALUE,
     )
     .join("/")
 
-  const costs = value.options.map((option) => option.value).join("/")
+  const costs = value.options.map(option => option.value).join("/")
 
   const permanentCosts = value.options.every(
-    (option) => option.permanent_value !== undefined
+    option => option.permanent_value !== undefined,
   )
-    ? value.options.map((option) => option.permanent_value!).join("/")
+    ? value.options.map(option => option.permanent_value!).join("/")
     : undefined
 
   const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
@@ -290,7 +290,7 @@ const getCostMapTranslation = (
     locale,
     entity,
     ModifiableParameter.Cost,
-    responsiveTextSize
+    responsiveTextSize,
   )
 
   return (
@@ -298,15 +298,15 @@ const getCostMapTranslation = (
     locale.translate(" for ") +
     mapNullableDefault(
       translation?.list_prepend,
-      (listPrepend) => `${listPrepend} `,
-      ""
+      listPrepend => `${listPrepend} `,
+      "",
     ) +
     labels +
     (translation?.list_append ?? "") +
     (permanentCosts !== undefined
       ? locale.translate(
           ", {0} of which are permanent",
-          formatCostP(permanentCosts)
+          formatCostP(permanentCosts),
         )
       : "") +
     notModifiable
@@ -322,7 +322,7 @@ export const getOneTimeCostTranslation = (
   speed: Speed,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: OneTimeCost
+  value: OneTimeCost,
 ): string => {
   switch (value.tag) {
     case "Single":
@@ -332,7 +332,7 @@ export const getOneTimeCostTranslation = (
         speed,
         entity,
         responsiveTextSize,
-        value.single
+        value.single,
       )
     case "Conjunction":
       return getMultipleOneTimeCostsTranslation(
@@ -342,7 +342,7 @@ export const getOneTimeCostTranslation = (
         speed,
         entity,
         responsiveTextSize,
-        value.conjunction
+        value.conjunction,
       )
     case "Disjunction":
       return getMultipleOneTimeCostsTranslation(
@@ -352,14 +352,14 @@ export const getOneTimeCostTranslation = (
         speed,
         entity,
         responsiveTextSize,
-        value.disjunction
+        value.disjunction,
       )
     case "Map":
       return getCostMapTranslation(
         locale,
         entity,
         responsiveTextSize,
-        value.map
+        value.map,
       )
     default:
       return assertExhaustive(value)
@@ -372,16 +372,16 @@ const getModifiableSustainedCostTranslation = (
   speed: Speed,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: ModifiableSustainedCost
+  value: ModifiableSustainedCost,
 ) =>
   mapNullable(
     getSkillModificationLevelById(value.initial_modification_level),
-    (modificationLevel) => {
+    modificationLevel => {
       const cost = getModifiableBySpeed(
-        (config) => config.cost,
-        (config) => config.cost,
+        config => config.cost,
+        config => config.cost,
         speed,
-        modificationLevel
+        modificationLevel,
       )
 
       const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
@@ -390,7 +390,7 @@ const getModifiableSustainedCostTranslation = (
         locale,
         responsiveTextSize,
         value.interval.unit,
-        value.interval.value
+        value.interval.value,
       )
 
       return responsive(
@@ -402,16 +402,16 @@ const getModifiableSustainedCostTranslation = (
         () =>
           `${formatCostP(cost)} + ${
             formatCostP(cost / 2) + locale.translate("/{0}", interval)
-          }`
+          }`,
       )
-    }
+    },
   ) ?? MISSING_VALUE
 
 const getNonModifiableSustainedCostTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: NonModifiableSustainedCost
+  value: NonModifiableSustainedCost,
 ) => {
   const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
 
@@ -422,19 +422,19 @@ const getNonModifiableSustainedCostTranslation = (
 
     const countable = responsive(
       responsiveTextSize,
-      (entity) => locale.translate(" per {0}", entity),
-      (entity) => locale.translate("/{0}", entity),
+      entity => locale.translate(" per {0}", entity),
+      entity => locale.translate("/{0}", entity),
       getResponsiveText(
         locale.translateMap(value.per.translations)?.countable,
-        responsiveTextSize
-      )
+        responsiveTextSize,
+      ),
     )
 
     const minimumTotal =
       value.per.minimum_total !== undefined
         ? locale.translate(
             ", minimum of {0}",
-            formatCostP(value.per.minimum_total)
+            formatCostP(value.per.minimum_total),
           )
         : ""
 
@@ -445,7 +445,7 @@ const getNonModifiableSustainedCostTranslation = (
     locale,
     responsiveTextSize,
     value.interval.unit,
-    value.interval.value
+    value.interval.value,
   )
 
   const cost =
@@ -464,14 +464,14 @@ const getNonModifiableSustainedCostTranslation = (
           (value.is_minimum === true ? "50%" : formatCostP(value.value / 2)) +
           per.countable +
           locale.translate("/{0}", interval)
-        }`
+        }`,
     ) + per.minimumTotal
 
   const costWrappedIfMinimum = wrapIfMinimum(
     locale,
     responsiveTextSize,
     value.is_minimum,
-    cost
+    cost,
   )
 
   return (
@@ -480,7 +480,7 @@ const getNonModifiableSustainedCostTranslation = (
       locale,
       entity,
       ModifiableParameter.Cost,
-      responsiveTextSize
+      responsiveTextSize,
     )
   )
 }
@@ -494,7 +494,7 @@ export const getSustainedCostTranslation = (
   speed: Speed,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: SustainedCost
+  value: SustainedCost,
 ): string => {
   switch (value.tag) {
     case "Modifiable":
@@ -504,14 +504,14 @@ export const getSustainedCostTranslation = (
         speed,
         entity,
         responsiveTextSize,
-        value.modifiable
+        value.modifiable,
       )
     case "NonModifiable":
       return getNonModifiableSustainedCostTranslation(
         locale,
         entity,
         responsiveTextSize,
-        value.non_modifiable
+        value.non_modifiable,
       )
     default:
       return assertExhaustive(value)

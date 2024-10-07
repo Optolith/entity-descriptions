@@ -12,7 +12,7 @@ const getContentPartsForQualityLevels = (
     text_before: string
     quality_levels: string[]
     text_after?: string
-  }
+  },
 ): EntityDescriptionSection[] =>
   filterNonNullable([
     {
@@ -23,7 +23,7 @@ const getContentPartsForQualityLevels = (
       value: text,
       label: locale.translate("QL {0}", getQualityLevelString(index)),
     })),
-    mapNullable(source.text_after, (textAfter) => ({
+    mapNullable(source.text_after, textAfter => ({
       value: textAfter,
       className: "effect-after",
     })),
@@ -34,7 +34,7 @@ const getContentPartsForQualityLevels = (
  */
 export const getTextForEffect = (
   locale: LocaleEnvironment,
-  effect: Effect
+  effect: Effect,
 ): EntityDescriptionSection[] => {
   switch (effect.tag) {
     case "Plain":
@@ -46,15 +46,15 @@ export const getTextForEffect = (
       ]
     case "ForEachQualityLevel":
       return getContentPartsForQualityLevels(
-        (index) => index + 1,
+        index => index + 1,
         locale,
-        effect.for_each_quality_level
+        effect.for_each_quality_level,
       )
     case "ForEachTwoQualityLevels":
       return getContentPartsForQualityLevels(
-        (index) => `${index * 2 + 1}–${index * 2 + 2}`,
+        index => `${index * 2 + 1}–${index * 2 + 2}`,
         locale,
-        effect.for_each_two_quality_levels
+        effect.for_each_two_quality_levels,
       )
     default:
       return assertExhaustive(effect)

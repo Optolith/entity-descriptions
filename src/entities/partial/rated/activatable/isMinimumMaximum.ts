@@ -7,12 +7,12 @@ import { responsive, ResponsiveTextSize } from "../../responsiveText.js"
 export const wrapAsMinimum = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  text: string
+  text: string,
 ): string =>
   responsive(
     responsiveTextSize,
     () => locale.translate("at least {0}", text),
-    () => locale.translate("min. {0}", text)
+    () => locale.translate("min. {0}", text),
   )
 
 /**
@@ -23,7 +23,7 @@ export const wrapIfMinimum = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   is_minimum: boolean | undefined,
-  text: string
+  text: string,
 ) =>
   is_minimum === true ? wrapAsMinimum(locale, responsiveTextSize, text) : ""
 
@@ -33,12 +33,12 @@ export const wrapIfMinimum = (
 export const wrapAsMaximum = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  text: string
+  text: string,
 ): string =>
   responsive(
     responsiveTextSize,
     () => locale.translate("no more than {0}", text),
-    () => locale.translate("max. {0}", text)
+    () => locale.translate("max. {0}", text),
   )
 
 /**
@@ -49,6 +49,6 @@ export const wrapIfMaximum = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   is_maximum: boolean | undefined,
-  text: string
+  text: string,
 ): string =>
   is_maximum === true ? wrapAsMaximum(locale, responsiveTextSize, text) : ""

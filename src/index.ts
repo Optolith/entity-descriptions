@@ -10,7 +10,7 @@ import { getReferencesTranslation } from "./references/index.js"
  */
 export const createEntityDescriptionCreator =
   <T, A extends object = object>(
-    fn: EntityDescriptionCreator<T, A, RawEntityDescription>
+    fn: EntityDescriptionCreator<T, A, RawEntityDescription>,
   ): EntityDescriptionCreator<T | undefined, A> =>
   (databaseAccessors, locale, entry) => {
     if (entry === undefined) {
@@ -32,7 +32,7 @@ export const createEntityDescriptionCreator =
           : getReferencesTranslation(
               databaseAccessors.getPublicationById,
               locale,
-              rawEntry.references
+              rawEntry.references,
             ),
     }
   }
@@ -44,11 +44,11 @@ export const createEntityDescriptionCreator =
 export type EntityDescriptionCreator<
   T,
   A extends object = object,
-  R = EntityDescription
+  R = EntityDescription,
 > = (
   databaseAccessors: A & { getPublicationById: GetById.Static.Publication },
   locale: LocaleEnvironment,
-  entry: T
+  entry: T,
 ) => R | undefined
 
 /**

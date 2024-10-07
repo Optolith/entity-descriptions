@@ -36,21 +36,21 @@ const getTextForTraditions = (
     getBlessedTraditionById: GetById.Static.BlessedTradition
     getAspectById: GetById.Static.Aspect
   },
-  values: SkillTradition[]
+  values: SkillTradition[],
 ): EntityDescriptionSection => {
   const getAspectName = (ref: AspectReference) =>
     deps.translateMap(deps.getAspectById(ref.id.aspect)?.translations)?.name
 
   const text = values
-    .map((trad) => {
+    .map(trad => {
       switch (trad.tag) {
         case "GeneralAspect":
           return getAspectName(trad.general_aspect)
         case "Tradition": {
           const traditionTranslation = deps.translateMap(
             deps.getBlessedTraditionById(
-              trad.tradition.tradition.id.blessed_tradition
-            )?.translations
+              trad.tradition.tradition.id.blessed_tradition,
+            )?.translations,
           )
           const name =
             traditionTranslation?.name_compressed ?? traditionTranslation?.name
@@ -103,13 +103,13 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
   const range = getTextForBlessingRange(
     locale,
     ResponsiveTextSize.Full,
-    entry.parameters.range
+    entry.parameters.range,
   )
 
   const duration = getDurationTranslationForBlessing(
     locale,
     ResponsiveTextSize.Full,
-    entry.parameters.duration
+    entry.parameters.duration,
   )
 
   return {
@@ -167,7 +167,7 @@ export const getLiturgicalChantEntityDescription =
         getAspectById,
       },
       locale,
-      entry
+      entry,
     ) => {
       const { translate, translateMap, compare: localeCompare } = locale
       const translation = translateMap(entry.translations)
@@ -184,7 +184,7 @@ export const getLiturgicalChantEntityDescription =
               locale,
               Entity.LiturgicalChant,
               ResponsiveTextSize.Full,
-              entry.parameters.one_time
+              entry.parameters.one_time,
             )
 
           case "Sustained":
@@ -193,7 +193,7 @@ export const getLiturgicalChantEntityDescription =
               locale,
               Entity.LiturgicalChant,
               ResponsiveTextSize.Full,
-              entry.parameters.sustained
+              entry.parameters.sustained,
             )
 
           default:
@@ -213,7 +213,7 @@ export const getLiturgicalChantEntityDescription =
               responsiveText: ResponsiveTextSize.Full,
               getSpirit,
               getToughness,
-            }
+            },
           ),
           ...getTextForEffect(locale, translation.effect),
           {
@@ -247,7 +247,7 @@ export const getLiturgicalChantEntityDescription =
           getTargetCategoryTranslation(
             getTargetCategoryById,
             locale,
-            entry.target
+            entry.target,
           ),
           getTextForTraditions(
             {
@@ -257,13 +257,13 @@ export const getLiturgicalChantEntityDescription =
               getBlessedTraditionById,
               getAspectById,
             },
-            entry.traditions
+            entry.traditions,
           ),
           createImprovementCost(translate, entry.improvement_cost),
         ],
         references: entry.src,
       }
-    }
+    },
   )
 
 /**
@@ -292,7 +292,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       getAspectById,
     },
     locale,
-    entry
+    entry,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -309,7 +309,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             locale,
             Entity.Ritual,
             ResponsiveTextSize.Full,
-            entry.parameters.one_time
+            entry.parameters.one_time,
           )
 
         case "Sustained":
@@ -318,7 +318,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             locale,
             Entity.Ceremony,
             ResponsiveTextSize.Full,
-            entry.parameters.sustained
+            entry.parameters.sustained,
           )
 
         default:
@@ -338,7 +338,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             responsiveText: ResponsiveTextSize.Full,
             getSpirit,
             getToughness,
-          }
+          },
         ),
         ...getTextForEffect(locale, translation.effect),
         {
@@ -372,7 +372,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
         getTargetCategoryTranslation(
           getTargetCategoryById,
           locale,
-          entry.target
+          entry.target,
         ),
         getTextForTraditions(
           {
@@ -382,11 +382,11 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             getBlessedTraditionById,
             getAspectById,
           },
-          entry.traditions
+          entry.traditions,
         ),
         createImprovementCost(translate, entry.improvement_cost),
       ],
       references: entry.src,
     }
-  }
+  },
 )

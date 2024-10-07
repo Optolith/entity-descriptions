@@ -18,7 +18,7 @@ const getZoneTranslation = (locale: LocaleEnvironment) =>
   locale.translate("Zone")
 
 const getLiturgicalChantsAndCeremoniesTranslation = (
-  locale: LocaleEnvironment
+  locale: LocaleEnvironment,
 ) => locale.translate("Liturgical Chants and Ceremonies")
 
 const getCantripsTranslation = (locale: LocaleEnvironment) =>
@@ -27,7 +27,7 @@ const getCantripsTranslation = (locale: LocaleEnvironment) =>
 const getPredefinedTranslation = (
   getTargetCategoryById: GetById.Static.TargetCategory,
   locale: LocaleEnvironment,
-  value: TargetCategoryReference
+  value: TargetCategoryReference,
 ) => {
   const numericId = value.id.target_category
   const specificTargetCategory = getTargetCategoryById(numericId)
@@ -35,7 +35,7 @@ const getPredefinedTranslation = (
   return (
     mapNullable(
       locale.translateMap(specificTargetCategory?.translations),
-      (translation) => translation.name
+      translation => translation.name,
     ) ?? MISSING_VALUE
   )
 }
@@ -43,7 +43,7 @@ const getPredefinedTranslation = (
 const getTargetCategoryTranslationByType = (
   getTargetCategoryById: GetById.Static.TargetCategory,
   locale: LocaleEnvironment,
-  id: TargetCategoryIdentifier
+  id: TargetCategoryIdentifier,
 ) => {
   switch (id.tag) {
     case "Self":
@@ -58,7 +58,7 @@ const getTargetCategoryTranslationByType = (
       return getPredefinedTranslation(
         getTargetCategoryById,
         locale,
-        id.predefined
+        id.predefined,
       )
     default:
       return assertExhaustive(id)
@@ -71,7 +71,7 @@ const getTargetCategoryTranslationByType = (
 export const getTargetCategoryTranslation = (
   getTargetCategoryById: GetById.Static.TargetCategory,
   locale: LocaleEnvironment,
-  values: TargetCategory
+  values: TargetCategory,
 ): EntityDescriptionSection => ({
   label: locale.translate("Target Category"),
   value:
@@ -84,9 +84,9 @@ export const getTargetCategoryTranslation = (
               getTargetCategoryTranslationByType(
                 getTargetCategoryById,
                 locale,
-                id
-              )
-            )
+                id,
+              ),
+            ),
           )
           .join(", "),
 })

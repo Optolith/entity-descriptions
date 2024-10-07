@@ -24,7 +24,7 @@ export const getTextForCheck = (
     responsiveText: ResponsiveTextSize
     getSpirit: () => DerivedCharacteristic | undefined
     getToughness: () => DerivedCharacteristic | undefined
-  }
+  },
 ): EntityDescriptionSection => ({
   label: deps.translate("Check"),
   value:
@@ -32,7 +32,7 @@ export const getTextForCheck = (
       .map(
         ({ id: { attribute: id } }) =>
           deps.translateMap(deps.getAttributeById(id)?.translations)
-            ?.abbreviation ?? "??"
+            ?.abbreviation ?? "??",
       )
       .join("/") +
     (() => {
@@ -43,7 +43,7 @@ export const getTextForCheck = (
       const { responsiveText } = checkPenalty
 
       const getDerivedCharacteristicTranslation = (
-        getDerivedCharacteristic: () => DerivedCharacteristic | undefined
+        getDerivedCharacteristic: () => DerivedCharacteristic | undefined,
       ) => deps.translateMap(getDerivedCharacteristic()?.translations)
 
       const getSpiritTranslation = () =>
@@ -61,7 +61,7 @@ export const getTextForCheck = (
               : responsive(
                   responsiveText,
                   () => translation.name,
-                  () => translation.abbreviation
+                  () => translation.abbreviation,
                 )
           }
 
@@ -72,7 +72,7 @@ export const getTextForCheck = (
               : responsive(
                   responsiveText,
                   () => `${translation.name}/2`,
-                  () => `${translation.abbreviation}/2`
+                  () => `${translation.abbreviation}/2`,
                 )
           }
 
@@ -83,7 +83,7 @@ export const getTextForCheck = (
               : responsive(
                   responsiveText,
                   () => `${translation.name}/2`,
-                  () => `${translation.abbreviation}/2`
+                  () => `${translation.abbreviation}/2`,
                 )
           }
 
@@ -99,10 +99,10 @@ export const getTextForCheck = (
                     deps.translate(
                       "{0} or {1}, depending on which value is higher",
                       spiritTranslation.abbreviation,
-                      toughnessTranslation.abbreviation
+                      toughnessTranslation.abbreviation,
                     ),
                   () =>
-                    `${spiritTranslation.abbreviation}/${toughnessTranslation.abbreviation}`
+                    `${spiritTranslation.abbreviation}/${toughnessTranslation.abbreviation}`,
                 )
           }
 
@@ -110,14 +110,14 @@ export const getTextForCheck = (
             return responsive(
               responsiveText,
               () => deps.translate("Invocation Difficulty"),
-              () => deps.translate("ID")
+              () => deps.translate("ID"),
             )
 
           case "CreationDifficulty":
             return responsive(
               responsiveText,
               () => deps.translate("Creation Difficulty"),
-              () => deps.translate("CD")
+              () => deps.translate("CD"),
             )
 
           default:
@@ -128,7 +128,7 @@ export const getTextForCheck = (
       return responsive(
         responsiveText,
         () => deps.translate(" (modified by {0})", penalty),
-        () => deps.translate(" (− {0})", penalty)
+        () => deps.translate(" (− {0})", penalty),
       )
     })(),
 })

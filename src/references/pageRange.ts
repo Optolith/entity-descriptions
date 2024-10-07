@@ -26,7 +26,7 @@ export type PageRange = {
  * Converts a numeric range to a page object range.
  */
 export const numberRangeToPageRange = (
-  numberRange: SimpleOccurrence
+  numberRange: SimpleOccurrence,
 ): PageRange =>
   numberRange.last_page === undefined
     ? { firstPage: numberToPage(numberRange.first_page) }
@@ -53,7 +53,7 @@ export const normalizePageRanges = (ranges: PageRange[]): PageRange[] =>
   ranges
     .flatMap(({ firstPage, lastPage = firstPage }): Page[] => {
       if (firstPage.tag === "Numbered" && lastPage.tag === "Numbered") {
-        return range(firstPage.numbered, lastPage.numbered).map((numbered) => ({
+        return range(firstPage.numbered, lastPage.numbered).map(numbered => ({
           tag: "Numbered",
           numbered,
         }))
@@ -61,9 +61,7 @@ export const normalizePageRanges = (ranges: PageRange[]): PageRange[] =>
         return [firstPage, lastPage]
       }
     })
-    .filter(
-      (page, i, pages) => pages.findIndex((p) => equalsPage(page, p)) === i
-    )
+    .filter((page, i, pages) => pages.findIndex(p => equalsPage(page, p)) === i)
     .sort(comparePage)
     .reduce<PageRange[]>((acc, page): PageRange[] => {
       const lastRange = acc[acc.length - 1]
@@ -89,7 +87,7 @@ export const printPageRange = (translate: Translate, pageRange: PageRange) =>
     ? printPage(translate, pageRange.firstPage)
     : `${printPage(translate, pageRange.firstPage)}–${printPage(
         translate,
-        pageRange.lastPage
+        pageRange.lastPage,
       )}`
 
 /**
@@ -97,6 +95,6 @@ export const printPageRange = (translate: Translate, pageRange: PageRange) =>
  */
 export const printPageRanges = (
   translate: Translate,
-  pageRanges: PageRange[]
+  pageRanges: PageRange[],
 ) =>
-  pageRanges.map((pageRange) => printPageRange(translate, pageRange)).join(", ")
+  pageRanges.map(pageRange => printPageRange(translate, pageRange)).join(", ")

@@ -155,22 +155,22 @@ import { config as brewConfig } from "optolith-database-schema/types/traditionAr
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IdFromConfig<
-  Config extends { id: (data: any, filePath: string) => string | number }
+  Config extends { id: (data: any, filePath: string) => string | number },
 > = ReturnType<Config["id"]>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TypeFromConfig<
-  Config extends { id: (data: any, filePath: string) => string | number }
+  Config extends { id: (data: any, filePath: string) => string | number },
 > = Parameters<Config["id"]>[0]
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GetByIdFromConfig<
-  Config extends { id: (data: any, filePath: string) => string | number }
+  Config extends { id: (data: any, filePath: string) => string | number },
 > = (id: IdFromConfig<Config>) => TypeFromConfig<Config> | undefined
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AllFromConfig<
-  Config extends { id: (data: any, filePath: string) => string | number }
+  Config extends { id: (data: any, filePath: string) => string | number },
 > = TypeFromConfig<Config>[]
 
 // prettier-ignore

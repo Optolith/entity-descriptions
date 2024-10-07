@@ -11,7 +11,7 @@ export const parensIf = (text: string | undefined): string =>
  */
 export const appendInParensIfNotEmpty = (
   textToAppend: string | undefined,
-  text: string
+  text: string,
 ): string =>
   textToAppend === undefined || textToAppend === ""
     ? text

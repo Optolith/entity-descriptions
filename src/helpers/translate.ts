@@ -15,7 +15,7 @@ const insertParams = (str: string, params: (string | number)[]): string =>
     (_match, _p1, _offset, _s, { index: rawIndex }) => {
       const index = Number.parseInt(rawIndex, 10)
       return params[index]?.toString() ?? `{${rawIndex}}`
-    }
+    },
   )
 
 /**

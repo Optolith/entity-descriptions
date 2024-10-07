@@ -18,7 +18,7 @@ const lengthUnitTranslationKeys: {
 export const formatEnergy = (
   locale: LocaleEnvironment,
   unit: EnergyUnit,
-  value: number | string
+  value: number | string,
 ): string => {
   const key = lengthUnitTranslationKeys[unit]
 
@@ -31,7 +31,7 @@ export const formatEnergy = (
 export const formatEnergyByEntity = (
   locale: LocaleEnvironment,
   entity: Entity,
-  value: number | string
+  value: number | string,
 ) => {
   switch (entity) {
     case Entity.Cantrip:

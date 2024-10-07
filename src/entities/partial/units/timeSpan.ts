@@ -40,13 +40,13 @@ export const formatTimeSpan = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   unit: TimeSpanUnit,
-  value: number | string
+  value: number | string,
 ): string => {
   const [fullKey, compressedKey] = timeSpanUnitTranslationKeys[unit]
 
   return responsive(
     responsiveTextSize,
     () => locale.translate(fullKey, value),
-    () => locale.translate(compressedKey, value)
+    () => locale.translate(compressedKey, value),
   )
 }

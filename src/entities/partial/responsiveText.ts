@@ -44,7 +44,7 @@ export const responsive = <T, A extends unknown[]>(
  */
 export const getResponsiveText = (
   value: ResponsiveText | undefined,
-  size: ResponsiveTextSize
+  size: ResponsiveTextSize,
 ): string => {
   if (value === undefined) {
     return MISSING_VALUE
@@ -53,7 +53,7 @@ export const getResponsiveText = (
   return responsive(
     size,
     () => value.full,
-    () => value.compressed
+    () => value.compressed,
   )
 }
 
@@ -62,7 +62,7 @@ export const getResponsiveText = (
  */
 export const getResponsiveTextOptional = (
   value: ResponsiveTextOptional | undefined,
-  size: ResponsiveTextSize
+  size: ResponsiveTextSize,
 ): string | undefined => {
   if (value === undefined) {
     return MISSING_VALUE
@@ -71,7 +71,7 @@ export const getResponsiveTextOptional = (
   return responsive(
     size,
     () => value.full,
-    () => value.compressed
+    () => value.compressed,
   )
 }
 
@@ -84,10 +84,13 @@ export const replaceTextIfRequested = <Key extends string>(
   translation: LocaleMap<{ [K in Key]?: ResponsiveTextReplace }> | undefined,
   translateMap: TranslateMap,
   responsiveText: ResponsiveTextSize,
-  valueToReplace: string
+  valueToReplace: string,
 ) =>
-  mapNullable(translateMap(translation)?.[key], (replacement) =>
-    getResponsiveText(replacement, responsiveText).replace("$1", valueToReplace)
+  mapNullable(translateMap(translation)?.[key], replacement =>
+    getResponsiveText(replacement, responsiveText).replace(
+      "$1",
+      valueToReplace,
+    ),
   ) ?? valueToReplace
 
 /**
@@ -99,11 +102,11 @@ export const appendNoteIfRequested = <Key extends string>(
   translation: LocaleMap<{ [K in Key]?: ResponsiveTextOptional }> | undefined,
   translateMap: TranslateMap,
   responsiveText: ResponsiveTextSize,
-  valueToAppendTo: string
+  valueToAppendTo: string,
 ) =>
-  mapNullable(translateMap(translation)?.[key], (note) =>
+  mapNullable(translateMap(translation)?.[key], note =>
     appendInParensIfNotEmpty(
       getResponsiveTextOptional(note, responsiveText),
-      valueToAppendTo
-    )
+      valueToAppendTo,
+    ),
   ) ?? valueToAppendTo

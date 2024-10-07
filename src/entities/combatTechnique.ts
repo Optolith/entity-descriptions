@@ -25,7 +25,7 @@ export const getCloseCombatTechniqueEntityDescription =
       title: translation.name,
       className: "combat-technique close-combat-technique",
       body: [
-        mapNullable(translation.special, (value) => ({
+        mapNullable(translation.special, value => ({
           label: translate("Special"),
           value,
         })),
@@ -33,9 +33,9 @@ export const getCloseCombatTechniqueEntityDescription =
           label: translate("Primary Attribute"),
           value: entry.primary_attribute
             .map(
-              (attr) =>
+              attr =>
                 translateMap(getAttributeById(attr.id.attribute)?.translations)
-                  ?.name
+                  ?.name,
             )
             .join("/"),
         },
@@ -65,7 +65,7 @@ export const getRangedCombatTechniqueEntityDescription =
       title: translation.name,
       className: "combat-technique ranged-combat-technique",
       body: [
-        mapNullable(translation.special, (value) => ({
+        mapNullable(translation.special, value => ({
           label: translate("Special"),
           value,
         })),
@@ -73,9 +73,9 @@ export const getRangedCombatTechniqueEntityDescription =
           label: translate("Primary Attribute"),
           value: entry.primary_attribute
             .map(
-              (attr) =>
+              attr =>
                 translateMap(getAttributeById(attr.id.attribute)?.translations)
-                  ?.name
+                  ?.name,
             )
             .join("/"),
         },

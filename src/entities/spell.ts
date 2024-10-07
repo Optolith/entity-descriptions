@@ -38,7 +38,7 @@ const getTextForProperty = (
     translateMap: TranslateMap
     getPropertyById: GetById.Static.Property
   },
-  value: PropertyReference
+  value: PropertyReference,
 ): EntityDescriptionSection => {
   const text = (() => {
     const staticEntry = deps.getPropertyById(value.id.property)
@@ -64,7 +64,7 @@ const getTextForTraditions = (
     localeCompare: Compare<string>
     getMagicalTraditionById: GetById.Static.MagicalTradition
   },
-  value: Traditions
+  value: Traditions,
 ): EntityDescriptionSection => {
   const text = (() => {
     switch (value.tag) {
@@ -72,13 +72,14 @@ const getTextForTraditions = (
         return deps.translate("General")
       case "Specific":
         return value.specific
-          .map((trad) =>
+          .map(trad =>
             deps.translateMap(
-              deps.getMagicalTraditionById(trad.magical_tradition)?.translations
-            )
+              deps.getMagicalTraditionById(trad.magical_tradition)
+                ?.translations,
+            ),
           )
           .filter(isNotNullish)
-          .map((trad) => trad.name_for_arcane_spellworks ?? trad.name)
+          .map(trad => trad.name_for_arcane_spellworks ?? trad.name)
           .sort(deps.localeCompare)
           .join(", ")
       default:
@@ -95,10 +96,10 @@ const getTextForTraditions = (
 const getTraditionNameForArcaneSpellworksById = (
   ref: MagicalTraditionReference,
   getMagicalTraditionById: GetById.Static.MagicalTradition,
-  translateMap: TranslateMap
+  translateMap: TranslateMap,
 ) => {
   const translation = translateMap(
-    getMagicalTraditionById(ref.id.magical_tradition)?.translations
+    getMagicalTraditionById(ref.id.magical_tradition)?.translations,
   )
   return translation?.name_for_arcane_spellworks ?? translation?.name
 }
@@ -123,7 +124,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
       getCurriculumById,
     },
     locale,
-    entry
+    entry,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -135,13 +136,13 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
     const range = getTextForCantripRange(
       locale,
       ResponsiveTextSize.Full,
-      entry.parameters.range
+      entry.parameters.range,
     )
 
     const duration = getDurationTranslationForCantrip(
       locale,
       ResponsiveTextSize.Full,
-      entry.parameters.duration
+      entry.parameters.duration,
     )
 
     return {
@@ -169,40 +170,40 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
         getTargetCategoryTranslation(
           getTargetCategoryById,
           locale,
-          entry.target
+          entry.target,
         ),
         getTextForProperty(
           { translate, translateMap, getPropertyById },
-          entry.property
+          entry.property,
         ),
-        mapNullable(entry.note, (note) => ({
+        mapNullable(entry.note, note => ({
           label: translate("Note"),
           value: (() => {
             switch (note.tag) {
               case "Common":
                 return note.common.list
-                  .map((academyOrTradition) => {
+                  .map(academyOrTradition => {
                     switch (academyOrTradition.tag) {
                       case "Academy":
                         return translateMap(
                           getCurriculumById(
-                            academyOrTradition.academy.id.curriculum
-                          )?.translations
+                            academyOrTradition.academy.id.curriculum,
+                          )?.translations,
                         )?.name
                       case "Tradition": {
                         return mapNullable(
                           getTraditionNameForArcaneSpellworksById(
                             academyOrTradition.tradition,
                             getMagicalTraditionById,
-                            translateMap
+                            translateMap,
                           ),
-                          (name) =>
+                          name =>
                             name +
                             parensIf(
                               translateMap(
-                                academyOrTradition.tradition.translations
-                              )?.note
-                            )
+                                academyOrTradition.tradition.translations,
+                              )?.note,
+                            ),
                         )
                       }
                       default:
@@ -215,12 +216,12 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
 
               case "Exclusive":
                 return note.exclusive.traditions
-                  .map((tradition) =>
+                  .map(tradition =>
                     getTraditionNameForArcaneSpellworksById(
                       tradition,
                       getMagicalTraditionById,
-                      translateMap
-                    )
+                      translateMap,
+                    ),
                   )
                   .filter(isNotNullish)
                   .sort(localeCompare)
@@ -234,7 +235,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
       ],
       references: entry.src,
     }
-  }
+  },
 )
 
 /**
@@ -263,7 +264,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
       getMagicalTraditionById,
     },
     locale,
-    entry
+    entry,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -280,7 +281,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
             locale,
             Entity.Spell,
             ResponsiveTextSize.Full,
-            entry.parameters.one_time
+            entry.parameters.one_time,
           )
 
         case "Sustained":
@@ -289,7 +290,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
             locale,
             Entity.Spell,
             ResponsiveTextSize.Full,
-            entry.parameters.sustained
+            entry.parameters.sustained,
           )
 
         default:
@@ -309,7 +310,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
             responsiveText: ResponsiveTextSize.Full,
             getSpirit,
             getToughness,
-          }
+          },
         ),
         ...getTextForEffect(locale, translation.effect),
         {
@@ -343,21 +344,21 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
         getTargetCategoryTranslation(
           getTargetCategoryById,
           locale,
-          entry.target
+          entry.target,
         ),
         getTextForProperty(
           { translate, translateMap, getPropertyById },
-          entry.property
+          entry.property,
         ),
         getTextForTraditions(
           { translate, translateMap, localeCompare, getMagicalTraditionById },
-          entry.traditions
+          entry.traditions,
         ),
         createImprovementCost(translate, entry.improvement_cost),
       ],
       references: entry.src,
     }
-  }
+  },
 )
 
 /**
@@ -386,7 +387,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
       getMagicalTraditionById,
     },
     locale,
-    entry
+    entry,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -403,7 +404,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
             locale,
             Entity.Ritual,
             ResponsiveTextSize.Full,
-            entry.parameters.one_time
+            entry.parameters.one_time,
           )
 
         case "Sustained":
@@ -412,7 +413,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
             locale,
             Entity.Ritual,
             ResponsiveTextSize.Full,
-            entry.parameters.sustained
+            entry.parameters.sustained,
           )
 
         default:
@@ -432,7 +433,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
             responsiveText: ResponsiveTextSize.Full,
             getSpirit,
             getToughness,
-          }
+          },
         ),
         ...getTextForEffect(locale, translation.effect),
         {
@@ -466,19 +467,19 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
         getTargetCategoryTranslation(
           getTargetCategoryById,
           locale,
-          entry.target
+          entry.target,
         ),
         getTextForProperty(
           { translate, translateMap, getPropertyById },
-          entry.property
+          entry.property,
         ),
         getTextForTraditions(
           { translate, translateMap, localeCompare, getMagicalTraditionById },
-          entry.traditions
+          entry.traditions,
         ),
         createImprovementCost(translate, entry.improvement_cost),
       ],
       references: entry.src,
     }
-  }
+  },
 )

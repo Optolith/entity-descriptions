@@ -7,7 +7,7 @@ import { EntityDescriptionSection } from "../../../index.js"
  */
 export const createImprovementCost = (
   translate: Translate,
-  improvementCost: RawImprovementCost
+  improvementCost: RawImprovementCost,
 ): EntityDescriptionSection => ({
   label: translate("Improvement Cost"),
   value: improvementCost,

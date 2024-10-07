@@ -65,14 +65,13 @@ export const getNonModifiableSuffixTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   param: ModifiableParameter,
-  responsiveTextSize: ResponsiveTextSize
+  responsiveTextSize: ResponsiveTextSize,
 ): string =>
   responsive(
     responsiveTextSize,
     () =>
-      mapNullable(
-        translationKeyForNonModifiableSuffix[entity]?.[param],
-        (key) => locale.translate(key)
+      mapNullable(translationKeyForNonModifiableSuffix[entity]?.[param], key =>
+        locale.translate(key),
       ) ?? "",
     () => {
       switch (entity) {
@@ -87,5 +86,5 @@ export const getNonModifiableSuffixTranslation = (
         default:
           return assertExhaustive(entity)
       }
-    }
+    },
   )

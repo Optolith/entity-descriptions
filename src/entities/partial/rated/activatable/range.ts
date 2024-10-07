@@ -32,16 +32,16 @@ const getModifiableRangeTranslation = (
   locale: LocaleEnvironment,
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
-  value: ModifiableRange
+  value: ModifiableRange,
 ) =>
   mapNullable(
     getSkillModificationLevelById(value.initial_modification_level),
-    (modificationLevel) => {
+    modificationLevel => {
       const range = getModifiableBySpeed(
-        (config) => config.range,
-        (config) => config.range,
+        config => config.range,
+        config => config.range,
         speed,
-        modificationLevel
+        modificationLevel,
       )
 
       if (range === 1) {
@@ -49,7 +49,7 @@ const getModifiableRangeTranslation = (
       }
 
       return formatLength(locale, responsiveTextSize, "Steps", range)
-    }
+    },
   ) ?? MISSING_VALUE
 
 const getSightTranslation = (locale: LocaleEnvironment) =>
@@ -64,47 +64,47 @@ const getGlobalTranslation = (locale: LocaleEnvironment) =>
 const getTouchTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
-  responsiveTextSize: ResponsiveTextSize
+  responsiveTextSize: ResponsiveTextSize,
 ) =>
   locale.translate("Touch") +
   getNonModifiableSuffixTranslation(
     locale,
     entity,
     ModifiableParameter.Range,
-    responsiveTextSize
+    responsiveTextSize,
   )
 
 const getFixedRangeTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: FixedRange
+  value: FixedRange,
 ) =>
   formatLength(locale, responsiveTextSize, value.unit, value.value) +
   getNonModifiableSuffixTranslation(
     locale,
     entity,
     ModifiableParameter.Range,
-    responsiveTextSize
+    responsiveTextSize,
   )
 
 const wrapIfRadius = (
   locale: LocaleEnvironment,
   is_radius: boolean | undefined,
-  text: string
+  text: string,
 ) => (is_radius === true ? `${text} ${locale.translate("Radius")}` : text)
 
 const getCheckResultBasedRangeTranslation = (
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: CheckResultBasedRange
+  value: CheckResultBasedRange,
 ) => {
   const range = formatLength(
     locale,
     responsiveTextSize,
     value.unit,
-    getCheckResultBasedValueTranslation(locale.translate, value)
+    getCheckResultBasedValueTranslation(locale.translate, value),
   )
 
   const rangeWrappedIfRadius = wrapIfRadius(locale, value.is_radius, range)
@@ -113,7 +113,7 @@ const getCheckResultBasedRangeTranslation = (
     locale,
     responsiveTextSize,
     value.is_maximum,
-    rangeWrappedIfRadius
+    rangeWrappedIfRadius,
   )
 
   return (
@@ -122,7 +122,7 @@ const getCheckResultBasedRangeTranslation = (
       locale,
       entity,
       ModifiableParameter.Range,
-      responsiveTextSize
+      responsiveTextSize,
     )
   )
 }
@@ -133,7 +133,7 @@ const getRangeValueTranslation = (
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
   entity: Entity,
-  value: RangeValue
+  value: RangeValue,
 ) => {
   switch (value.tag) {
     case "Modifiable":
@@ -142,7 +142,7 @@ const getRangeValueTranslation = (
         locale,
         speed,
         responsiveTextSize,
-        value.modifiable
+        value.modifiable,
       )
     case "Sight":
       return getSightTranslation(locale)
@@ -157,7 +157,7 @@ const getRangeValueTranslation = (
         locale,
         entity,
         responsiveTextSize,
-        value.fixed
+        value.fixed,
       )
     }
     case "CheckResultBased":
@@ -165,7 +165,7 @@ const getRangeValueTranslation = (
         locale,
         entity,
         responsiveTextSize,
-        value.check_result_based
+        value.check_result_based,
       )
     default:
       return assertExhaustive(value)
@@ -181,7 +181,7 @@ export const getTextForActivatableSkillRange = (
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
   entity: Entity,
-  value: Range
+  value: Range,
 ): string => {
   const rangeValue = getRangeValueTranslation(
     getSkillModificationLevelById,
@@ -189,7 +189,7 @@ export const getTextForActivatableSkillRange = (
     speed,
     responsiveTextSize,
     entity,
-    value.value
+    value.value,
   )
 
   const withReplacement = replaceTextIfRequested(
@@ -197,7 +197,7 @@ export const getTextForActivatableSkillRange = (
     value.translations,
     locale.translateMap,
     responsiveTextSize,
-    rangeValue
+    rangeValue,
   )
 
   return appendNoteIfRequested(
@@ -205,7 +205,7 @@ export const getTextForActivatableSkillRange = (
     value.translations,
     locale.translateMap,
     responsiveTextSize,
-    withReplacement
+    withReplacement,
   )
 }
 
@@ -213,7 +213,7 @@ const getTextForTinyAcitvatableRange = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   entity: Entity,
-  value: CantripRange | BlessingRange
+  value: CantripRange | BlessingRange,
 ): string => {
   switch (value.tag) {
     case "Self":
@@ -225,7 +225,7 @@ const getTextForTinyAcitvatableRange = (
         locale,
         entity,
         responsiveTextSize,
-        value.fixed
+        value.fixed,
       )
     default:
       return assertExhaustive(value)
@@ -238,13 +238,13 @@ const getTextForTinyAcitvatableRange = (
 export const getTextForCantripRange = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: CantripRange
+  value: CantripRange,
 ): string =>
   getTextForTinyAcitvatableRange(
     locale,
     responsiveTextSize,
     Entity.Cantrip,
-    value
+    value,
   )
 
 /**
@@ -253,11 +253,11 @@ export const getTextForCantripRange = (
 export const getTextForBlessingRange = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: BlessingRange
+  value: BlessingRange,
 ): string =>
   getTextForTinyAcitvatableRange(
     locale,
     responsiveTextSize,
     Entity.Blessing,
-    value
+    value,
   )

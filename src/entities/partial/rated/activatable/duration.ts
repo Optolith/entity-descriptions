@@ -27,24 +27,24 @@ import { appendInParensIfNotEmpty } from "./parensIf.js"
 const getImmediateDurationTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: Immediate
+  value: Immediate,
 ): string => {
   const text = appendInParensIfNotEmpty(
-    mapNullable(value.maximum, (max) => {
+    mapNullable(value.maximum, max => {
       const maxText = formatTimeSpan(
         locale,
         responsiveTextSize,
         max.unit,
-        max.value
+        max.value,
       )
 
       return responsive(
         responsiveTextSize,
         () => locale.translate("no more than {0}", maxText),
-        () => locale.translate("max. {0}", maxText)
+        () => locale.translate("max. {0}", maxText),
       )
     }),
-    locale.translate("Immediate")
+    locale.translate("Immediate"),
   )
 
   return replaceTextIfRequested(
@@ -52,40 +52,40 @@ const getImmediateDurationTranslation = (
     value.translations,
     locale.translateMap,
     responsiveTextSize,
-    text
+    text,
   )
 }
 
 const getPermanentDurationTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: PermanentDuration
+  value: PermanentDuration,
 ): string =>
   replaceTextIfRequested(
     "replacement",
     value.translations,
     locale.translateMap,
     responsiveTextSize,
-    locale.translate("Permanent")
+    locale.translate("Permanent"),
   )
 
 const getFixedDurationTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: FixedDuration
+  value: FixedDuration,
 ): string => {
   const duration = formatTimeSpan(
     locale,
     responsiveTextSize,
     value.unit,
-    value.value
+    value.value,
   )
 
   const durationWrappedIfMaximum = wrapIfMaximum(
     locale,
     responsiveTextSize,
     value.is_maximum,
-    duration
+    duration,
   )
 
   return replaceTextIfRequested(
@@ -93,20 +93,20 @@ const getFixedDurationTranslation = (
     value.translations,
     locale.translateMap,
     responsiveTextSize,
-    durationWrappedIfMaximum
+    durationWrappedIfMaximum,
   )
 }
 
 const getCheckResultBasedDurationTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: CheckResultBasedDuration
+  value: CheckResultBasedDuration,
 ): string => {
   const duration = formatTimeSpan(
     locale,
     responsiveTextSize,
     value.unit,
-    getCheckResultBasedValueTranslation(locale.translate, value)
+    getCheckResultBasedValueTranslation(locale.translate, value),
   )
 
   return wrapIfMaximum(locale, responsiveTextSize, value.is_maximum, duration)
@@ -115,11 +115,11 @@ const getCheckResultBasedDurationTranslation = (
 const getIndefiniteDurationTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: IndefiniteDuration
+  value: IndefiniteDuration,
 ) =>
   getResponsiveText(
     locale.translateMap(value.translations)?.description,
-    responsiveTextSize
+    responsiveTextSize,
   )
 
 /**
@@ -128,38 +128,38 @@ const getIndefiniteDurationTranslation = (
 export const getDurationForOneTimeTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: DurationForOneTime
+  value: DurationForOneTime,
 ): string => {
   switch (value.tag) {
     case "Immediate":
       return getImmediateDurationTranslation(
         locale,
         responsiveTextSize,
-        value.immediate
+        value.immediate,
       )
     case "Permanent":
       return getPermanentDurationTranslation(
         locale,
         responsiveTextSize,
-        value.permanent
+        value.permanent,
       )
     case "Fixed":
       return getFixedDurationTranslation(
         locale,
         responsiveTextSize,
-        value.fixed
+        value.fixed,
       )
     case "CheckResultBased":
       return getCheckResultBasedDurationTranslation(
         locale,
         responsiveTextSize,
-        value.check_result_based
+        value.check_result_based,
       )
     case "Indefinite":
       return getIndefiniteDurationTranslation(
         locale,
         responsiveTextSize,
-        value.indefinite
+        value.indefinite,
       )
     default:
       return assertExhaustive(value)
@@ -172,13 +172,13 @@ export const getDurationForOneTimeTranslation = (
 export const getDurationForSustainedTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: DurationForSustained | undefined
+  value: DurationForSustained | undefined,
 ): string =>
   value === undefined
     ? responsive(
         responsiveTextSize,
         () => locale.translate("Sustained"),
-        () => locale.translate("(S)")
+        () => locale.translate("(S)"),
       )
     : wrapAsMaximum(
         locale,
@@ -187,14 +187,14 @@ export const getDurationForSustainedTranslation = (
           locale,
           responsiveTextSize,
           value.maximum.unit,
-          value.maximum.value
-        )
+          value.maximum.value,
+        ),
       )
 
 const getDurationDuringLovemakingTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: CastingTimeDuringLovemaking
+  value: CastingTimeDuringLovemaking,
 ): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
 
 /**
@@ -203,32 +203,32 @@ const getDurationDuringLovemakingTranslation = (
 export const getDurationTranslationForCantrip = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: CantripDuration
+  value: CantripDuration,
 ): string => {
   switch (value.tag) {
     case "Immediate":
       return getImmediateDurationTranslation(
         locale,
         responsiveTextSize,
-        value.immediate
+        value.immediate,
       )
     case "Fixed":
       return getFixedDurationTranslation(
         locale,
         responsiveTextSize,
-        value.fixed
+        value.fixed,
       )
     case "Indefinite":
       return getIndefiniteDurationTranslation(
         locale,
         responsiveTextSize,
-        value.indefinite
+        value.indefinite,
       )
     case "DuringLovemaking":
       return getDurationDuringLovemakingTranslation(
         locale,
         responsiveTextSize,
-        value.during_lovemaking
+        value.during_lovemaking,
       )
     default:
       return assertExhaustive(value)
@@ -241,26 +241,26 @@ export const getDurationTranslationForCantrip = (
 export const getDurationTranslationForBlessing = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  value: BlessingDuration
+  value: BlessingDuration,
 ): string => {
   switch (value.tag) {
     case "Immediate":
       return getImmediateDurationTranslation(
         locale,
         responsiveTextSize,
-        value.immediate
+        value.immediate,
       )
     case "Fixed":
       return getFixedDurationTranslation(
         locale,
         responsiveTextSize,
-        value.fixed
+        value.fixed,
       )
     case "Indefinite":
       return getIndefiniteDurationTranslation(
         locale,
         responsiveTextSize,
-        value.indefinite
+        value.indefinite,
       )
     default:
       return assertExhaustive(value)

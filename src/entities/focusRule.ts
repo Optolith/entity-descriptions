@@ -19,7 +19,7 @@ export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
   return {
     title: `${translation.name} (${romanize(entry.level)})`,
     subtitle: translateMap(
-      getSubjectById(entry.subject.id.subject)?.translations
+      getSubjectById(entry.subject.id.subject)?.translations,
     )?.name,
     className: "focus-rule",
     body: [{ value: translation.description }],

@@ -23,7 +23,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
   (
     { getAttributeById, blessedTraditions, diseases, regions, cache },
     { translate, translateMap, compare: localeCompare },
-    entry
+    entry,
   ) => {
     const translation = translateMap(entry.translations)
 
@@ -34,12 +34,12 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
     const newApplications = (
       entry === undefined ? [] : cache.newApplications[entry.id] ?? []
     )
-      .map((x) => translateMap(x.data.translations)?.name)
+      .map(x => translateMap(x.data.translations)?.name)
       .filter(isNotNullish)
       .sort(localeCompare)
 
     const uses = (entry === undefined ? [] : cache.uses[entry.id] ?? [])
-      .map((x) => translateMap(x.data.translations)?.name)
+      .map(x => translateMap(x.data.translations)?.name)
       .filter(isNotNullish)
       .sort(localeCompare)
 
@@ -50,17 +50,17 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
             switch (entry.applications.derived) {
               case "BlessedTraditions":
                 return Object.values(blessedTraditions)
-                  .map((x) => translateMap(x.translations)?.name)
+                  .map(x => translateMap(x.translations)?.name)
                   .filter(isNotNullish)
                   .sort(localeCompare)
               case "Diseases":
                 return Object.values(diseases)
-                  .map((x) => translateMap(x.translations)?.name)
+                  .map(x => translateMap(x.translations)?.name)
                   .filter(isNotNullish)
                   .sort(localeCompare)
               case "Regions":
                 return Object.values(regions)
-                  .map((x) => translateMap(x.translations)?.name)
+                  .map(x => translateMap(x.translations)?.name)
                   .filter(isNotNullish)
                   .sort(localeCompare)
               default:
@@ -69,7 +69,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
           })()
         case "Explicit":
           return entry.applications.explicit
-            .map((x) => translateMap(x.translations)?.name)
+            .map(x => translateMap(x.translations)?.name)
             .filter(isNotNullish)
             .sort(localeCompare)
         default:
@@ -95,7 +95,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
             },
         getTextForCheck(
           { translate, translateMap, getAttributeById },
-          entry.check
+          entry.check,
         ),
         {
           label: translate("Applications"),
@@ -135,5 +135,5 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
         createImprovementCost(translate, entry.improvement_cost),
       ],
     }
-  }
+  },
 )

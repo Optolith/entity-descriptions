@@ -20,7 +20,7 @@ export const getModifiableBySpeed = <T>(
   fast: (config: FastSkillModificationLevelConfig) => T,
   slow: (config: SlowSkillModificationLevelConfig) => T,
   speed: Speed,
-  level: SkillModificationLevel
+  level: SkillModificationLevel,
 ): T => {
   switch (speed) {
     case Speed.Fast:

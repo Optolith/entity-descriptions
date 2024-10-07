@@ -9,27 +9,27 @@ describe("getTextForCheckResultBased", () => {
       getCheckResultBasedValueTranslation(translateMock, {
         base: "QualityLevels",
       }),
-      "QL"
+      "QL",
     )
     assert.equal(
       getCheckResultBasedValueTranslation(translateMock, {
         base: "SkillPoints",
       }),
-      "SP"
+      "SP",
     )
     assert.equal(
       getCheckResultBasedValueTranslation(translateMock, {
         base: "QualityLevels",
         modifier: { arithmetic: "Divide", value: 2 },
       }),
-      "QL / 2"
+      "QL / 2",
     )
     assert.equal(
       getCheckResultBasedValueTranslation(translateMock, {
         base: "SkillPoints",
         modifier: { arithmetic: "Multiply", value: 3 },
       }),
-      "SP × 3"
+      "SP × 3",
     )
   })
 })

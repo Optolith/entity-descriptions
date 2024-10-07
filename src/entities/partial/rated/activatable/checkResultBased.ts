@@ -9,7 +9,7 @@ import { Translate } from "../../../../helpers/translate.js"
 
 const getCheckResultBaseValueTranslation = (
   translate: Translate,
-  baseValue: CheckResultValue
+  baseValue: CheckResultValue,
 ) => {
   switch (baseValue) {
     case "QualityLevels":
@@ -38,11 +38,11 @@ const getArithmeticSymbol = (arithmetic: CheckResultArithmetic) => {
  */
 export const getCheckResultBasedValueTranslation = (
   translate: Translate,
-  value: CheckResultBased
+  value: CheckResultBased,
 ): string =>
   getCheckResultBaseValueTranslation(translate, value.base) +
   mapNullableDefault(
     value.modifier,
-    (modifier) => getArithmeticSymbol(modifier.arithmetic) + modifier.value,
-    ""
+    modifier => getArithmeticSymbol(modifier.arithmetic) + modifier.value,
+    "",
   )
