@@ -10,12 +10,10 @@ import {
   PropertyReference,
 } from "optolith-database-schema/types/_SimpleReferences"
 import { Traditions } from "optolith-database-schema/types/_Spellwork"
+import { createEntityDescriptionCreator } from "../creator.js"
 import { GetById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
-import {
-  createEntityDescriptionCreator,
-  EntityDescriptionSection,
-} from "../index.js"
+import { EntityDescriptionSection } from "../index.js"
 import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"

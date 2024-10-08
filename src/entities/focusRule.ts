@@ -1,7 +1,7 @@
 import { romanize } from "@optolith/helpers/roman"
 import { FocusRule } from "optolith-database-schema/types/rule/FocusRule"
+import { createEntityDescriptionCreator } from "../creator.js"
 import { GetById } from "../helpers/getTypes.js"
-import { createEntityDescriptionCreator } from "../index.js"
 
 /**
  * Get a JSON representation of the rules text for a focus rule.

@@ -1,5 +1,5 @@
 import { ExperienceLevel } from "optolith-database-schema/types/ExperienceLevel"
-import { createEntityDescriptionCreator } from "../index.js"
+import { createEntityDescriptionCreator } from "../creator.js"
 
 /**
  * Get a JSON representation of the rules text for an experience level.

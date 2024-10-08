@@ -7,12 +7,10 @@ import { DerivedCharacteristic } from "optolith-database-schema/types/DerivedCha
 import { LiturgicalChant } from "optolith-database-schema/types/LiturgicalChant"
 import { SkillTradition } from "optolith-database-schema/types/_Blessed"
 import { AspectReference } from "optolith-database-schema/types/_SimpleReferences"
+import { createEntityDescriptionCreator } from "../creator.js"
 import { GetById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
-import {
-  createEntityDescriptionCreator,
-  EntityDescriptionSection,
-} from "../index.js"
+import { EntityDescriptionSection } from "../index.js"
 import { getDurationTranslationForBlessing } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"

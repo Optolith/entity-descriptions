@@ -1,8 +1,8 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { CloseCombatTechnique } from "optolith-database-schema/types/CombatTechnique_Close"
 import { RangedCombatTechnique } from "optolith-database-schema/types/CombatTechnique_Ranged"
+import { createEntityDescriptionCreator } from "../creator.js"
 import { GetById } from "../helpers/getTypes.js"
-import { createEntityDescriptionCreator } from "../index.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 
 /**
