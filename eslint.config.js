@@ -190,7 +190,8 @@ export default [
   eslintConfigPrettier,
   {
     ignores: [
-      "*.config.js",
+      "lib/*",
+      "*.config.js"
     ],
   },
 ]
