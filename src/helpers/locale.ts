@@ -9,4 +9,6 @@ export type LocaleEnvironment = {
   translate: Translate
   translateMap: TranslateMap
   compare: Compare<string>
+  joinConjunctionList: (list: string[]) => string
+  joinDisjunctionList: (list: string[]) => string
 }

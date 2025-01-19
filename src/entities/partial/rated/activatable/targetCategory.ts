@@ -1,8 +1,8 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
-  TargetCategory,
-  TargetCategoryIdentifier,
+  AffectedTargetCategories,
+  SpecificAffectedTargetCategoryIdentifier,
 } from "optolith-database-schema/types/_ActivatableSkillTargetCategory"
 import { TargetCategoryReference } from "optolith-database-schema/types/_SimpleReferences"
 import { GetById } from "../../../../helpers/getTypes.js"
@@ -43,7 +43,7 @@ const getPredefinedTranslation = (
 const getTargetCategoryTranslationByType = (
   getTargetCategoryById: GetById.Static.TargetCategory,
   locale: LocaleEnvironment,
-  id: TargetCategoryIdentifier,
+  id: SpecificAffectedTargetCategoryIdentifier,
 ) => {
   switch (id.tag) {
     case "Self":
@@ -71,7 +71,7 @@ const getTargetCategoryTranslationByType = (
 export const getTargetCategoryTranslation = (
   getTargetCategoryById: GetById.Static.TargetCategory,
   locale: LocaleEnvironment,
-  values: TargetCategory,
+  values: AffectedTargetCategories,
 ): EntityDescriptionSection => ({
   label: locale.translate("Target Category"),
   value:

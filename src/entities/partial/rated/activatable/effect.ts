@@ -1,7 +1,7 @@
 import { filterNonNullable } from "@optolith/helpers/array"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { Effect } from "optolith-database-schema/types/_ActivatableSkillEffect"
+import { ActivatableSkillEffect } from "optolith-database-schema/types/_ActivatableSkillEffect"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { EntityDescriptionSection } from "../../../../index.js"
 
@@ -34,7 +34,7 @@ const getContentPartsForQualityLevels = (
  */
 export const getTextForEffect = (
   locale: LocaleEnvironment,
-  effect: Effect,
+  effect: ActivatableSkillEffect,
 ): EntityDescriptionSection[] => {
   switch (effect.tag) {
     case "Plain":

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import { getCheckResultBasedValueTranslation } from "../../../../../src/entities/partial/rated/activatable/checkResultBased.js"
-import { translateMock } from "../../../../../src/helpers/translate.js"
+import { translateMock } from "../../../../helpers/translate.js"
 
 describe("getTextForCheckResultBased", () => {
   it("should return the value text for a check-result-based parameter of an activatable skill", () => {
