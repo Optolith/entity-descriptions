@@ -16,7 +16,7 @@
     "build": "tsc -b",
     "watch": "tsc -b -w",
     "release": "commit-and-tag-version",
-    "test": "glob -c \"node --import tsx --test\" \"./test/**/*.ts\"",
+    "test": "node --import tsx --test",
     "lint": "eslint"
   },
   "repository": {
@@ -30,20 +30,21 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
-    "@optolith/helpers": "^0.2.2"
+    "@optolith/helpers": "^0.2.2",
+    "messageformat": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@types/node": "^22.10.5",
-    "commit-and-tag-version": "^12.5.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-jsdoc": "^50.6.1",
-    "glob": "^11.0.0",
-    "globals": "^15.14.0",
-    "optolith-database-schema": "^0.17.2",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.19.0"
+    "@types/node": "^25.2.1",
+    "commit-and-tag-version": "^12.6.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsdoc": "^62.5.4",
+    "glob": "^13.0.1",
+    "globals": "^17.3.0",
+    "optolith-database-schema": "^0.29.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
   },
   "type": "module"
 }

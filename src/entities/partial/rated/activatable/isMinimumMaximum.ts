@@ -11,8 +11,8 @@ export const wrapAsMinimum = (
 ): string =>
   responsive(
     responsiveTextSize,
-    () => locale.translate("at least {0}", text),
-    () => locale.translate("min. {0}", text),
+    () => locale.translate("at least {$value}", { value: text }),
+    () => locale.translate("min. {$value}", { value: text }),
   )
 
 /**
@@ -37,8 +37,8 @@ export const wrapAsMaximum = (
 ): string =>
   responsive(
     responsiveTextSize,
-    () => locale.translate("no more than {0}", text),
-    () => locale.translate("max. {0}", text),
+    () => locale.translate("no more than {$value}", { value: text }),
+    () => locale.translate("max. {$value}", { value: text }),
   )
 
 /**

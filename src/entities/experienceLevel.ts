@@ -1,4 +1,4 @@
-import { ExperienceLevel } from "optolith-database-schema/types/ExperienceLevel"
+import { ExperienceLevel } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 
 /**

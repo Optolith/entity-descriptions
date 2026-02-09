@@ -1,12 +1,11 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { LocaleMap } from "optolith-database-schema/types/_LocaleMap"
-import {
+import type {
   ResponsiveText,
   ResponsiveTextOptional,
   ResponsiveTextReplace,
-} from "optolith-database-schema/types/_ResponsiveText"
-import { TranslateMap } from "../../helpers/translate.js"
+} from "optolith-database-schema/gen"
+import { TranslateMap, type LocaleMap } from "../../helpers/translate.js"
 import { appendInParensIfNotEmpty } from "./rated/activatable/parensIf.js"
 import { MISSING_VALUE } from "./unknown.js"
 

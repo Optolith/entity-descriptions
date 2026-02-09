@@ -6,7 +6,6 @@ import { PrerequisitePart } from "../part.js"
  */
 export const printNoOtherAncestorBloodAdvantagePrerequisite = (
   locale: LocaleEnvironment,
-  _prerequisite: Record<string, never>,
 ): PrerequisitePart | undefined => ({
   value: locale.translate("no other ancestor blood advantage"),
   sentenceType: undefined,

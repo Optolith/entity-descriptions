@@ -1,5 +1,5 @@
-import { CulturePrerequisite } from "optolith-database-schema/types/prerequisites/single/CulturePrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+import { CulturePrerequisite } from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -8,7 +8,7 @@ import { PrerequisitePart } from "../part.js"
  * Get the translation of a culture prerequisite.
  */
 export const printCulturePrerequisite = (
-  getCultureById: GetById.Static.Culture,
+  getInstanceById: GetInstanceById<"Culture">,
   locale: LocaleEnvironment,
   prerequisite: CulturePrerequisite,
 ): PrerequisitePart | undefined => {
@@ -16,7 +16,7 @@ export const printCulturePrerequisite = (
     return printDisplayOption(locale, prerequisite.display_option)
   }
 
-  const culture = getCultureById(prerequisite.id.culture)
+  const culture = getInstanceById("Culture", prerequisite.id)
   const cultureTranslation = locale.translateMap(culture?.translations)
 
   if (cultureTranslation === undefined) {

@@ -21,14 +21,12 @@ const printType = (
  */
 export const printCommonSuggestedByRCPPrerequisite = (
   locale: LocaleEnvironment,
-  _prerequisite: Record<string, never>,
   name: string,
   type: "advantage" | "disadvantage",
 ): PrerequisitePart | undefined => ({
   value: locale.translate(
-    "Race, culture, or profession must have {0} as an automatic or suggested {1}",
-    name,
-    printType(locale, type),
+    "Race, culture, or profession must have {$entry} as an automatic or suggested {$itemOfCategory}",
+    { entry: name, itemOfCategory: printType(locale, type) },
   ),
   sentenceType: undefined,
   isMeta: false,

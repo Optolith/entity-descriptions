@@ -1,19 +1,19 @@
 import { mapObject } from "@optolith/helpers/object"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { ResolvedSelectOption } from "optolith-database-schema/cache/activatableSelectOptions"
-import {
+import type { ResolvedSelectOption } from "optolith-database-schema/cache"
+import type {
   ActivatableIdentifier,
-  SelectOptionIdentifier,
-} from "optolith-database-schema/types/_IdentifierGroup"
-import { LocaleMap } from "optolith-database-schema/types/_LocaleMap"
-import { GetById } from "../../helpers/getTypes.js"
+  RequirableSelectOptionIdentifier,
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../helpers/getTypes.js"
 import {
   AdvantageIdentifier,
   DisadvantageIdentifier,
   KarmaSpecialAbilityIdentifier,
 } from "../../helpers/identifiers.js"
 import { LocaleEnvironment } from "../../helpers/locale.js"
+import type { LocaleMap } from "../../helpers/translate.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**
@@ -172,17 +172,17 @@ const combineBaseName = (
 }
 
 const getEntrySpecificFullName = (
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<"Aspect">,
   locale: LocaleEnvironment,
   id: ActivatableIdentifier,
   base: ActivatableNameChunk,
   level: number | undefined,
-  options: SelectOptionIdentifier[] | undefined,
+  options: RequirableSelectOptionIdentifier[] | undefined,
   printedOptions: ActivatableNameComponents["options"],
 ): Pick<ActivatableNameComponents, "full" | "fullWithoutLevel"> | undefined => {
-  switch (id.tag) {
+  switch (id.kind) {
     case "Advantage":
-      switch (id.advantage) {
+      switch (id.Advantage) {
         case AdvantageIdentifier.HatredOf: {
           const [firstOption, ...rest] = printedOptions
 
@@ -205,7 +205,7 @@ const getEntrySpecificFullName = (
           return undefined
       }
     case "Disadvantage":
-      switch (id.disadvantage) {
+      switch (id.Disadvantage) {
         case DisadvantageIdentifier.PersonalityFlaw: {
           const [selection, optionalText, ...rest] = printedOptions
 
@@ -239,7 +239,7 @@ const getEntrySpecificFullName = (
     case "AdvancedMagicalSpecialAbility":
       return undefined
     case "AdvancedSkillSpecialAbility":
-      switch (id.advanced_skill_special_ability) {
+      switch (id.AdvancedSkillSpecialAbility) {
         // case AdvancedSkillSpecialAbilityIdentifier.Fachwissen: {
         //   const [skillId, firstApplicationId, secondApplicationId] = options ?? []
         // const aspect =
@@ -299,6 +299,7 @@ const getEntrySpecificFullName = (
     case "AncestorGlyph":
     case "ArcaneOrbEnchantment":
     case "AttireEnchantment":
+    case "Beutelzauber":
     case "BlessedTradition":
     case "BowlEnchantment":
     case "BrawlingSpecialAbility":
@@ -315,7 +316,7 @@ const getEntrySpecificFullName = (
     case "FoolsHatEnchantment":
       return undefined
     case "GeneralSpecialAbility":
-      switch (id.general_special_ability) {
+      switch (id.GeneralSpecialAbility) {
         // case GeneralSpecialAbilityIdentifier.LanguageSpecialization: {
         //   const [languageId, specializationId] = options ?? []
 
@@ -374,15 +375,16 @@ const getEntrySpecificFullName = (
         default:
           return undefined
       }
+    case "Haubenzauber":
     case "InstrumentEnchantment":
       return undefined
     case "KarmaSpecialAbility":
-      switch (id.karma_special_ability) {
+      switch (id.KarmaSpecialAbility) {
         case KarmaSpecialAbilityIdentifier.MasterOfAspect: {
           const [aspectId] = options ?? []
           const aspect =
-            aspectId?.tag === "Aspect"
-              ? getAspectById(aspectId.aspect)
+            aspectId?.kind === "Aspect"
+              ? getInstanceById("Aspect", aspectId.Aspect)
               : undefined
           const aspectTranslations = locale.translateMap(aspect?.translations)
 
@@ -406,6 +408,7 @@ const getEntrySpecificFullName = (
           return undefined
       }
     case "Krallenkettenzauber":
+    case "Kristallkugelzauber":
     case "LiturgicalStyleSpecialAbility":
     case "LycantropicGift":
     case "MagicalSign":
@@ -439,15 +442,15 @@ const getEntrySpecificFullName = (
  * Gets the name components for an activatable entry.
  */
 export const getNameComponents = <T>(
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<"Aspect">,
   locale: LocaleEnvironment,
   id: ActivatableIdentifier,
-  options: SelectOptionIdentifier[] | undefined,
+  options: RequirableSelectOptionIdentifier[] | undefined,
   level: number | undefined,
   translations: LocaleMap<T>,
   getBaseName: (translation: T) => string,
   getSelectOptionById: (
-    id: SelectOptionIdentifier,
+    id: RequirableSelectOptionIdentifier,
   ) => ResolvedSelectOption | undefined,
   displayedInProfession: boolean,
 ): ActivatableNameComponents => {
@@ -455,12 +458,13 @@ export const getNameComponents = <T>(
   const nameOptions: ActivatableNameComponents["options"] = (() => {
     const arr =
       options?.map(optionId => {
-        const optTranslations = getSelectOptionById(optionId)?.translations
+        const optTranslations =
+          getSelectOptionById(optionId)?.content.translations
         return optTranslations === undefined
           ? MISSING_VALUE
           : mapObject(optTranslations, t10n =>
               displayedInProfession
-                ? t10n.name_in_profession ?? t10n.name
+                ? (t10n.name_in_profession ?? t10n.name)
                 : t10n.name,
             )
       }) ?? []
@@ -475,7 +479,7 @@ export const getNameComponents = <T>(
 
   return {
     ...(getEntrySpecificFullName(
-      getAspectById,
+      getInstanceById,
       locale,
       id,
       base,

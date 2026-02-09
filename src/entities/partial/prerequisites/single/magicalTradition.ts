@@ -1,8 +1,8 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
   MagicalTraditionPrerequisite,
   MagicalTraditionPrerequisiteRestriction,
-} from "optolith-database-schema/types/prerequisites/single/TraditionPrerequisite"
+} from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -11,17 +11,11 @@ const printValue = (
   locale: LocaleEnvironment,
   restriction: MagicalTraditionPrerequisiteRestriction | undefined,
 ) => {
-  switch (restriction) {
+  switch (restriction?.kind) {
     case "CanLearnRituals":
-      return locale.translate(
-        "Tradition must be able to use rituals",
-        locale.translate("Church"),
-      )
+      return locale.translate("Tradition must be able to use rituals")
     case "CanBindFamiliars":
-      return locale.translate(
-        "Tradition must be able to bind familiars",
-        locale.translate("Shaman"),
-      )
+      return locale.translate("Tradition must be able to bind familiars")
     case undefined:
       return locale.translate("Tradition")
     default:

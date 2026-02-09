@@ -1,13 +1,13 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { ResolvedSelectOption } from "optolith-database-schema/cache/activatableSelectOptions"
-import {
+import type { ResolvedSelectOption } from "optolith-database-schema/cache"
+import type {
   ActivatableIdentifier,
-  SelectOptionIdentifier,
-} from "optolith-database-schema/types/_IdentifierGroup"
-import { LocaleMap } from "optolith-database-schema/types/_LocaleMap"
-import { ActivatablePrerequisite } from "optolith-database-schema/types/prerequisites/single/ActivatablePrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+  ActivatablePrerequisite,
+  RequirableSelectOptionIdentifier,
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { LocaleMap } from "../../../../helpers/translate.js"
 import {
   getNameComponents,
   printActivatableNameChunk,
@@ -16,177 +16,215 @@ import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
 
 const getTranslationsForActivatable = (
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
+  getInstanceById: GetInstanceById<
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "Advantage"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "Beutelzauber"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "Disadvantage"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "Haubenzauber"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "Kristallkugelzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+  >,
   id: ActivatableIdentifier,
 ): { translations: LocaleMap<{ name: string }> } | undefined => {
-  switch (id.tag) {
+  switch (id.kind) {
     case "Advantage":
-      return getAdvantageById(id.advantage)
+      return getInstanceById("Advantage", id.Advantage)
     case "Disadvantage":
-      return getDisadvantageById(id.disadvantage)
+      return getInstanceById("Disadvantage", id.Disadvantage)
     case "AdvancedCombatSpecialAbility":
-      return getAdvancedCombatSpecialAbilityById(
-        id.advanced_combat_special_ability,
+      return getInstanceById(
+        "AdvancedCombatSpecialAbility",
+        id.AdvancedCombatSpecialAbility,
       )
     case "AdvancedKarmaSpecialAbility":
-      return getAdvancedKarmaSpecialAbilityById(
-        id.advanced_karma_special_ability,
+      return getInstanceById(
+        "AdvancedKarmaSpecialAbility",
+        id.AdvancedKarmaSpecialAbility,
       )
     case "AdvancedMagicalSpecialAbility":
-      return getAdvancedMagicalSpecialAbilityById(
-        id.advanced_magical_special_ability,
+      return getInstanceById(
+        "AdvancedMagicalSpecialAbility",
+        id.AdvancedMagicalSpecialAbility,
       )
     case "AdvancedSkillSpecialAbility":
-      return getAdvancedSkillSpecialAbilityById(
-        id.advanced_skill_special_ability,
+      return getInstanceById(
+        "AdvancedSkillSpecialAbility",
+        id.AdvancedSkillSpecialAbility,
       )
     case "AncestorGlyph":
-      return getAncestorGlyphById(id.ancestor_glyph)
+      return getInstanceById("AncestorGlyph", id.AncestorGlyph)
     case "ArcaneOrbEnchantment":
-      return getArcaneOrbEnchantmentById(id.arcane_orb_enchantment)
+      return getInstanceById("ArcaneOrbEnchantment", id.ArcaneOrbEnchantment)
     case "AttireEnchantment":
-      return getAttireEnchantmentById(id.attire_enchantment)
+      return getInstanceById("AttireEnchantment", id.AttireEnchantment)
     case "BlessedTradition":
-      return getBlessedTraditionById(id.blessed_tradition)
+      return getInstanceById("BlessedTradition", id.BlessedTradition)
+    case "Beutelzauber":
+      return getInstanceById("Beutelzauber", id.Beutelzauber)
+    case "Haubenzauber":
+      return getInstanceById("Haubenzauber", id.Haubenzauber)
+    case "Kristallkugelzauber":
+      return getInstanceById("Kristallkugelzauber", id.Kristallkugelzauber)
     case "BowlEnchantment":
-      return getBowlEnchantmentById(id.bowl_enchantment)
+      return getInstanceById("BowlEnchantment", id.BowlEnchantment)
     case "BrawlingSpecialAbility":
-      return getBrawlingSpecialAbilityById(id.brawling_special_ability)
+      return getInstanceById(
+        "BrawlingSpecialAbility",
+        id.BrawlingSpecialAbility,
+      )
     case "CauldronEnchantment":
-      return getCauldronEnchantmentById(id.cauldron_enchantment)
+      return getInstanceById("CauldronEnchantment", id.CauldronEnchantment)
     case "CeremonialItemSpecialAbility":
-      return getCeremonialItemSpecialAbilityById(
-        id.ceremonial_item_special_ability,
+      return getInstanceById(
+        "CeremonialItemSpecialAbility",
+        id.CeremonialItemSpecialAbility,
       )
     case "ChronicleEnchantment":
-      return getChronicleEnchantmentById(id.chronicle_enchantment)
+      return getInstanceById("ChronicleEnchantment", id.ChronicleEnchantment)
     case "CombatSpecialAbility":
-      return getCombatSpecialAbilityById(id.combat_special_ability)
+      return getInstanceById("CombatSpecialAbility", id.CombatSpecialAbility)
     case "CombatStyleSpecialAbility":
-      return getCombatStyleSpecialAbilityById(id.combat_style_special_ability)
+      return getInstanceById(
+        "CombatStyleSpecialAbility",
+        id.CombatStyleSpecialAbility,
+      )
     case "CommandSpecialAbility":
-      return getCommandSpecialAbilityById(id.command_special_ability)
+      return getInstanceById("CommandSpecialAbility", id.CommandSpecialAbility)
     case "DaggerRitual":
-      return getDaggerRitualById(id.dagger_ritual)
+      return getInstanceById("DaggerRitual", id.DaggerRitual)
     case "FamiliarSpecialAbility":
-      return getFamiliarSpecialAbilityById(id.familiar_special_ability)
+      return getInstanceById(
+        "FamiliarSpecialAbility",
+        id.FamiliarSpecialAbility,
+      )
     case "FatePointSexSpecialAbility":
-      return getFatePointSexSpecialAbilityById(
-        id.fate_point_sex_special_ability,
+      return getInstanceById(
+        "FatePointSexSpecialAbility",
+        id.FatePointSexSpecialAbility,
       )
     case "FatePointSpecialAbility":
-      return getFatePointSpecialAbilityById(id.fate_point_special_ability)
+      return getInstanceById(
+        "FatePointSpecialAbility",
+        id.FatePointSpecialAbility,
+      )
     case "FoolsHatEnchantment":
-      return getFoolsHatEnchantmentById(id.fools_hat_enchantment)
+      return getInstanceById("FoolsHatEnchantment", id.FoolsHatEnchantment)
     case "GeneralSpecialAbility":
-      return getGeneralSpecialAbilityById(id.general_special_ability)
+      return getInstanceById("GeneralSpecialAbility", id.GeneralSpecialAbility)
     case "InstrumentEnchantment":
-      return getInstrumentEnchantmentById(id.instrument_enchantment)
+      return getInstanceById("InstrumentEnchantment", id.InstrumentEnchantment)
     case "KarmaSpecialAbility":
-      return getKarmaSpecialAbilityById(id.karma_special_ability)
+      return getInstanceById("KarmaSpecialAbility", id.KarmaSpecialAbility)
     case "Krallenkettenzauber":
-      return getKrallenkettenzauberById(id.krallenkettenzauber)
+      return getInstanceById("Krallenkettenzauber", id.Krallenkettenzauber)
     case "LiturgicalStyleSpecialAbility":
-      return getLiturgicalStyleSpecialAbilityById(
-        id.liturgical_style_special_ability,
+      return getInstanceById(
+        "LiturgicalStyleSpecialAbility",
+        id.LiturgicalStyleSpecialAbility,
       )
     case "LycantropicGift":
-      return getLycantropicGiftById(id.lycantropic_gift)
+      return getInstanceById("LycantropicGift", id.LycantropicGift)
     case "MagicalSign":
-      return getMagicalSignById(id.magical_sign)
+      return getInstanceById("MagicalSign", id.MagicalSign)
     case "MagicalSpecialAbility":
-      return getMagicalSpecialAbilityById(id.magical_special_ability)
+      return getInstanceById("MagicalSpecialAbility", id.MagicalSpecialAbility)
     case "MagicalTradition":
-      return getMagicalTraditionById(id.magical_tradition)
+      return getInstanceById("MagicalTradition", id.MagicalTradition)
     case "MagicStyleSpecialAbility":
-      return getMagicStyleSpecialAbilityById(id.magic_style_special_ability)
+      return getInstanceById(
+        "MagicStyleSpecialAbility",
+        id.MagicStyleSpecialAbility,
+      )
     case "OrbEnchantment":
-      return getOrbEnchantmentById(id.orb_enchantment)
+      return getInstanceById("OrbEnchantment", id.OrbEnchantment)
     case "PactGift":
-      return getPactGiftById(id.pact_gift)
+      return getInstanceById("PactGift", id.PactGift)
     case "ProtectiveWardingCircleSpecialAbility":
-      return getProtectiveWardingCircleSpecialAbilityById(
-        id.protective_warding_circle_special_ability,
+      return getInstanceById(
+        "ProtectiveWardingCircleSpecialAbility",
+        id.ProtectiveWardingCircleSpecialAbility,
       )
     case "RingEnchantment":
-      return getRingEnchantmentById(id.ring_enchantment)
+      return getInstanceById("RingEnchantment", id.RingEnchantment)
     case "Sermon":
-      return getSermonById(id.sermon)
+      return getInstanceById("Sermon", id.Sermon)
     case "SexSpecialAbility":
-      return getSexSpecialAbilityById(id.sex_special_ability)
+      return getInstanceById("SexSpecialAbility", id.SexSpecialAbility)
     case "SickleRitual":
-      return getSickleRitualById(id.sickle_ritual)
+      return getInstanceById("SickleRitual", id.SickleRitual)
     case "SikaryanDrainSpecialAbility":
-      return getSikaryanDrainSpecialAbilityById(
-        id.sikaryan_drain_special_ability,
+      return getInstanceById(
+        "SikaryanDrainSpecialAbility",
+        id.SikaryanDrainSpecialAbility,
       )
     case "SkillStyleSpecialAbility":
-      return getSkillStyleSpecialAbilityById(id.skill_style_special_ability)
+      return getInstanceById(
+        "SkillStyleSpecialAbility",
+        id.SkillStyleSpecialAbility,
+      )
     case "SpellSwordEnchantment":
-      return getSpellSwordEnchantmentById(id.spell_sword_enchantment)
+      return getInstanceById("SpellSwordEnchantment", id.SpellSwordEnchantment)
     case "StaffEnchantment":
-      return getStaffEnchantmentById(id.staff_enchantment)
+      return getInstanceById("StaffEnchantment", id.StaffEnchantment)
     case "ToyEnchantment":
-      return getToyEnchantmentById(id.toy_enchantment)
+      return getInstanceById("ToyEnchantment", id.ToyEnchantment)
     case "Trinkhornzauber":
-      return getTrinkhornzauberById(id.trinkhornzauber)
+      return getInstanceById("Trinkhornzauber", id.Trinkhornzauber)
     case "VampiricGift":
-      return getVampiricGiftById(id.vampiric_gift)
+      return getInstanceById("VampiricGift", id.VampiricGift)
     case "Vision":
-      return getVisionById(id.vision)
+      return getInstanceById("Vision", id.Vision)
     case "WandEnchantment":
-      return getWandEnchantmentById(id.wand_enchantment)
+      return getInstanceById("WandEnchantment", id.WandEnchantment)
     case "WeaponEnchantment":
-      return getWeaponEnchantmentById(id.weapon_enchantment)
+      return getInstanceById("WeaponEnchantment", id.WeaponEnchantment)
     default:
       return assertExhaustive(id)
   }
@@ -196,127 +234,77 @@ const getTranslationsForActivatable = (
  */
 export type GetResolvedSelectOptionById = (
   id: ActivatableIdentifier,
-  selectOptionId: SelectOptionIdentifier,
+  selectOptionId: RequirableSelectOptionIdentifier,
 ) => ResolvedSelectOption | undefined
 
 const printActivatableName = (
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<
+    | "Advantage"
+    | "Disadvantage"
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+    | "Aspect"
+  >,
   locale: LocaleEnvironment,
   id: ActivatableIdentifier,
-  options: SelectOptionIdentifier[] | undefined,
+  options: RequirableSelectOptionIdentifier[] | undefined,
   level: number | undefined,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
 ) => {
-  const entry = getTranslationsForActivatable(
-    getAdvantageById,
-    getDisadvantageById,
-    getAdvancedCombatSpecialAbilityById,
-    getAdvancedKarmaSpecialAbilityById,
-    getAdvancedMagicalSpecialAbilityById,
-    getAdvancedSkillSpecialAbilityById,
-    getAncestorGlyphById,
-    getArcaneOrbEnchantmentById,
-    getAttireEnchantmentById,
-    getBlessedTraditionById,
-    getBowlEnchantmentById,
-    getBrawlingSpecialAbilityById,
-    getCauldronEnchantmentById,
-    getCeremonialItemSpecialAbilityById,
-    getChronicleEnchantmentById,
-    getCombatSpecialAbilityById,
-    getCombatStyleSpecialAbilityById,
-    getCommandSpecialAbilityById,
-    getDaggerRitualById,
-    getFamiliarSpecialAbilityById,
-    getFatePointSexSpecialAbilityById,
-    getFatePointSpecialAbilityById,
-    getFoolsHatEnchantmentById,
-    getGeneralSpecialAbilityById,
-    getInstrumentEnchantmentById,
-    getKarmaSpecialAbilityById,
-    getKrallenkettenzauberById,
-    getLiturgicalStyleSpecialAbilityById,
-    getLycantropicGiftById,
-    getMagicalSignById,
-    getMagicalSpecialAbilityById,
-    getMagicalTraditionById,
-    getMagicStyleSpecialAbilityById,
-    getOrbEnchantmentById,
-    getPactGiftById,
-    getProtectiveWardingCircleSpecialAbilityById,
-    getRingEnchantmentById,
-    getSermonById,
-    getSexSpecialAbilityById,
-    getSickleRitualById,
-    getSikaryanDrainSpecialAbilityById,
-    getSkillStyleSpecialAbilityById,
-    getSpellSwordEnchantmentById,
-    getStaffEnchantmentById,
-    getToyEnchantmentById,
-    getTrinkhornzauberById,
-    getVampiricGiftById,
-    getVisionById,
-    getWandEnchantmentById,
-    getWeaponEnchantmentById,
-    id,
-  )
+  const entry = getTranslationsForActivatable(getInstanceById, id)
 
   if (entry === undefined) {
     return undefined
   }
 
   return getNameComponents(
-    getAspectById,
+    getInstanceById,
     locale,
     id,
     options,
@@ -332,57 +320,59 @@ const printActivatableName = (
  * Get the translation of a blessed tradition prerequisite.
  */
 export const printActivatablePrerequisite = (
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<
+    | "Advantage"
+    | "Disadvantage"
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+    | "Aspect"
+  >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: ActivatablePrerequisite,
@@ -392,57 +382,7 @@ export const printActivatablePrerequisite = (
   }
 
   const nameComponents = printActivatableName(
-    getAdvantageById,
-    getDisadvantageById,
-    getAdvancedCombatSpecialAbilityById,
-    getAdvancedKarmaSpecialAbilityById,
-    getAdvancedMagicalSpecialAbilityById,
-    getAdvancedSkillSpecialAbilityById,
-    getAncestorGlyphById,
-    getArcaneOrbEnchantmentById,
-    getAttireEnchantmentById,
-    getBlessedTraditionById,
-    getBowlEnchantmentById,
-    getBrawlingSpecialAbilityById,
-    getCauldronEnchantmentById,
-    getCeremonialItemSpecialAbilityById,
-    getChronicleEnchantmentById,
-    getCombatSpecialAbilityById,
-    getCombatStyleSpecialAbilityById,
-    getCommandSpecialAbilityById,
-    getDaggerRitualById,
-    getFamiliarSpecialAbilityById,
-    getFatePointSexSpecialAbilityById,
-    getFatePointSpecialAbilityById,
-    getFoolsHatEnchantmentById,
-    getGeneralSpecialAbilityById,
-    getInstrumentEnchantmentById,
-    getKarmaSpecialAbilityById,
-    getKrallenkettenzauberById,
-    getLiturgicalStyleSpecialAbilityById,
-    getLycantropicGiftById,
-    getMagicalSignById,
-    getMagicalSpecialAbilityById,
-    getMagicalTraditionById,
-    getMagicStyleSpecialAbilityById,
-    getOrbEnchantmentById,
-    getPactGiftById,
-    getProtectiveWardingCircleSpecialAbilityById,
-    getRingEnchantmentById,
-    getSermonById,
-    getSexSpecialAbilityById,
-    getSickleRitualById,
-    getSikaryanDrainSpecialAbilityById,
-    getSkillStyleSpecialAbilityById,
-    getSpellSwordEnchantmentById,
-    getStaffEnchantmentById,
-    getToyEnchantmentById,
-    getTrinkhornzauberById,
-    getVampiricGiftById,
-    getVisionById,
-    getWandEnchantmentById,
-    getWeaponEnchantmentById,
-    getAspectById,
+    getInstanceById,
     locale,
     prerequisite.id,
     prerequisite.options,

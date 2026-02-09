@@ -1,5 +1,5 @@
-import { RacePrerequisite } from "optolith-database-schema/types/prerequisites/single/RacePrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+import { RacePrerequisite } from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -8,7 +8,7 @@ import { PrerequisitePart } from "../part.js"
  * Get the translation of a race prerequisite.
  */
 export const printRacePrerequisite = (
-  getRaceById: GetById.Static.Race,
+  getInstanceById: GetInstanceById<"Race">,
   locale: LocaleEnvironment,
   prerequisite: RacePrerequisite,
 ): PrerequisitePart | undefined => {
@@ -16,7 +16,7 @@ export const printRacePrerequisite = (
     return printDisplayOption(locale, prerequisite.display_option)
   }
 
-  const race = getRaceById(prerequisite.id.race)
+  const race = getInstanceById("Race", prerequisite.id)
   const raceTranslation = locale.translateMap(race?.translations)
 
   if (raceTranslation === undefined) {

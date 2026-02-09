@@ -1,5 +1,5 @@
 import { filterNonNullable } from "@optolith/helpers/array"
-import { GetById } from "./helpers/getTypes.js"
+import type { GetInstanceById } from "./helpers/getTypes.js"
 import { LocaleEnvironment } from "./helpers/locale.js"
 import { EntityDescription, RawEntityDescription } from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
@@ -12,12 +12,12 @@ export const createEntityDescriptionCreator =
   <T, A extends object = object>(
     fn: EntityDescriptionCreator<T, A, RawEntityDescription>,
   ): EntityDescriptionCreator<T | undefined, A> =>
-  (databaseAccessors, locale, entry) => {
+  (databaseAccessors, locale, entry, id) => {
     if (entry === undefined) {
       return undefined
     }
 
-    const rawEntry = fn(databaseAccessors, locale, entry)
+    const rawEntry = fn(databaseAccessors, locale, entry, id)
 
     if (rawEntry === undefined) {
       return undefined
@@ -30,7 +30,7 @@ export const createEntityDescriptionCreator =
         rawEntry.references === undefined
           ? undefined
           : getReferencesTranslation(
-              databaseAccessors.getPublicationById,
+              databaseAccessors.getInstanceById,
               locale,
               rawEntry.references,
             ),
@@ -46,7 +46,8 @@ export type EntityDescriptionCreator<
   A extends object = object,
   R = EntityDescription,
 > = (
-  databaseAccessors: A & { getPublicationById: GetById.Static.Publication },
+  databaseAccessors: A & { getInstanceById: GetInstanceById<"Publication"> },
   locale: LocaleEnvironment,
   entry: T,
+  id: string,
 ) => R | undefined

@@ -1,7 +1,7 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { UI } from "optolith-database-schema/types/UI"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { Translations } from "../../../../helpers/translate.js"
 import { responsive, ResponsiveTextSize } from "../../responsiveText.js"
 import { Entity } from "./entity.js"
 
@@ -14,13 +14,7 @@ export enum ModifiableParameter {
   Range,
 }
 
-const translationKeyForNonModifiableSuffix: {
-  [entityKey in Entity]:
-    | {
-        [paramKey in ModifiableParameter]: keyof UI
-      }
-    | undefined
-} = {
+const translationKeyForNonModifiableSuffix = {
   [Entity.Spell]: {
     [ModifiableParameter.CastingTime]:
       " (you cannot use a modification on this spell’s casting time)",
@@ -55,6 +49,12 @@ const translationKeyForNonModifiableSuffix: {
   },
   [Entity.Cantrip]: undefined,
   [Entity.Blessing]: undefined,
+} satisfies {
+  [entityKey in Entity]:
+    | {
+        [paramKey in ModifiableParameter]: keyof Translations
+      }
+    | undefined
 }
 
 /**

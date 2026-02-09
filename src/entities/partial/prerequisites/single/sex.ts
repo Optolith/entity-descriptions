@@ -1,11 +1,10 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { BinarySex } from "optolith-database-schema/types/_Sex"
-import { SexPrerequisite } from "optolith-database-schema/types/prerequisites/single/SexPrerequisite"
+import type { BinarySex, SexPrerequisite } from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { PrerequisitePart } from "../part.js"
 
 const printId = (locale: LocaleEnvironment, id: BinarySex): string => {
-  switch (id) {
+  switch (id.kind) {
     case "Male":
       return locale.translate("Male")
     case "Female":

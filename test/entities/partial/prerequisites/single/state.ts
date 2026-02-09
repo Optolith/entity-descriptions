@@ -1,13 +1,17 @@
 import assert from "node:assert/strict"
+import { randomUUID } from "node:crypto"
 import { describe, it } from "node:test"
 import { printStatePrerequisite } from "../../../../../src/entities/partial/prerequisites/single/state.js"
-import { GetById } from "../../../../../src/helpers/getTypes.js"
+import { Case } from "../../../../../src/helpers/enums.js"
+import type { GetInstanceById } from "../../../../../src/helpers/getTypes.js"
 import { defaultLocaleEnvironment } from "../../../../helpers/locale.js"
+
+const ExampleUUID = randomUUID()
 
 describe("getStatePrerequisiteTranslation", () => {
   it("returns a PrerequisitePart object for the prerequisite", () => {
-    const getStateById: GetById.Static.State = () => ({
-      id: 1,
+    const getInstanceById: GetInstanceById<"State"> = () => ({
+      id: ExampleUUID,
       src: [],
       translations: {
         "en-US": {
@@ -18,11 +22,8 @@ describe("getStatePrerequisiteTranslation", () => {
     })
 
     assert.deepEqual(
-      printStatePrerequisite(getStateById, defaultLocaleEnvironment, {
-        id: {
-          tag: "State",
-          state: 1,
-        },
+      printStatePrerequisite(getInstanceById, defaultLocaleEnvironment, {
+        id: ExampleUUID,
       }),
       {
         label: "State ",
@@ -35,35 +36,26 @@ describe("getStatePrerequisiteTranslation", () => {
     assert.deepEqual(
       printStatePrerequisite(
         () => ({
-          id: 1,
+          id: ExampleUUID,
           src: [],
           translations: {},
         }),
         defaultLocaleEnvironment,
         {
-          id: {
-            tag: "State",
-            state: 1,
-          },
+          id: ExampleUUID,
         },
       ),
       undefined,
     )
 
     assert.deepEqual(
-      printStatePrerequisite(getStateById, defaultLocaleEnvironment, {
-        id: {
-          tag: "State",
-          state: 1,
-        },
-        display_option: {
-          tag: "ReplaceWith",
-          replace_with: {
-            translations: {
-              "en-US": "Replacement",
-            },
+      printStatePrerequisite(getInstanceById, defaultLocaleEnvironment, {
+        id: ExampleUUID,
+        display_option: Case("ReplaceWith", {
+          translations: {
+            "en-US": { replacement: "Replacement" },
           },
-        },
+        }),
       }),
       {
         value: "Replacement",

@@ -1,10 +1,10 @@
-import {
+import type {
   FastOneTimePerformanceParameters,
   FastSustainedPerformanceParameters,
   SlowOneTimePerformanceParameters,
   SlowSustainedPerformanceParameters,
-} from "optolith-database-schema/types/_ActivatableSkill"
-import { GetById } from "../../../../helpers/getTypes.js"
+} from "optolith-database-schema/gen"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { ResponsiveTextSize } from "../../responsiveText.js"
 import {
@@ -27,7 +27,7 @@ import { Speed } from "./speed.js"
  * Get the texts for all fast one-time performance parameters.
  */
 export const getFastOneTimePerformanceParametersTranslations = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
@@ -39,14 +39,14 @@ export const getFastOneTimePerformanceParametersTranslations = (
   duration: string
 } => ({
   castingTime: getFastCastingTimeTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     entity,
     responsiveTextSize,
     value.casting_time,
   ),
   cost: getOneTimeCostTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Fast,
     entity,
@@ -54,7 +54,7 @@ export const getFastOneTimePerformanceParametersTranslations = (
     value.cost,
   ),
   range: getTextForActivatableSkillRange(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Fast,
     responsiveTextSize,
@@ -72,7 +72,7 @@ export const getFastOneTimePerformanceParametersTranslations = (
  * Get the texts for all fast sustained performance parameters.
  */
 export const getFastSustainedPerformanceParametersTranslations = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
@@ -84,14 +84,14 @@ export const getFastSustainedPerformanceParametersTranslations = (
   duration: string
 } => ({
   castingTime: getFastCastingTimeTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     entity,
     responsiveTextSize,
     value.casting_time,
   ),
   cost: getSustainedCostTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Fast,
     entity,
@@ -99,7 +99,7 @@ export const getFastSustainedPerformanceParametersTranslations = (
     value.cost,
   ),
   range: getTextForActivatableSkillRange(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Fast,
     responsiveTextSize,
@@ -117,7 +117,7 @@ export const getFastSustainedPerformanceParametersTranslations = (
  * Get the texts for all slow one-time performance parameters.
  */
 export const getSlowOneTimePerformanceParametersTranslations = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
@@ -129,14 +129,14 @@ export const getSlowOneTimePerformanceParametersTranslations = (
   duration: string
 } => ({
   castingTime: getSlowCastingTimeTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     entity,
     responsiveTextSize,
     value.casting_time,
   ),
   cost: getOneTimeCostTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Slow,
     entity,
@@ -144,7 +144,7 @@ export const getSlowOneTimePerformanceParametersTranslations = (
     value.cost,
   ),
   range: getTextForActivatableSkillRange(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Slow,
     responsiveTextSize,
@@ -162,7 +162,7 @@ export const getSlowOneTimePerformanceParametersTranslations = (
  * Get the texts for all slow sustained performance parameters.
  */
 export const getSlowSustainedPerformanceParametersTranslations = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
@@ -174,14 +174,14 @@ export const getSlowSustainedPerformanceParametersTranslations = (
   duration: string
 } => ({
   castingTime: getSlowCastingTimeTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     entity,
     responsiveTextSize,
     value.casting_time,
   ),
   cost: getSustainedCostTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Slow,
     entity,
@@ -189,7 +189,7 @@ export const getSlowSustainedPerformanceParametersTranslations = (
     value.cost,
   ),
   range: getTextForActivatableSkillRange(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Slow,
     responsiveTextSize,

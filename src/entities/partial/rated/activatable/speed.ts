@@ -3,7 +3,7 @@ import {
   FastSkillModificationLevelConfig,
   SkillModificationLevel,
   SlowSkillModificationLevelConfig,
-} from "optolith-database-schema/types/SkillModificationLevel"
+} from "optolith-database-schema/gen"
 
 /**
  * The speed of an activatable skill.

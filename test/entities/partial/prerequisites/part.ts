@@ -4,6 +4,7 @@ import {
   joinPrerequisiteParts,
   PrerequisitePart,
 } from "../../../../src/entities/partial/prerequisites/part.js"
+import { Case } from "../../../../src/helpers/enums.js"
 import { defaultLocaleEnvironment } from "../../../helpers/locale.js"
 
 describe("joinPrerequisiteParts", () => {
@@ -25,11 +26,11 @@ describe("joinPrerequisiteParts", () => {
   it("should connect connected sentence types by semicolon", () => {
     const parts: PrerequisitePart[] = [
       { value: "A", sentenceType: undefined, isMeta: false },
-      { value: "B", sentenceType: "Connected", isMeta: false },
-      { value: "C", sentenceType: "Connected", isMeta: false },
+      { value: "B", sentenceType: Case("Connected"), isMeta: false },
+      { value: "C", sentenceType: Case("Connected"), isMeta: false },
       { value: "D", sentenceType: undefined, isMeta: false },
       { value: "E", sentenceType: undefined, isMeta: false },
-      { value: "F", sentenceType: "Connected", isMeta: false },
+      { value: "F", sentenceType: Case("Connected"), isMeta: false },
     ]
     const result = joinPrerequisiteParts(defaultLocaleEnvironment, parts)
     assert.equal(result, "A; B; C; D, E; F")
@@ -38,15 +39,15 @@ describe("joinPrerequisiteParts", () => {
   it("should connect standalone sentence types by periods", () => {
     const parts: PrerequisitePart[] = [
       { value: "A", sentenceType: undefined, isMeta: false },
-      { value: "B", sentenceType: "Standalone", isMeta: false },
-      { value: "C", sentenceType: "Standalone", isMeta: false },
+      { value: "B", sentenceType: Case("Standalone"), isMeta: false },
+      { value: "C", sentenceType: Case("Standalone"), isMeta: false },
       { value: "D", sentenceType: undefined, isMeta: false },
       { value: "E", sentenceType: undefined, isMeta: false },
-      { value: "F.", sentenceType: "Standalone", isMeta: false },
-      { value: "G.", sentenceType: "Standalone", isMeta: false },
+      { value: "F.", sentenceType: Case("Standalone"), isMeta: false },
+      { value: "G.", sentenceType: Case("Standalone"), isMeta: false },
       { value: "H", sentenceType: undefined, isMeta: false },
       { value: "I", sentenceType: undefined, isMeta: false },
-      { value: "J", sentenceType: "Standalone", isMeta: false },
+      { value: "J", sentenceType: Case("Standalone"), isMeta: false },
     ]
     const result = joinPrerequisiteParts(defaultLocaleEnvironment, parts)
     assert.equal(result, "A. B. C. D, E. F. G. H, I. J.")
@@ -65,7 +66,7 @@ describe("joinPrerequisiteParts", () => {
   it("throws an error if the sentenceType is unknown", () => {
     const parts: PrerequisitePart[] = [
       // @ts-expect-error Testing invalid input
-      { value: "A", sentenceType: "any", isMeta: true },
+      { value: "A", sentenceType: Case("any"), isMeta: true },
     ]
     const block = () => joinPrerequisiteParts(defaultLocaleEnvironment, parts)
     assert.throws(block)

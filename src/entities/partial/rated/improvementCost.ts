@@ -1,4 +1,4 @@
-import { ImprovementCost as RawImprovementCost } from "optolith-database-schema/types/_ImprovementCost"
+import type { ImprovementCost } from "optolith-database-schema/gen"
 import { Translate } from "../../../helpers/translate.js"
 import { EntityDescriptionSection } from "../../../index.js"
 
@@ -7,8 +7,8 @@ import { EntityDescriptionSection } from "../../../index.js"
  */
 export const createImprovementCost = (
   translate: Translate,
-  improvementCost: RawImprovementCost,
+  improvementCost: ImprovementCost,
 ): EntityDescriptionSection => ({
   label: translate("Improvement Cost"),
-  value: improvementCost,
+  value: improvementCost.kind,
 })

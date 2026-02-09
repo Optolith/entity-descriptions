@@ -1,4 +1,4 @@
-import { OptionalRule } from "optolith-database-schema/types/rule/OptionalRule"
+import { OptionalRule } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 
 /**

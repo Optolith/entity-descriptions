@@ -1,5 +1,5 @@
-import { UI } from "optolith-database-schema/types/UI"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
+import type { Translations } from "../../../helpers/translate.js"
 import { ResponsiveTextSize, responsive } from "../responsiveText.js"
 
 type TimeSpanUnit =
@@ -16,21 +16,26 @@ type TimeSpanUnit =
   | "SeductionActions"
   | "Rounds"
 
-const timeSpanUnitTranslationKeys: {
-  [key in TimeSpanUnit]: [full: keyof UI, compressed: keyof UI]
-} = {
-  Seconds: ["{0} seconds", "{0} s"],
-  Minutes: ["{0} minutes", "{0} min"],
-  Hours: ["{0} hours", "{0} h"],
-  Days: ["{0} days", "{0} d"],
-  Weeks: ["{0} weeks", "{0} wks."],
-  Months: ["{0} months", "{0} mos."],
-  Years: ["{0} years", "{0} yrs."],
-  Centuries: ["{0} centuries", "{0} cent."],
-  Actions: ["{0} actions", "{0} act"],
-  CombatRounds: ["{0} combat rounds", "{0} CR"],
-  SeductionActions: ["{0} seduction actions", "{0} SA"],
-  Rounds: ["{0} rounds", "{0} rnds"],
+// prettier-ignore
+const timeSpanUnitTranslationKeys = {
+  Seconds: [".input {$value :number} {{{$value} seconds}}", "{$value} seconds", "{$value} s"],
+  Minutes: [".input {$value :number} {{{$value} minutes}}", "{$value} minutes", "{$value} min"],
+  Hours: [".input {$value :number} {{{$value} hours}}", "{$value} hours", "{$value} h"],
+  Days: [".input {$value :number} {{{$value} days}}", "{$value} days", "{$value} d"],
+  Weeks: [".input {$value :number} {{{$value} weeks}}", "{$value} weeks", ".input {$value :number} {{{$value} wks.}}"],
+  Months: [".input {$value :number} {{{$value} months}}", "{$value} months", ".input {$value :number} {{{$value} mos.}}"],
+  Years: [".input {$value :number} {{{$value} years}}", "{$value} years", ".input {$value :number} {{{$value} yrs.}}"],
+  Centuries: [".input {$value :number} {{{$value} centuries}}", "{$value} centuries", "{$value} cent."],
+  Actions: [".input {$value :number} {{{$value} actions}}", "{$value} actions", "{$value} act"],
+  CombatRounds: [".input {$value :number} {{{$value} combat rounds}}", "{$value} combat rounds", "{$value} CR"],
+  SeductionActions: [".input {$value :number} {{{$value} seduction actions}}", "{$value} seduction actions", "{$value} SA"],
+  Rounds: [".input {$value :number} {{{$value} rounds}}", "{$value} rounds", "{$value} rnds"],
+} as const satisfies {
+  [key in TimeSpanUnit]: [
+    fullNumber: keyof Translations,
+    full: keyof Translations,
+    compressed: keyof Translations,
+  ]
 }
 
 /**
@@ -39,14 +44,18 @@ const timeSpanUnitTranslationKeys: {
 export const formatTimeSpan = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
-  unit: TimeSpanUnit,
+  unit: { kind: TimeSpanUnit },
   value: number | string,
 ): string => {
-  const [fullKey, compressedKey] = timeSpanUnitTranslationKeys[unit]
+  const [fullNumberKey, fullKey, compressedKey] =
+    timeSpanUnitTranslationKeys[unit.kind]
 
   return responsive(
     responsiveTextSize,
-    () => locale.translate(fullKey, value),
-    () => locale.translate(compressedKey, value),
+    () =>
+      locale.translate(typeof value === "number" ? fullNumberKey : fullKey, {
+        value,
+      }),
+    () => locale.translate(compressedKey, { value }),
   )
 }

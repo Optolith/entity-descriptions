@@ -1,4 +1,4 @@
-import { PrimaryAttributePrerequisite } from "optolith-database-schema/types/prerequisites/single/PrimaryAttributePrerequisite"
+import { PrimaryAttributePrerequisite } from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"

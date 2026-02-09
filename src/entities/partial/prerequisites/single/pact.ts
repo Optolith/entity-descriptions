@@ -1,7 +1,7 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
-import { PactPrerequisite } from "optolith-database-schema/types/prerequisites/single/PactPrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+import type { PactPrerequisite } from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
@@ -11,7 +11,7 @@ import { PrerequisitePart } from "../part.js"
  * Get the translation of a culture prerequisite.
  */
 export const printPactPrerequisite = (
-  getPactCategoryById: GetById.Static.PactCategory,
+  getInstanceById: GetInstanceById<"PactCategory" | "PactDomain">,
   locale: LocaleEnvironment,
   prerequisite: PactPrerequisite,
 ): PrerequisitePart | undefined => {
@@ -19,31 +19,26 @@ export const printPactPrerequisite = (
     return printDisplayOption(locale, prerequisite.display_option)
   }
 
-  const pactCategory = getPactCategoryById(
-    prerequisite.category.id.pact_category,
-  )
+  const pactCategory = getInstanceById("PactCategory", prerequisite.category)
 
   const parts = [
-    prerequisite.domain_id === undefined
+    prerequisite.domain === undefined
       ? undefined
-      : locale.translate(
-          "domain {0}",
-          locale.joinDisjunctionList(
-            prerequisite.domain_id.map(
-              ref =>
+      : locale.translate("domain {$domain}", {
+          domain: locale.joinDisjunctionList(
+            prerequisite.domain.map(
+              id =>
                 locale.translateMap(
-                  pactCategory?.domains.find(
-                    domain => domain.id === ref.id.pact_domain,
-                  )?.translations,
+                  getInstanceById("PactDomain", id)?.translations,
                 )?.name ?? MISSING_VALUE,
             ),
           ),
-        ),
-    locale.translate(
-      "{0} level {1}",
-      locale.translateMap(pactCategory?.translations)?.name ?? MISSING_VALUE,
-      romanize(prerequisite.level ?? 1),
-    ),
+        }),
+    locale.translate("{$pact} level {$pactLevel}", {
+      pact:
+        locale.translateMap(pactCategory?.translations)?.name ?? MISSING_VALUE,
+      pactLevel: romanize(prerequisite.level ?? 1),
+    }),
   ].filter(isNotNullish)
 
   return {

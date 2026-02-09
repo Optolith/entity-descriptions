@@ -1,5 +1,5 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { SentenceType } from "optolith-database-schema/types/prerequisites/single/TextPrerequisite"
+import { SentenceType } from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
 
 /**
@@ -28,7 +28,7 @@ export const joinPrerequisiteParts = (
         return text
       }
 
-      switch (part.sentenceType) {
+      switch (part.sentenceType?.kind) {
         case "Standalone":
           return `${
             /[.;]$/u.test(acc) ? `${acc.slice(0, -1)}. ` : `${acc}. `

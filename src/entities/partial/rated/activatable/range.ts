@@ -1,15 +1,15 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
+  BlessingRange,
+  CantripRange,
   CheckResultBasedRange,
   FixedRange,
   ModifiableRange,
   Range,
   RangeValue,
-} from "optolith-database-schema/types/_ActivatableSkillRange"
-import { BlessingRange } from "optolith-database-schema/types/Blessing"
-import { CantripRange } from "optolith-database-schema/types/Cantrip"
-import { GetById } from "../../../../helpers/getTypes.js"
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import {
   appendNoteIfRequested,
@@ -28,14 +28,14 @@ import {
 import { getModifiableBySpeed, Speed } from "./speed.js"
 
 const getModifiableRangeTranslation = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
   value: ModifiableRange,
 ) =>
   mapNullable(
-    getSkillModificationLevelById(value.initial_modification_level),
+    getInstanceById("SkillModificationLevel", value.initial_modification_level),
     modificationLevel => {
       const range = getModifiableBySpeed(
         config => config.range,
@@ -80,7 +80,7 @@ const getFixedRangeTranslation = (
   responsiveTextSize: ResponsiveTextSize,
   value: FixedRange,
 ) =>
-  formatLength(locale, responsiveTextSize, value.unit, value.value) +
+  formatLength(locale, responsiveTextSize, value.unit.kind, value.value) +
   getNonModifiableSuffixTranslation(
     locale,
     entity,
@@ -103,7 +103,7 @@ const getCheckResultBasedRangeTranslation = (
   const range = formatLength(
     locale,
     responsiveTextSize,
-    value.unit,
+    value.unit.kind,
     getCheckResultBasedValueTranslation(locale.translate, value),
   )
 
@@ -128,21 +128,21 @@ const getCheckResultBasedRangeTranslation = (
 }
 
 const getRangeValueTranslation = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
   entity: Entity,
   value: RangeValue,
 ) => {
-  switch (value.tag) {
+  switch (value.kind) {
     case "Modifiable":
       return getModifiableRangeTranslation(
-        getSkillModificationLevelById,
+        getInstanceById,
         locale,
         speed,
         responsiveTextSize,
-        value.modifiable,
+        value.Modifiable,
       )
     case "Sight":
       return getSightTranslation(locale)
@@ -157,7 +157,7 @@ const getRangeValueTranslation = (
         locale,
         entity,
         responsiveTextSize,
-        value.fixed,
+        value.Fixed,
       )
     }
     case "CheckResultBased":
@@ -165,7 +165,7 @@ const getRangeValueTranslation = (
         locale,
         entity,
         responsiveTextSize,
-        value.check_result_based,
+        value.CheckResultBased,
       )
     default:
       return assertExhaustive(value)
@@ -176,7 +176,7 @@ const getRangeValueTranslation = (
  * Returns the text for the range of an activatable skill.
  */
 export const getTextForActivatableSkillRange = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
@@ -184,7 +184,7 @@ export const getTextForActivatableSkillRange = (
   value: Range,
 ): string => {
   const rangeValue = getRangeValueTranslation(
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     speed,
     responsiveTextSize,
@@ -209,13 +209,13 @@ export const getTextForActivatableSkillRange = (
   )
 }
 
-const getTextForTinyAcitvatableRange = (
+const getTextForTinyActivatableRange = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   entity: Entity,
   value: CantripRange | BlessingRange,
 ): string => {
-  switch (value.tag) {
+  switch (value.kind) {
     case "Self":
       return getSelfTranslation(locale)
     case "Touch":
@@ -225,7 +225,7 @@ const getTextForTinyAcitvatableRange = (
         locale,
         entity,
         responsiveTextSize,
-        value.fixed,
+        value.Fixed,
       )
     default:
       return assertExhaustive(value)
@@ -240,7 +240,7 @@ export const getTextForCantripRange = (
   responsiveTextSize: ResponsiveTextSize,
   value: CantripRange,
 ): string =>
-  getTextForTinyAcitvatableRange(
+  getTextForTinyActivatableRange(
     locale,
     responsiveTextSize,
     Entity.Cantrip,
@@ -255,7 +255,7 @@ export const getTextForBlessingRange = (
   responsiveTextSize: ResponsiveTextSize,
   value: BlessingRange,
 ): string =>
-  getTextForTinyAcitvatableRange(
+  getTextForTinyActivatableRange(
     locale,
     responsiveTextSize,
     Entity.Blessing,

@@ -1,5 +1,5 @@
-import { SocialStatusPrerequisite } from "optolith-database-schema/types/prerequisites/single/SocialStatusPrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+import type { SocialStatusPrerequisite } from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -8,7 +8,7 @@ import { PrerequisitePart } from "../part.js"
  * Get the translation of a social status prerequisite.
  */
 export const printSocialStatusPrerequisite = (
-  getSocialStatusById: GetById.Static.SocialStatus,
+  getInstanceById: GetInstanceById<"SocialStatus">,
   locale: LocaleEnvironment,
   prerequisite: SocialStatusPrerequisite,
 ): PrerequisitePart | undefined => {
@@ -16,7 +16,7 @@ export const printSocialStatusPrerequisite = (
     return printDisplayOption(locale, prerequisite.display_option)
   }
 
-  const socialStatus = getSocialStatusById(prerequisite.id.social_status)
+  const socialStatus = getInstanceById("SocialStatus", prerequisite.id)
   const socialStatusTranslation = locale.translateMap(
     socialStatus?.translations,
   )
@@ -26,8 +26,9 @@ export const printSocialStatusPrerequisite = (
   }
 
   return {
-    label: `${locale.translate("Social Status {0} or higher")} `,
-    value: `*${socialStatusTranslation.name}*`,
+    value: `${locale.translate("Social Status {$minStatus} or higher", {
+      minStatus: `*${socialStatusTranslation.name}*`,
+    })} `,
     sentenceType: undefined,
     isMeta: false,
   }

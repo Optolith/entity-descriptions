@@ -1,7 +1,7 @@
 import { filterNonNullable } from "@optolith/helpers/array"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { ActivatableSkillEffect } from "optolith-database-schema/types/_ActivatableSkillEffect"
+import type { ActivatableSkillEffect } from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { EntityDescriptionSection } from "../../../../index.js"
 
@@ -21,7 +21,9 @@ const getContentPartsForQualityLevels = (
     },
     ...source.quality_levels.map((text, index) => ({
       value: text,
-      label: locale.translate("QL {0}", getQualityLevelString(index)),
+      label: locale.translate("QL {$value}", {
+        value: getQualityLevelString(index),
+      }),
     })),
     mapNullable(source.text_after, textAfter => ({
       value: textAfter,
@@ -36,25 +38,25 @@ export const getTextForEffect = (
   locale: LocaleEnvironment,
   effect: ActivatableSkillEffect,
 ): EntityDescriptionSection[] => {
-  switch (effect.tag) {
+  switch (effect.kind) {
     case "Plain":
       return [
         {
           label: locale.translate("Effect"),
-          value: effect.plain.text,
+          value: effect.Plain.text,
         },
       ]
     case "ForEachQualityLevel":
       return getContentPartsForQualityLevels(
         index => index + 1,
         locale,
-        effect.for_each_quality_level,
+        effect.ForEachQualityLevel,
       )
     case "ForEachTwoQualityLevels":
       return getContentPartsForQualityLevels(
         index => `${index * 2 + 1}–${index * 2 + 2}`,
         locale,
-        effect.for_each_two_quality_levels,
+        effect.ForEachTwoQualityLevels,
       )
     default:
       return assertExhaustive(effect)

@@ -1,4 +1,4 @@
-import { PublicationRefs } from "optolith-database-schema/types/source/_PublicationRef"
+import type { PublicationRefs } from "optolith-database-schema/gen"
 
 /**
  * A JSON representation of the rules text for a library entry.

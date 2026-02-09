@@ -1,17 +1,17 @@
 import { mapNullableDefault } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
   CheckResultArithmetic,
-  CheckResultBased,
+  CheckResultBasedModifier,
   CheckResultValue,
-} from "optolith-database-schema/types/_ActivatableSkillCheckResultBased"
+} from "optolith-database-schema/gen"
 import { Translate } from "../../../../helpers/translate.js"
 
 const getCheckResultBaseValueTranslation = (
   translate: Translate,
   baseValue: CheckResultValue,
 ) => {
-  switch (baseValue) {
+  switch (baseValue.kind) {
     case "QualityLevels":
       return translate("QL")
     case "SkillPoints":
@@ -22,7 +22,7 @@ const getCheckResultBaseValueTranslation = (
 }
 
 const getArithmeticSymbol = (arithmetic: CheckResultArithmetic) => {
-  switch (arithmetic) {
+  switch (arithmetic.kind) {
     case "Divide":
       return ` / `
     case "Multiply":
@@ -30,6 +30,18 @@ const getArithmeticSymbol = (arithmetic: CheckResultArithmetic) => {
     default:
       return assertExhaustive(arithmetic)
   }
+}
+
+interface CheckResultBased {
+  /**
+   * The base value that is derived from the check result.
+   */
+  base: CheckResultValue
+
+  /**
+   * If defined, it modifies the base value.
+   */
+  modifier?: CheckResultBasedModifier
 }
 
 /**

@@ -1,4 +1,4 @@
-import { RulePrerequisite } from "optolith-database-schema/types/prerequisites/single/RulePrerequisite"
+import { RulePrerequisite } from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { PrerequisitePart } from "../part.js"
 

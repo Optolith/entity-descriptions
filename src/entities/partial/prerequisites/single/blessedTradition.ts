@@ -1,8 +1,8 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
   BlessedTraditionPrerequisite,
   BlessedTraditionPrerequisiteRestriction,
-} from "optolith-database-schema/types/prerequisites/single/TraditionPrerequisite"
+} from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -11,11 +11,15 @@ const printValue = (
   locale: LocaleEnvironment,
   restriction: BlessedTraditionPrerequisiteRestriction | undefined,
 ) => {
-  switch (restriction) {
+  switch (restriction?.kind) {
     case "Church":
-      return locale.translate("Tradition ({0})", locale.translate("Church"))
+      return locale.translate("Tradition ({$tradition})", {
+        tradition: locale.translate("Church"),
+      })
     case "Shamanistic":
-      return locale.translate("Tradition ({0})", locale.translate("Shaman"))
+      return locale.translate("Tradition ({$tradition})", {
+        tradition: locale.translate("Shaman"),
+      })
     case undefined:
       return locale.translate("Tradition")
     default:

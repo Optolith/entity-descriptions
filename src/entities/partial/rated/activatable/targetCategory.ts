@@ -1,11 +1,10 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
   AffectedTargetCategories,
   SpecificAffectedTargetCategoryIdentifier,
-} from "optolith-database-schema/types/_ActivatableSkillTargetCategory"
-import { TargetCategoryReference } from "optolith-database-schema/types/_SimpleReferences"
-import { GetById } from "../../../../helpers/getTypes.js"
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { EntityDescriptionSection } from "../../../../index.js"
 import { MISSING_VALUE } from "../../unknown.js"
@@ -21,45 +20,40 @@ const getLiturgicalChantsAndCeremoniesTranslation = (
   locale: LocaleEnvironment,
 ) => locale.translate("Liturgical Chants and Ceremonies")
 
+const getSpellworksTranslation = (locale: LocaleEnvironment) =>
+  locale.translate("Spellworks")
+
 const getCantripsTranslation = (locale: LocaleEnvironment) =>
   locale.translate("Cantrips")
 
 const getPredefinedTranslation = (
-  getTargetCategoryById: GetById.Static.TargetCategory,
+  getInstanceById: GetInstanceById<"TargetCategory">,
   locale: LocaleEnvironment,
-  value: TargetCategoryReference,
-) => {
-  const numericId = value.id.target_category
-  const specificTargetCategory = getTargetCategoryById(numericId)
-
-  return (
-    mapNullable(
-      locale.translateMap(specificTargetCategory?.translations),
-      translation => translation.name,
-    ) ?? MISSING_VALUE
-  )
-}
+  id: string,
+) =>
+  mapNullable(
+    locale.translateMap(getInstanceById("TargetCategory", id)?.translations),
+    translation => translation.name,
+  ) ?? MISSING_VALUE
 
 const getTargetCategoryTranslationByType = (
-  getTargetCategoryById: GetById.Static.TargetCategory,
+  getInstanceById: GetInstanceById<"TargetCategory">,
   locale: LocaleEnvironment,
   id: SpecificAffectedTargetCategoryIdentifier,
 ) => {
-  switch (id.tag) {
+  switch (id.kind) {
     case "Self":
       return getSelfTranslation(locale)
     case "Zone":
       return getZoneTranslation(locale)
     case "LiturgicalChantsAndCeremonies":
       return getLiturgicalChantsAndCeremoniesTranslation(locale)
+    case "Spellworks":
+      return getSpellworksTranslation(locale)
     case "Cantrips":
       return getCantripsTranslation(locale)
     case "Predefined":
-      return getPredefinedTranslation(
-        getTargetCategoryById,
-        locale,
-        id.predefined,
-      )
+      return getPredefinedTranslation(getInstanceById, locale, id.Predefined)
     default:
       return assertExhaustive(id)
   }
@@ -69,7 +63,7 @@ const getTargetCategoryTranslationByType = (
  * Get the text for the target category.
  */
 export const getTargetCategoryTranslation = (
-  getTargetCategoryById: GetById.Static.TargetCategory,
+  getInstanceById: GetInstanceById<"TargetCategory">,
   locale: LocaleEnvironment,
   values: AffectedTargetCategories,
 ): EntityDescriptionSection => ({
@@ -81,11 +75,7 @@ export const getTargetCategoryTranslation = (
           .map(({ id, translations }) =>
             appendInParensIfNotEmpty(
               locale.translateMap(translations)?.note,
-              getTargetCategoryTranslationByType(
-                getTargetCategoryById,
-                locale,
-                id,
-              ),
+              getTargetCategoryTranslationByType(getInstanceById, locale, id),
             ),
           )
           .join(", "),

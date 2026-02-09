@@ -1,10 +1,10 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
-  CombatTechniquesTargetGroup,
+import type {
   RatedMinimumNumberPrerequisite,
-} from "optolith-database-schema/types/prerequisites/single/RatedMinimumNumberPrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+  RatedMinimumNumberPrerequisiteCombatTechniquesTargetGroup,
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
@@ -13,121 +13,44 @@ import { PrerequisitePart } from "../part.js"
 const printNumberOfTheFollowingSkills = (
   locale: LocaleEnvironment,
   number: number,
-): string => {
-  switch (number) {
-    case 1:
-      return locale.translate("one of the following skills")
-    case 2:
-      return locale.translate("two of the following skills")
-    case 3:
-      return locale.translate("three of the following skills")
-    case 4:
-      return locale.translate("four of the following skills")
-    case 5:
-      return locale.translate("five of the following skills")
-    case 6:
-      return locale.translate("six of the following skills")
-    case 7:
-      return locale.translate("seven of the following skills")
-    case 8:
-      return locale.translate("eight of the following skills")
-    case 9:
-      return locale.translate("nine of the following skills")
-    default:
-      return locale.translate("{0} of the following skills")
-  }
-}
+): string =>
+  locale.translate(
+    ".input {$count :number} {{{$count} of the following skills}}",
+    { count: number },
+  )
 
 const printNumberOfAllCombatTechniques = (
   locale: LocaleEnvironment,
   number: number,
-): string => {
-  switch (number) {
-    case 1:
-      return locale.translate("one combat technique")
-    case 2:
-      return locale.translate("two combat techniques")
-    case 3:
-      return locale.translate("three combat techniques")
-    case 4:
-      return locale.translate("four combat techniques")
-    case 5:
-      return locale.translate("five combat techniques")
-    case 6:
-      return locale.translate("six combat techniques")
-    case 7:
-      return locale.translate("seven combat techniques")
-    case 8:
-      return locale.translate("eight combat techniques")
-    case 9:
-      return locale.translate("nine combat techniques")
-    default:
-      return locale.translate("{0} combat techniques")
-  }
-}
+): string =>
+  locale.translate(".input {$count :number} {{{$count} combat techniques}}", {
+    count: number,
+  })
 
 const printNumberOfCloseCombatTechniques = (
   locale: LocaleEnvironment,
   number: number,
-): string => {
-  switch (number) {
-    case 1:
-      return locale.translate("one close combat technique")
-    case 2:
-      return locale.translate("two close combat techniques")
-    case 3:
-      return locale.translate("three close combat techniques")
-    case 4:
-      return locale.translate("four close combat techniques")
-    case 5:
-      return locale.translate("five close combat techniques")
-    case 6:
-      return locale.translate("six close combat techniques")
-    case 7:
-      return locale.translate("seven close combat techniques")
-    case 8:
-      return locale.translate("eight close combat techniques")
-    case 9:
-      return locale.translate("nine close combat techniques")
-    default:
-      return locale.translate("{0} close combat techniques")
-  }
-}
+): string =>
+  locale.translate(
+    ".input {$count :number} {{{$count} close combat techniques}}",
+    { count: number },
+  )
 
 const printNumberOfRangedCombatTechniques = (
   locale: LocaleEnvironment,
   number: number,
-): string => {
-  switch (number) {
-    case 1:
-      return locale.translate("one ranged combat technique")
-    case 2:
-      return locale.translate("two ranged combat techniques")
-    case 3:
-      return locale.translate("three ranged combat techniques")
-    case 4:
-      return locale.translate("four ranged combat techniques")
-    case 5:
-      return locale.translate("five ranged combat techniques")
-    case 6:
-      return locale.translate("six ranged combat techniques")
-    case 7:
-      return locale.translate("seven ranged combat techniques")
-    case 8:
-      return locale.translate("eight ranged combat techniques")
-    case 9:
-      return locale.translate("nine ranged combat techniques")
-    default:
-      return locale.translate("{0} ranged combat techniques")
-  }
-}
+): string =>
+  locale.translate(
+    ".input {$count :number} {{{$count} ranged combat techniques}}",
+    { count: number },
+  )
 
 const printNumberOfCombatTechniques = (
   locale: LocaleEnvironment,
-  category: CombatTechniquesTargetGroup,
+  category: RatedMinimumNumberPrerequisiteCombatTechniquesTargetGroup,
   number: number,
 ): string => {
-  switch (category) {
+  switch (category.kind) {
     case "All":
       return printNumberOfAllCombatTechniques(locale, number)
     case "Close":
@@ -143,9 +66,7 @@ const printNumberOfCombatTechniques = (
  * Get the translation of a rated minimum number prerequisite.
  */
 export const printRatedMinimumNumberPrerequisite = (
-  getSkillById: GetById.Static.Skill,
-  getPropertyById: GetById.Static.Property,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<"Skill" | "Property" | "Aspect">,
   locale: LocaleEnvironment,
   prerequisite: RatedMinimumNumberPrerequisite,
 ): PrerequisitePart | undefined => {
@@ -153,21 +74,24 @@ export const printRatedMinimumNumberPrerequisite = (
     return printDisplayOption(locale, prerequisite.display_option)
   }
 
-  switch (prerequisite.targets.tag) {
+  switch (prerequisite.targets.kind) {
     case "Skills": {
-      const skills = prerequisite.targets.skills.list
+      const skills = prerequisite.targets.Skills.targets
         .map(
-          ref =>
-            locale.translateMap(getSkillById(ref.id.skill)?.translations)?.name,
+          id =>
+            locale.translateMap(getInstanceById("Skill", id)?.translations)
+              ?.name,
         )
         .filter(isNotNullish)
 
       return {
         value: locale.translate(
-          "{0} on at least SR {1}: {2}", // zwei der folgenden Talente mindestens FW 10:
-          printNumberOfTheFollowingSkills(locale, prerequisite.number),
-          prerequisite.value,
-          locale.joinConjunctionList(skills),
+          ".input {$minRating :number} {{{$count} on at least SR {$minRating}: {$list}}}", // zwei der folgenden Talente mindestens FW 10:
+          {
+            count: printNumberOfTheFollowingSkills(locale, prerequisite.number),
+            minRating: prerequisite.value,
+            list: locale.joinConjunctionList(skills),
+          },
         ),
         sentenceType: undefined,
         isMeta: false,
@@ -184,7 +108,7 @@ export const printRatedMinimumNumberPrerequisite = (
       return {
         value: `${printNumberOfCombatTechniques(
           locale,
-          prerequisite.targets.combat_techniques.group,
+          prerequisite.targets.CombatTechniques.group,
           prerequisite.number,
         )} ${prerequisite.value}`,
         sentenceType: undefined,
@@ -195,13 +119,18 @@ export const printRatedMinimumNumberPrerequisite = (
     case "Spellworks": {
       return {
         value: locale.translate(
-          "{0} arcane works with the property {1} at SR {2} or higher",
-          prerequisite.number,
-          locale.translateMap(
-            getPropertyById(prerequisite.targets.spellworks.id.property)
-              ?.translations,
-          )?.name ?? MISSING_VALUE,
-          prerequisite.value,
+          ".input {$count :number} .input {$minRating :number} {{{$count} arcane works with the property {$property} at SR {$minRating} or higher}}",
+          {
+            count: prerequisite.number,
+            property:
+              locale.translateMap(
+                getInstanceById(
+                  "Property",
+                  prerequisite.targets.Spellworks.property,
+                )?.translations,
+              )?.name ?? MISSING_VALUE,
+            minRating: prerequisite.value,
+          },
         ),
         sentenceType: undefined,
         isMeta: false,
@@ -211,13 +140,16 @@ export const printRatedMinimumNumberPrerequisite = (
     case "Liturgies": {
       return {
         value: locale.translate(
-          "{0} liturgical chants and ceremonies with the aspect {1} at SR {2} or higher",
-          prerequisite.number,
-          locale.translateMap(
-            getAspectById(prerequisite.targets.liturgies.id.aspect)
-              ?.translations,
-          )?.name ?? MISSING_VALUE,
-          prerequisite.value,
+          ".input {$count :number} .input {$minRating :number} {{{$count} liturgical chants and ceremonies with the aspect {$aspect} at SR {$minRating} or higher}}",
+          {
+            count: prerequisite.number,
+            aspect:
+              locale.translateMap(
+                getInstanceById("Aspect", prerequisite.targets.Liturgies.aspect)
+                  ?.translations,
+              )?.name ?? MISSING_VALUE,
+            minRating: prerequisite.value,
+          },
         ),
         sentenceType: undefined,
         isMeta: false,

@@ -1,21 +1,19 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { Enhancements } from "optolith-database-schema/types/_Enhancements"
-import { SkillWithEnhancementsIdentifier } from "optolith-database-schema/types/_IdentifierGroup"
-import { LocaleMap } from "optolith-database-schema/types/_LocaleMap"
 import {
-  ExternalEnhancementPrerequisite,
-  InternalEnhancementPrerequisite,
-} from "optolith-database-schema/types/prerequisites/single/EnhancementPrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+  type EnhancementPrerequisite,
+  type SkillWithEnhancementsIdentifier,
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { printDisplayOption } from "../displayOption.js"
+import type { LocaleMap } from "../../../../helpers/translate.js"
+import { MISSING_VALUE } from "../../unknown.js"
 import { PrerequisitePart } from "../part.js"
 
 const printLabel = (
   locale: LocaleEnvironment,
   skillId: SkillWithEnhancementsIdentifier,
 ): string => {
-  switch (skillId.tag) {
+  switch (skillId.kind) {
     case "Spell":
     case "Ritual":
       return locale.translate("spell enhancement")
@@ -28,23 +26,20 @@ const printLabel = (
 }
 
 const getSkill = (
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
+  getInstanceById: GetInstanceById<
+    "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony"
+  >,
   parentId: SkillWithEnhancementsIdentifier,
-):
-  | { translations: LocaleMap<{ name: string }>; enhancements?: Enhancements }
-  | undefined => {
-  switch (parentId.tag) {
+): { translations: LocaleMap<{ name: string }> } | undefined => {
+  switch (parentId.kind) {
     case "Spell":
-      return getSpellById(parentId.spell)
+      return getInstanceById("Spell", parentId.Spell)
     case "Ritual":
-      return getRitualById(parentId.ritual)
+      return getInstanceById("Ritual", parentId.Ritual)
     case "LiturgicalChant":
-      return getLiturgicalChantById(parentId.liturgical_chant)
+      return getInstanceById("LiturgicalChant", parentId.LiturgicalChant)
     case "Ceremony":
-      return getCeremonyById(parentId.ceremony)
+      return getInstanceById("Ceremony", parentId.Ceremony)
     default:
       return assertExhaustive(parentId)
   }
@@ -53,67 +48,26 @@ const getSkill = (
 /**
  * Get the translation of an external enhancement prerequisite.
  */
-export const printExternalEnhancementPrerequisite = (
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
+export const printEnhancementPrerequisite = (
+  getInstanceById: GetInstanceById<
+    "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony" | "Enhancement"
+  >,
   locale: LocaleEnvironment,
-  prerequisite: ExternalEnhancementPrerequisite,
+  prerequisite: EnhancementPrerequisite,
 ): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
-  }
+  const enhancement = getInstanceById("Enhancement", prerequisite.id)
 
-  const skill = getSkill(
-    getSpellById,
-    getRitualById,
-    getLiturgicalChantById,
-    getCeremonyById,
-    prerequisite.skill.id,
-  )
-
-  const enhancement = skill?.enhancements?.find(
-    e => e.id === prerequisite.enhancement.id,
-  )
+  const skill = enhancement && getSkill(getInstanceById, enhancement.parent)
 
   return {
-    label: `${printLabel(locale, prerequisite.skill.id)} `,
+    label: `${
+      enhancement ? printLabel(locale, enhancement.parent) : MISSING_VALUE
+    } `,
     value: `*${
-      locale.translateMap(enhancement?.translations)?.name
+      locale.translateMap(enhancement?.translations)?.name ?? MISSING_VALUE
     }* ${locale.translate("for")} ${
-      locale.translateMap(skill?.translations)?.name
+      locale.translateMap(skill?.translations)?.name ?? MISSING_VALUE
     }`,
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
-
-/**
- * Get the translation of an internal enhancement prerequisite.
- */
-export const printInternalEnhancementPrerequisite = (
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
-  locale: LocaleEnvironment,
-  prerequisite: InternalEnhancementPrerequisite,
-  parentId: SkillWithEnhancementsIdentifier,
-): PrerequisitePart | undefined => {
-  const skill = getSkill(
-    getSpellById,
-    getRitualById,
-    getLiturgicalChantById,
-    getCeremonyById,
-    parentId,
-  )
-
-  const enhancement = skill?.enhancements?.find(e => e.id === prerequisite.id)
-
-  return {
-    label: `${printLabel(locale, parentId)} `,
-    value: `*${locale.translateMap(enhancement?.translations)?.name}*`,
     sentenceType: undefined,
     isMeta: false,
   }

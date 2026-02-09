@@ -1,9 +1,12 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { NewApplicationsAndUsesCache } from "optolith-database-schema/cache/newApplicationsAndUses"
-import { Skill } from "optolith-database-schema/types/Skill"
+import type { Skill } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import { All, GetById } from "../helpers/getTypes.js"
+import type {
+  GetAllChildInstancesForParent,
+  GetAllInstances,
+  GetInstanceById,
+} from "../helpers/getTypes.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 import { getTextForCheck } from "./partial/rated/skillCheck.js"
 
@@ -13,17 +16,22 @@ import { getTextForCheck } from "./partial/rated/skillCheck.js"
 export const getSkillEntityDescription = createEntityDescriptionCreator<
   Skill,
   {
-    getAttributeById: GetById.Static.Attribute
-    blessedTraditions: All.Static.BlessedTraditions
-    diseases: All.Static.Diseases
-    regions: All.Static.Regions
-    cache: NewApplicationsAndUsesCache
+    getInstanceById: GetInstanceById<"Attribute">
+    getAllInstances: GetAllInstances<
+      | "BlessedTradition"
+      | "Disease"
+      | "Region"
+      | "SkillUse"
+      | "NewSkillApplication"
+    >
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"SkillApplication">
   }
 >(
   (
-    { getAttributeById, blessedTraditions, diseases, regions, cache },
+    { getInstanceById, getAllInstances, getChildInstancesForInstanceId },
     { translate, translateMap, compare: localeCompare },
     entry,
+    id,
   ) => {
     const translation = translateMap(entry.translations)
 
@@ -31,51 +39,47 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       return undefined
     }
 
-    const newApplications = (
-      entry === undefined ? [] : cache.newApplications[entry.id] ?? []
-    )
-      .map(x => translateMap(x.data.translations)?.name)
+    const newApplications = getAllInstances("NewSkillApplication")
+      .filter(application => application.skills.includes(id))
+      .map(x => translateMap(x.translations)?.name)
       .filter(isNotNullish)
       .sort(localeCompare)
 
-    const uses = (entry === undefined ? [] : cache.uses[entry.id] ?? [])
-      .map(x => translateMap(x.data.translations)?.name)
+    const uses = getAllInstances("SkillUse")
+      .filter(use => use.skills.includes(id))
+      .map(x => translateMap(x.translations)?.name)
       .filter(isNotNullish)
       .sort(localeCompare)
 
-    const applications = (() => {
-      switch (entry.applications.tag) {
-        case "Derived":
-          return (() => {
-            switch (entry.applications.derived) {
-              case "BlessedTraditions":
-                return Object.values(blessedTraditions)
-                  .map(x => translateMap(x.translations)?.name)
-                  .filter(isNotNullish)
-                  .sort(localeCompare)
-              case "Diseases":
-                return Object.values(diseases)
-                  .map(x => translateMap(x.translations)?.name)
-                  .filter(isNotNullish)
-                  .sort(localeCompare)
-              case "Regions":
-                return Object.values(regions)
-                  .map(x => translateMap(x.translations)?.name)
-                  .filter(isNotNullish)
-                  .sort(localeCompare)
-              default:
-                return assertExhaustive(entry.applications.derived)
-            }
-          })()
-        case "Explicit":
-          return entry.applications.explicit
-            .map(x => translateMap(x.translations)?.name)
-            .filter(isNotNullish)
-            .sort(localeCompare)
-        default:
-          return assertExhaustive(entry.applications)
-      }
-    })()
+    const applications = [
+      ...getChildInstancesForInstanceId("SkillApplication", id)
+        .map(x => translateMap(x.translations)?.name)
+        .filter(isNotNullish)
+        .sort(localeCompare),
+      ...(() => {
+        switch (entry.applications.derived?.kind) {
+          case "BlessedTraditions":
+            return getAllInstances("BlessedTradition")
+              .map(x => translateMap(x.translations)?.name)
+              .filter(isNotNullish)
+              .sort(localeCompare)
+          case "Diseases":
+            return getAllInstances("Disease")
+              .map(x => translateMap(x.translations)?.name)
+              .filter(isNotNullish)
+              .sort(localeCompare)
+          case "Regions":
+            return getAllInstances("Region")
+              .map(x => translateMap(x.translations)?.name)
+              .filter(isNotNullish)
+              .sort(localeCompare)
+          case undefined:
+            return []
+          default:
+            return assertExhaustive(entry.applications.derived)
+        }
+      })(),
+    ]
 
     return {
       title: translation.name,
@@ -94,7 +98,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
               value: uses.join(", "),
             },
         getTextForCheck(
-          { translate, translateMap, getAttributeById },
+          { translate, translateMap, getInstanceById },
           entry.check,
         ),
         {
@@ -104,9 +108,9 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
         {
           label: translate("Encumbrance"),
           value:
-            entry.encumbrance === "True"
+            entry.encumbrance.kind === "Yes"
               ? translate("Yes")
-              : entry.encumbrance === "False"
+              : entry.encumbrance.kind === "No"
               ? translate("No")
               : translation.encumbrance_description ?? translate("Maybe"),
         },

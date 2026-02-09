@@ -1,10 +1,10 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
+  DerivedCharacteristic,
   SkillCheck,
   SkillCheckPenalty,
-} from "optolith-database-schema/types/_SkillCheck"
-import { DerivedCharacteristic } from "optolith-database-schema/types/DerivedCharacteristic"
-import { GetById } from "../../../helpers/getTypes.js"
+} from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../../../helpers/translate.js"
 import { EntityDescriptionSection } from "../../../index.js"
 import { responsive, ResponsiveTextSize } from "../responsiveText.js"
@@ -16,7 +16,7 @@ export const getTextForCheck = (
   deps: {
     translate: Translate
     translateMap: TranslateMap
-    getAttributeById: GetById.Static.Attribute
+    getInstanceById: GetInstanceById<"Attribute">
   },
   check: SkillCheck,
   checkPenalty?: {
@@ -30,8 +30,8 @@ export const getTextForCheck = (
   value:
     check
       .map(
-        ({ id: { attribute: id } }) =>
-          deps.translateMap(deps.getAttributeById(id)?.translations)
+        id =>
+          deps.translateMap(deps.getInstanceById("Attribute", id)?.translations)
             ?.abbreviation ?? "??",
       )
       .join("/") +
@@ -53,7 +53,7 @@ export const getTextForCheck = (
         getDerivedCharacteristicTranslation(checkPenalty.getToughness)
 
       const penalty = (() => {
-        switch (checkPenalty.value) {
+        switch (checkPenalty.value.kind) {
           case "Spirit": {
             const translation = getSpiritTranslation()
             return translation === undefined
@@ -97,9 +97,11 @@ export const getTextForCheck = (
                   responsiveText,
                   () =>
                     deps.translate(
-                      "{0} or {1}, depending on which value is higher",
-                      spiritTranslation.abbreviation,
-                      toughnessTranslation.abbreviation,
+                      "{$first} or {$second}, depending on which value is higher",
+                      {
+                        first: spiritTranslation.abbreviation,
+                        second: toughnessTranslation.abbreviation,
+                      },
                     ),
                   () =>
                     `${spiritTranslation.abbreviation}/${toughnessTranslation.abbreviation}`,
@@ -120,6 +122,9 @@ export const getTextForCheck = (
               () => deps.translate("CD"),
             )
 
+          case "Object":
+            return deps.translate("Object")
+
           default:
             return assertExhaustive(checkPenalty.value)
         }
@@ -127,8 +132,9 @@ export const getTextForCheck = (
 
       return responsive(
         responsiveText,
-        () => deps.translate(" (modified by {0})", penalty),
-        () => deps.translate(" (− {0})", penalty),
+        () =>
+          deps.translate(" (modified by {$modifier})", { modifier: penalty }),
+        () => deps.translate(" (−{$modifier})", { modifier: penalty }),
       )
     })(),
 })

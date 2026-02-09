@@ -1,18 +1,11 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { PublicationRefs } from "optolith-database-schema/types/source/_PublicationRef"
-import { GetById } from "../helpers/getTypes.js"
+import type { PublicationRefs } from "optolith-database-schema/gen"
+import type { GetInstanceById } from "../helpers/getTypes.js"
 import { LocaleEnvironment } from "../helpers/locale.js"
-import {
-  isSimpleOccurrence,
-  isSimpleOccurrences,
-  isVersionedOccurrence,
-} from "./occurrence.js"
 import {
   fromRawPageRange,
   normalizePageRanges,
-  numberRangeToPageRange,
-  printPageRange,
   printPageRanges,
 } from "./pageRange.js"
 
@@ -20,13 +13,13 @@ import {
  * Returns the translation of the references.
  */
 export const getReferencesTranslation = (
-  getPublicationById: GetById.Static.Publication,
+  getInstanceById: GetInstanceById<"Publication">,
   locale: LocaleEnvironment,
   references: PublicationRefs,
 ) =>
   references
     .map(ref => {
-      const publication = getPublicationById(ref.id.publication)
+      const publication = getInstanceById("Publication", ref.id)
       const publicationTranslations = locale.translateMap(
         publication?.translations,
       )
@@ -40,71 +33,50 @@ export const getReferencesTranslation = (
         return undefined
       }
 
-      if (isSimpleOccurrence(occurrences)) {
-        return `${publicationTranslations.name} ${printPageRange(
-          locale.translate,
-          numberRangeToPageRange(occurrences),
-        )}`
-      }
+      const initialPageRanges = normalizePageRanges(
+        occurrences.initial.pages.map(fromRawPageRange),
+      )
 
-      if (isSimpleOccurrences(occurrences)) {
-        const ranges = normalizePageRanges(
-          occurrences.map(numberRangeToPageRange),
-        )
-        return `${publicationTranslations.name} ${printPageRanges(
-          locale.translate,
-          ranges,
-        )}`
-      }
+      const initial =
+        occurrences.initial.printing === undefined
+          ? printPageRanges(locale.translate, initialPageRanges)
+          : `${printPageRanges(
+              locale.translate,
+              initialPageRanges,
+            )} (${locale.translate(
+              ".input {$printing :number} {{since the {$printing}. printing}}",
+              { printing: occurrences.initial.printing },
+            )})`
 
-      if (isVersionedOccurrence(occurrences)) {
-        const initialPageRanges = normalizePageRanges(
-          occurrences.initial.pages.map(fromRawPageRange),
-        )
-
-        const initial =
-          occurrences.initial.printing === undefined
-            ? printPageRanges(locale.translate, initialPageRanges)
-            : `${printPageRanges(
+      const revisions =
+        occurrences.revisions?.map(rev => {
+          switch (rev.kind) {
+            case "Since": {
+              const pageRanges = normalizePageRanges(
+                rev.Since.pages.map(fromRawPageRange),
+              )
+              return `${printPageRanges(
                 locale.translate,
-                initialPageRanges,
+                pageRanges,
               )} (${locale.translate(
-                "since the {0}. printing",
-                occurrences.initial.printing,
+                ".input {$printing :number} {{since the {$printing}. printing}}",
+                { printing: rev.Since.printing },
               )})`
-
-        const revisions =
-          occurrences.revisions?.map(rev => {
-            switch (rev.tag) {
-              case "Since": {
-                const pageRanges = normalizePageRanges(
-                  rev.since.pages.map(fromRawPageRange),
-                )
-                return `${printPageRanges(
-                  locale.translate,
-                  pageRanges,
-                )} (${locale.translate(
-                  "since the {0}. printing",
-                  rev.since.printing,
-                )})`
-              }
-              case "Deprecated": {
-                return locale.translate(
-                  "removed in {0}. printing",
-                  rev.deprecated.printing,
-                )
-              }
-              default:
-                return assertExhaustive(rev)
             }
-          }) ?? []
+            case "Deprecated": {
+              return locale.translate(
+                ".input {$printing :number} {{removed in {$printing}. printing}}",
+                { printing: rev.Deprecated.printing },
+              )
+            }
+            default:
+              return assertExhaustive(rev)
+          }
+        }) ?? []
 
-        const allPageRanges = [initial, ...revisions].join("; ")
+      const allPageRanges = [initial, ...revisions].join("; ")
 
-        return `${publicationTranslations.name} ${allPageRanges}`
-      }
-
-      return assertExhaustive(occurrences)
+      return `${publicationTranslations.name} ${allPageRanges}`
     })
     .filter(isNotNullish)
     .join("; ")

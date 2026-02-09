@@ -1,6 +1,6 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
-import { RatedSumPrerequisite } from "optolith-database-schema/types/prerequisites/single/RatedSumPrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+import { RatedSumPrerequisite } from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -9,7 +9,7 @@ import { PrerequisitePart } from "../part.js"
  * Get the translation of a rated sum prerequisite.
  */
 export const printRatedSumPrerequisite = (
-  getSkillById: GetById.Static.Skill,
+  getInstanceById: GetInstanceById<"Skill">,
   locale: LocaleEnvironment,
   prerequisite: RatedSumPrerequisite,
 ): PrerequisitePart | undefined => {
@@ -19,16 +19,19 @@ export const printRatedSumPrerequisite = (
 
   const skills = prerequisite.targets
     .map(
-      target =>
-        locale.translateMap(getSkillById(target.skill)?.translations)?.name,
+      skillId =>
+        locale.translateMap(getInstanceById("Skill", skillId)?.translations)
+          ?.name,
     )
     .filter(isNotNullish)
 
   return {
     value: locale.translate(
-      "the SR for {0} combined must add up to at least {1}",
-      locale.joinConjunctionList(skills),
-      prerequisite.sum,
+      "the SR for {$skill} combined must add up to at least {$minRating}",
+      {
+        skill: locale.joinConjunctionList(skills),
+        minRating: prerequisite.sum,
+      },
     ),
     sentenceType: undefined,
     isMeta: false,

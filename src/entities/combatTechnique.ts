@@ -1,8 +1,10 @@
 import { mapNullable } from "@optolith/helpers/nullable"
-import { CloseCombatTechnique } from "optolith-database-schema/types/CombatTechnique_Close"
-import { RangedCombatTechnique } from "optolith-database-schema/types/CombatTechnique_Ranged"
+import {
+  CloseCombatTechnique,
+  RangedCombatTechnique,
+} from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import { GetById } from "../helpers/getTypes.js"
+import type { GetInstanceById } from "../helpers/getTypes.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 
 /**
@@ -12,9 +14,9 @@ export const getCloseCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
     CloseCombatTechnique,
     {
-      getAttributeById: GetById.Static.Attribute
+      getInstanceById: GetInstanceById<"Attribute">
     }
-  >(({ getAttributeById }, { translate, translateMap }, entry) => {
+  >(({ getInstanceById }, { translate, translateMap }, entry) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -33,8 +35,8 @@ export const getCloseCombatTechniqueEntityDescription =
           label: translate("Primary Attribute"),
           value: entry.primary_attribute
             .map(
-              attr =>
-                translateMap(getAttributeById(attr.id.attribute)?.translations)
+              attrId =>
+                translateMap(getInstanceById("Attribute", attrId)?.translations)
                   ?.name,
             )
             .join("/"),
@@ -52,9 +54,9 @@ export const getRangedCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
     RangedCombatTechnique,
     {
-      getAttributeById: GetById.Static.Attribute
+      getInstanceById: GetInstanceById<"Attribute">
     }
-  >(({ getAttributeById }, { translate, translateMap }, entry) => {
+  >(({ getInstanceById }, { translate, translateMap }, entry) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -73,8 +75,8 @@ export const getRangedCombatTechniqueEntityDescription =
           label: translate("Primary Attribute"),
           value: entry.primary_attribute
             .map(
-              attr =>
-                translateMap(getAttributeById(attr.id.attribute)?.translations)
+              attrId =>
+                translateMap(getInstanceById("Attribute", attrId)?.translations)
                   ?.name,
             )
             .join("/"),

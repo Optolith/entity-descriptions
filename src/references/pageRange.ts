@@ -1,17 +1,7 @@
 import { range } from "@optolith/helpers/array"
-import {
-  Page,
-  PageRange as RawPageRange,
-  SimpleOccurrence,
-} from "optolith-database-schema/types/source/_PublicationRef"
+import { Page, PageRange as RawPageRange } from "optolith-database-schema/gen"
 import { Translate } from "../helpers/translate.js"
-import {
-  comparePage,
-  equalsPage,
-  numberToPage,
-  printPage,
-  succ,
-} from "./page.js"
+import { comparePage, equalsPage, printPage, succ } from "./page.js"
 
 /**
  * A range of pages, including the first and last page, if the range includes
@@ -21,19 +11,6 @@ export type PageRange = {
   firstPage: Page
   lastPage?: Page
 }
-
-/**
- * Converts a numeric range to a page object range.
- */
-export const numberRangeToPageRange = (
-  numberRange: SimpleOccurrence,
-): PageRange =>
-  numberRange.last_page === undefined
-    ? { firstPage: numberToPage(numberRange.first_page) }
-    : {
-        firstPage: numberToPage(numberRange.first_page),
-        lastPage: numberToPage(numberRange.last_page),
-      }
 
 /**
  * Converts a page object range from the database to a local page object range.
@@ -52,10 +29,10 @@ export const fromRawPageRange = (pageRange: RawPageRange): PageRange =>
 export const normalizePageRanges = (ranges: PageRange[]): PageRange[] =>
   ranges
     .flatMap(({ firstPage, lastPage = firstPage }): Page[] => {
-      if (firstPage.tag === "Numbered" && lastPage.tag === "Numbered") {
-        return range(firstPage.numbered, lastPage.numbered).map(numbered => ({
-          tag: "Numbered",
-          numbered,
+      if (firstPage.kind === "Numbered" && lastPage.kind === "Numbered") {
+        return range(firstPage.Numbered, lastPage.Numbered).map(numbered => ({
+          kind: "Numbered",
+          Numbered: numbered,
         }))
       } else {
         return [firstPage, lastPage]

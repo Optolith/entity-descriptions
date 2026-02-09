@@ -1,5 +1,5 @@
-import { PublicationPrerequisite } from "optolith-database-schema/types/prerequisites/single/PublicationPrerequisite"
-import { GetById } from "../../../../helpers/getTypes.js"
+import { PublicationPrerequisite } from "optolith-database-schema/gen"
+import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
@@ -8,7 +8,7 @@ import { PrerequisitePart } from "../part.js"
  * Get the translation of a state prerequisite.
  */
 export const printPublicationPrerequisite = (
-  getPublicationById: GetById.Static.Publication,
+  getInstanceById: GetInstanceById<"Publication">,
   locale: LocaleEnvironment,
   prerequisite: PublicationPrerequisite,
 ): PrerequisitePart | undefined => {
@@ -16,7 +16,7 @@ export const printPublicationPrerequisite = (
     return printDisplayOption(locale, prerequisite.display_option)
   }
 
-  const publication = getPublicationById(prerequisite.id.publication)
+  const publication = getInstanceById("Publication", prerequisite.id)
   const publicationTranslation = locale.translateMap(publication?.translations)
 
   if (publicationTranslation === undefined) {

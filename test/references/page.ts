@@ -11,23 +11,17 @@ import {
 describe("comparePage", () => {
   it("returns 0 if the pages are equal", () => {
     assert.equal(
-      comparePage(
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-      ),
+      comparePage({ kind: "InsideCoverBack" }, { kind: "InsideCoverBack" }),
+      0,
+    )
+    assert.equal(
+      comparePage({ kind: "InsideCoverFront" }, { kind: "InsideCoverFront" }),
       0,
     )
     assert.equal(
       comparePage(
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-      ),
-      0,
-    )
-    assert.equal(
-      comparePage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "Numbered", numbered: 42 },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "Numbered", Numbered: 42 },
       ),
       0,
     )
@@ -35,30 +29,27 @@ describe("comparePage", () => {
 
   it("returns a negative number if first should be sorted before the second", () => {
     assert.equal(
+      comparePage({ kind: "InsideCoverFront" }, { kind: "InsideCoverBack" }),
+      -1,
+    )
+    assert.equal(
       comparePage(
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-        { tag: "InsideCoverBack", inside_cover_back: {} },
+        { kind: "InsideCoverFront" },
+        { kind: "Numbered", Numbered: 42 },
       ),
       -1,
     )
     assert.equal(
       comparePage(
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-        { tag: "Numbered", numbered: 42 },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "InsideCoverBack" },
       ),
       -1,
     )
     assert.equal(
       comparePage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-      ),
-      -1,
-    )
-    assert.equal(
-      comparePage(
-        { tag: "Numbered", numbered: 24 },
-        { tag: "Numbered", numbered: 42 },
+        { kind: "Numbered", Numbered: 24 },
+        { kind: "Numbered", Numbered: 42 },
       ),
       -18,
     )
@@ -66,30 +57,27 @@ describe("comparePage", () => {
 
   it("returns a positive number if first should be sorted after the second", () => {
     assert.equal(
+      comparePage({ kind: "InsideCoverBack" }, { kind: "InsideCoverFront" }),
+      1,
+    )
+    assert.equal(
       comparePage(
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-        { tag: "InsideCoverFront", inside_cover_front: {} },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "InsideCoverFront" },
       ),
       1,
     )
     assert.equal(
       comparePage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "InsideCoverFront", inside_cover_front: {} },
+        { kind: "InsideCoverBack" },
+        { kind: "Numbered", Numbered: 42 },
       ),
       1,
     )
     assert.equal(
       comparePage(
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-        { tag: "Numbered", numbered: 42 },
-      ),
-      1,
-    )
-    assert.equal(
-      comparePage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "Numbered", numbered: 24 },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "Numbered", Numbered: 24 },
       ),
       18,
     )
@@ -99,23 +87,17 @@ describe("comparePage", () => {
 describe("equalsPage", () => {
   it("returns true if the pages are equal", () => {
     assert.equal(
-      equalsPage(
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-      ),
+      equalsPage({ kind: "InsideCoverBack" }, { kind: "InsideCoverBack" }),
+      true,
+    )
+    assert.equal(
+      equalsPage({ kind: "InsideCoverFront" }, { kind: "InsideCoverFront" }),
       true,
     )
     assert.equal(
       equalsPage(
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-      ),
-      true,
-    )
-    assert.equal(
-      equalsPage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "Numbered", numbered: 42 },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "Numbered", Numbered: 42 },
       ),
       true,
     )
@@ -123,58 +105,52 @@ describe("equalsPage", () => {
 
   it("returns false if the pages are not equal", () => {
     assert.equal(
+      equalsPage({ kind: "InsideCoverFront" }, { kind: "InsideCoverBack" }),
+      false,
+    )
+    assert.equal(
       equalsPage(
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-        { tag: "InsideCoverBack", inside_cover_back: {} },
+        { kind: "InsideCoverFront" },
+        { kind: "Numbered", Numbered: 42 },
       ),
       false,
     )
     assert.equal(
       equalsPage(
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-        { tag: "Numbered", numbered: 42 },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "InsideCoverBack" },
       ),
       false,
     )
     assert.equal(
       equalsPage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "InsideCoverBack", inside_cover_back: {} },
+        { kind: "Numbered", Numbered: 24 },
+        { kind: "Numbered", Numbered: 42 },
+      ),
+      false,
+    )
+    assert.equal(
+      equalsPage({ kind: "InsideCoverBack" }, { kind: "InsideCoverFront" }),
+      false,
+    )
+    assert.equal(
+      equalsPage(
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "InsideCoverFront" },
       ),
       false,
     )
     assert.equal(
       equalsPage(
-        { tag: "Numbered", numbered: 24 },
-        { tag: "Numbered", numbered: 42 },
+        { kind: "InsideCoverBack" },
+        { kind: "Numbered", Numbered: 42 },
       ),
       false,
     )
     assert.equal(
       equalsPage(
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-      ),
-      false,
-    )
-    assert.equal(
-      equalsPage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "InsideCoverFront", inside_cover_front: {} },
-      ),
-      false,
-    )
-    assert.equal(
-      equalsPage(
-        { tag: "InsideCoverBack", inside_cover_back: {} },
-        { tag: "Numbered", numbered: 42 },
-      ),
-      false,
-    )
-    assert.equal(
-      equalsPage(
-        { tag: "Numbered", numbered: 42 },
-        { tag: "Numbered", numbered: 24 },
+        { kind: "Numbered", Numbered: 42 },
+        { kind: "Numbered", Numbered: 24 },
       ),
       false,
     )
@@ -183,20 +159,20 @@ describe("equalsPage", () => {
 
 describe("succ", () => {
   it("returns the next page", () => {
-    assert.deepEqual(
-      succ({ tag: "InsideCoverFront", inside_cover_front: {} }),
-      { tag: "Numbered", numbered: 1 },
-    )
-    assert.deepEqual(succ({ tag: "Numbered", numbered: 42 }), {
-      tag: "Numbered",
-      numbered: 43,
+    assert.deepEqual(succ({ kind: "InsideCoverFront" }), {
+      kind: "Numbered",
+      Numbered: 1,
+    })
+    assert.deepEqual(succ({ kind: "Numbered", Numbered: 42 }), {
+      kind: "Numbered",
+      Numbered: 43,
     })
   })
 })
 
 describe("numberToPage", () => {
   it("returns a page object for the page number", () => {
-    assert.deepEqual(numberToPage(42), { tag: "Numbered", numbered: 42 })
+    assert.deepEqual(numberToPage(42), { kind: "Numbered", Numbered: 42 })
   })
 })
 
@@ -204,20 +180,18 @@ describe("printPage", () => {
   it("returns a string representation of the page", () => {
     assert.equal(
       printPage(() => "Front Cover Inside", {
-        tag: "InsideCoverFront",
-        inside_cover_front: {},
+        kind: "InsideCoverFront",
       }),
       "Front Cover Inside",
     )
     assert.equal(
       printPage(() => "Back Cover Inside", {
-        tag: "InsideCoverBack",
-        inside_cover_back: {},
+        kind: "InsideCoverBack",
       }),
       "Back Cover Inside",
     )
     assert.equal(
-      printPage(() => "", { tag: "Numbered", numbered: 42 }),
+      printPage(() => "", { kind: "Numbered", Numbered: 42 }),
       "42",
     )
   })

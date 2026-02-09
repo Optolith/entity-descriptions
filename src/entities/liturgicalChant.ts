@@ -1,14 +1,15 @@
 import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { Blessing } from "optolith-database-schema/types/Blessing"
-import { Ceremony } from "optolith-database-schema/types/Ceremony"
-import { DerivedCharacteristic } from "optolith-database-schema/types/DerivedCharacteristic"
-import { LiturgicalChant } from "optolith-database-schema/types/LiturgicalChant"
-import { SkillTradition } from "optolith-database-schema/types/_Blessed"
-import { AspectReference } from "optolith-database-schema/types/_SimpleReferences"
+import {
+  Blessing,
+  type Ceremony,
+  type DerivedCharacteristic,
+  type LiturgicalChant,
+  type LiturgyTradition,
+} from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import { GetById } from "../helpers/getTypes.js"
+import type { GetInstanceById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection } from "../index.js"
 import { getDurationTranslationForBlessing } from "./partial/rated/activatable/duration.js"
@@ -31,24 +32,23 @@ const getTextForTraditions = (
     translate: Translate
     translateMap: TranslateMap
     localeCompare: Compare<string>
-    getBlessedTraditionById: GetById.Static.BlessedTradition
-    getAspectById: GetById.Static.Aspect
+    getInstanceById: GetInstanceById<"BlessedTradition" | "Aspect">
   },
-  values: SkillTradition[],
+  values: LiturgyTradition[],
 ): EntityDescriptionSection => {
-  const getAspectName = (ref: AspectReference) =>
-    deps.translateMap(deps.getAspectById(ref.id.aspect)?.translations)?.name
+  const getAspectName = (aspectId: string) =>
+    deps.translateMap(deps.getInstanceById("Aspect", aspectId)?.translations)
+      ?.name
 
   const text = values
     .map(trad => {
-      switch (trad.tag) {
+      switch (trad.kind) {
         case "GeneralAspect":
-          return getAspectName(trad.general_aspect)
+          return getAspectName(trad.GeneralAspect)
         case "Tradition": {
           const traditionTranslation = deps.translateMap(
-            deps.getBlessedTraditionById(
-              trad.tradition.tradition.id.blessed_tradition,
-            )?.translations,
+            deps.getInstanceById("BlessedTradition", trad.Tradition.tradition)
+              ?.translations,
           )
           const name =
             traditionTranslation?.name_compressed ?? traditionTranslation?.name
@@ -58,7 +58,7 @@ const getTextForTraditions = (
           }
 
           const aspects =
-            trad.tradition.aspects
+            trad.Tradition.aspects
               ?.map(getAspectName)
               .filter(isNotNullish)
               .sort(deps.localeCompare) ?? []
@@ -88,9 +88,9 @@ const getTextForTraditions = (
 export const getBlessingEntityDescription = createEntityDescriptionCreator<
   Blessing,
   {
-    getTargetCategoryById: GetById.Static.TargetCategory
+    getInstanceById: GetInstanceById<"TargetCategory">
   }
->(({ getTargetCategoryById }, locale, entry) => {
+>(({ getInstanceById }, locale, entry) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
@@ -132,7 +132,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
             ? `***${duration}*** (${translation.duration})`
             : duration,
       },
-      getTargetCategoryTranslation(getTargetCategoryById, locale, entry.target),
+      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
     ],
     references: entry.src,
   }
@@ -145,153 +145,17 @@ export const getLiturgicalChantEntityDescription =
   createEntityDescriptionCreator<
     LiturgicalChant,
     {
-      getAttributeById: GetById.Static.Attribute
+      getInstanceById: GetInstanceById<
+        | "Attribute"
+        | "SkillModificationLevel"
+        | "TargetCategory"
+        | "Aspect"
+        | "BlessedTradition"
+      >
       getSpirit: () => DerivedCharacteristic | undefined
       getToughness: () => DerivedCharacteristic | undefined
-      getSkillModificationLevelById: GetById.Static.SkillModificationLevel
-      getTargetCategoryById: GetById.Static.TargetCategory
-      getBlessedTraditionById: GetById.Static.BlessedTradition
-      getAspectById: GetById.Static.Aspect
     }
-  >(
-    (
-      {
-        getAttributeById,
-        getSpirit,
-        getToughness,
-        getSkillModificationLevelById,
-        getTargetCategoryById,
-        getBlessedTraditionById,
-        getAspectById,
-      },
-      locale,
-      entry,
-    ) => {
-      const { translate, translateMap, compare: localeCompare } = locale
-      const translation = translateMap(entry.translations)
-
-      if (translation === undefined) {
-        return undefined
-      }
-
-      const { castingTime, cost, range, duration } = (() => {
-        switch (entry.parameters.tag) {
-          case "OneTime":
-            return getFastOneTimePerformanceParametersTranslations(
-              getSkillModificationLevelById,
-              locale,
-              Entity.LiturgicalChant,
-              ResponsiveTextSize.Full,
-              entry.parameters.one_time,
-            )
-
-          case "Sustained":
-            return getFastSustainedPerformanceParametersTranslations(
-              getSkillModificationLevelById,
-              locale,
-              Entity.LiturgicalChant,
-              ResponsiveTextSize.Full,
-              entry.parameters.sustained,
-            )
-
-          default:
-            return assertExhaustive(entry.parameters)
-        }
-      })()
-
-      return {
-        title: translation.name,
-        className: "liturgical-chant",
-        body: [
-          getTextForCheck(
-            { translate, translateMap, getAttributeById },
-            entry.check,
-            {
-              value: entry.check_penalty,
-              responsiveText: ResponsiveTextSize.Full,
-              getSpirit,
-              getToughness,
-            },
-          ),
-          ...getTextForEffect(locale, translation.effect),
-          {
-            label: translate("Liturgical Time"),
-            value:
-              castingTime !== translation.casting_time.full
-                ? `***${castingTime}*** (${translation.casting_time.full})`
-                : castingTime,
-          },
-          {
-            label: translate("KP Cost"),
-            value:
-              cost !== translation.cost.full
-                ? `***${cost}*** (${translation.cost.full})`
-                : cost,
-          },
-          {
-            label: translate("Range"),
-            value:
-              range !== translation.range.full
-                ? `***${range}*** (${translation.range.full})`
-                : range,
-          },
-          {
-            label: translate("Duration"),
-            value:
-              duration !== translation.duration.full
-                ? `***${duration}*** (${translation.duration.full})`
-                : duration,
-          },
-          getTargetCategoryTranslation(
-            getTargetCategoryById,
-            locale,
-            entry.target,
-          ),
-          getTextForTraditions(
-            {
-              translate,
-              translateMap,
-              localeCompare,
-              getBlessedTraditionById,
-              getAspectById,
-            },
-            entry.traditions,
-          ),
-          createImprovementCost(translate, entry.improvement_cost),
-        ],
-        references: entry.src,
-      }
-    },
-  )
-
-/**
- * Get a JSON representation of the rules text for a ceremony.
- */
-export const getCeremonyEntityDescription = createEntityDescriptionCreator<
-  Ceremony,
-  {
-    getAttributeById: GetById.Static.Attribute
-    getSpirit: () => DerivedCharacteristic | undefined
-    getToughness: () => DerivedCharacteristic | undefined
-    getSkillModificationLevelById: GetById.Static.SkillModificationLevel
-    getTargetCategoryById: GetById.Static.TargetCategory
-    getBlessedTraditionById: GetById.Static.BlessedTradition
-    getAspectById: GetById.Static.Aspect
-  }
->(
-  (
-    {
-      getAttributeById,
-      getSpirit,
-      getToughness,
-      getSkillModificationLevelById,
-      getTargetCategoryById,
-      getBlessedTraditionById,
-      getAspectById,
-    },
-    locale,
-    entry,
-  ) => {
+  >(({ getInstanceById, getSpirit, getToughness }, locale, entry) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
@@ -300,23 +164,23 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     }
 
     const { castingTime, cost, range, duration } = (() => {
-      switch (entry.parameters.tag) {
+      switch (entry.parameters.kind) {
         case "OneTime":
-          return getSlowOneTimePerformanceParametersTranslations(
-            getSkillModificationLevelById,
+          return getFastOneTimePerformanceParametersTranslations(
+            getInstanceById,
             locale,
-            Entity.Ritual,
+            Entity.LiturgicalChant,
             ResponsiveTextSize.Full,
-            entry.parameters.one_time,
+            entry.parameters.OneTime,
           )
 
         case "Sustained":
-          return getSlowSustainedPerformanceParametersTranslations(
-            getSkillModificationLevelById,
+          return getFastSustainedPerformanceParametersTranslations(
+            getInstanceById,
             locale,
-            Entity.Ceremony,
+            Entity.LiturgicalChant,
             ResponsiveTextSize.Full,
-            entry.parameters.sustained,
+            entry.parameters.Sustained,
           )
 
         default:
@@ -326,10 +190,10 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
 
     return {
       title: translation.name,
-      className: "ceremony",
+      className: "liturgical-chant",
       body: [
         getTextForCheck(
-          { translate, translateMap, getAttributeById },
+          { translate, translateMap, getInstanceById },
           entry.check,
           {
             value: entry.check_penalty,
@@ -340,8 +204,9 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
         ),
         ...getTextForEffect(locale, translation.effect),
         {
-          label: translate("Ceremonial Time"),
+          label: translate("Liturgical Time"),
           value:
+            translation.casting_time &&
             castingTime !== translation.casting_time.full
               ? `***${castingTime}*** (${translation.casting_time.full})`
               : castingTime,
@@ -349,36 +214,31 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
         {
           label: translate("KP Cost"),
           value:
-            cost !== translation.cost.full
+            translation.cost && cost !== translation.cost.full
               ? `***${cost}*** (${translation.cost.full})`
               : cost,
         },
         {
           label: translate("Range"),
           value:
-            range !== translation.range.full
+            translation.range && range !== translation.range.full
               ? `***${range}*** (${translation.range.full})`
               : range,
         },
         {
           label: translate("Duration"),
           value:
-            duration !== translation.duration.full
+            translation.duration && duration !== translation.duration.full
               ? `***${duration}*** (${translation.duration.full})`
               : duration,
         },
-        getTargetCategoryTranslation(
-          getTargetCategoryById,
-          locale,
-          entry.target,
-        ),
+        getTargetCategoryTranslation(getInstanceById, locale, entry.target),
         getTextForTraditions(
           {
             translate,
             translateMap,
             localeCompare,
-            getBlessedTraditionById,
-            getAspectById,
+            getInstanceById,
           },
           entry.traditions,
         ),
@@ -386,5 +246,113 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       ],
       references: entry.src,
     }
-  },
-)
+  })
+
+/**
+ * Get a JSON representation of the rules text for a ceremony.
+ */
+export const getCeremonyEntityDescription = createEntityDescriptionCreator<
+  Ceremony,
+  {
+    getInstanceById: GetInstanceById<
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Aspect"
+      | "BlessedTradition"
+    >
+    getSpirit: () => DerivedCharacteristic | undefined
+    getToughness: () => DerivedCharacteristic | undefined
+  }
+>(({ getInstanceById, getSpirit, getToughness }, locale, entry) => {
+  const { translate, translateMap, compare: localeCompare } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const { castingTime, cost, range, duration } = (() => {
+    switch (entry.parameters.kind) {
+      case "OneTime":
+        return getSlowOneTimePerformanceParametersTranslations(
+          getInstanceById,
+          locale,
+          Entity.Ritual,
+          ResponsiveTextSize.Full,
+          entry.parameters.OneTime,
+        )
+
+      case "Sustained":
+        return getSlowSustainedPerformanceParametersTranslations(
+          getInstanceById,
+          locale,
+          Entity.Ceremony,
+          ResponsiveTextSize.Full,
+          entry.parameters.Sustained,
+        )
+
+      default:
+        return assertExhaustive(entry.parameters)
+    }
+  })()
+
+  return {
+    title: translation.name,
+    className: "ceremony",
+    body: [
+      getTextForCheck(
+        { translate, translateMap, getInstanceById },
+        entry.check,
+        {
+          value: entry.check_penalty,
+          responsiveText: ResponsiveTextSize.Full,
+          getSpirit,
+          getToughness,
+        },
+      ),
+      ...getTextForEffect(locale, translation.effect),
+      {
+        label: translate("Ceremonial Time"),
+        value:
+          translation.casting_time &&
+          castingTime !== translation.casting_time.full
+            ? `***${castingTime}*** (${translation.casting_time.full})`
+            : castingTime,
+      },
+      {
+        label: translate("KP Cost"),
+        value:
+          translation.cost && cost !== translation.cost.full
+            ? `***${cost}*** (${translation.cost.full})`
+            : cost,
+      },
+      {
+        label: translate("Range"),
+        value:
+          translation.range && range !== translation.range.full
+            ? `***${range}*** (${translation.range.full})`
+            : range,
+      },
+      {
+        label: translate("Duration"),
+        value:
+          translation.duration && duration !== translation.duration.full
+            ? `***${duration}*** (${translation.duration.full})`
+            : duration,
+      },
+      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+      getTextForTraditions(
+        {
+          translate,
+          translateMap,
+          localeCompare,
+          getInstanceById,
+        },
+        entry.traditions,
+      ),
+      createImprovementCost(translate, entry.improvement_cost),
+    ],
+    references: entry.src,
+  }
+})

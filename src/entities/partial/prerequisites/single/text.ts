@@ -1,4 +1,4 @@
-import { TextPrerequisite } from "optolith-database-schema/types/prerequisites/single/TextPrerequisite"
+import { TextPrerequisite } from "optolith-database-schema/gen"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { PrerequisitePart } from "../part.js"
@@ -10,7 +10,7 @@ export const printTextPrerequisite = (
   locale: LocaleEnvironment,
   prerequisite: TextPrerequisite,
 ): PrerequisitePart => ({
-  value: locale.translateMap(prerequisite.translations) ?? MISSING_VALUE,
+  value: locale.translateMap(prerequisite.translations)?.text ?? MISSING_VALUE,
   sentenceType: prerequisite.sentence_type,
   isMeta: prerequisite.is_meta ?? false,
 })

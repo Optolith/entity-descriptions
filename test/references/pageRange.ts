@@ -1,35 +1,18 @@
 import assert from "assert/strict"
 import { describe, it } from "node:test"
-import { Page } from "optolith-database-schema/types/source/_PublicationRef"
-import { Translate } from "../../src/helpers/translate.js"
+import { Page } from "optolith-database-schema/gen"
 import {
   fromRawPageRange,
   normalizePageRanges,
-  numberRangeToPageRange,
   PageRange,
   printPageRange,
   printPageRanges,
 } from "../../src/references/pageRange.js"
+import { translateMock } from "../helpers/translate.js"
 
-const mockTranslate: Translate = (key: string) => key
-
-const mockPage: Page = Object.freeze({ tag: "Numbered", numbered: 1 })
-const mockPage2: Page = Object.freeze({ tag: "Numbered", numbered: 2 })
-const mockPage3: Page = Object.freeze({ tag: "Numbered", numbered: 3 })
-
-describe("numberRangeToPageRange", () => {
-  it("should convert a numeric range to a page object range", () => {
-    const input = { first_page: 1, last_page: 2 }
-    const expected: PageRange = { firstPage: mockPage, lastPage: mockPage2 }
-    assert.deepEqual(numberRangeToPageRange(input), expected)
-  })
-
-  it("should handle single page ranges", () => {
-    const input = { first_page: 1 }
-    const expected: PageRange = { firstPage: mockPage }
-    assert.deepEqual(numberRangeToPageRange(input), expected)
-  })
-})
+const mockPage: Page = Object.freeze({ kind: "Numbered", Numbered: 1 })
+const mockPage2: Page = Object.freeze({ kind: "Numbered", Numbered: 2 })
+const mockPage3: Page = Object.freeze({ kind: "Numbered", Numbered: 3 })
 
 describe("fromRawPageRange", () => {
   it("should convert a raw page range to a local page object range", () => {
@@ -60,13 +43,13 @@ describe("printPageRange", () => {
   it("should return a string representation of a page range", () => {
     const input: PageRange = { firstPage: mockPage, lastPage: mockPage2 }
     const expected = "1–2"
-    assert.equal(printPageRange(mockTranslate, input), expected)
+    assert.equal(printPageRange(translateMock, input), expected)
   })
 
   it("should handle single page ranges", () => {
     const input: PageRange = { firstPage: mockPage }
     const expected = "1"
-    assert.equal(printPageRange(mockTranslate, input), expected)
+    assert.equal(printPageRange(translateMock, input), expected)
   })
 })
 
@@ -77,6 +60,6 @@ describe("printPageRanges", () => {
       { firstPage: mockPage3 },
     ]
     const expected = "1–2, 3"
-    assert.equal(printPageRanges(mockTranslate, input), expected)
+    assert.equal(printPageRanges(translateMock, input), expected)
   })
 })

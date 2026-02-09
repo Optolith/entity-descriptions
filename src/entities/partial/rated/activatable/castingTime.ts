@@ -9,8 +9,9 @@ import {
   ModifiableCastingTime,
   SlowCastingTime,
   SlowSkillNonModifiableCastingTime,
-} from "optolith-database-schema/types/_ActivatableSkillCastingTime"
-import { GetById } from "../../../../helpers/getTypes.js"
+} from "optolith-database-schema/gen"
+import { Case } from "../../../../helpers/enums.js"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { ResponsiveTextSize } from "../../responsiveText.js"
 import { formatTimeSpan } from "../../units/timeSpan.js"
@@ -23,21 +24,21 @@ import {
 import { getModifiableBySpeed, Speed } from "./speed.js"
 
 const getModifiableCastingTimeTranslation = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   speed: Speed,
   responsiveTextSize: ResponsiveTextSize,
   value: ModifiableCastingTime,
 ): string =>
   mapNullable(
-    getSkillModificationLevelById(value.initial_modification_level),
+    getInstanceById("SkillModificationLevel", value.initial_modification_level),
     modificationLevel =>
       getModifiableBySpeed(
         config =>
           formatTimeSpan(
             locale,
             responsiveTextSize,
-            "Actions",
+            Case("Actions"),
             config.casting_time,
           ),
         config =>
@@ -57,7 +58,7 @@ const getFastSkillNonModifiableCastingTimeTranslation = (
   responsiveTextSize: ResponsiveTextSize,
   value: FastSkillNonModifiableCastingTime,
 ): string =>
-  formatTimeSpan(locale, responsiveTextSize, "Actions", value.actions)
+  formatTimeSpan(locale, responsiveTextSize, Case("Actions"), value.actions)
 
 const getSlowSkillNonModifiableCastingTimeTranslation = (
   locale: LocaleEnvironment,
@@ -67,25 +68,25 @@ const getSlowSkillNonModifiableCastingTimeTranslation = (
 
 const getCastingTimeTranslation = <NonModifiable extends object>(
   getNonModifiableCastingTimeTranslation: (value: NonModifiable) => string,
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   speed: Speed,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
   value: CastingTime<NonModifiable>,
 ): string => {
-  switch (value.tag) {
+  switch (value.kind) {
     case "Modifiable":
       return getModifiableCastingTimeTranslation(
-        getSkillModificationLevelById,
+        getInstanceById,
         locale,
         speed,
         responsiveTextSize,
-        value.modifiable,
+        value.Modifiable,
       )
     case "NonModifiable":
       return (
-        getNonModifiableCastingTimeTranslation(value.non_modifiable) +
+        getNonModifiableCastingTimeTranslation(value.NonModifiable) +
         getNonModifiableSuffixTranslation(
           locale,
           entity,
@@ -108,7 +109,7 @@ const getCastingTimeIncludingLovemakingTranslation = <
   NonModifiable extends object,
 >(
   getNonModifiableCastingTimeTranslation: (value: NonModifiable) => string,
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   speed: Speed,
   entity: Entity,
@@ -119,7 +120,7 @@ const getCastingTimeIncludingLovemakingTranslation = <
     mapNullable(value.default, def =>
       getCastingTimeTranslation(
         getNonModifiableCastingTimeTranslation,
-        getSkillModificationLevelById,
+        getInstanceById,
         locale,
         speed,
         entity,
@@ -142,7 +143,7 @@ const getCastingTimeIncludingLovemakingTranslation = <
  * Get the text for the casting time of a fast activatable skill.
  */
 export const getFastCastingTimeTranslation = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
@@ -155,7 +156,7 @@ export const getFastCastingTimeTranslation = (
         responsiveTextSize,
         nonModifiableValue,
       ),
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Fast,
     entity,
@@ -167,7 +168,7 @@ export const getFastCastingTimeTranslation = (
  * Get the text for the casting time of a slow activatable skill.
  */
 export const getSlowCastingTimeTranslation = (
-  getSkillModificationLevelById: GetById.Static.SkillModificationLevel,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
@@ -180,7 +181,7 @@ export const getSlowCastingTimeTranslation = (
         responsiveTextSize,
         nonModifiableValue,
       ),
-    getSkillModificationLevelById,
+    getInstanceById,
     locale,
     Speed.Slow,
     entity,

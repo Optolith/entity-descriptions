@@ -1,5 +1,4 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { SkillWithEnhancementsIdentifier } from "optolith-database-schema/types/_IdentifierGroup"
 import {
   AdvantageDisadvantagePrerequisiteGroup,
   AnimistPowerPrerequisiteGroup,
@@ -16,8 +15,8 @@ import {
   ProfessionPrerequisiteGroup,
   PublicationPrerequisiteGroup,
   SpellworkPrerequisiteGroup,
-} from "optolith-database-schema/types/prerequisites/PrerequisiteGroups"
-import { GetById } from "../../../helpers/getTypes.js"
+} from "optolith-database-schema/gen"
+import type { GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
 import { PrerequisitePart } from "./part.js"
 import {
@@ -28,14 +27,12 @@ import { printAnimistPowerPrerequisite } from "./single/animistPower.js"
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
 import { printCommonSuggestedByRCPPrerequisite } from "./single/commonSuggestedByRCP.js"
 import { printCulturePrerequisite } from "./single/culture.js"
-import {
-  printExternalEnhancementPrerequisite,
-  printInternalEnhancementPrerequisite,
-} from "./single/enhancement.js"
+import { printEnhancementPrerequisite } from "./single/enhancement.js"
 import { printInfluencePrerequisite } from "./single/influence.js"
 import { printMagicalTraditionPrerequisite } from "./single/magicalTradition.js"
 import { printNoOtherAncestorBloodAdvantagePrerequisite } from "./single/noOtherAncestorBloodAdvantage.js"
 import { printPactPrerequisite } from "./single/pact.js"
+import { printPersonalityTraitPrerequisite } from "./single/personalityTrait.js"
 import { printPrimaryAttributePrerequisite } from "./single/primaryAttribute.js"
 import { printPublicationPrerequisite } from "./single/publication.js"
 import { printRacePrerequisite } from "./single/race.js"
@@ -61,13 +58,13 @@ export const printDerivedCharacteristicPrerequisiteGroup = (
   //   default:
   //     return assertExhaustive(prerequisite)
   // }
-  printRulePrerequisite(locale, prerequisite.rule)
+  printRulePrerequisite(locale, prerequisite.Rule)
 
 /**
  * Print the translation of a publication prerequisite group.
  */
 export const printPublicationPrerequisiteGroup = (
-  getPublicationById: GetById.Static.Publication,
+  getInstanceById: GetInstanceById<"Publication">,
   locale: LocaleEnvironment,
   prerequisite: PublicationPrerequisiteGroup,
 ): PrerequisitePart | undefined =>
@@ -77,225 +74,157 @@ export const printPublicationPrerequisiteGroup = (
   //     return assertExhaustive(prerequisite)
   // }
   printPublicationPrerequisite(
-    getPublicationById,
+    getInstanceById,
     locale,
-    prerequisite.publication,
+    prerequisite.Publication,
   )
 
 /**
  * Print the translation of a general prerequisite group.
  */
 export const printGeneralPrerequisiteGroup = (
-  getRaceById: GetById.Static.Race,
-  getCultureById: GetById.Static.Culture,
-  getPactCategoryById: GetById.Static.PactCategory,
-  getSocialStatusById: GetById.Static.SocialStatus,
-  getStateById: GetById.Static.State,
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
-  getAttributeById: GetById.Static.Attribute,
-  getSkillById: GetById.Static.Skill,
-  getCloseCombatTechniqueById: GetById.Static.CloseCombatTechnique,
-  getRangedCombatTechniqueById: GetById.Static.RangedCombatTechnique,
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
-  getPropertyById: GetById.Static.Property,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<
+    | "Race"
+    | "Culture"
+    | "PactCategory"
+    | "SocialStatus"
+    | "State"
+    | "Advantage"
+    | "Disadvantage"
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+    | "Attribute"
+    | "Skill"
+    | "CloseCombatTechnique"
+    | "RangedCombatTechnique"
+    | "Spell"
+    | "Ritual"
+    | "LiturgicalChant"
+    | "Ceremony"
+    | "Property"
+    | "Aspect"
+  >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: GeneralPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.sex)
+      return printBinarySexPrerequisite(locale, prerequisite.Sex)
     case "Race":
-      return printRacePrerequisite(getRaceById, locale, prerequisite.race)
+      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
       return printCulturePrerequisite(
-        getCultureById,
+        getInstanceById,
         locale,
-        prerequisite.culture,
+        prerequisite.Culture,
       )
     case "Pact":
-      return printPactPrerequisite(
-        getPactCategoryById,
-        locale,
-        prerequisite.pact,
-      )
+      return printPactPrerequisite(getInstanceById, locale, prerequisite.Pact)
     case "SocialStatus":
       return printSocialStatusPrerequisite(
-        getSocialStatusById,
+        getInstanceById,
         locale,
-        prerequisite.social_status,
+        prerequisite.SocialStatus,
       )
     case "State":
-      return printStatePrerequisite(getStateById, locale, prerequisite.state)
+      return printStatePrerequisite(getInstanceById, locale, prerequisite.State)
     case "Rule":
-      return printRulePrerequisite(locale, prerequisite.rule)
+      return printRulePrerequisite(locale, prerequisite.Rule)
     case "PrimaryAttribute":
       return printPrimaryAttributePrerequisite(
         locale,
-        prerequisite.primary_attribute,
+        prerequisite.PrimaryAttribute,
       )
     case "Activatable":
       return printActivatablePrerequisite(
-        getAdvantageById,
-        getDisadvantageById,
-        getAdvancedCombatSpecialAbilityById,
-        getAdvancedKarmaSpecialAbilityById,
-        getAdvancedMagicalSpecialAbilityById,
-        getAdvancedSkillSpecialAbilityById,
-        getAncestorGlyphById,
-        getArcaneOrbEnchantmentById,
-        getAttireEnchantmentById,
-        getBlessedTraditionById,
-        getBowlEnchantmentById,
-        getBrawlingSpecialAbilityById,
-        getCauldronEnchantmentById,
-        getCeremonialItemSpecialAbilityById,
-        getChronicleEnchantmentById,
-        getCombatSpecialAbilityById,
-        getCombatStyleSpecialAbilityById,
-        getCommandSpecialAbilityById,
-        getDaggerRitualById,
-        getFamiliarSpecialAbilityById,
-        getFatePointSexSpecialAbilityById,
-        getFatePointSpecialAbilityById,
-        getFoolsHatEnchantmentById,
-        getGeneralSpecialAbilityById,
-        getInstrumentEnchantmentById,
-        getKarmaSpecialAbilityById,
-        getKrallenkettenzauberById,
-        getLiturgicalStyleSpecialAbilityById,
-        getLycantropicGiftById,
-        getMagicalSignById,
-        getMagicalSpecialAbilityById,
-        getMagicalTraditionById,
-        getMagicStyleSpecialAbilityById,
-        getOrbEnchantmentById,
-        getPactGiftById,
-        getProtectiveWardingCircleSpecialAbilityById,
-        getRingEnchantmentById,
-        getSermonById,
-        getSexSpecialAbilityById,
-        getSickleRitualById,
-        getSikaryanDrainSpecialAbilityById,
-        getSkillStyleSpecialAbilityById,
-        getSpellSwordEnchantmentById,
-        getStaffEnchantmentById,
-        getToyEnchantmentById,
-        getTrinkhornzauberById,
-        getVampiricGiftById,
-        getVisionById,
-        getWandEnchantmentById,
-        getWeaponEnchantmentById,
-        getAspectById,
+        getInstanceById,
         getResolvedSelectOptionById,
         locale,
-        prerequisite.activatable,
+        prerequisite.Activatable,
       )
     case "BlessedTradition":
       return printBlessedTraditionPrerequisite(
         locale,
-        prerequisite.blessed_tradition,
+        prerequisite.BlessedTradition,
       )
     case "MagicalTradition":
       return printMagicalTraditionPrerequisite(
         locale,
-        prerequisite.magical_tradition,
+        prerequisite.MagicalTradition,
       )
     case "Rated":
-      return printRatedPrerequisite(
-        getAttributeById,
-        getSkillById,
-        getCloseCombatTechniqueById,
-        getRangedCombatTechniqueById,
-        getSpellById,
-        getRitualById,
-        getLiturgicalChantById,
-        getCeremonyById,
-        locale,
-        prerequisite.rated,
-      )
+      return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     case "RatedMinimumNumber":
       return printRatedMinimumNumberPrerequisite(
-        getSkillById,
-        getPropertyById,
-        getAspectById,
+        getInstanceById,
         locale,
-        prerequisite.rated_minimum_number,
+        prerequisite.RatedMinimumNumber,
       )
     case "RatedSum":
       return printRatedSumPrerequisite(
-        getSkillById,
+        getInstanceById,
         locale,
-        prerequisite.rated_sum,
+        prerequisite.RatedSum,
       )
-    case "ExternalEnhancement":
-      return printExternalEnhancementPrerequisite(
-        getSpellById,
-        getRitualById,
-        getLiturgicalChantById,
-        getCeremonyById,
+    case "Enhancement":
+      return printEnhancementPrerequisite(
+        getInstanceById,
         locale,
-        prerequisite.external_enhancement,
+        prerequisite.Enhancement,
       )
     case "Text":
-      return printTextPrerequisite(locale, prerequisite.text)
+      return printTextPrerequisite(locale, prerequisite.Text)
     case "SexualCharacteristic":
       return printSexualCharacteristicPrerequisite(
         locale,
-        prerequisite.sexual_characteristic,
+        prerequisite.SexualCharacteristic,
       )
     default:
       return assertExhaustive(prerequisite)
@@ -306,152 +235,93 @@ export const printGeneralPrerequisiteGroup = (
  * Print the translation of a profession prerequisite group.
  */
 export const printProfessionPrerequisiteGroup = (
-  getRaceById: GetById.Static.Race,
-  getCultureById: GetById.Static.Culture,
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
-  getAttributeById: GetById.Static.Attribute,
-  getSkillById: GetById.Static.Skill,
-  getCloseCombatTechniqueById: GetById.Static.CloseCombatTechnique,
-  getRangedCombatTechniqueById: GetById.Static.RangedCombatTechnique,
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<
+    | "Race"
+    | "Culture"
+    | "Advantage"
+    | "Disadvantage"
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+    | "Attribute"
+    | "Skill"
+    | "CloseCombatTechnique"
+    | "RangedCombatTechnique"
+    | "Spell"
+    | "Ritual"
+    | "LiturgicalChant"
+    | "Ceremony"
+    | "Aspect"
+  >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: ProfessionPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.sex)
+      return printBinarySexPrerequisite(locale, prerequisite.Sex)
     case "Race":
-      return printRacePrerequisite(getRaceById, locale, prerequisite.race)
+      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
       return printCulturePrerequisite(
-        getCultureById,
+        getInstanceById,
         locale,
-        prerequisite.culture,
+        prerequisite.Culture,
       )
     case "Activatable":
       return printActivatablePrerequisite(
-        getAdvantageById,
-        getDisadvantageById,
-        getAdvancedCombatSpecialAbilityById,
-        getAdvancedKarmaSpecialAbilityById,
-        getAdvancedMagicalSpecialAbilityById,
-        getAdvancedSkillSpecialAbilityById,
-        getAncestorGlyphById,
-        getArcaneOrbEnchantmentById,
-        getAttireEnchantmentById,
-        getBlessedTraditionById,
-        getBowlEnchantmentById,
-        getBrawlingSpecialAbilityById,
-        getCauldronEnchantmentById,
-        getCeremonialItemSpecialAbilityById,
-        getChronicleEnchantmentById,
-        getCombatSpecialAbilityById,
-        getCombatStyleSpecialAbilityById,
-        getCommandSpecialAbilityById,
-        getDaggerRitualById,
-        getFamiliarSpecialAbilityById,
-        getFatePointSexSpecialAbilityById,
-        getFatePointSpecialAbilityById,
-        getFoolsHatEnchantmentById,
-        getGeneralSpecialAbilityById,
-        getInstrumentEnchantmentById,
-        getKarmaSpecialAbilityById,
-        getKrallenkettenzauberById,
-        getLiturgicalStyleSpecialAbilityById,
-        getLycantropicGiftById,
-        getMagicalSignById,
-        getMagicalSpecialAbilityById,
-        getMagicalTraditionById,
-        getMagicStyleSpecialAbilityById,
-        getOrbEnchantmentById,
-        getPactGiftById,
-        getProtectiveWardingCircleSpecialAbilityById,
-        getRingEnchantmentById,
-        getSermonById,
-        getSexSpecialAbilityById,
-        getSickleRitualById,
-        getSikaryanDrainSpecialAbilityById,
-        getSkillStyleSpecialAbilityById,
-        getSpellSwordEnchantmentById,
-        getStaffEnchantmentById,
-        getToyEnchantmentById,
-        getTrinkhornzauberById,
-        getVampiricGiftById,
-        getVisionById,
-        getWandEnchantmentById,
-        getWeaponEnchantmentById,
-        getAspectById,
+        getInstanceById,
         getResolvedSelectOptionById,
         locale,
-        prerequisite.activatable,
+        prerequisite.Activatable,
       )
     case "Rated":
-      return printRatedPrerequisite(
-        getAttributeById,
-        getSkillById,
-        getCloseCombatTechniqueById,
-        getRangedCombatTechniqueById,
-        getSpellById,
-        getRitualById,
-        getLiturgicalChantById,
-        getCeremonyById,
-        locale,
-        prerequisite.rated,
-      )
+      return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -461,230 +331,154 @@ export const printProfessionPrerequisiteGroup = (
  * Print the translation of an advantage/disadvantage prerequisite group.
  */
 export const printAdvantageDisadvantagePrerequisiteGroup = (
-  getRaceById: GetById.Static.Race,
-  getCultureById: GetById.Static.Culture,
-  getPactCategoryById: GetById.Static.PactCategory,
-  getSocialStatusById: GetById.Static.SocialStatus,
-  getStateById: GetById.Static.State,
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
-  getAttributeById: GetById.Static.Attribute,
-  getSkillById: GetById.Static.Skill,
-  getCloseCombatTechniqueById: GetById.Static.CloseCombatTechnique,
-  getRangedCombatTechniqueById: GetById.Static.RangedCombatTechnique,
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
-  getPropertyById: GetById.Static.Property,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<
+    | "Race"
+    | "Culture"
+    | "PactCategory"
+    | "SocialStatus"
+    | "State"
+    | "Advantage"
+    | "Disadvantage"
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+    | "Attribute"
+    | "Skill"
+    | "CloseCombatTechnique"
+    | "RangedCombatTechnique"
+    | "Spell"
+    | "Ritual"
+    | "LiturgicalChant"
+    | "Ceremony"
+    | "Property"
+    | "Aspect"
+  >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: AdvantageDisadvantagePrerequisiteGroup,
   name: string,
   type: "advantage" | "disadvantage",
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "CommonSuggestedByRCP":
-      return printCommonSuggestedByRCPPrerequisite(
-        locale,
-        prerequisite.common_suggested_by_rcp,
-        name,
-        type,
-      )
+      return printCommonSuggestedByRCPPrerequisite(locale, name, type)
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.sex)
+      return printBinarySexPrerequisite(locale, prerequisite.Sex)
     case "Race":
-      return printRacePrerequisite(getRaceById, locale, prerequisite.race)
+      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
       return printCulturePrerequisite(
-        getCultureById,
+        getInstanceById,
         locale,
-        prerequisite.culture,
+        prerequisite.Culture,
       )
     case "Pact":
-      return printPactPrerequisite(
-        getPactCategoryById,
-        locale,
-        prerequisite.pact,
-      )
+      return printPactPrerequisite(getInstanceById, locale, prerequisite.Pact)
     case "SocialStatus":
       return printSocialStatusPrerequisite(
-        getSocialStatusById,
+        getInstanceById,
         locale,
-        prerequisite.social_status,
+        prerequisite.SocialStatus,
       )
     case "State":
-      return printStatePrerequisite(getStateById, locale, prerequisite.state)
+      return printStatePrerequisite(getInstanceById, locale, prerequisite.State)
     case "Rule":
-      return printRulePrerequisite(locale, prerequisite.rule)
+      return printRulePrerequisite(locale, prerequisite.Rule)
     case "PrimaryAttribute":
       return printPrimaryAttributePrerequisite(
         locale,
-        prerequisite.primary_attribute,
+        prerequisite.PrimaryAttribute,
       )
     case "Activatable":
       return printActivatablePrerequisite(
-        getAdvantageById,
-        getDisadvantageById,
-        getAdvancedCombatSpecialAbilityById,
-        getAdvancedKarmaSpecialAbilityById,
-        getAdvancedMagicalSpecialAbilityById,
-        getAdvancedSkillSpecialAbilityById,
-        getAncestorGlyphById,
-        getArcaneOrbEnchantmentById,
-        getAttireEnchantmentById,
-        getBlessedTraditionById,
-        getBowlEnchantmentById,
-        getBrawlingSpecialAbilityById,
-        getCauldronEnchantmentById,
-        getCeremonialItemSpecialAbilityById,
-        getChronicleEnchantmentById,
-        getCombatSpecialAbilityById,
-        getCombatStyleSpecialAbilityById,
-        getCommandSpecialAbilityById,
-        getDaggerRitualById,
-        getFamiliarSpecialAbilityById,
-        getFatePointSexSpecialAbilityById,
-        getFatePointSpecialAbilityById,
-        getFoolsHatEnchantmentById,
-        getGeneralSpecialAbilityById,
-        getInstrumentEnchantmentById,
-        getKarmaSpecialAbilityById,
-        getKrallenkettenzauberById,
-        getLiturgicalStyleSpecialAbilityById,
-        getLycantropicGiftById,
-        getMagicalSignById,
-        getMagicalSpecialAbilityById,
-        getMagicalTraditionById,
-        getMagicStyleSpecialAbilityById,
-        getOrbEnchantmentById,
-        getPactGiftById,
-        getProtectiveWardingCircleSpecialAbilityById,
-        getRingEnchantmentById,
-        getSermonById,
-        getSexSpecialAbilityById,
-        getSickleRitualById,
-        getSikaryanDrainSpecialAbilityById,
-        getSkillStyleSpecialAbilityById,
-        getSpellSwordEnchantmentById,
-        getStaffEnchantmentById,
-        getToyEnchantmentById,
-        getTrinkhornzauberById,
-        getVampiricGiftById,
-        getVisionById,
-        getWandEnchantmentById,
-        getWeaponEnchantmentById,
-        getAspectById,
+        getInstanceById,
         getResolvedSelectOptionById,
         locale,
-        prerequisite.activatable,
+        prerequisite.Activatable,
       )
     case "BlessedTradition":
       return printBlessedTraditionPrerequisite(
         locale,
-        prerequisite.blessed_tradition,
+        prerequisite.BlessedTradition,
       )
     case "MagicalTradition":
       return printMagicalTraditionPrerequisite(
         locale,
-        prerequisite.magical_tradition,
+        prerequisite.MagicalTradition,
       )
     case "Rated":
-      return printRatedPrerequisite(
-        getAttributeById,
-        getSkillById,
-        getCloseCombatTechniqueById,
-        getRangedCombatTechniqueById,
-        getSpellById,
-        getRitualById,
-        getLiturgicalChantById,
-        getCeremonyById,
-        locale,
-        prerequisite.rated,
-      )
+      return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     case "RatedMinimumNumber":
       return printRatedMinimumNumberPrerequisite(
-        getSkillById,
-        getPropertyById,
-        getAspectById,
+        getInstanceById,
         locale,
-        prerequisite.rated_minimum_number,
+        prerequisite.RatedMinimumNumber,
       )
     case "RatedSum":
       return printRatedSumPrerequisite(
-        getSkillById,
+        getInstanceById,
         locale,
-        prerequisite.rated_sum,
+        prerequisite.RatedSum,
       )
-    case "ExternalEnhancement":
-      return printExternalEnhancementPrerequisite(
-        getSpellById,
-        getRitualById,
-        getLiturgicalChantById,
-        getCeremonyById,
+    case "Enhancement":
+      return printEnhancementPrerequisite(
+        getInstanceById,
         locale,
-        prerequisite.external_enhancement,
+        prerequisite.Enhancement,
       )
     case "Text":
-      return printTextPrerequisite(locale, prerequisite.text)
+      return printTextPrerequisite(locale, prerequisite.Text)
     case "NoOtherAncestorBloodAdvantage":
-      return printNoOtherAncestorBloodAdvantagePrerequisite(
-        locale,
-        prerequisite.no_other_ancestor_blood_advantage,
-      )
+      return printNoOtherAncestorBloodAdvantagePrerequisite(locale)
     case "SexualCharacteristic":
       return printSexualCharacteristicPrerequisite(
         locale,
-        prerequisite.sexual_characteristic,
+        prerequisite.SexualCharacteristic,
       )
     default:
       return assertExhaustive(prerequisite)
@@ -695,18 +489,18 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
  * Print the translation of an arcane tradition prerequisite group.
  */
 export const printArcaneTraditionPrerequisiteGroup = (
-  getCultureById: GetById.Static.Culture,
+  getInstanceById: GetInstanceById<"Culture">,
   locale: LocaleEnvironment,
   prerequisite: ArcaneTraditionPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.sex)
+      return printBinarySexPrerequisite(locale, prerequisite.Sex)
     case "Culture":
       return printCulturePrerequisite(
-        getCultureById,
+        getInstanceById,
         locale,
-        prerequisite.culture,
+        prerequisite.Culture,
       )
     default:
       return assertExhaustive(prerequisite)
@@ -717,19 +511,27 @@ export const printArcaneTraditionPrerequisiteGroup = (
  * Print the translation of a personality trait prerequisite group.
  */
 export const printPersonalityTraitPrerequisiteGroup = (
-  getCultureById: GetById.Static.Culture,
+  getInstanceById: GetInstanceById<"Race" | "Culture" | "PersonalityTrait">,
   locale: LocaleEnvironment,
   prerequisite: PersonalityTraitPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
+    case "Race":
+      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
       return printCulturePrerequisite(
-        getCultureById,
+        getInstanceById,
         locale,
-        prerequisite.culture,
+        prerequisite.Culture,
+      )
+    case "PersonalityTrait":
+      return printPersonalityTraitPrerequisite(
+        getInstanceById,
+        locale,
+        prerequisite.PersonalityTrait,
       )
     case "Text":
-      return printTextPrerequisite(locale, prerequisite.text)
+      return printTextPrerequisite(locale, prerequisite.Text)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -739,33 +541,24 @@ export const printPersonalityTraitPrerequisiteGroup = (
  * Print the translation of a spellwork prerequisite group.
  */
 export const printSpellworkPrerequisiteGroup = (
-  getAttributeById: GetById.Static.Attribute,
-  getSkillById: GetById.Static.Skill,
-  getCloseCombatTechniqueById: GetById.Static.CloseCombatTechnique,
-  getRangedCombatTechniqueById: GetById.Static.RangedCombatTechnique,
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
+  getInstanceById: GetInstanceById<
+    | "Attribute"
+    | "Skill"
+    | "CloseCombatTechnique"
+    | "RangedCombatTechnique"
+    | "Spell"
+    | "Ritual"
+    | "LiturgicalChant"
+    | "Ceremony"
+  >,
   locale: LocaleEnvironment,
   prerequisite: SpellworkPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Rule":
-      return printRulePrerequisite(locale, prerequisite.rule)
+      return printRulePrerequisite(locale, prerequisite.Rule)
     case "Rated":
-      return printRatedPrerequisite(
-        getAttributeById,
-        getSkillById,
-        getCloseCombatTechniqueById,
-        getRangedCombatTechniqueById,
-        getSpellById,
-        getRitualById,
-        getLiturgicalChantById,
-        getCeremonyById,
-        locale,
-        prerequisite.rated,
-      )
+      return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -783,7 +576,7 @@ export const printLiturgyPrerequisiteGroup = (
   //   default:
   //     return assertExhaustive(prerequisite)
   // }
-  printRulePrerequisite(locale, prerequisite.rule)
+  printRulePrerequisite(locale, prerequisite.Rule)
 
 /**
  * Print the translation of an influence prerequisite group.
@@ -792,11 +585,11 @@ export const printInfluencePrerequisiteGroup = (
   locale: LocaleEnvironment,
   prerequisite: InfluencePrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Influence":
-      return printInfluencePrerequisite(locale, prerequisite.influence)
+      return printInfluencePrerequisite(locale, prerequisite.Influence)
     case "Text":
-      return printTextPrerequisite(locale, prerequisite.text)
+      return printTextPrerequisite(locale, prerequisite.Text)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -806,124 +599,76 @@ export const printInfluencePrerequisiteGroup = (
  * Print the translation of a language prerequisite group.
  */
 export const printLanguagePrerequisiteGroup = (
-  getRaceById: GetById.Static.Race,
-  getAdvantageById: GetById.Static.Advantage,
-  getDisadvantageById: GetById.Static.Disadvantage,
-  getAdvancedCombatSpecialAbilityById: GetById.Static.AdvancedCombatSpecialAbility,
-  getAdvancedKarmaSpecialAbilityById: GetById.Static.AdvancedKarmaSpecialAbility,
-  getAdvancedMagicalSpecialAbilityById: GetById.Static.AdvancedMagicalSpecialAbility,
-  getAdvancedSkillSpecialAbilityById: GetById.Static.AdvancedSkillSpecialAbility,
-  getAncestorGlyphById: GetById.Static.AncestorGlyph,
-  getArcaneOrbEnchantmentById: GetById.Static.ArcaneOrbEnchantment,
-  getAttireEnchantmentById: GetById.Static.AttireEnchantment,
-  getBlessedTraditionById: GetById.Static.BlessedTradition,
-  getBowlEnchantmentById: GetById.Static.BowlEnchantment,
-  getBrawlingSpecialAbilityById: GetById.Static.BrawlingSpecialAbility,
-  getCauldronEnchantmentById: GetById.Static.CauldronEnchantment,
-  getCeremonialItemSpecialAbilityById: GetById.Static.CeremonialItemSpecialAbility,
-  getChronicleEnchantmentById: GetById.Static.ChronicleEnchantment,
-  getCombatSpecialAbilityById: GetById.Static.CombatSpecialAbility,
-  getCombatStyleSpecialAbilityById: GetById.Static.CombatStyleSpecialAbility,
-  getCommandSpecialAbilityById: GetById.Static.CommandSpecialAbility,
-  getDaggerRitualById: GetById.Static.DaggerRitual,
-  getFamiliarSpecialAbilityById: GetById.Static.FamiliarSpecialAbility,
-  getFatePointSexSpecialAbilityById: GetById.Static.FatePointSexSpecialAbility,
-  getFatePointSpecialAbilityById: GetById.Static.FatePointSpecialAbility,
-  getFoolsHatEnchantmentById: GetById.Static.FoolsHatEnchantment,
-  getGeneralSpecialAbilityById: GetById.Static.GeneralSpecialAbility,
-  getInstrumentEnchantmentById: GetById.Static.InstrumentEnchantment,
-  getKarmaSpecialAbilityById: GetById.Static.KarmaSpecialAbility,
-  getKrallenkettenzauberById: GetById.Static.Krallenkettenzauber,
-  getLiturgicalStyleSpecialAbilityById: GetById.Static.LiturgicalStyleSpecialAbility,
-  getLycantropicGiftById: GetById.Static.LycantropicGift,
-  getMagicalSignById: GetById.Static.MagicalSign,
-  getMagicalSpecialAbilityById: GetById.Static.MagicalSpecialAbility,
-  getMagicalTraditionById: GetById.Static.MagicalTradition,
-  getMagicStyleSpecialAbilityById: GetById.Static.MagicStyleSpecialAbility,
-  getOrbEnchantmentById: GetById.Static.OrbEnchantment,
-  getPactGiftById: GetById.Static.PactGift,
-  getProtectiveWardingCircleSpecialAbilityById: GetById.Static.ProtectiveWardingCircleSpecialAbility,
-  getRingEnchantmentById: GetById.Static.RingEnchantment,
-  getSermonById: GetById.Static.Sermon,
-  getSexSpecialAbilityById: GetById.Static.SexSpecialAbility,
-  getSickleRitualById: GetById.Static.SickleRitual,
-  getSikaryanDrainSpecialAbilityById: GetById.Static.SikaryanDrainSpecialAbility,
-  getSkillStyleSpecialAbilityById: GetById.Static.SkillStyleSpecialAbility,
-  getSpellSwordEnchantmentById: GetById.Static.SpellSwordEnchantment,
-  getStaffEnchantmentById: GetById.Static.StaffEnchantment,
-  getToyEnchantmentById: GetById.Static.ToyEnchantment,
-  getTrinkhornzauberById: GetById.Static.Trinkhornzauber,
-  getVampiricGiftById: GetById.Static.VampiricGift,
-  getVisionById: GetById.Static.Vision,
-  getWandEnchantmentById: GetById.Static.WandEnchantment,
-  getWeaponEnchantmentById: GetById.Static.WeaponEnchantment,
-  getAspectById: GetById.Static.Aspect,
+  getInstanceById: GetInstanceById<
+    | "Race"
+    | "Advantage"
+    | "Disadvantage"
+    | "AdvancedCombatSpecialAbility"
+    | "AdvancedKarmaSpecialAbility"
+    | "AdvancedMagicalSpecialAbility"
+    | "AdvancedSkillSpecialAbility"
+    | "AncestorGlyph"
+    | "ArcaneOrbEnchantment"
+    | "AttireEnchantment"
+    | "BlessedTradition"
+    | "BowlEnchantment"
+    | "BrawlingSpecialAbility"
+    | "CauldronEnchantment"
+    | "CeremonialItemSpecialAbility"
+    | "ChronicleEnchantment"
+    | "CombatSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "CommandSpecialAbility"
+    | "DaggerRitual"
+    | "FamiliarSpecialAbility"
+    | "FatePointSexSpecialAbility"
+    | "FatePointSpecialAbility"
+    | "FoolsHatEnchantment"
+    | "GeneralSpecialAbility"
+    | "InstrumentEnchantment"
+    | "KarmaSpecialAbility"
+    | "Krallenkettenzauber"
+    | "LiturgicalStyleSpecialAbility"
+    | "LycantropicGift"
+    | "MagicalSign"
+    | "MagicalSpecialAbility"
+    | "MagicalTradition"
+    | "MagicStyleSpecialAbility"
+    | "OrbEnchantment"
+    | "PactGift"
+    | "ProtectiveWardingCircleSpecialAbility"
+    | "RingEnchantment"
+    | "Sermon"
+    | "SexSpecialAbility"
+    | "SickleRitual"
+    | "SikaryanDrainSpecialAbility"
+    | "SkillStyleSpecialAbility"
+    | "SpellSwordEnchantment"
+    | "StaffEnchantment"
+    | "ToyEnchantment"
+    | "Trinkhornzauber"
+    | "VampiricGift"
+    | "Vision"
+    | "WandEnchantment"
+    | "WeaponEnchantment"
+    | "Aspect"
+  >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: LanguagePrerequisiteGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Race":
-      return printRacePrerequisite(getRaceById, locale, prerequisite.race)
+      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Activatable":
       return printActivatablePrerequisite(
-        getAdvantageById,
-        getDisadvantageById,
-        getAdvancedCombatSpecialAbilityById,
-        getAdvancedKarmaSpecialAbilityById,
-        getAdvancedMagicalSpecialAbilityById,
-        getAdvancedSkillSpecialAbilityById,
-        getAncestorGlyphById,
-        getArcaneOrbEnchantmentById,
-        getAttireEnchantmentById,
-        getBlessedTraditionById,
-        getBowlEnchantmentById,
-        getBrawlingSpecialAbilityById,
-        getCauldronEnchantmentById,
-        getCeremonialItemSpecialAbilityById,
-        getChronicleEnchantmentById,
-        getCombatSpecialAbilityById,
-        getCombatStyleSpecialAbilityById,
-        getCommandSpecialAbilityById,
-        getDaggerRitualById,
-        getFamiliarSpecialAbilityById,
-        getFatePointSexSpecialAbilityById,
-        getFatePointSpecialAbilityById,
-        getFoolsHatEnchantmentById,
-        getGeneralSpecialAbilityById,
-        getInstrumentEnchantmentById,
-        getKarmaSpecialAbilityById,
-        getKrallenkettenzauberById,
-        getLiturgicalStyleSpecialAbilityById,
-        getLycantropicGiftById,
-        getMagicalSignById,
-        getMagicalSpecialAbilityById,
-        getMagicalTraditionById,
-        getMagicStyleSpecialAbilityById,
-        getOrbEnchantmentById,
-        getPactGiftById,
-        getProtectiveWardingCircleSpecialAbilityById,
-        getRingEnchantmentById,
-        getSermonById,
-        getSexSpecialAbilityById,
-        getSickleRitualById,
-        getSikaryanDrainSpecialAbilityById,
-        getSkillStyleSpecialAbilityById,
-        getSpellSwordEnchantmentById,
-        getStaffEnchantmentById,
-        getToyEnchantmentById,
-        getTrinkhornzauberById,
-        getVampiricGiftById,
-        getVisionById,
-        getWandEnchantmentById,
-        getWeaponEnchantmentById,
-        getAspectById,
+        getInstanceById,
         getResolvedSelectOptionById,
         locale,
-        prerequisite.activatable,
+        prerequisite.Activatable,
       )
     case "Text":
-      return printTextPrerequisite(locale, prerequisite.text)
+      return printTextPrerequisite(locale, prerequisite.Text)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -933,7 +678,7 @@ export const printLanguagePrerequisiteGroup = (
  * Print the translation of an animist power prerequisite group.
  */
 export const printAnimistPowerPrerequisiteGroup = (
-  getAnimistPowerById: GetById.Static.AnimistPower,
+  getInstanceById: GetInstanceById<"AnimistPower">,
   locale: LocaleEnvironment,
   prerequisite: AnimistPowerPrerequisiteGroup,
 ): PrerequisitePart | undefined =>
@@ -943,9 +688,9 @@ export const printAnimistPowerPrerequisiteGroup = (
   //     return assertExhaustive(prerequisite)
   // }
   printAnimistPowerPrerequisite(
-    getAnimistPowerById,
+    getInstanceById,
     locale,
-    prerequisite.animist_power,
+    prerequisite.AnimistPower,
   )
 
 /**
@@ -960,54 +705,51 @@ export const printGeodeRitualPrerequisiteGroup = (
   //   default:
   //     return assertExhaustive(prerequisite)
   // }
-  printInfluencePrerequisite(locale, prerequisite.influence)
+  printInfluencePrerequisite(locale, prerequisite.Influence)
 
 /**
  * Print the translation of an enhancement prerequisite group.
  */
 export const printEnhancementPrerequisiteGroup = (
-  getSpellById: GetById.Static.Spell,
-  getRitualById: GetById.Static.Ritual,
-  getLiturgicalChantById: GetById.Static.LiturgicalChant,
-  getCeremonyById: GetById.Static.Ceremony,
+  getInstanceById: GetInstanceById<
+    "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony"
+  >,
   locale: LocaleEnvironment,
   prerequisite: EnhancementPrerequisiteGroup,
-  parentId: SkillWithEnhancementsIdentifier,
-): PrerequisitePart | undefined =>
-  // switch (prerequisite.tag) {
-  //   case "InternalEnhancement":
-  //   default:
-  //     return assertExhaustive(prerequisite)
-  // }
-  printInternalEnhancementPrerequisite(
-    getSpellById,
-    getRitualById,
-    getLiturgicalChantById,
-    getCeremonyById,
-    locale,
-    prerequisite.internal_enhancement,
-    parentId,
-  )
+): PrerequisitePart | undefined => {
+  switch (prerequisite.kind) {
+    case "Rated":
+      return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
+    case "Enhancement":
+      return printEnhancementPrerequisite(
+        getInstanceById,
+        locale,
+        prerequisite.Enhancement,
+      )
+    default:
+      return assertExhaustive(prerequisite)
+  }
+}
 
 /**
  * Print the translation of a precondition group.
  */
 export const printPreconditionGroup = (
-  getPublicationById: GetById.Static.Publication,
+  getInstanceById: GetInstanceById<"Publication">,
   locale: LocaleEnvironment,
   prerequisite: PreconditionGroup,
 ): PrerequisitePart | undefined => {
-  switch (prerequisite.tag) {
+  switch (prerequisite.kind) {
     case "Publication":
       return printPublicationPrerequisite(
-        getPublicationById,
+        getInstanceById,
         locale,
-        prerequisite.publication,
+        prerequisite.Publication,
       )
     case "SexualCharacteristic":
       return printSexualCharacteristicPrerequisite(
         locale,
-        prerequisite.sexual_characteristic,
+        prerequisite.SexualCharacteristic,
       )
     default:
       return assertExhaustive(prerequisite)

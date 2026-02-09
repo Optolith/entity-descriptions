@@ -1,15 +1,15 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { UI } from "optolith-database-schema/types/UI"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
+import type { Translations } from "../../../helpers/translate.js"
 import { Entity } from "../rated/activatable/entity.js"
 
 type EnergyUnit = "ArcaneEnergy" | "KarmaPoints"
 
-const lengthUnitTranslationKeys: {
-  [key in EnergyUnit]: keyof UI
-} = {
-  ArcaneEnergy: "{0} AE",
-  KarmaPoints: "{0} KP",
+const lengthUnitTranslationKeys = {
+  ArcaneEnergy: "{$value} AE",
+  KarmaPoints: "{$value} KP",
+} as const satisfies {
+  [key in EnergyUnit]: keyof Translations
 }
 
 /**
@@ -22,7 +22,7 @@ export const formatEnergy = (
 ): string => {
   const key = lengthUnitTranslationKeys[unit]
 
-  return locale.translate(key, value)
+  return locale.translate(key, { value })
 }
 
 /**
