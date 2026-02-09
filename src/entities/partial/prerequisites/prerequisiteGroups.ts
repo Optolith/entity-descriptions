@@ -52,13 +52,24 @@ import { printTextPrerequisite } from "./single/text.js"
 export const printDerivedCharacteristicPrerequisiteGroup = (
   locale: LocaleEnvironment,
   prerequisite: DerivedCharacteristicPrerequisiteGroup,
-): PrerequisitePart | undefined =>
-  // switch (prerequisite.tag) {
-  //   case "Rule":
-  //   default:
-  //     return assertExhaustive(prerequisite)
-  // }
-  printRulePrerequisite(locale, prerequisite.Rule)
+): PrerequisitePart | undefined => {
+  switch (prerequisite.kind) {
+    case "Rule":
+      return printRulePrerequisite(locale, prerequisite.Rule)
+    case "BlessedTradition":
+      return printBlessedTraditionPrerequisite(
+        locale,
+        prerequisite.BlessedTradition,
+      )
+    case "MagicalTradition":
+      return printMagicalTraditionPrerequisite(
+        locale,
+        prerequisite.MagicalTradition,
+      )
+    default:
+      return assertExhaustive(prerequisite)
+  }
+}
 
 /**
  * Print the translation of a publication prerequisite group.

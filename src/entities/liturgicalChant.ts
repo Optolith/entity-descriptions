@@ -4,14 +4,13 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
   Blessing,
   type Ceremony,
-  type DerivedCharacteristic,
   type LiturgicalChant,
   type LiturgyTradition,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
-import { EntityDescriptionSection } from "../index.js"
+import { EntityDescriptionSection, type IdMap } from "../index.js"
 import { getDurationTranslationForBlessing } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
@@ -151,11 +150,11 @@ export const getLiturgicalChantEntityDescription =
         | "TargetCategory"
         | "Aspect"
         | "BlessedTradition"
+        | "DerivedCharacteristic"
       >
-      getSpirit: () => DerivedCharacteristic | undefined
-      getToughness: () => DerivedCharacteristic | undefined
+      idMap: IdMap
     }
-  >(({ getInstanceById, getSpirit, getToughness }, locale, entry) => {
+  >(({ getInstanceById, idMap }, locale, entry) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
@@ -198,8 +197,8 @@ export const getLiturgicalChantEntityDescription =
           {
             value: entry.check_penalty,
             responsiveText: ResponsiveTextSize.Full,
-            getSpirit,
-            getToughness,
+            getInstanceById,
+            idMap,
           },
         ),
         ...getTextForEffect(locale, translation.effect),
@@ -260,11 +259,11 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       | "TargetCategory"
       | "Aspect"
       | "BlessedTradition"
+      | "DerivedCharacteristic"
     >
-    getSpirit: () => DerivedCharacteristic | undefined
-    getToughness: () => DerivedCharacteristic | undefined
+    idMap: IdMap
   }
->(({ getInstanceById, getSpirit, getToughness }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, entry) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -307,8 +306,8 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
         {
           value: entry.check_penalty,
           responsiveText: ResponsiveTextSize.Full,
-          getSpirit,
-          getToughness,
+          getInstanceById,
+          idMap,
         },
       ),
       ...getTextForEffect(locale, translation.effect),

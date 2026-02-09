@@ -1,12 +1,11 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
-  DerivedCharacteristic,
   SkillCheck,
   SkillCheckPenalty,
 } from "optolith-database-schema/gen"
 import { type GetInstanceById } from "../../../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../../../helpers/translate.js"
-import { EntityDescriptionSection } from "../../../index.js"
+import { EntityDescriptionSection, type IdMap } from "../../../index.js"
 import { responsive, ResponsiveTextSize } from "../responsiveText.js"
 
 /**
@@ -22,8 +21,8 @@ export const getTextForCheck = (
   checkPenalty?: {
     value: SkillCheckPenalty | undefined
     responsiveText: ResponsiveTextSize
-    getSpirit: () => DerivedCharacteristic | undefined
-    getToughness: () => DerivedCharacteristic | undefined
+    getInstanceById: GetInstanceById<"DerivedCharacteristic">
+    idMap: IdMap
   },
 ): EntityDescriptionSection => ({
   label: deps.translate("Check"),
@@ -42,15 +41,21 @@ export const getTextForCheck = (
 
       const { responsiveText } = checkPenalty
 
-      const getDerivedCharacteristicTranslation = (
-        getDerivedCharacteristic: () => DerivedCharacteristic | undefined,
-      ) => deps.translateMap(getDerivedCharacteristic()?.translations)
+      const getDerivedCharacteristicTranslation = (id: string) =>
+        deps.translateMap(
+          checkPenalty.getInstanceById("DerivedCharacteristic", id)
+            ?.translations,
+        )
 
       const getSpiritTranslation = () =>
-        getDerivedCharacteristicTranslation(checkPenalty.getSpirit)
+        getDerivedCharacteristicTranslation(
+          checkPenalty.idMap.DerivedCharacteristic.Spirit,
+        )
 
       const getToughnessTranslation = () =>
-        getDerivedCharacteristicTranslation(checkPenalty.getToughness)
+        getDerivedCharacteristicTranslation(
+          checkPenalty.idMap.DerivedCharacteristic.Toughness,
+        )
 
       const penalty = (() => {
         switch (checkPenalty.value.kind) {

@@ -3,7 +3,6 @@ import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   Cantrip,
-  DerivedCharacteristic,
   MagicalTradition_ID,
   Property_ID,
   Ritual,
@@ -13,7 +12,7 @@ import type {
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
-import { EntityDescriptionSection } from "../index.js"
+import { EntityDescriptionSection, type IdMap } from "../index.js"
 import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
@@ -231,11 +230,11 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
       | "TargetCategory"
       | "Property"
       | "MagicalTradition"
+      | "DerivedCharacteristic"
     >
-    getSpirit: () => DerivedCharacteristic | undefined
-    getToughness: () => DerivedCharacteristic | undefined
+    idMap: IdMap
   }
->(({ getInstanceById, getSpirit, getToughness }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, entry) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -278,8 +277,8 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
         {
           value: entry.check_penalty,
           responsiveText: ResponsiveTextSize.Full,
-          getSpirit,
-          getToughness,
+          getInstanceById,
+          idMap,
         },
       ),
       ...getTextForEffect(locale, translation.effect),
@@ -339,11 +338,11 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
       | "TargetCategory"
       | "Property"
       | "MagicalTradition"
+      | "DerivedCharacteristic"
     >
-    getSpirit: () => DerivedCharacteristic | undefined
-    getToughness: () => DerivedCharacteristic | undefined
+    idMap: IdMap
   }
->(({ getInstanceById, getSpirit, getToughness }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, entry) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -386,8 +385,8 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
         {
           value: entry.check_penalty,
           responsiveText: ResponsiveTextSize.Full,
-          getSpirit,
-          getToughness,
+          getInstanceById,
+          idMap,
         },
       ),
       ...getTextForEffect(locale, translation.effect),
