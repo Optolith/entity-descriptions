@@ -1,3 +1,5 @@
+import { on } from "@elyukai/utils/function"
+import { numAsc } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
@@ -180,33 +182,30 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
           }),
         )
 
-  const groupedByLevel = [...value, ...previousLevelPrerequisites].reduce<{
-    [level: string]: [number, PrerequisiteForLevel<T>[]]
-  }>((acc, prerequisite) => {
-    ;(acc[prerequisite.level] ??= [prerequisite.level, []])[1].push(
-      prerequisite,
-    )
-    return acc
-  }, {})
-
-  const hasBasePrerequisites = Object.hasOwn(groupedByLevel, 1)
-
-  const sortedByLevel = Object.entries(groupedByLevel).sort(
-    ([_a, [a]], [_b, [b]]) => a - b,
+  const groupedByLevel = Map.groupBy(
+    [...value, ...previousLevelPrerequisites],
+    prerequisite => prerequisite.level,
   )
+
+  const hasBasePrerequisites = groupedByLevel.has(1)
+
+  const sortedByLevel = groupedByLevel
+    .entries()
+    .toArray()
+    .sort(on(item => item[0], numAsc))
+
+  const hasOnlyBasePrerequisites =
+    groupedByLevel.size === 1 && hasBasePrerequisites
 
   const printedParts = [
     ...(hasBasePrerequisites
       ? []
       : [
-          `${locale.translate("Level {$level}:", {
+          `${locale.translate("Level {$level}", {
             level: romanize(1),
-          })} ${locale.translate("none")}`,
+          })}: ${locale.translate("none")}`,
         ]),
-    ...sortedByLevel.map(([_, [levelNumber, prerequisites]]) => {
-      const level = locale.translate("Level {$level}:", {
-        level: romanize(levelNumber),
-      })
+    ...sortedByLevel.map(([levelNumber, prerequisites]) => {
       const prerequisitesString = joinPrerequisiteParts(
         locale,
         prerequisites
@@ -215,7 +214,12 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
           )
           .filter(isNotNullish),
       )
-      return `${level} ${prerequisitesString}`
+
+      return hasOnlyBasePrerequisites
+        ? prerequisitesString
+        : `${locale.translate("Level {$level}", {
+            level: romanize(levelNumber),
+          })}: ${prerequisitesString}`
     }),
   ]
 
@@ -600,7 +604,7 @@ export const printAdvantageDisadvantagePrerequisites = (
   locale: LocaleEnvironment,
   value: AdvantageDisadvantagePrerequisites,
   name: string,
-  type: "advantage" | "disadvantage",
+  type: "Advantage" | "Disadvantage",
 ): string =>
   printPrerequisitesForLevels(
     prerequisite =>

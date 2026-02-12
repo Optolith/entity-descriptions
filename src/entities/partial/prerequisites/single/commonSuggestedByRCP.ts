@@ -4,12 +4,12 @@ import { PrerequisitePart } from "../part.js"
 
 const printType = (
   locale: LocaleEnvironment,
-  type: "advantage" | "disadvantage",
+  type: "Advantage" | "Disadvantage",
 ): string => {
   switch (type) {
-    case "advantage":
+    case "Advantage":
       return locale.translate("advantage")
-    case "disadvantage":
+    case "Disadvantage":
       return locale.translate("disadvantage")
     default:
       return assertExhaustive(type)
@@ -22,7 +22,7 @@ const printType = (
 export const printCommonSuggestedByRCPPrerequisite = (
   locale: LocaleEnvironment,
   name: string,
-  type: "advantage" | "disadvantage",
+  type: "Advantage" | "Disadvantage",
 ): PrerequisitePart | undefined => ({
   value: locale.translate(
     "Race, culture, or profession must have {$entry} as an automatic or suggested {$itemOfCategory}",

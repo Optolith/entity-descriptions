@@ -36,14 +36,14 @@ const getModifiableCastingTimeTranslation = (
       getModifiableBySpeed(
         config =>
           formatTimeSpan(
-            locale,
+            locale.translate,
             responsiveTextSize,
             Case("Actions"),
             config.casting_time,
           ),
         config =>
           formatTimeSpan(
-            locale,
+            locale.translate,
             responsiveTextSize,
             config.casting_time.unit,
             config.casting_time.value,
@@ -58,13 +58,19 @@ const getFastSkillNonModifiableCastingTimeTranslation = (
   responsiveTextSize: ResponsiveTextSize,
   value: FastSkillNonModifiableCastingTime,
 ): string =>
-  formatTimeSpan(locale, responsiveTextSize, Case("Actions"), value.actions)
+  formatTimeSpan(
+    locale.translate,
+    responsiveTextSize,
+    Case("Actions"),
+    value.actions,
+  )
 
 const getSlowSkillNonModifiableCastingTimeTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   value: SlowSkillNonModifiableCastingTime,
-): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
+): string =>
+  formatTimeSpan(locale.translate, responsiveTextSize, value.unit, value.value)
 
 const getCastingTimeTranslation = <NonModifiable extends object>(
   getNonModifiableCastingTimeTranslation: (value: NonModifiable) => string,
@@ -103,7 +109,8 @@ const getCastingTimeDuringLovemakingTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   value: CastingTimeDuringLovemaking,
-): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
+): string =>
+  formatTimeSpan(locale.translate, responsiveTextSize, value.unit, value.value)
 
 const getCastingTimeIncludingLovemakingTranslation = <
   NonModifiable extends object,

@@ -1,9 +1,15 @@
+import { deepEqual } from "@optolith/helpers/compare"
 import { MessageFormat } from "messageformat"
 import { findPackageJSON } from "node:module"
 import { dirname, join } from "node:path"
 import { argv } from "node:process"
 import { schema } from "optolith-database-schema"
+import {
+  createCache,
+  type IdMap as CacheIdMap,
+} from "optolith-database-schema/cache"
 import { TSONDB } from "tsondb"
+import { fromUniformCase } from "tsondb/schema/gen"
 import type { LocaleEnvironment } from "../lib/helpers/locale.js"
 import {
   getEntityDescription,
@@ -66,7 +72,17 @@ const localeEnv: LocaleEnvironment = {
   joinDisjunctionList: disjunctionListFormat.format.bind(disjunctionListFormat),
 }
 
-const idMap: IdMap = {
+const idMap: IdMap & CacheIdMap = {
+  Advantage: {
+    Blessed: "e5a9bb6d-9791-4d20-bf34-52a3aaf69726",
+    Spellcaster: "9770a700-acb7-4b60-b6ea-a329a9acb26b",
+  },
+  KarmaSpecialAbility: {
+    AspectKnowledge: "a1c2c1ef-9b1a-4c0b-9bc0-51e4b944269e",
+  },
+  MagicalSpecialAbility: {
+    PropertyKnowledge: "5d9f3ba7-0fb8-48ca-aebb-baa01c67b4ab",
+  },
   DerivedCharacteristic: {
     LifePoints: "190845e8-c2c8-40ff-8908-248f01b49f8b",
     Spirit: "b6f98337-77b4-4f8e-9b6d-fda3a49d5c75",
@@ -75,7 +91,24 @@ const idMap: IdMap = {
   },
 }
 
-const result = getEntityDescription(db, localeEnv, idMap, entity, id)
+const cache = createCache(db, idMap)
+
+const result = getEntityDescription(
+  db,
+  localeEnv,
+  idMap,
+  (parentId, id) =>
+    cache.activatableSelectOptions[parentId.kind][
+      fromUniformCase(parentId)
+    ]?.find(option => deepEqual(option.id, id)),
+  parentId =>
+    cache.activatableSelectOptions[parentId.kind][fromUniformCase(parentId)] ??
+    [],
+  skillId => cache.newApplicationsAndUses.newApplications[skillId] ?? [],
+  skillId => cache.newApplicationsAndUses.uses[skillId] ?? [],
+  entity,
+  id,
+)
 
 if (result === undefined) {
   throw new Error("No description found")

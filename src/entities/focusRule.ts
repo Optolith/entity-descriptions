@@ -9,22 +9,29 @@ import type { GetInstanceById } from "../helpers/getTypes.js"
 export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
   FocusRule,
   { getInstanceById: GetInstanceById<"Subject"> }
->(({ getInstanceById }, { translateMap }, entry) => {
+>(({ getInstanceById }, { translate, translateMap }, entry) => {
   const translation = translateMap(entry.translations)
+  const topicTranslation = translateMap(
+    getInstanceById("Subject", entry.subject)?.translations,
+  )
 
-  if (translation === undefined) {
+  if (translation === undefined || topicTranslation === undefined) {
     return undefined
   }
 
   return {
     title: `${translation.name} (${romanize(entry.level)})`,
-    subtitle:
-      entry.subject !== undefined
-        ? translateMap(getInstanceById("Subject", entry.subject)?.translations)
-            ?.name
-        : undefined,
+    subtitle: topicTranslation.name,
     className: "focus-rule",
-    body: [{ value: translation.description }],
+    body: [
+      {
+        value: translate(
+          "The following rule is a Level {$level} focus rule for the topic {$topic}.",
+          { level: romanize(entry.level), topic: topicTranslation.name },
+        ),
+      },
+      { value: translation.description },
+    ],
     references: entry.src,
   }
 })

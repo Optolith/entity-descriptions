@@ -1,5 +1,8 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { ResolvedSelectOption } from "optolith-database-schema/cache"
+import type {
+  ResolvedSelectOption,
+  ResolvedSelectOptionIdentifier,
+} from "optolith-database-schema/cache"
 import type {
   ActivatableIdentifier,
   ActivatablePrerequisite,
@@ -234,7 +237,7 @@ const getTranslationsForActivatable = (
  */
 export type GetResolvedSelectOptionById = (
   id: ActivatableIdentifier,
-  selectOptionId: RequirableSelectOptionIdentifier,
+  selectOptionId: ResolvedSelectOptionIdentifier,
 ) => ResolvedSelectOption | undefined
 
 const printActivatableName = (

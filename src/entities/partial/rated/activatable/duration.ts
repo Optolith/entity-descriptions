@@ -35,7 +35,7 @@ const getImmediateDurationTranslation = (
   const text = appendInParensIfNotEmpty(
     mapNullable(value.maximum, max => {
       const maxText = formatTimeSpan(
-        locale,
+        locale.translate,
         responsiveTextSize,
         max.unit,
         max.value,
@@ -78,7 +78,7 @@ const getFixedDurationTranslation = (
   value: FixedDuration,
 ): string => {
   const duration = formatTimeSpan(
-    locale,
+    locale.translate,
     responsiveTextSize,
     value.unit,
     value.value,
@@ -106,7 +106,7 @@ const getCheckResultBasedDurationTranslation = (
   value: CheckResultBasedDuration,
 ): string => {
   const duration = formatTimeSpan(
-    locale,
+    locale.translate,
     responsiveTextSize,
     value.unit,
     getCheckResultBasedValueTranslation(locale.translate, value),
@@ -191,7 +191,7 @@ export const getDurationForSustainedTranslation = (
         locale,
         responsiveTextSize,
         formatTimeSpan(
-          locale,
+          locale.translate,
           responsiveTextSize,
           value.maximum.unit,
           value.maximum.value,
@@ -202,7 +202,8 @@ const getDurationDuringLovemakingTranslation = (
   locale: LocaleEnvironment,
   responsiveTextSize: ResponsiveTextSize,
   value: CastingTimeDuringLovemaking,
-): string => formatTimeSpan(locale, responsiveTextSize, value.unit, value.value)
+): string =>
+  formatTimeSpan(locale.translate, responsiveTextSize, value.unit, value.value)
 
 /**
  * Returns the text for the duration of a cantrip.

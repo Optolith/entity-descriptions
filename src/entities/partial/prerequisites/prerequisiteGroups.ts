@@ -413,7 +413,7 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
   locale: LocaleEnvironment,
   prerequisite: AdvantageDisadvantagePrerequisiteGroup,
   name: string,
-  type: "advantage" | "disadvantage",
+  type: "Advantage" | "Disadvantage",
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "CommonSuggestedByRCP":

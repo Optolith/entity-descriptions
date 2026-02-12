@@ -1,3 +1,4 @@
+import { bind } from "@elyukai/utils/function"
 import { mapNullable, mapNullableDefault } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
@@ -16,6 +17,7 @@ import {
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { renderResponsiveMap } from "../../map.js"
 import {
   appendNoteIfRequested,
   getResponsiveText,
@@ -268,66 +270,34 @@ const getOneTimeCostMapTranslation = (
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
   value: OneTimeCostMap,
-): string => {
-  const translation = locale.translateMap(value.translations)
-
-  if (value.translations !== undefined && translation === undefined) {
-    return MISSING_VALUE
-  }
-
-  if (translation?.replacement !== undefined) {
-    const res = getResponsiveTextOptional(
-      translation.replacement,
-      responsiveTextSize,
-    )
-
-    if (res !== undefined) {
-      return res
-    }
-  }
-
-  const labels = value.options
-    .map(
-      option =>
-        locale.translateMap(option.translations)?.label ?? MISSING_VALUE,
-    )
-    .join("/")
-
-  const costs = value.options.map(option => option.value).join("/")
-
-  const permanentCosts = value.options.every(
-    option => option.permanent_value !== undefined,
-  )
-    ? value.options.map(option => option.permanent_value!).join("/")
-    : undefined
-
-  const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
-
-  const notModifiable = getNonModifiableSuffixTranslation(
+): string =>
+  renderResponsiveMap(
+    locale.translate,
+    locale.translateMap,
+    responsiveTextSize,
+    value,
+    option => option.value,
+    bind(formatEnergyByEntity, locale, entity),
+    optionTranslation => optionTranslation.label,
+    translation => translation.list_prepend,
+    translation => translation.list_append,
+    translation => translation.replacement,
+    value.options.every(option => option.permanent_value !== undefined)
+      ? {
+          surround: values =>
+            locale.translate(", {$value} of which are permanent", {
+              value: values,
+            }),
+          getAdditionalValue: option => option.permanent_value!,
+        }
+      : undefined,
+  ) +
+  getNonModifiableSuffixTranslation(
     locale,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
   )
-
-  return (
-    formatCostP(costs) +
-    locale.translate(" for ") +
-    mapNullableDefault(
-      translation?.list_prepend,
-      listPrepend => `${listPrepend} `,
-      "",
-    ) +
-    labels +
-    (translation?.list_append ?? "") +
-    (permanentCosts !== undefined
-      ? locale.translate(", {$value} of which are permanent", {
-          value: formatCostP(permanentCosts),
-        })
-      : "") +
-    notModifiable
-  )
-}
 
 const getSustainedCostMapTranslation = (
   locale: LocaleEnvironment,
@@ -458,7 +428,7 @@ const getModifiableSustainedCostTranslation = (
       const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
 
       const interval = formatTimeSpan(
-        locale,
+        locale.translate,
         responsiveTextSize,
         value.interval.unit,
         value.interval.value,
@@ -515,7 +485,7 @@ const getNonModifiableSustainedCostTranslation = (
   })()
 
   const interval = formatTimeSpan(
-    locale,
+    locale.translate,
     responsiveTextSize,
     value.interval.unit,
     value.interval.value,

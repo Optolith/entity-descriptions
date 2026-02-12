@@ -1,5 +1,4 @@
-import { LocaleEnvironment } from "../../../helpers/locale.js"
-import type { Translations } from "../../../helpers/translate.js"
+import type { Translate, Translations } from "../../../helpers/translate.js"
 import { ResponsiveTextSize, responsive } from "../responsiveText.js"
 
 type TimeSpanUnit =
@@ -42,7 +41,7 @@ const timeSpanUnitTranslationKeys = {
  * Returns the text for a time span unit.
  */
 export const formatTimeSpan = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   unit: { kind: TimeSpanUnit },
   value: number | string,
@@ -53,9 +52,9 @@ export const formatTimeSpan = (
   return responsive(
     responsiveTextSize,
     () =>
-      locale.translate(typeof value === "number" ? fullNumberKey : fullKey, {
+      translate(typeof value === "number" ? fullNumberKey : fullKey, {
         value,
       }),
-    () => locale.translate(compressedKey, { value }),
+    () => translate(compressedKey, { value }),
   )
 }

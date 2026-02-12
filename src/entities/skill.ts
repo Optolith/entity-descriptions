@@ -1,14 +1,66 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { Skill } from "optolith-database-schema/gen"
+import type {
+  ResolvedNewSkillApplication,
+  ResolvedSkillUse,
+} from "optolith-database-schema/cache"
+import type { ActivatableIdentifier, Skill } from "optolith-database-schema/gen"
+import { fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   GetAllChildInstancesForParent,
   GetAllInstances,
   GetInstanceById,
 } from "../helpers/getTypes.js"
+import type { LocaleEnvironment } from "../helpers/locale.js"
+import type {
+  GetAllResolvedNewSkillApplications,
+  GetAllResolvedSkillUses,
+} from "../index.js"
+import { BaseActivatableTranslation } from "./activatable.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 import { getTextForCheck } from "./partial/rated/skillCheck.js"
+
+const getUsesOrNewApplications = <
+  T extends ResolvedNewSkillApplication | ResolvedSkillUse,
+>(
+  getInstanceById: GetInstanceById<"Aspect" | ActivatableIdentifier["kind"]>,
+  locale: LocaleEnvironment,
+  items: T[],
+) =>
+  items
+    .map(x => {
+      const name = locale.translateMap(x.content.translations)?.name
+      if (name !== undefined) {
+        return name
+      }
+      const { parent: parentId } = x.content
+      if (parentId.kind === "GeneralSelectOption") {
+        return undefined
+      }
+      return locale.translateMap<BaseActivatableTranslation>(
+        getInstanceById(parentId.kind, fromUniformCase(parentId))?.translations,
+      )?.name
+      // if (parentTranslations === undefined) {
+      //   return undefined
+      // }
+      // return printActivatableNameChunk(
+      //   locale,
+      //   getNameComponents<BaseSpecialAbilityTranslation>(
+      //     getInstanceById,
+      //     locale,
+      //     parentId,
+      //     undefined,
+      //     undefined,
+      //     parentTranslations,
+      //     translation => translation.name,
+      //     id => getResolvedSelectOptionById(parentId, id),
+      //     false,
+      //   ).full,
+      // )
+    })
+    .filter(isNotNullish)
+    .sort(locale.compare)
 
 /**
  * Get a JSON representation of the rules text for a skill.
@@ -16,7 +68,9 @@ import { getTextForCheck } from "./partial/rated/skillCheck.js"
 export const getSkillEntityDescription = createEntityDescriptionCreator<
   Skill,
   {
-    getInstanceById: GetInstanceById<"Attribute">
+    getInstanceById: GetInstanceById<
+      "Attribute" | ActivatableIdentifier["kind"]
+    >
     getAllInstances: GetAllInstances<
       | "BlessedTradition"
       | "Disease"
@@ -25,31 +79,40 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       | "NewSkillApplication"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"SkillApplication">
+    getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
+    getAllResolvedSkillUses: GetAllResolvedSkillUses
   }
 >(
   (
-    { getInstanceById, getAllInstances, getChildInstancesForInstanceId },
-    { translate, translateMap, compare: localeCompare },
+    {
+      getInstanceById,
+      getAllInstances,
+      getChildInstancesForInstanceId,
+      getAllResolvedNewSkillApplications,
+      getAllResolvedSkillUses,
+    },
+    locale,
     entry,
     id,
   ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
       return undefined
     }
 
-    const newApplications = getAllInstances("NewSkillApplication")
-      .filter(application => application.skills.includes(id))
-      .map(x => translateMap(x.translations)?.name)
-      .filter(isNotNullish)
-      .sort(localeCompare)
+    const newApplications = getUsesOrNewApplications(
+      getInstanceById,
+      locale,
+      getAllResolvedNewSkillApplications(id),
+    )
 
-    const uses = getAllInstances("SkillUse")
-      .filter(use => use.skills.includes(id))
-      .map(x => translateMap(x.translations)?.name)
-      .filter(isNotNullish)
-      .sort(localeCompare)
+    const uses = getUsesOrNewApplications(
+      getInstanceById,
+      locale,
+      getAllResolvedSkillUses(id),
+    )
 
     const applications = [
       ...getChildInstancesForInstanceId("SkillApplication", id)
@@ -111,8 +174,8 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
             entry.encumbrance.kind === "Yes"
               ? translate("Yes")
               : entry.encumbrance.kind === "No"
-              ? translate("No")
-              : translation.encumbrance_description ?? translate("Maybe"),
+                ? translate("No")
+                : (translation.encumbrance_description ?? translate("Maybe")),
         },
         translation?.tools === undefined
           ? undefined

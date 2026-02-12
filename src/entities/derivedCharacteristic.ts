@@ -136,6 +136,11 @@ export const getDerivedCharacteristicEntityDescription =
       title: `${translation.name} (${translation.abbreviation})`,
       className: "derived-characteristic",
       body: [
+        translation.description === undefined
+          ? undefined
+          : {
+              value: translation.description,
+            },
         {
           label: translate("Base Value"),
           value: renderBaseCalculation(

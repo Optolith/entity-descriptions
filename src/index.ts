@@ -1,8 +1,22 @@
 import type { TSONDBTypes } from "optolith-database-schema"
-import type { PublicationRefs } from "optolith-database-schema/gen"
+import type {
+  ResolvedNewSkillApplication,
+  ResolvedSelectOption,
+  ResolvedSkillUse,
+} from "optolith-database-schema/cache"
+import type {
+  ActivatableIdentifier,
+  PublicationRefs,
+  Skill_ID,
+} from "optolith-database-schema/gen"
 import type { TSONDB } from "tsondb"
 import type { EntityDescriptionCreator } from "./creator.js"
+import { getActivatableEntityDescription } from "./entities/activatable.js"
 import { getAttributeEntityDescription } from "./entities/attribute.js"
+import {
+  getConditionEntityDescription,
+  getMetaConditionEntityDescription,
+} from "./entities/condition.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
 import {
@@ -11,12 +25,14 @@ import {
   getLiturgicalChantEntityDescription,
 } from "./entities/liturgicalChant.js"
 import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
+import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
 import {
   getCantripEntityDescription,
   getRitualEntityDescription,
   getSpellEntityDescription,
 } from "./entities/spell.js"
+import { getStateEntityDescription } from "./entities/state.js"
 import type {
   GetAllChildInstancesForParent,
   GetAllInstances,
@@ -57,24 +73,37 @@ export type EntityDescriptionSection = {
   className?: string
 }
 
+/**
+ * Data passed to an EntityDescriptionCreator function, with the entity type as a type parameter for better type inference.
+ */
+export type TypedCreatorData<E extends keyof TSONDBTypes["entityMap"]> = {
+  getInstanceById: GetInstanceById<keyof TSONDBTypes["entityMap"]>
+  getAllInstances: GetAllInstances<keyof TSONDBTypes["entityMap"]>
+  getChildInstancesForInstanceId: GetAllChildInstancesForParent<
+    keyof TSONDBTypes["childEntityMap"]
+  >
+  getResolvedSelectOptionById: GetResolvedSelectOptionById
+  getAllResolvedSelectOptions: GetAllResolvedSelectOptions
+  getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
+  getAllResolvedSkillUses: GetAllResolvedSkillUses
+  entityName: E
+  idMap: IdMap
+}
+
 type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> =
   EntityDescriptionCreator<
     TSONDBTypes["entityMap"][E] | undefined,
-    {
-      getInstanceById: GetInstanceById<keyof TSONDBTypes["entityMap"]>
-      getAllInstances: GetAllInstances<keyof TSONDBTypes["entityMap"]>
-      getChildInstancesForInstanceId: GetAllChildInstancesForParent<
-        keyof TSONDBTypes["childEntityMap"]
-      >
-      idMap: IdMap
-    }
+    TypedCreatorData<E>
   >
 
 const registeredEntityDescriptionCreators = {
-  Attribute: getAttributeEntityDescription,
-  Skill: getSkillEntityDescription,
   FocusRule: getFocusRuleEntityDescription,
   OptionalRule: getOptionalRuleEntityDescription,
+  Condition: getConditionEntityDescription,
+  MetaCondition: getMetaConditionEntityDescription,
+  State: getStateEntityDescription,
+  Attribute: getAttributeEntityDescription,
+  Skill: getSkillEntityDescription,
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
   Cantrip: getCantripEntityDescription,
   Spell: getSpellEntityDescription,
@@ -82,6 +111,60 @@ const registeredEntityDescriptionCreators = {
   Blessing: getBlessingEntityDescription,
   LiturgicalChant: getLiturgicalChantEntityDescription,
   Ceremony: getCeremonyEntityDescription,
+  // activatables
+  Advantage: getActivatableEntityDescription,
+  Disadvantage: getActivatableEntityDescription,
+  AdvancedCombatSpecialAbility: getActivatableEntityDescription,
+  AdvancedKarmaSpecialAbility: getActivatableEntityDescription,
+  AdvancedMagicalSpecialAbility: getActivatableEntityDescription,
+  AdvancedSkillSpecialAbility: getActivatableEntityDescription,
+  AncestorGlyph: getActivatableEntityDescription,
+  ArcaneOrbEnchantment: getActivatableEntityDescription,
+  AttireEnchantment: getActivatableEntityDescription,
+  Beutelzauber: getActivatableEntityDescription,
+  BlessedTradition: getActivatableEntityDescription,
+  BowlEnchantment: getActivatableEntityDescription,
+  BrawlingSpecialAbility: getActivatableEntityDescription,
+  CauldronEnchantment: getActivatableEntityDescription,
+  CeremonialItemSpecialAbility: getActivatableEntityDescription,
+  ChronicleEnchantment: getActivatableEntityDescription,
+  CombatSpecialAbility: getActivatableEntityDescription,
+  CombatStyleSpecialAbility: getActivatableEntityDescription,
+  CommandSpecialAbility: getActivatableEntityDescription,
+  DaggerRitual: getActivatableEntityDescription,
+  FamiliarSpecialAbility: getActivatableEntityDescription,
+  FatePointSexSpecialAbility: getActivatableEntityDescription,
+  FatePointSpecialAbility: getActivatableEntityDescription,
+  FoolsHatEnchantment: getActivatableEntityDescription,
+  GeneralSpecialAbility: getActivatableEntityDescription,
+  Haubenzauber: getActivatableEntityDescription,
+  InstrumentEnchantment: getActivatableEntityDescription,
+  KarmaSpecialAbility: getActivatableEntityDescription,
+  Krallenkettenzauber: getActivatableEntityDescription,
+  Kristallkugelzauber: getActivatableEntityDescription,
+  LiturgicalStyleSpecialAbility: getActivatableEntityDescription,
+  LycantropicGift: getActivatableEntityDescription,
+  MagicalSign: getActivatableEntityDescription,
+  MagicalSpecialAbility: getActivatableEntityDescription,
+  MagicalTradition: getActivatableEntityDescription,
+  MagicStyleSpecialAbility: getActivatableEntityDescription,
+  OrbEnchantment: getActivatableEntityDescription,
+  PactGift: getActivatableEntityDescription,
+  ProtectiveWardingCircleSpecialAbility: getActivatableEntityDescription,
+  RingEnchantment: getActivatableEntityDescription,
+  Sermon: getActivatableEntityDescription,
+  SexSpecialAbility: getActivatableEntityDescription,
+  SickleRitual: getActivatableEntityDescription,
+  SikaryanDrainSpecialAbility: getActivatableEntityDescription,
+  SkillStyleSpecialAbility: getActivatableEntityDescription,
+  SpellSwordEnchantment: getActivatableEntityDescription,
+  StaffEnchantment: getActivatableEntityDescription,
+  ToyEnchantment: getActivatableEntityDescription,
+  Trinkhornzauber: getActivatableEntityDescription,
+  VampiricGift: getActivatableEntityDescription,
+  Vision: getActivatableEntityDescription,
+  WandEnchantment: getActivatableEntityDescription,
+  WeaponEnchantment: getActivatableEntityDescription,
 } satisfies Partial<{ [E in keyof TSONDBTypes["entityMap"]]: TypedCreator<E> }>
 
 type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
@@ -105,12 +188,35 @@ export type IdMap = {
 }
 
 /**
+ * A function that returns all resolved select options for an activatable entry.
+ */
+export type GetAllResolvedSelectOptions = (
+  id: ActivatableIdentifier,
+) => ResolvedSelectOption[]
+
+/**
+ * A function that returns all new skill applications for a skill.
+ */
+export type GetAllResolvedNewSkillApplications = (
+  id: Skill_ID,
+) => ResolvedNewSkillApplication[]
+
+/**
+ * A function that returns all skill uses for a skill.
+ */
+export type GetAllResolvedSkillUses = (id: Skill_ID) => ResolvedSkillUse[]
+
+/**
  * Get a JSON representation of the rules text for an entry in the database.
  */
 export const getEntityDescription = <E extends AvailableCreatorEntity>(
   database: TSONDB<TSONDBTypes>,
   localeEnv: LocaleEnvironment,
   idMap: IdMap,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getAllResolvedSelectOptions: GetAllResolvedSelectOptions,
+  getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications,
+  getAllResolvedSkillUses: GetAllResolvedSkillUses,
   entityName: E,
   instanceId: string,
 ): EntityDescription | undefined => {
@@ -132,6 +238,11 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
         database
           .getAllChildInstanceContainersForParent(childEntityName, parentId)
           .map(container => container.content),
+      getResolvedSelectOptionById,
+      getAllResolvedSelectOptions,
+      getAllResolvedNewSkillApplications,
+      getAllResolvedSkillUses,
+      entityName,
       idMap,
     },
     localeEnv,

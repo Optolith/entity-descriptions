@@ -29,7 +29,7 @@ export const printPersonalityTraitPrerequisite = (
   }
 
   const name = `${personalityTraitTranslation.name} (${locale.translate(
-    ".input {$level :number} {{Level {$level}}}",
+    "Level {$level}",
     { level: personalityTrait.level },
   )})`
 
