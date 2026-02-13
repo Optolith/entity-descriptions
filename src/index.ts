@@ -31,6 +31,7 @@ import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisit
 import { getSkillEntityDescription } from "./entities/skill.js"
 import {
   getCantripEntityDescription,
+  getCurseEntityDescription,
   getRitualEntityDescription,
   getSpellEntityDescription,
 } from "./entities/spell.js"
@@ -119,6 +120,7 @@ const registeredEntityDescriptionCreators = {
   Cantrip: getCantripEntityDescription,
   Spell: getSpellEntityDescription,
   Ritual: getRitualEntityDescription,
+  Curse: getCurseEntityDescription,
   Curriculum: getCurriculumEntityDescription,
   Blessing: getBlessingEntityDescription,
   LiturgicalChant: getLiturgicalChantEntityDescription,
