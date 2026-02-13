@@ -12,6 +12,7 @@ import type {
 import type { TSONDB } from "tsondb"
 import type { EntityDescriptionCreator } from "./creator.js"
 import { getActivatableEntityDescription } from "./entities/activatable.js"
+import { getAlternativeRuleEntityDescription } from "./entities/alternativeRule.js"
 import { getAttributeEntityDescription } from "./entities/attribute.js"
 import {
   getConditionEntityDescription,
@@ -99,6 +100,7 @@ type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> =
 const registeredEntityDescriptionCreators = {
   FocusRule: getFocusRuleEntityDescription,
   OptionalRule: getOptionalRuleEntityDescription,
+  AlternativeRule: getAlternativeRuleEntityDescription,
   Condition: getConditionEntityDescription,
   MetaCondition: getMetaConditionEntityDescription,
   State: getStateEntityDescription,
