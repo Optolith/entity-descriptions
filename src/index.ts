@@ -113,29 +113,36 @@ type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> =
   >
 
 const registeredEntityDescriptionCreators = {
+  // rules
   FocusRule: getFocusRuleEntityDescription,
   OptionalRule: getOptionalRuleEntityDescription,
   AlternativeRule: getAlternativeRuleEntityDescription,
   Condition: getConditionEntityDescription,
   MetaCondition: getMetaConditionEntityDescription,
   State: getStateEntityDescription,
+  // character creation
   ExperienceLevel: getExperienceLevelEntityDescription,
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
   Advantage: getActivatableEntityDescription,
   Disadvantage: getActivatableEntityDescription,
+  // core values
   Attribute: getAttributeEntityDescription,
   Skill: getSkillEntityDescription,
   CloseCombatTechnique: getCloseCombatTechniqueEntityDescription,
   RangedCombatTechnique: getRangedCombatTechniqueEntityDescription,
+  // spellworks
   Cantrip: getCantripEntityDescription,
   Spell: getSpellEntityDescription,
   Ritual: getRitualEntityDescription,
+  // magical actions
   Curse: getCurseEntityDescription,
+  // auxiliary magical
   Curriculum: getCurriculumEntityDescription,
+  // work of the gods
   Blessing: getBlessingEntityDescription,
   LiturgicalChant: getLiturgicalChantEntityDescription,
   Ceremony: getCeremonyEntityDescription,
-  // activatables
+  // special abilities and enchantments
   AdvancedCombatSpecialAbility: getActivatableEntityDescription,
   AdvancedKarmaSpecialAbility: getActivatableEntityDescription,
   AdvancedMagicalSpecialAbility: getActivatableEntityDescription,
@@ -187,6 +194,8 @@ const registeredEntityDescriptionCreators = {
   Vision: getActivatableEntityDescription,
   WandEnchantment: getActivatableEntityDescription,
   WeaponEnchantment: getActivatableEntityDescription,
+  // equipment
+  // other
 } satisfies Partial<{ [E in keyof TSONDBTypes["entityMap"]]: TypedCreator<E> }>
 
 type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
