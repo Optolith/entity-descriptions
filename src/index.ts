@@ -15,11 +15,16 @@ import { getActivatableEntityDescription } from "./entities/activatable.js"
 import { getAlternativeRuleEntityDescription } from "./entities/alternativeRule.js"
 import { getAttributeEntityDescription } from "./entities/attribute.js"
 import {
+  getCloseCombatTechniqueEntityDescription,
+  getRangedCombatTechniqueEntityDescription,
+} from "./entities/combatTechnique.js"
+import {
   getConditionEntityDescription,
   getMetaConditionEntityDescription,
 } from "./entities/condition.js"
 import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
+import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
 import {
   getBlessingEntityDescription,
@@ -114,9 +119,14 @@ const registeredEntityDescriptionCreators = {
   Condition: getConditionEntityDescription,
   MetaCondition: getMetaConditionEntityDescription,
   State: getStateEntityDescription,
+  ExperienceLevel: getExperienceLevelEntityDescription,
+  DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
+  Advantage: getActivatableEntityDescription,
+  Disadvantage: getActivatableEntityDescription,
   Attribute: getAttributeEntityDescription,
   Skill: getSkillEntityDescription,
-  DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
+  CloseCombatTechnique: getCloseCombatTechniqueEntityDescription,
+  RangedCombatTechnique: getRangedCombatTechniqueEntityDescription,
   Cantrip: getCantripEntityDescription,
   Spell: getSpellEntityDescription,
   Ritual: getRitualEntityDescription,
@@ -126,8 +136,6 @@ const registeredEntityDescriptionCreators = {
   LiturgicalChant: getLiturgicalChantEntityDescription,
   Ceremony: getCeremonyEntityDescription,
   // activatables
-  Advantage: getActivatableEntityDescription,
-  Disadvantage: getActivatableEntityDescription,
   AdvancedCombatSpecialAbility: getActivatableEntityDescription,
   AdvancedKarmaSpecialAbility: getActivatableEntityDescription,
   AdvancedMagicalSpecialAbility: getActivatableEntityDescription,
