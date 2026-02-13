@@ -89,6 +89,9 @@ const idMap: IdMap & CacheIdMap = {
     Toughness: "1fa344af-3e53-4f25-b36a-7f53f51b90f5",
     Movement: "0c634904-d238-47ee-9b0f-2d6a9d5ff63a",
   },
+  ExperienceLevel: {
+    Experienced: "2b0a18c5-40a8-4c86-98b3-a93c85e82497",
+  },
 }
 
 const cache = createCache(db, idMap)

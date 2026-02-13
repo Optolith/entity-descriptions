@@ -164,7 +164,7 @@ export const renderAdventurePointsValue = (
           return translate("{$value} Adventure Points", {
             value: unique(
               getAllInstances("Script")
-                .map(script => script.ap_value)
+                .map(script => script.content.ap_value)
                 .filter(apValue => apValue !== undefined),
             )
               .toSorted(numAsc)
@@ -172,16 +172,17 @@ export const renderAdventurePointsValue = (
           })
         case "AnimalShapes": {
           const sizes = getAllInstances("AnimalShapeSize").toSorted(
-            on(x => x.ap_value, numAsc),
+            on(x => x.content.ap_value, numAsc),
           )
           return translate(
             "{$values} adventure points for a {$sized} animal shape",
             {
-              values: sizes.map(size => size.ap_value).join("/"),
+              values: sizes.map(size => size.content.ap_value).join("/"),
               sized: sizes
                 .map(
                   size =>
-                    translateMap(size.translations)?.name ?? MISSING_VALUE,
+                    translateMap(size.content.translations)?.name ??
+                    MISSING_VALUE,
                 )
                 .join("/"),
             },

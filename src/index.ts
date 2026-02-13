@@ -18,6 +18,7 @@ import {
   getConditionEntityDescription,
   getMetaConditionEntityDescription,
 } from "./entities/condition.js"
+import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
 import {
@@ -69,9 +70,17 @@ export type RawEntityDescription = {
  */
 export type EntityDescriptionSection = {
   label?: string
-  value: string | number
+  value: string | number | EntityDescriptionAtom[]
   noIndent?: boolean
   className?: string
+}
+
+/**
+ * A single aspect of a library entry text, such as a standalone text or a labeled text.
+ */
+export type EntityDescriptionAtom = {
+  label?: string
+  value: string | number
 }
 
 /**
@@ -110,6 +119,7 @@ const registeredEntityDescriptionCreators = {
   Cantrip: getCantripEntityDescription,
   Spell: getSpellEntityDescription,
   Ritual: getRitualEntityDescription,
+  Curriculum: getCurriculumEntityDescription,
   Blessing: getBlessingEntityDescription,
   LiturgicalChant: getLiturgicalChantEntityDescription,
   Ceremony: getCeremonyEntityDescription,
@@ -187,6 +197,7 @@ export type IdMap = {
     "LifePoints" | "Spirit" | "Toughness" | "Movement",
     string
   >
+  ExperienceLevel: Record<"Experienced", string>
 }
 
 /**
@@ -235,11 +246,12 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   return creator(
     {
       getInstanceById: database.getInstanceOfEntityById.bind(database),
-      getAllInstances: database.getAllInstancesOfEntity.bind(database),
+      getAllInstances: database.getAllInstanceContainersOfEntity.bind(database),
       getChildInstancesForInstanceId: (childEntityName, parentId) =>
-        database
-          .getAllChildInstanceContainersForParent(childEntityName, parentId)
-          .map(container => container.content),
+        database.getAllChildInstanceContainersForParent(
+          childEntityName,
+          parentId,
+        ),
       getResolvedSelectOptionById,
       getAllResolvedSelectOptions,
       getAllResolvedNewSkillApplications,

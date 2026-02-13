@@ -8,7 +8,12 @@ export type LocaleEnvironment = {
   id: string
   translate: Translate
   translateMap: TranslateMap
-  compare: Compare<string>
+  compare: LocaleCompare
   joinConjunctionList: (list: string[]) => string
   joinDisjunctionList: (list: string[]) => string
 }
+
+/**
+ * A function that compares two strings according to the locale's sorting rules.
+ */
+export type LocaleCompare = Compare<string>

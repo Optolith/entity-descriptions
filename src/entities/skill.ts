@@ -116,24 +116,24 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
 
     const applications = [
       ...getChildInstancesForInstanceId("SkillApplication", id)
-        .map(x => translateMap(x.translations)?.name)
+        .map(x => translateMap(x.content.translations)?.name)
         .filter(isNotNullish)
         .sort(localeCompare),
       ...(() => {
         switch (entry.applications.derived?.kind) {
           case "BlessedTraditions":
             return getAllInstances("BlessedTradition")
-              .map(x => translateMap(x.translations)?.name)
+              .map(x => translateMap(x.content.translations)?.name)
               .filter(isNotNullish)
               .sort(localeCompare)
           case "Diseases":
             return getAllInstances("Disease")
-              .map(x => translateMap(x.translations)?.name)
+              .map(x => translateMap(x.content.translations)?.name)
               .filter(isNotNullish)
               .sort(localeCompare)
           case "Regions":
             return getAllInstances("Region")
-              .map(x => translateMap(x.translations)?.name)
+              .map(x => translateMap(x.content.translations)?.name)
               .filter(isNotNullish)
               .sort(localeCompare)
           case undefined:
