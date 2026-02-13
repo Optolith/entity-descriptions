@@ -134,7 +134,7 @@ export default [
         "error",
         {
           ignoreTypeValueShadow: true,
-        }
+        },
       ],
       "no-unused-expressions": "off",
       "@typescript-eslint/no-unused-vars": "off",
@@ -180,18 +180,13 @@ export default [
       "jsdoc/require-description": [
         "error",
         {
-          contexts: [
-            "any",
-          ]
+          contexts: ["any"],
         },
       ],
     },
   },
   eslintConfigPrettier,
   {
-    ignores: [
-      "lib/*",
-      "*.config.js"
-    ],
+    ignores: ["lib/*", "scripts/*", "*.config.js"],
   },
 ]
