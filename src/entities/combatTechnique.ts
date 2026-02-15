@@ -39,6 +39,7 @@ export const getCloseCombatTechniqueEntityDescription =
         },
         createImprovementCost(translate, entry.improvement_cost),
       ],
+      errata: translation.errata,
       references: entry.src,
     }
   })
@@ -79,6 +80,7 @@ export const getRangedCombatTechniqueEntityDescription =
         },
         createImprovementCost(translate, entry.improvement_cost),
       ],
+      errata: translation.errata,
       references: entry.src,
     }
   })

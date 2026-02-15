@@ -219,6 +219,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
         })(),
       })),
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })
@@ -327,6 +328,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
       ),
       createImprovementCost(translate, entry.improvement_cost),
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })
@@ -435,6 +437,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
       ),
       createImprovementCost(translate, entry.improvement_cost),
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })
@@ -581,6 +584,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
         entry.property,
       ),
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })

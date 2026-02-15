@@ -31,6 +31,7 @@ export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
       },
       { value: translation.description },
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })

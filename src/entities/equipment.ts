@@ -19,6 +19,7 @@ import type {
   Encumbrance,
   EquipmentIdentifier,
   EquipmentPackageItem,
+  Errata,
   GenMeleeWeapon,
   GenRangedWeapon,
   HasAdditionalPenalties,
@@ -772,6 +773,7 @@ type BaseItemTranslation = {
   color?: string
   language?: string
   script?: string
+  errata?: Errata
 }
 
 type NormalizedCombatValues<GenMeleeDamage, GenRangedDamage> =
@@ -1056,6 +1058,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
           }
         : undefined,
     ],
+    errata: baseItemTranslation?.errata,
     references: entry.content.src,
   }
 })

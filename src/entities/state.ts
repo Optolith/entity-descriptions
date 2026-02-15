@@ -16,6 +16,7 @@ export const getStateEntityDescription =
         title: translation.name,
         className: "state",
         body: [{ value: translation.description }],
+        errata: translation.errata,
         references: entry.src,
       }
     },

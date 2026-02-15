@@ -128,6 +128,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
       },
       getTargetCategoryTranslation(getInstanceById, locale, entry.target),
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })
@@ -238,6 +239,7 @@ export const getLiturgicalChantEntityDescription =
         ),
         createImprovementCost(translate, entry.improvement_cost),
       ],
+      errata: translation.errata,
       references: entry.src,
     }
   })
@@ -347,6 +349,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       ),
       createImprovementCost(translate, entry.improvement_cost),
     ],
+    errata: translation.errata,
     references: entry.src,
   }
 })

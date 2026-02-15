@@ -610,6 +610,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
           )
           .filter(isNotNullish),
       ],
+      errata: translation.errata,
       references: entry.src,
     }
   },

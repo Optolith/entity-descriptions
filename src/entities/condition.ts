@@ -26,6 +26,7 @@ export const getConditionEntityDescription =
             value: effect,
           })),
         ],
+        errata: translation.errata,
         references: entry.src,
       }
     },
@@ -57,6 +58,7 @@ export const getMetaConditionEntityDescription =
             value: effect,
           })),
         ],
+        errata: translation.errata,
         references: entry.src,
       }
     },

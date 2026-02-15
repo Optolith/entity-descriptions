@@ -24,6 +24,7 @@ import type {
   CombatTechniqueIdentifier,
   DaggerRitualCost,
   EnchantmentCost,
+  Errata,
   GeneralPrerequisites,
   LifePointsCost,
   MagicalSignCost,
@@ -101,6 +102,7 @@ export type BaseActivatableTranslation = {
   warding_circle?: string
   ap_value?: string
   ap_value_append?: string
+  errata?: Errata
 }
 
 const renderPropertyValue = (
@@ -1132,6 +1134,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
           }
         }),
       ],
+      errata: translation.errata,
       references: entry.src,
     }
   },

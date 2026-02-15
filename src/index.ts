@@ -6,6 +6,7 @@ import type {
 } from "optolith-database-schema/cache"
 import type {
   ActivatableIdentifier,
+  Errata,
   PublicationRefs,
   Skill_ID,
 } from "optolith-database-schema/gen"
@@ -72,6 +73,7 @@ export type RawEntityDescription = {
   subtitle?: string
   className: string
   body: (EntityDescriptionSection | undefined)[]
+  errata?: Errata
   references?: PublicationRefs
 }
 
