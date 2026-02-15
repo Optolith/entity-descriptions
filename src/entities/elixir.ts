@@ -33,6 +33,17 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
       title: translation.name,
       className: "elixir",
       body: [
+        translation.alternative_names === undefined
+          ? undefined
+          : {
+              label: translate(
+                ".input {$hiddenCount :number} {{Alternative Names}}",
+                { hiddenCount: translation.alternative_names.length },
+              ),
+              value: translation.alternative_names
+                .map(name => name.name + parensIf(name.region))
+                .join(", "),
+            },
         {
           label: translate("Typical Ingredients"),
           value: translation.typical_ingredients.join(", "),
@@ -78,6 +89,12 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
               ),
             ),
         },
+        translation.special === undefined
+          ? undefined
+          : {
+              label: translate("Special"),
+              value: translation.special,
+            },
         {
           label: translate("Quality Levels"),
           value: translation.quality_levels.map((effectForLevel, index) => ({

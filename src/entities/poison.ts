@@ -479,6 +479,17 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       title: translation.name,
       className: "poison",
       body: [
+        translation.alternative_names === undefined
+          ? undefined
+          : {
+              label: translate(
+                ".input {$hiddenCount :number} {{Alternative Names}}",
+                { hiddenCount: translation.alternative_names.length },
+              ),
+              value: translation.alternative_names
+                .map(name => name.name + parensIf(name.region))
+                .join(", "),
+            },
         {
           label: translate("Level"),
           value: level,
