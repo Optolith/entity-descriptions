@@ -36,6 +36,7 @@ import {
 } from "./entities/liturgicalChant.js"
 import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
+import { getPoisonEntityDescription } from "./entities/poison.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
 import {
   getCantripEntityDescription,
@@ -240,7 +241,7 @@ const registeredEntityDescriptionCreators = {
   MusicalInstrument: getEquipmentEntityDescription,
   Newspaper: getEquipmentEntityDescription,
   OrienteeringAid: getEquipmentEntityDescription,
-  // Poison: getPoisonEntityDescription,
+  Poison: getPoisonEntityDescription,
   RopeOrChain: getEquipmentEntityDescription,
   Stationery: getEquipmentEntityDescription,
   ThievesTool: getEquipmentEntityDescription,

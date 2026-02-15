@@ -59,7 +59,7 @@ import type {
   TranslateMap,
 } from "../helpers/translate.js"
 import type { EntityDescriptionSection, IdMap } from "../index.js"
-import { renderDice } from "./partial/dice.js"
+import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
 import {
   additionFormatter,
   subtractionFormatter,
@@ -121,7 +121,10 @@ export const getEquipmentName = (
     case "Vehicle":
     case "Weapon":
     case "WeaponAccessory":
-      return translateMap(entry.content.translations)?.name ?? MISSING_VALUE
+      return (
+        translateMap<BaseItemTranslation>(entry.content.translations)?.name ??
+        MISSING_VALUE
+      )
     default:
       return assertExhaustive(entry)
   }
@@ -270,14 +273,8 @@ const renderAmmunition = (
     : (translateMap(getInstanceById("Ammunition", ammunition)?.translations)
         ?.name ?? MISSING_VALUE)
 
-const renderMeleeDamage = (translate: Translate) => (damage: MeleeDamage) => {
-  const renderedDice = renderDice(translate, damage.dice)
-  return damage.flat === undefined || damage.flat === 0
-    ? renderedDice
-    : damage.flat > 0
-      ? additionFormatter(renderedDice, damage.flat)
-      : subtractionFormatter(renderedDice, damage.flat)
-}
+const renderMeleeDamage = (translate: Translate) => (damage: MeleeDamage) =>
+  renderDiceAndFlat(translate, damage.dice, damage.flat)
 
 /**
  * Render combat values of a ranged weapon.
