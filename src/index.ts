@@ -61,6 +61,7 @@ export type EntityDescription = {
   subtitle?: string
   className: string
   body: EntityDescriptionSection[]
+  errata?: { date: string; description: string }[]
   references?: string
 }
 

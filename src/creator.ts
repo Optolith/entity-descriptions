@@ -41,6 +41,10 @@ export const createEntityDescriptionCreator =
     return {
       ...rawEntry,
       body: filterNonNullable(rawEntry.body),
+      errata: rawEntry.errata?.map(({ date, description }) => ({
+        date: date.toLocaleDateString(locale.id),
+        description: description.trim(),
+      })),
       references:
         rawEntry.references === undefined
           ? undefined
