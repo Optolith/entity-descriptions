@@ -82,6 +82,7 @@ export type RawEntityDescription = {
  */
 export type EntityDescriptionSection =
   | {
+      type?: undefined
       label?: string
       value: string | number | EntityDescriptionAtom[]
       noIndent?: boolean

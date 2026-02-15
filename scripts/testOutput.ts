@@ -4,6 +4,7 @@ import { MessageFormat } from "messageformat"
 import { findPackageJSON } from "node:module"
 import { dirname, join } from "node:path"
 import { argv } from "node:process"
+import { styleText } from "node:util"
 import { schema } from "optolith-database-schema"
 import {
   createCache,
@@ -139,4 +140,39 @@ if (result === undefined) {
   throw new Error("No description found")
 }
 
-console.log(JSON.stringify(result, undefined, 2))
+console.log(styleText(["bold", "underline"], result.title))
+if (result.subtitle) console.log(styleText("italic", result.subtitle))
+
+console.log()
+result.body.forEach(section => {
+  if (section.type === "table") {
+  } else {
+    if (section.label) {
+      if (Array.isArray(section.value)) {
+        console.log(styleText("italic", section.label))
+        section.value.forEach(subsection => {
+          console.log("  " + styleText("bold", subsection.label + ":"))
+          console.log("    " + subsection.value)
+        })
+      } else {
+        console.log(styleText("bold", section.label + ":"))
+        console.log("  " + section.value)
+      }
+    } else {
+      console.log(section.value)
+    }
+  }
+})
+
+if (result.errata) {
+  console.log()
+  result.errata.forEach(erratum => {
+    console.log(styleText(["bold", "yellow"], erratum.date))
+    console.log("  " + styleText("yellow", erratum.description))
+  })
+}
+
+if (result.references) {
+  console.log()
+  console.log(styleText("blue", result.references))
+}
