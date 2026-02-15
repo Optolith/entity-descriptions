@@ -12,7 +12,6 @@ import type {
   PoisonDuration,
   PoisonSourceType,
   PoisonStart,
-  Resistance,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
@@ -20,7 +19,12 @@ import type { LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type { EntityDescriptionSection, IdMap } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
-import { renderLaboratoryLevel } from "./partial/herbary.js"
+import {
+  renderAlternativeNames,
+  renderChance,
+  renderLaboratoryLevel,
+  renderResistance,
+} from "./partial/herbary.js"
 import { renderMathOperation } from "./partial/mathOperation.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
@@ -84,14 +88,7 @@ const renderAddiction = (
   addiction: IntoxicantAddiction,
 ) =>
   [
-    translateMap(addiction.translations)?.chance ??
-      (addiction.chance === undefined
-        ? undefined
-        : translate("{$valueRange} on {$dice}", {
-            valueRange:
-              addiction.chance === 5 ? 1 : `1–${addiction.chance / 5}`,
-            dice: renderDice(translate, { number: 1, sides: 20 }),
-          })),
+    renderChance(translate, translateMap, addiction),
     translate(
       ".input {$value :number} {{{$value} applications every {$interval}}}",
       {
@@ -241,63 +238,6 @@ const renderSourceTypeBasedValues = (
     }
     default:
       return assertExhaustive(sourceType)
-  }
-}
-
-const renderResistance = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"DerivedCharacteristic">,
-  idMap: IdMap,
-  resistance: Resistance,
-) => {
-  switch (resistance.kind) {
-    case "Spirit":
-      return (
-        translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Spirit,
-          )?.translations,
-        )?.name ?? MISSING_VALUE
-      )
-
-    case "Toughness":
-      return (
-        translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Toughness,
-          )?.translations,
-        )?.name ?? MISSING_VALUE
-      )
-
-    case "LowerOfSpiritAndToughness": {
-      const spiritTranslation =
-        translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Spirit,
-          )?.translations,
-        )?.name ?? MISSING_VALUE
-      const toughnessTranslation =
-        translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Toughness,
-          )?.translations,
-        )?.name ?? MISSING_VALUE
-      return translate(
-        "{$first} or {$second}, depending on which value is lower",
-        {
-          first: spiritTranslation,
-          second: toughnessTranslation,
-        },
-      )
-    }
-
-    default:
-      return assertExhaustive(resistance)
   }
 }
 
@@ -479,17 +419,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       title: translation.name,
       className: "poison",
       body: [
-        translation.alternative_names === undefined
-          ? undefined
-          : {
-              label: translate(
-                ".input {$hiddenCount :number} {{Alternative Names}}",
-                { hiddenCount: translation.alternative_names.length },
-              ),
-              value: translation.alternative_names
-                .map(name => name.name + parensIf(name.region))
-                .join(", "),
-            },
+        renderAlternativeNames(translate, translation.alternative_names),
         {
           label: translate("Level"),
           value: level,

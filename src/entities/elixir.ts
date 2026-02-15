@@ -2,7 +2,10 @@ import { mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import { renderLaboratoryLevel } from "./partial/herbary.js"
+import {
+  renderAlternativeNames,
+  renderLaboratoryLevel,
+} from "./partial/herbary.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -33,17 +36,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
       title: translation.name,
       className: "elixir",
       body: [
-        translation.alternative_names === undefined
-          ? undefined
-          : {
-              label: translate(
-                ".input {$hiddenCount :number} {{Alternative Names}}",
-                { hiddenCount: translation.alternative_names.length },
-              ),
-              value: translation.alternative_names
-                .map(name => name.name + parensIf(name.region))
-                .join(", "),
-            },
+        renderAlternativeNames(translate, translation.alternative_names),
         {
           label: translate("Typical Ingredients"),
           value: translation.typical_ingredients.join(", "),

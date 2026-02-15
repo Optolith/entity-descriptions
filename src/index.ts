@@ -25,6 +25,7 @@ import {
 } from "./entities/condition.js"
 import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
+import { getDiseaseEntityDescription } from "./entities/disease.js"
 import { getElixirEntityDescription } from "./entities/elixir.js"
 import { getEquipmentEntityDescription } from "./entities/equipment.js"
 import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackage.js"
@@ -255,8 +256,8 @@ const registeredEntityDescriptionCreators = {
   WeaponAccessory: getEquipmentEntityDescription,
   EquipmentPackage: getEquipmentPackageEntityDescription,
   // other
-  // Disease: getDiseaseEntityDescription,
-  // AnimalDisease: getDiseaseEntityDescription,
+  Disease: getDiseaseEntityDescription,
+  AnimalDisease: getDiseaseEntityDescription,
   // Influence: getInfluenceEntityDescription,
   // PersonalityTrait: getPersonalityTraitEntityDescription,
   SexPractice: getSexPracticeEntityDescription,
