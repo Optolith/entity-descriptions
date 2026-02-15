@@ -25,6 +25,7 @@ import {
 } from "./entities/condition.js"
 import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
+import { getElixirEntityDescription } from "./entities/elixir.js"
 import { getEquipmentEntityDescription } from "./entities/equipment.js"
 import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackage.js"
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
@@ -229,7 +230,7 @@ const registeredEntityDescriptionCreators = {
   Clothes: getEquipmentEntityDescription,
   ClothingPackage: getEquipmentEntityDescription,
   Container: getEquipmentEntityDescription,
-  // Elixir: getElixirEntityDescription,
+  Elixir: getElixirEntityDescription,
   EquipmentOfBlessedOnes: getEquipmentEntityDescription,
   GemOrPreciousStone: getEquipmentEntityDescription,
   IlluminationLightSource: getEquipmentEntityDescription,

@@ -6,7 +6,6 @@ import type {
   DemonicPoisonLevel,
   Intoxicant,
   IntoxicantAddiction,
-  LaboratoryLevel,
   PlainGeneralPrerequisites,
   PoisonApplicationType,
   PoisonCost,
@@ -21,6 +20,7 @@ import type { LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type { EntityDescriptionSection, IdMap } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
+import { renderLaboratoryLevel } from "./partial/herbary.js"
 import { renderMathOperation } from "./partial/mathOperation.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
@@ -73,22 +73,6 @@ const renderLevel = (
             translateMap(subtype.translations)?.name ?? MISSING_VALUE
           })`,
       ).join(", ")
-    default:
-      return assertExhaustive(level)
-  }
-}
-
-const renderLaboratoryLevel = (
-  translate: Translate,
-  level: LaboratoryLevel,
-) => {
-  switch (level.kind) {
-    case "ArchaicLaboratory":
-      return translate("Archaic laboratory")
-    case "WitchKitchen":
-      return translate("Witch kitchen")
-    case "AlchemistsLaboratory":
-      return translate("Alchemist’s laboratory")
     default:
       return assertExhaustive(level)
   }
