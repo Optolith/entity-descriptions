@@ -29,7 +29,7 @@ export const printRatedSumPrerequisite = (
     value: locale.translate(
       "the SR for {$skill} combined must add up to at least {$minRating}",
       {
-        skill: locale.joinConjunctionList(skills),
+        skill: locale.join(skills, "conjunction"),
         minRating: prerequisite.sum,
       },
     ),

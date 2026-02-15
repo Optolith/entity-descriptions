@@ -1,6 +1,5 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
-  DerivedCharacteristic,
   DerivedCharacteristicBase,
   DerivedCharacteristicRaceBaseValue,
 } from "optolith-database-schema/gen"
@@ -120,37 +119,43 @@ const renderBaseCalculation = (
  */
 export const getDerivedCharacteristicEntityDescription =
   createEntityDescriptionCreator<
-    DerivedCharacteristic,
+    "DerivedCharacteristic",
     {
       getInstanceById: GetInstanceById<"Attribute" | "DerivedCharacteristic">
       idMap: IdMap
     }
-  >(({ getInstanceById, idMap }, { translate, translateMap }, entry) => {
-    const translation = translateMap(entry.translations)
+  >(
+    (
+      { getInstanceById, idMap },
+      { translate, translateMap },
+      { content: entry },
+    ) => {
+      const translation = translateMap(entry.translations)
 
-    if (translation === undefined) {
-      return undefined
-    }
+      if (translation === undefined) {
+        return undefined
+      }
 
-    return {
-      title: `${translation.name} (${translation.abbreviation})`,
-      className: "derived-characteristic",
-      body: [
-        translation.description === undefined
-          ? undefined
-          : {
-              value: translation.description,
-            },
-        {
-          label: translate("Base Value"),
-          value: renderBaseCalculation(
-            getInstanceById,
-            translate,
-            translateMap,
-            idMap,
-            entry.calculation.base,
-          ),
-        },
-      ],
-    }
-  })
+      return {
+        title: `${translation.name} (${translation.abbreviation})`,
+        className: "derived-characteristic",
+        body: [
+          translation.description === undefined
+            ? undefined
+            : {
+                value: translation.description,
+              },
+          {
+            label: translate("Base Value"),
+            value: renderBaseCalculation(
+              getInstanceById,
+              translate,
+              translateMap,
+              idMap,
+              entry.calculation.base,
+            ),
+          },
+        ],
+      }
+    },
+  )

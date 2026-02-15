@@ -43,7 +43,7 @@
     "eslint-plugin-jsdoc": "^62.5.4",
     "glob": "^13.0.1",
     "globals": "^17.3.0",
-    "optolith-database-schema": "^0.30.1",
+    "optolith-database-schema": "^0.31.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"

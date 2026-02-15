@@ -25,13 +25,14 @@ export const printPactPrerequisite = (
     prerequisite.domain === undefined
       ? undefined
       : locale.translate("domain {$domain}", {
-          domain: locale.joinDisjunctionList(
+          domain: locale.join(
             prerequisite.domain.map(
               id =>
                 locale.translateMap(
                   getInstanceById("PactDomain", id)?.translations,
                 )?.name ?? MISSING_VALUE,
             ),
+            "disjunction",
           ),
         }),
     locale.translate("{$pact} level {$pactLevel}", {

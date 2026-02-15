@@ -2,14 +2,10 @@ import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
-  Cantrip,
-  Curse,
   CurseCost,
   CurseDuration,
   MagicalTradition_ID,
   Property_ID,
-  Ritual,
-  Spell,
   SpellworkTraditions,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -112,13 +108,13 @@ const getTraditionNameForArcaneSpellworksById = (
  * Get a JSON representation of the rules text for a cantrip.
  */
 export const getCantripEntityDescription = createEntityDescriptionCreator<
-  Cantrip,
+  "Cantrip",
   {
     getInstanceById: GetInstanceById<
       "TargetCategory" | "Property" | "MagicalTradition" | "Curriculum"
     >
   }
->(({ getInstanceById }, locale, entry) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -231,7 +227,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
  * Get a JSON representation of the rules text for a skill.
  */
 export const getSpellEntityDescription = createEntityDescriptionCreator<
-  Spell,
+  "Spell",
   {
     getInstanceById: GetInstanceById<
       | "Attribute"
@@ -243,7 +239,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     >
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -339,7 +335,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
  * Get a JSON representation of the rules text for a ritual.
  */
 export const getRitualEntityDescription = createEntityDescriptionCreator<
-  Ritual,
+  "Ritual",
   {
     getInstanceById: GetInstanceById<
       | "Attribute"
@@ -351,7 +347,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     >
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -517,7 +513,7 @@ const renderCurseDuration = (
  * Get a JSON representation of the rules text for a curse.
  */
 export const getCurseEntityDescription = createEntityDescriptionCreator<
-  Curse,
+  "Curse",
   {
     getInstanceById: GetInstanceById<
       | "Attribute"
@@ -529,7 +525,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     >
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 

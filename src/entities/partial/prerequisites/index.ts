@@ -87,8 +87,9 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
   ) {
     return {
       label: first.label,
-      value: locale.joinDisjunctionList(
+      value: locale.join(
         [first, ...other].map(part => part.value),
+        "disjunction",
       ),
       sentenceType: undefined,
       isMeta: false,
@@ -96,8 +97,9 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
   }
 
   return {
-    value: locale.joinDisjunctionList(
+    value: locale.join(
       [first, ...other].map(part => (part.label ?? "") + part.value),
+      "disjunction",
     ),
     sentenceType: undefined,
     isMeta: false,

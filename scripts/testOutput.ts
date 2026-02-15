@@ -1,3 +1,4 @@
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { deepEqual } from "@optolith/helpers/compare"
 import { MessageFormat } from "messageformat"
 import { findPackageJSON } from "node:module"
@@ -56,6 +57,10 @@ const conjunctionListFormat = new Intl.ListFormat(localeId, {
 const disjunctionListFormat = new Intl.ListFormat(localeId, {
   type: "disjunction",
 })
+const unitListFormat = new Intl.ListFormat(localeId, {
+  type: "unit",
+})
+
 const collator = new Intl.Collator(localeId, { usage: "sort" })
 
 const localeEnv: LocaleEnvironment = {
@@ -68,8 +73,24 @@ const localeEnv: LocaleEnvironment = {
     ).format(rest[0] as Record<string, unknown> | undefined),
   translateMap: translations =>
     translations?.[localeId] ?? translations?.[Object.keys(translations)[0]],
-  joinConjunctionList: conjunctionListFormat.format.bind(conjunctionListFormat),
-  joinDisjunctionList: disjunctionListFormat.format.bind(disjunctionListFormat),
+  measurementAdjustments: {
+    milesMultiplier: 1,
+    stepsMultiplier: 1,
+    halffingersMultiplier: 1,
+    stonesMultiplier: 1,
+  },
+  join: (list, style) => {
+    switch (style) {
+      case "conjunction":
+        return conjunctionListFormat.format(list)
+      case "disjunction":
+        return disjunctionListFormat.format(list)
+      case "unit":
+        return unitListFormat.format(list)
+      default:
+        return assertExhaustive(style)
+    }
+  },
 }
 
 const idMap: IdMap & CacheIdMap = {
@@ -87,6 +108,7 @@ const idMap: IdMap & CacheIdMap = {
     LifePoints: "190845e8-c2c8-40ff-8908-248f01b49f8b",
     Spirit: "b6f98337-77b4-4f8e-9b6d-fda3a49d5c75",
     Toughness: "1fa344af-3e53-4f25-b36a-7f53f51b90f5",
+    Initiative: "0b97b4ce-75b0-4573-add9-86621dcf52a6",
     Movement: "0c634904-d238-47ee-9b0f-2d6a9d5ff63a",
   },
   ExperienceLevel: {

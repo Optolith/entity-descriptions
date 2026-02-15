@@ -39,7 +39,7 @@ import type {
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../helpers/locale.js"
+import type { LocaleEnvironment, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   EntityDescriptionSection,
@@ -344,7 +344,7 @@ const renderApplicableCombatTechniquesRestriction = <
         main +
         wrapInParens([
           locale.translate("except {$list}", {
-            list: locale.joinConjunctionList(
+            list: locale.join(
               restriction.ExcludeCombatTechniques.list.map(
                 id =>
                   locale.translateMap(
@@ -353,6 +353,7 @@ const renderApplicableCombatTechniquesRestriction = <
                     )?.translations,
                   )?.name ?? MISSING_VALUE,
               ),
+              "conjunction",
             ),
           }),
           weapons,
@@ -481,13 +482,14 @@ const renderApplicableCombatTechniquesValue = (
                   specific.weapons === undefined
                     ? undefined
                     : locale.translate("only {$weapons}", {
-                        weapons: locale.joinConjunctionList(
+                        weapons: locale.join(
                           specific.weapons.map(
                             weapon =>
                               locale.translateMap(
                                 getInstanceById("Weapon", weapon)?.translations,
                               )?.name ?? MISSING_VALUE,
                           ),
+                          "conjunction",
                         ),
                       }),
                   undefined,
@@ -574,7 +576,7 @@ const renderVolumeValue = (
 const renderArcaneEnergyCost = (
   translate: Translate,
   translateMap: TranslateMap,
-  joinDisjunctionList: LocaleEnvironment["joinDisjunctionList"],
+  localeJoin: LocaleJoin,
   responsiveTextSize: ResponsiveTextSize,
   levels: number | undefined,
   cost: ArcaneEnergyCost | MagicalSignCost,
@@ -706,7 +708,7 @@ const renderArcaneEnergyCost = (
       )
     case "Disjunction":
       return translate("{$value} AE", {
-        value: joinDisjunctionList(
+        value: localeJoin(
           cost.Disjunction.options.map(
             option =>
               option.value +
@@ -717,6 +719,7 @@ const renderArcaneEnergyCost = (
                 "",
               ),
           ),
+          "disjunction",
         ),
       })
     case "Map":
@@ -841,12 +844,13 @@ const renderLifePointsCost = (
 ): string =>
   cost === undefined
     ? ""
-    : ` (+ ${translate("{$value} LP", { value: cost.Fixed.value })})`
+    : // eslint-disable-next-line no-irregular-whitespace
+      ` (+ ${translate("{$value} LP", { value: cost.Fixed.value })})`
 
 const renderCost = (
   translate: Translate,
   translateMap: TranslateMap,
-  joinDisjunctionList: LocaleEnvironment["joinDisjunctionList"],
+  localeJoin: LocaleJoin,
   getAllResolvedSelectOptions: () => ResolvedSelectOption[],
   responsiveTextSize: ResponsiveTextSize,
   levels: number | undefined,
@@ -871,7 +875,7 @@ const renderCost = (
               ? renderArcaneEnergyCost(
                   translate,
                   translateMap,
-                  joinDisjunctionList,
+                  localeJoin,
                   responsiveTextSize,
                   levels,
                   cost.ArcaneEnergyCost.ae_cost,
@@ -880,7 +884,7 @@ const renderCost = (
               : renderArcaneEnergyCost(
                   translate,
                   translateMap,
-                  joinDisjunctionList,
+                  localeJoin,
                   responsiveTextSize,
                   levels,
                   cost.ArcaneEnergyCost,
@@ -888,7 +892,7 @@ const renderCost = (
             : renderArcaneEnergyCost(
                 translate,
                 translateMap,
-                joinDisjunctionList,
+                localeJoin,
                 responsiveTextSize,
                 levels,
                 cost,
@@ -914,7 +918,7 @@ const renderCost = (
  * Get a JSON representation of the rules text for a special ability.
  */
 export const getActivatableEntityDescription = createEntityDescriptionCreator<
-  BaseActivatable,
+  ActivatableIdentifier["kind"],
   {
     getInstanceById: GetInstanceById<
       | "Subject"
@@ -924,7 +928,6 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Property"
     >
     getAllInstances: GetAllInstances<"Script">
-    entityName: ActivatableIdentifier["kind"]
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     getAllResolvedSelectOptions: GetAllResolvedSelectOptions
     getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
@@ -935,13 +938,11 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
     {
       getInstanceById,
       getAllInstances,
-      entityName,
       getResolvedSelectOptionById,
       getAllResolvedSelectOptions,
     },
     locale,
-    entry,
-    id,
+    { entity: entityName, content: entry, id },
   ) => {
     const { translate, translateMap } = locale
     const translation = translateMap<BaseActivatableTranslation>(
@@ -953,14 +954,18 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       return undefined
     }
 
+    const baseEntry: BaseActivatable = entry
+
     const wrappedId = Case(entityName, id)
 
     return {
       title:
         translation.name_in_library ??
         translation.name +
-          (entry.levels !== undefined ? ` I–${romanize(entry.levels)}` : ""),
-      subtitle: mapNullable(entry.usage_type, usageType => {
+          (baseEntry.levels !== undefined
+            ? ` I–${romanize(baseEntry.levels)}`
+            : ""),
+      subtitle: mapNullable(baseEntry.usage_type, usageType => {
         switch (usageType.kind) {
           case "Passive":
             return translate("Passive")
@@ -999,7 +1004,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             )
             .join("\n"),
         })),
-        mapNullable(entry.aspect, aspect => ({
+        mapNullable(baseEntry.aspect, aspect => ({
           label: translate("Aspect"),
           value:
             translateMap(getInstanceById("Aspect", aspect)?.translations)
@@ -1009,7 +1014,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
           label: translate("Range"),
           value: range,
         })),
-        mapNullable(entry.penalty, penalty => ({
+        mapNullable(baseEntry.penalty, penalty => ({
           label: translate("Penalty"),
           value: renderPenaltyValue(
             getInstanceById,
@@ -1036,13 +1041,13 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                   getResolvedSelectOptionById,
                   locale,
                   prerequisites as GeneralPrerequisites,
-                  mapNullable(entry.levels, levels => ({
+                  mapNullable(baseEntry.levels, levels => ({
                     id: wrappedId,
                     levels,
                   })),
                 ),
         })),
-        mapNullable(entry.combat_techniques, combatTechniques => ({
+        mapNullable(baseEntry.combat_techniques, combatTechniques => ({
           label: translate("Combat Techniques"),
           value: renderApplicableCombatTechniquesValue(
             getInstanceById,
@@ -1051,7 +1056,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             combatTechniques,
           ),
         })),
-        mapNullable(entry.volume, volume => ({
+        mapNullable(baseEntry.volume, volume => ({
           label: translate("Volume"),
           value: renderVolumeValue(
             translate,
@@ -1061,18 +1066,18 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             volume,
           ),
         })),
-        mapNullable(entry.cost, cost =>
+        mapNullable(baseEntry.cost, cost =>
           renderCost(
             translate,
             translateMap,
-            locale.joinDisjunctionList,
+            locale.join,
             () => getAllResolvedSelectOptions(wrappedId),
             responsiveTextSize,
-            entry.levels,
+            baseEntry.levels,
             cost,
           ),
         ),
-        mapNullable(entry.property, property => ({
+        mapNullable(baseEntry.property, property => ({
           label: translate("Property"),
           value: renderPropertyValue(
             getInstanceById,

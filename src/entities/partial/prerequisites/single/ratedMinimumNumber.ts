@@ -90,7 +90,7 @@ export const printRatedMinimumNumberPrerequisite = (
           {
             count: printNumberOfTheFollowingSkills(locale, prerequisite.number),
             minRating: prerequisite.value,
-            list: locale.joinConjunctionList(skills),
+            list: locale.join(skills, "conjunction"),
           },
         ),
         sentenceType: undefined,

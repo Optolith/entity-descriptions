@@ -1,5 +1,5 @@
 import { filterNonNullable } from "@optolith/helpers/array"
-import type { TSONDBTypes } from "optolith-database-schema"
+import type { EntityMap } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "./helpers/getTypes.js"
 import { LocaleEnvironment } from "./helpers/locale.js"
 import {
@@ -10,26 +10,29 @@ import {
 import { getReferencesTranslation } from "./references/index.js"
 
 /**
+ * A union type of entities with their names as a discriminant property.
+ */
+export type TaggedEntity<ES extends keyof EntityMap> = {
+  [E in ES]: { entity: E; content: EntityMap[E]; id: string }
+}[ES]
+
+/**
  * Creates a function that creates the JSON representation of the rules text for
  * a library entry.
  */
 export const createEntityDescriptionCreator =
   <
-    T,
-    A extends Partial<TypedCreatorData<keyof TSONDBTypes["entityMap"]>> & {
+    ES extends keyof EntityMap,
+    A extends Partial<TypedCreatorData> & {
       getInstanceById: GetInstanceById<"Publication">
-    } = Partial<TypedCreatorData<keyof TSONDBTypes["entityMap"]>> & {
+    } = Partial<TypedCreatorData> & {
       getInstanceById: GetInstanceById<"Publication">
     },
   >(
-    fn: EntityDescriptionCreator<T, A, RawEntityDescription>,
-  ): EntityDescriptionCreator<T | undefined, A> =>
-  (databaseAccessors, locale, entry, id) => {
-    if (entry === undefined) {
-      return undefined
-    }
-
-    const rawEntry = fn(databaseAccessors, locale, entry, id)
+    fn: EntityDescriptionCreator<ES, A, RawEntityDescription>,
+  ): EntityDescriptionCreator<ES, A> =>
+  (databaseAccessors, locale, entry) => {
+    const rawEntry = fn(databaseAccessors, locale, entry)
 
     if (rawEntry === undefined) {
       return undefined
@@ -54,7 +57,7 @@ export const createEntityDescriptionCreator =
  * library entry.
  */
 export type EntityDescriptionCreator<
-  T,
+  ES extends keyof EntityMap = keyof EntityMap,
   A extends { getInstanceById: GetInstanceById<"Publication"> } = {
     getInstanceById: GetInstanceById<"Publication">
   },
@@ -62,6 +65,5 @@ export type EntityDescriptionCreator<
 > = (
   databaseAccessors: A,
   locale: LocaleEnvironment,
-  entry: T,
-  id: string,
+  entry: TaggedEntity<ES>,
 ) => R | undefined

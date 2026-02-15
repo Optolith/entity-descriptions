@@ -1,8 +1,4 @@
 import { mapNullable } from "@optolith/helpers/nullable"
-import {
-  CloseCombatTechnique,
-  RangedCombatTechnique,
-} from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
@@ -12,11 +8,11 @@ import { createImprovementCost } from "./partial/rated/improvementCost.js"
  */
 export const getCloseCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
-    CloseCombatTechnique,
+    "CloseCombatTechnique",
     {
       getInstanceById: GetInstanceById<"Attribute">
     }
-  >(({ getInstanceById }, { translate, translateMap }, entry) => {
+  >(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -52,11 +48,11 @@ export const getCloseCombatTechniqueEntityDescription =
  */
 export const getRangedCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
-    RangedCombatTechnique,
+    "RangedCombatTechnique",
     {
       getInstanceById: GetInstanceById<"Attribute">
     }
-  >(({ getInstanceById }, { translate, translateMap }, entry) => {
+  >(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {

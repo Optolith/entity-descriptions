@@ -1,4 +1,3 @@
-import type { AlternativeRule } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
@@ -8,9 +7,9 @@ import { MISSING_VALUE } from "./partial/unknown.js"
  */
 export const getAlternativeRuleEntityDescription =
   createEntityDescriptionCreator<
-    AlternativeRule,
+    "AlternativeRule",
     { getInstanceById: GetInstanceById<"PlayerType"> }
-  >(({ getInstanceById }, { translateMap }, entry) => {
+  >(({ getInstanceById }, { translateMap }, { content: entry }) => {
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {

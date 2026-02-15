@@ -1,12 +1,7 @@
 import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
-  Blessing,
-  type Ceremony,
-  type LiturgicalChant,
-  type LiturgyTradition,
-} from "optolith-database-schema/gen"
+import { type LiturgyTradition } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
@@ -85,11 +80,11 @@ const getTextForTraditions = (
  * Get a JSON representation of the rules text for a blessing.
  */
 export const getBlessingEntityDescription = createEntityDescriptionCreator<
-  Blessing,
+  "Blessing",
   {
     getInstanceById: GetInstanceById<"TargetCategory">
   }
->(({ getInstanceById }, locale, entry) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
@@ -142,7 +137,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
  */
 export const getLiturgicalChantEntityDescription =
   createEntityDescriptionCreator<
-    LiturgicalChant,
+    "LiturgicalChant",
     {
       getInstanceById: GetInstanceById<
         | "Attribute"
@@ -154,7 +149,7 @@ export const getLiturgicalChantEntityDescription =
       >
       idMap: IdMap
     }
-  >(({ getInstanceById, idMap }, locale, entry) => {
+  >(({ getInstanceById, idMap }, locale, { content: entry }) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
@@ -251,7 +246,7 @@ export const getLiturgicalChantEntityDescription =
  * Get a JSON representation of the rules text for a ceremony.
  */
 export const getCeremonyEntityDescription = createEntityDescriptionCreator<
-  Ceremony,
+  "Ceremony",
   {
     getInstanceById: GetInstanceById<
       | "Attribute"
@@ -263,7 +258,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     >
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, entry) => {
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 

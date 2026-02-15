@@ -1,6 +1,47 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { MathOperation } from "optolith-database-schema/gen"
 
+type UnaryFormatter = (value: string | number) => string
+type BinaryFormatter = (left: string | number, right: string | number) => string
+
+/**
+ * Typographic formatter for addition.
+ */
+export const additionFormatter: BinaryFormatter = (left, right) =>
+  // eslint-disable-next-line no-irregular-whitespace
+  `${left} + ${right}`
+
+/**
+ * Typographic formatter for subtraction.
+ */
+export const subtractionFormatter: BinaryFormatter = (left, right) =>
+  // eslint-disable-next-line no-irregular-whitespace
+  `${left} − ${right}`
+/**
+ * Typographic formatter for multiplication.
+ */
+export const multiplicationFormatter: BinaryFormatter = (left, right) =>
+  // eslint-disable-next-line no-irregular-whitespace
+  `${left} × ${right}`
+
+/**
+ * Typographic formatter for division.
+ */
+export const divisionFormatter: BinaryFormatter = (left, right) =>
+  // eslint-disable-next-line no-irregular-whitespace
+  `${left} / ${right}`
+
+/**
+ * Typographic formatter for exponentiation. Uses Markdown syntax.
+ */
+export const exponentiationFormatter: BinaryFormatter = (left, right) =>
+  `${left}^${right}^`
+
+/**
+ * Typographic formatter for grouping (parentheses).
+ */
+export const groupFormatter: UnaryFormatter = value => `(${value})`
+
 /**
  * Render a math operation as a string, using the provided function to render the values.
  */
@@ -13,50 +54,50 @@ export const renderMathOperation = <T>(
     addParenthesisTo: MathOperation<T>["kind"][] = [],
   ): string => {
     const rendered = renderMathOperation(op, renderValue)
-    return addParenthesisTo.includes(op.kind) ? `(${rendered})` : rendered
+    return addParenthesisTo.includes(op.kind)
+      ? groupFormatter(rendered)
+      : rendered
   }
 
   const renderBinary = (
     [left, right]: [MathOperation<T>, MathOperation<T>],
     options: {
-      infix?: string
-      postfix?: string
+      formatter: BinaryFormatter
       addParenthesisTo?: MathOperation<T>["kind"][]
       addParenthesisToRight?: MathOperation<T>["kind"][]
-    } = {},
+    },
   ): string =>
-    renderWithParenthesis(left, options.addParenthesisTo) +
-    (options.infix ?? "") +
-    renderWithParenthesis(
-      right,
-      options.addParenthesisToRight ?? options.addParenthesisTo,
-    ) +
-    (options.postfix ?? "")
+    options.formatter(
+      renderWithParenthesis(left, options.addParenthesisTo),
+      renderWithParenthesis(
+        right,
+        options.addParenthesisToRight ?? options.addParenthesisTo,
+      ),
+    )
 
   switch (operation.kind) {
     case "Value":
       return renderValue(operation.Value)
     case "Addition":
-      return renderBinary(operation.Addition, { infix: " + " })
+      return renderBinary(operation.Addition, { formatter: additionFormatter })
     case "Subtraction":
       return renderBinary(operation.Subtraction, {
-        infix: " − ",
+        formatter: subtractionFormatter,
         addParenthesisToRight: ["Addition", "Subtraction"],
       })
     case "Multiplication":
       return renderBinary(operation.Multiplication, {
-        infix: " × ",
+        formatter: multiplicationFormatter,
         addParenthesisTo: ["Addition", "Subtraction"],
       })
     case "Division":
       return renderBinary(operation.Division, {
-        infix: " / ",
+        formatter: divisionFormatter,
         addParenthesisTo: ["Addition", "Subtraction"],
       })
     case "Exponentiation":
       return renderBinary(operation.Exponentiation, {
-        infix: "^",
-        postfix: "^",
+        formatter: exponentiationFormatter,
       })
     default:
       return assertExhaustive(operation)

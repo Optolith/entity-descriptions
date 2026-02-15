@@ -4,7 +4,7 @@ import type {
   ResolvedNewSkillApplication,
   ResolvedSkillUse,
 } from "optolith-database-schema/cache"
-import type { ActivatableIdentifier, Skill } from "optolith-database-schema/gen"
+import type { ActivatableIdentifier } from "optolith-database-schema/gen"
 import { fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
@@ -66,7 +66,7 @@ const getUsesOrNewApplications = <
  * Get a JSON representation of the rules text for a skill.
  */
 export const getSkillEntityDescription = createEntityDescriptionCreator<
-  Skill,
+  "Skill",
   {
     getInstanceById: GetInstanceById<
       "Attribute" | ActivatableIdentifier["kind"]
@@ -92,8 +92,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       getAllResolvedSkillUses,
     },
     locale,
-    entry,
-    id,
+    { content: entry, id },
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)

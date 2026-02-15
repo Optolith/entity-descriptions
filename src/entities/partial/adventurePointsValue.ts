@@ -61,11 +61,12 @@ const renderSelectOptionsAdventurePointsValue = <
         .entries()
         .map(([apValue, items]): [number, string] => [
           apValue,
-          locale.joinConjunctionList(
+          locale.join(
             items
               .map(item => getNameForSelectOptionId(item[1].id))
               .filter(name => name !== undefined)
               .toSorted(locale.compare),
+            "conjunction",
           ),
         ])
         .toArray()

@@ -24,6 +24,10 @@ import {
 } from "./entities/condition.js"
 import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
+import {
+  getEquipmentEntityDescription,
+  getEquipmentPackageEntityDescription,
+} from "./entities/equipment.js"
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
 import {
@@ -74,12 +78,19 @@ export type RawEntityDescription = {
 /**
  * A slice of the content of a library entry text.
  */
-export type EntityDescriptionSection = {
-  label?: string
-  value: string | number | EntityDescriptionAtom[]
-  noIndent?: boolean
-  className?: string
-}
+export type EntityDescriptionSection =
+  | {
+      label?: string
+      value: string | number | EntityDescriptionAtom[]
+      noIndent?: boolean
+      className?: string
+    }
+  | {
+      type: "table"
+      header: string[]
+      rows: string[][]
+      footer?: string[]
+    }
 
 /**
  * A single aspect of a library entry text, such as a standalone text or a labeled text.
@@ -92,7 +103,7 @@ export type EntityDescriptionAtom = {
 /**
  * Data passed to an EntityDescriptionCreator function, with the entity type as a type parameter for better type inference.
  */
-export type TypedCreatorData<E extends keyof TSONDBTypes["entityMap"]> = {
+export type TypedCreatorData = {
   getInstanceById: GetInstanceById<keyof TSONDBTypes["entityMap"]>
   getAllInstances: GetAllInstances<keyof TSONDBTypes["entityMap"]>
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<
@@ -102,18 +113,15 @@ export type TypedCreatorData<E extends keyof TSONDBTypes["entityMap"]> = {
   getAllResolvedSelectOptions: GetAllResolvedSelectOptions
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
   getAllResolvedSkillUses: GetAllResolvedSkillUses
-  entityName: E
   idMap: IdMap
 }
 
 type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> =
-  EntityDescriptionCreator<
-    TSONDBTypes["entityMap"][E] | undefined,
-    TypedCreatorData<E>
-  >
+  EntityDescriptionCreator<E, TypedCreatorData>
 
 const registeredEntityDescriptionCreators = {
   // rules
+  // CoreRule: getCoreRuleEntityDescription,
   FocusRule: getFocusRuleEntityDescription,
   OptionalRule: getOptionalRuleEntityDescription,
   AlternativeRule: getAlternativeRuleEntityDescription,
@@ -123,6 +131,9 @@ const registeredEntityDescriptionCreators = {
   // character creation
   ExperienceLevel: getExperienceLevelEntityDescription,
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
+  // Race: getRaceEntityDescription,
+  // Culture: getCultureEntityDescription,
+  // ProfessionVersion: getProfessionVersionEntityDescription,
   Advantage: getActivatableEntityDescription,
   Disadvantage: getActivatableEntityDescription,
   // core values
@@ -135,7 +146,17 @@ const registeredEntityDescriptionCreators = {
   Spell: getSpellEntityDescription,
   Ritual: getRitualEntityDescription,
   // magical actions
+  // AnimistPower: getAnimistPowerEntityDescription,
   Curse: getCurseEntityDescription,
+  // DominationRitual: getDominationRitualEntityDescription,
+  // ElvenMagicalSong: getElvenMagicalSongEntityDescription,
+  // GeodeRitual: getGeodeRitualEntityDescription,
+  // JesterTrick: getJesterTrickEntityDescription,
+  // MagicalDance: getMagicalDanceEntityDescription,
+  // MagicalMelody: getMagicalMelodyEntityDescription,
+  // MagicalRune: getMagicalRuneEntityDescription,
+  // ZibiljaRitual: getZibiljaRitualEntityDescription,
+  // FamiliarsTrick: getFamiliarsTrickEntityDescription,
   // auxiliary magical
   Curriculum: getCurriculumEntityDescription,
   // work of the gods
@@ -195,7 +216,45 @@ const registeredEntityDescriptionCreators = {
   WandEnchantment: getActivatableEntityDescription,
   WeaponEnchantment: getActivatableEntityDescription,
   // equipment
+  Ammunition: getEquipmentEntityDescription,
+  Animal: getEquipmentEntityDescription,
+  AnimalCare: getEquipmentEntityDescription,
+  Armor: getEquipmentEntityDescription,
+  BandageOrRemedy: getEquipmentEntityDescription,
+  Book: getEquipmentEntityDescription,
+  CeremonialItem: getEquipmentEntityDescription,
+  Clothes: getEquipmentEntityDescription,
+  ClothingPackage: getEquipmentEntityDescription,
+  Container: getEquipmentEntityDescription,
+  // Elixir: getElixirEntityDescription,
+  EquipmentOfBlessedOnes: getEquipmentEntityDescription,
+  GemOrPreciousStone: getEquipmentEntityDescription,
+  IlluminationLightSource: getEquipmentEntityDescription,
+  IlluminationRefillOrSupply: getEquipmentEntityDescription,
+  Jewelry: getEquipmentEntityDescription,
+  Laboratory: getEquipmentEntityDescription,
+  Liebesspielzeug: getEquipmentEntityDescription,
+  LuxuryGood: getEquipmentEntityDescription,
+  MagicalArtifact: getEquipmentEntityDescription,
+  MusicalInstrument: getEquipmentEntityDescription,
+  Newspaper: getEquipmentEntityDescription,
+  OrienteeringAid: getEquipmentEntityDescription,
+  // Poison: getPoisonEntityDescription,
+  RopeOrChain: getEquipmentEntityDescription,
+  Stationery: getEquipmentEntityDescription,
+  ThievesTool: getEquipmentEntityDescription,
+  ToolOfTheTrade: getEquipmentEntityDescription,
+  TravelGearOrTool: getEquipmentEntityDescription,
+  Vehicle: getEquipmentEntityDescription,
+  Weapon: getEquipmentEntityDescription,
+  WeaponAccessory: getEquipmentEntityDescription,
+  EquipmentPackage: getEquipmentPackageEntityDescription,
   // other
+  // Disease: getDiseaseEntityDescription,
+  // AnimalDisease: getDiseaseEntityDescription,
+  // Influence: getInfluenceEntityDescription,
+  // PersonalityTrait: getPersonalityTraitEntityDescription,
+  // SexPractice: getSexPracticeEntityDescription,
 } satisfies Partial<{ [E in keyof TSONDBTypes["entityMap"]]: TypedCreator<E> }>
 
 type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
@@ -213,7 +272,7 @@ export const isSupportedEntity = (
  */
 export type IdMap = {
   DerivedCharacteristic: Record<
-    "LifePoints" | "Spirit" | "Toughness" | "Movement",
+    "LifePoints" | "Spirit" | "Toughness" | "Initiative" | "Movement",
     string
   >
   ExperienceLevel: Record<"Experienced", string>
@@ -275,11 +334,9 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
       getAllResolvedSelectOptions,
       getAllResolvedNewSkillApplications,
       getAllResolvedSkillUses,
-      entityName,
       idMap,
     },
     localeEnv,
-    instance,
-    instanceId,
+    { entity: entityName, content: instance, id: instanceId },
   )
 }

@@ -1,14 +1,19 @@
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { LocaleEnvironment } from "../../src/helpers/locale.js"
 import { translateMapMock, translateMock } from "./translate.js"
 
-const collator = new Intl.Collator("en-US")
+const localeId = "en-US"
 
-const conjunctionListFormat = new Intl.ListFormat("en-US", {
+const collator = new Intl.Collator(localeId)
+
+const conjunctionListFormat = new Intl.ListFormat(localeId, {
   type: "conjunction",
 })
-
-const disjunctionListFormat = new Intl.ListFormat("en-US", {
+const disjunctionListFormat = new Intl.ListFormat(localeId, {
   type: "disjunction",
+})
+const unitListFormat = new Intl.ListFormat(localeId, {
+  type: "unit",
 })
 
 /**
@@ -19,6 +24,22 @@ export const defaultLocaleEnvironment: LocaleEnvironment = {
   translate: translateMock,
   translateMap: translateMapMock,
   compare: (x, y) => collator.compare(x, y),
-  joinConjunctionList: list => conjunctionListFormat.format(list),
-  joinDisjunctionList: list => disjunctionListFormat.format(list),
+  measurementAdjustments: {
+    milesMultiplier: 1,
+    stepsMultiplier: 1,
+    halffingersMultiplier: 1,
+    stonesMultiplier: 1,
+  },
+  join: (list, style) => {
+    switch (style) {
+      case "conjunction":
+        return conjunctionListFormat.format(list)
+      case "disjunction":
+        return disjunctionListFormat.format(list)
+      case "unit":
+        return unitListFormat.format(list)
+      default:
+        return assertExhaustive(style)
+    }
+  },
 }

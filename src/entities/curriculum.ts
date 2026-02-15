@@ -7,7 +7,6 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import type {
   AbilityAdjustment,
-  Curriculum,
   ElectiveSpellworks,
   ProfessionPackage,
   RestrictedProperty,
@@ -22,7 +21,7 @@ import type {
   GetAllInstances,
   GetInstanceById,
 } from "../helpers/getTypes.js"
-import type { LocaleCompare, LocaleEnvironment } from "../helpers/locale.js"
+import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type { EntityDescriptionSection, IdMap } from "../index.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -72,8 +71,7 @@ const renderRestrictedSpellworks = (
   translate: Translate,
   translateMap: TranslateMap,
   localeCompare: LocaleCompare,
-  joinConjunctionList: LocaleEnvironment["joinConjunctionList"],
-  joinDisjunctionList: LocaleEnvironment["joinDisjunctionList"],
+  localeJoin: LocaleJoin,
   getInstanceById: GetInstanceById<
     SpellworkIdentifier["kind"] | "Element" | "Property"
   >,
@@ -112,7 +110,7 @@ const renderRestrictedSpellworks = (
     }
 
     return ` (${translate("except {$list}", {
-      list: joinConjunctionList(translatedSpellworks),
+      list: localeJoin(translatedSpellworks, "conjunction"),
     })})`
   }
 
@@ -127,7 +125,7 @@ const renderRestrictedSpellworks = (
     )?.map(
       restriction =>
         translate(
-          ".input {$count :number} {{only {$count} additional spellwork with the Property {$property}}}",
+          ".input {$count :number} {{only {$count} additional spellworks with the Property {$property}}}",
           {
             count: restriction.Property.maximum,
             property:
@@ -173,7 +171,7 @@ const renderRestrictedSpellworks = (
     translatedProperties.length > 0
       ? [
           translate("no spellworks with the Property {$property}", {
-            property: joinDisjunctionList(translatedProperties),
+            property: localeJoin(translatedProperties, "disjunction"),
           }),
         ]
       : []
@@ -463,7 +461,7 @@ const renderAbilityAdjustments = (
  * Get a JSON representation of the rules text for a curriculum.
  */
 export const getCurriculumEntityDescription = createEntityDescriptionCreator<
-  Curriculum,
+  "Curriculum",
   {
     getInstanceById: GetInstanceById<
       | "Skill"
@@ -483,15 +481,8 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
 >(
   (
     { getInstanceById, getAllInstances, getChildInstancesForInstanceId, idMap },
-    {
-      translate,
-      translateMap,
-      compare: localeCompare,
-      joinConjunctionList,
-      joinDisjunctionList,
-    },
-    entry,
-    id,
+    { translate, translateMap, compare: localeCompare, join: localeJoin },
+    { content: entry, id },
   ) => {
     const translation = translateMap(entry.translations)
 
@@ -539,8 +530,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                   translate,
                   translateMap,
                   localeCompare,
-                  joinConjunctionList,
-                  joinDisjunctionList,
+                  localeJoin,
                   getInstanceById,
                   entry.restricted_spellworks,
                 ),
