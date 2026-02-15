@@ -38,6 +38,7 @@ import {
 import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
+import { getSexPracticeEntityDescription } from "./entities/sexPractice.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
 import {
   getCantripEntityDescription,
@@ -258,7 +259,7 @@ const registeredEntityDescriptionCreators = {
   // AnimalDisease: getDiseaseEntityDescription,
   // Influence: getInfluenceEntityDescription,
   // PersonalityTrait: getPersonalityTraitEntityDescription,
-  // SexPractice: getSexPracticeEntityDescription,
+  SexPractice: getSexPracticeEntityDescription,
 } satisfies Partial<{ [E in keyof TSONDBTypes["entityMap"]]: TypedCreator<E> }>
 
 type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
