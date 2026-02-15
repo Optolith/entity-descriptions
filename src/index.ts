@@ -31,6 +31,7 @@ import { getEquipmentEntityDescription } from "./entities/equipment.js"
 import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackage.js"
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
+import { getInfluenceEntityDescription } from "./entities/influence.js"
 import {
   getBlessingEntityDescription,
   getCeremonyEntityDescription,
@@ -258,7 +259,7 @@ const registeredEntityDescriptionCreators = {
   // other
   Disease: getDiseaseEntityDescription,
   AnimalDisease: getDiseaseEntityDescription,
-  // Influence: getInfluenceEntityDescription,
+  Influence: getInfluenceEntityDescription,
   // PersonalityTrait: getPersonalityTraitEntityDescription,
   SexPractice: getSexPracticeEntityDescription,
 } satisfies Partial<{ [E in keyof TSONDBTypes["entityMap"]]: TypedCreator<E> }>
