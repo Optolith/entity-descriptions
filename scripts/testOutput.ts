@@ -35,17 +35,20 @@ const db = await TSONDB.create({
   locales: ["de-DE"],
 })
 
-const [entity, id] = argv.slice(2)
+const [localeId, entity, id] = argv.slice(2)
 
 if (!entity || !db.schema.isEntityName(entity) || !isSupportedEntity(entity)) {
   throw new Error("Invalid entity name")
+}
+
+if (localeId === undefined) {
+  throw new Error("No locale provided")
 }
 
 if (!id) {
   throw new Error("No ID provided")
 }
 
-const localeId = "de-DE"
 const localeInstance = db.getInstanceOfEntityById("Locale", localeId)
 
 if (localeInstance === undefined) {

@@ -1,3 +1,4 @@
+import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
@@ -15,7 +16,7 @@ import type {
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import type { LocaleJoin } from "../helpers/locale.js"
+import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type { EntityDescriptionSection, IdMap } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
@@ -36,24 +37,32 @@ import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
 const renderApplicationType = (
   translate: Translate,
   localeJoin: LocaleJoin,
+  localeCompare: LocaleCompare,
   applicationType: PoisonApplicationType[],
 ) =>
   translate("{$types} poison", {
     types: localeJoin(
-      applicationType.map(type => {
-        switch (type.kind) {
-          case "Weapon":
-            return translate("Weapon")
-          case "Ingestion":
-            return translate("Ingestion")
-          case "Inhalation":
-            return translate("Inhalation")
-          case "Contact":
-            return translate("Contact")
-          default:
-            return assertExhaustive(type)
-        }
-      }),
+      applicationType
+        .map(type => {
+          switch (type.kind) {
+            case "Weapon":
+              return translate("Weapon (poison)")
+            case "Ingestion":
+              return translate("Ingestion (poison)")
+            case "Inhalation":
+              return translate("Inhalation (poison)")
+            case "Contact":
+              return translate("Contact (poison)")
+            default:
+              return assertExhaustive(type)
+          }
+        })
+        .toSorted(localeCompare)
+        .map((type, index, arr) =>
+          index === arr.length - 1 && type.at(-1) === "-"
+            ? type.slice(0, -1)
+            : type,
+        ),
       "conjunction",
     ),
   })
@@ -85,33 +94,64 @@ const renderLevel = (
 const renderAddiction = (
   translate: Translate,
   translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<"Disease">,
   addiction: IntoxicantAddiction,
 ) =>
   [
-    renderChance(translate, translateMap, addiction),
-    translate(
-      ".input {$value :number} {{{$value} applications every {$interval}}}",
-      {
-        value: addiction.withdrawalPrevention.amount,
-        interval: formatTimeSpan(
-          translate,
-          ResponsiveTextSize.Full,
-          { kind: "Days" },
-          (() => {
-            switch (addiction.withdrawalPrevention.interval.kind) {
-              case "Constant":
-                return addiction.withdrawalPrevention.interval.Constant.value
-              case "DiceBased":
-                return renderDice(
-                  translate,
-                  addiction.withdrawalPrevention.interval.DiceBased.dice,
-                )
-              default:
-                return assertExhaustive(addiction.withdrawalPrevention.interval)
-            }
-          })(),
+    ensureNonEmpty(
+      [
+        mapNullable(
+          renderChance(translate, translateMap, addiction),
+          chance =>
+            chance +
+            parensIf(
+              addiction.check === undefined
+                ? undefined
+                : addiction.check.onlySameMonth === true
+                  ? translate(
+                      ".input {$count :number} {{check required every {$count}. application in the same month}}",
+                      { count: addiction.check.interval },
+                    )
+                  : translate(
+                      ".input {$count :number} {{check required every {$count}. application}}",
+                      { count: addiction.check.interval },
+                    ),
+            ),
         ),
-      },
+        mapNullable(addiction.disease, diseaseId => {
+          const disease = getInstanceById("Disease", diseaseId)
+          const diseaseTranslation = translateMap(disease?.translations)
+          return translate("see {$link}", {
+            link: diseaseTranslation?.name ?? MISSING_VALUE,
+          })
+        }),
+      ].filter(isNotNullish),
+    )?.join(", "),
+    mapNullable(addiction.withdrawalPrevention, withdrawalPrevention =>
+      translate(
+        ".input {$value :number} {{{$value} applications every {$interval}}}",
+        {
+          value: withdrawalPrevention.amount,
+          interval: formatTimeSpan(
+            translate,
+            ResponsiveTextSize.Full,
+            { kind: "Days" },
+            (() => {
+              switch (withdrawalPrevention.interval.kind) {
+                case "Constant":
+                  return withdrawalPrevention.interval.Constant.value
+                case "DiceBased":
+                  return renderDice(
+                    translate,
+                    withdrawalPrevention.interval.DiceBased.dice,
+                  )
+                default:
+                  return assertExhaustive(withdrawalPrevention.interval)
+              }
+            })(),
+          ),
+        },
+      ),
     ),
   ]
     .filter(isNotNullish)
@@ -120,6 +160,7 @@ const renderAddiction = (
 const renderIntoxicantValues = (
   translate: Translate,
   translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<"Disease">,
   intoxicant: Intoxicant,
 ) => {
   const translation = translateMap(intoxicant.translations)
@@ -134,13 +175,19 @@ const renderIntoxicantValues = (
     addiction:
       intoxicant?.addiction === undefined
         ? undefined
-        : renderAddiction(translate, translateMap, intoxicant.addiction),
+        : renderAddiction(
+            translate,
+            translateMap,
+            getInstanceById,
+            intoxicant.addiction,
+          ),
   }
 }
 
 const renderSourceTypeBasedValues = (
   translate: Translate,
   translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<"Disease">,
   sourceType: PoisonSourceType,
 ): {
   level: string | number
@@ -182,6 +229,7 @@ const renderSourceTypeBasedValues = (
           : renderIntoxicantValues(
               translate,
               translateMap,
+              getInstanceById,
               sourceType.AlchemicalPoison.intoxicant,
             )),
         typicalIngredients: translation?.typical_ingredients.join(", "),
@@ -221,6 +269,7 @@ const renderSourceTypeBasedValues = (
           : renderIntoxicantValues(
               translate,
               translateMap,
+              getInstanceById,
               sourceType.PlantPoison.intoxicant,
             )),
       }
@@ -270,7 +319,7 @@ const renderStart = (
     case "Indefinite":
       return (
         translateMap(start.Indefinite.translations)?.description ??
-        UNHANDLED_VALUE
+        MISSING_VALUE
       )
     default:
       return assertExhaustive(start)
@@ -374,7 +423,7 @@ const renderValueCost = (
 export const getPoisonEntityDescription = createEntityDescriptionCreator<
   "Poison",
   {
-    getInstanceById: GetInstanceById<"DerivedCharacteristic">
+    getInstanceById: GetInstanceById<"DerivedCharacteristic" | "Disease">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     idMap: IdMap
   }
@@ -384,7 +433,12 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     locale,
     { content: entry },
   ) => {
-    const { translate, translateMap, join: localeJoin } = locale
+    const {
+      translate,
+      translateMap,
+      join: localeJoin,
+      compare: localeCompare,
+    } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -394,6 +448,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     const applicationType = renderApplicationType(
       translate,
       localeJoin,
+      localeCompare,
       entry.application_type,
     )
 
@@ -413,7 +468,12 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       prerequisitesBrewingProcess,
       tradeSecret,
       note,
-    } = renderSourceTypeBasedValues(translate, translateMap, entry.source_type)
+    } = renderSourceTypeBasedValues(
+      translate,
+      translateMap,
+      getInstanceById,
+      entry.source_type,
+    )
 
     return {
       title: translation.name,
