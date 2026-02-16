@@ -40,7 +40,11 @@ import type {
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"
-import type { LocaleEnvironment, LocaleJoin } from "../helpers/locale.js"
+import type {
+  LocaleCompare,
+  LocaleEnvironment,
+  LocaleJoin,
+} from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   EntityDescriptionSection,
@@ -347,14 +351,16 @@ const renderApplicableCombatTechniquesRestriction = <
         wrapInParens([
           locale.translate("except {$list}", {
             list: locale.join(
-              restriction.ExcludeCombatTechniques.list.map(
-                id =>
-                  locale.translateMap(
-                    getExcludedInstance?.(
-                      id as (CombatTechniqueIdentifier & string) & string,
-                    )?.translations,
-                  )?.name ?? MISSING_VALUE,
-              ),
+              restriction.ExcludeCombatTechniques.list
+                .map(
+                  id =>
+                    locale.translateMap(
+                      getExcludedInstance?.(
+                        id as (CombatTechniqueIdentifier & string) & string,
+                      )?.translations,
+                    )?.name ?? MISSING_VALUE,
+                )
+                .toSorted(locale.compare),
               "conjunction",
             ),
           }),
@@ -485,12 +491,15 @@ const renderApplicableCombatTechniquesValue = (
                     ? undefined
                     : locale.translate("only {$weapons}", {
                         weapons: locale.join(
-                          specific.weapons.map(
-                            weapon =>
-                              locale.translateMap(
-                                getInstanceById("Weapon", weapon)?.translations,
-                              )?.name ?? MISSING_VALUE,
-                          ),
+                          specific.weapons
+                            .map(
+                              weapon =>
+                                locale.translateMap(
+                                  getInstanceById("Weapon", weapon)
+                                    ?.translations,
+                                )?.name ?? MISSING_VALUE,
+                            )
+                            .toSorted(locale.compare),
                           "conjunction",
                         ),
                       }),
@@ -498,6 +507,7 @@ const renderApplicableCombatTechniquesValue = (
                 )
           return mainWithRestriction
         })
+        .toSorted(locale.compare)
         .join(", ")
     }
     default:
@@ -781,6 +791,7 @@ const renderArcaneEnergyCost = (
 const renderBindingCost = (
   translate: Translate,
   translateMap: TranslateMap,
+  localeCompare: LocaleCompare,
   getAllResolvedSelectOptions: () => ResolvedSelectOption[],
   responsiveTextSize: ResponsiveTextSize,
   cost: BindingCost,
@@ -831,6 +842,7 @@ const renderBindingCost = (
                 translateMap(groupItem.content.translations)?.name ??
                 MISSING_VALUE,
             )
+            .toSorted(localeCompare)
             .join(", "),
         )
         .join(separator)}`
@@ -853,6 +865,7 @@ const renderCost = (
   translate: Translate,
   translateMap: TranslateMap,
   localeJoin: LocaleJoin,
+  localeCompare: LocaleCompare,
   getAllResolvedSelectOptions: () => ResolvedSelectOption[],
   responsiveTextSize: ResponsiveTextSize,
   levels: number | undefined,
@@ -906,6 +919,7 @@ const renderCost = (
         value: renderBindingCost(
           translate,
           translateMap,
+          localeCompare,
           getAllResolvedSelectOptions,
           responsiveTextSize,
           cost.BindingCost,
@@ -1073,6 +1087,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             translate,
             translateMap,
             locale.join,
+            locale.compare,
             () => getAllResolvedSelectOptions(wrappedId),
             responsiveTextSize,
             baseEntry.levels,

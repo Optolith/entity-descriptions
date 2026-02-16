@@ -84,7 +84,7 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
 >(
   (
     { getInstanceById, idMap },
-    { translate, translateMap },
+    { translate, translateMap, compare: localeCompare },
     { entity, content: entry },
   ) => {
     const baseEntry: BaseDisease = entry
@@ -154,6 +154,7 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
                               ?.translations,
                           )?.name ?? MISSING_VALUE,
                       )
+                      .toSorted(localeCompare)
                       .join(", "),
             }
           : undefined,
