@@ -1,4 +1,5 @@
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { Translate } from "../../../../helpers/translate.js"
 import { responsive, ResponsiveTextSize } from "../../responsiveText.js"
 
 /**
@@ -31,14 +32,14 @@ export const wrapIfMinimum = (
  * Wraps the text in a translation that indicates it’s a maximum value.
  */
 export const wrapAsMaximum = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   text: string,
 ): string =>
   responsive(
     responsiveTextSize,
-    () => locale.translate("no more than {$value}", { value: text }),
-    () => locale.translate("max. {$value}", { value: text }),
+    () => translate("no more than {$value}", { value: text }),
+    () => translate("max. {$value}", { value: text }),
   )
 
 /**
@@ -46,9 +47,9 @@ export const wrapAsMaximum = (
  * `is_maximum` property says it’s a maximum value.
  */
 export const wrapIfMaximum = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   is_maximum: boolean | undefined,
   text: string,
 ): string =>
-  is_maximum === true ? wrapAsMaximum(locale, responsiveTextSize, text) : ""
+  is_maximum === true ? wrapAsMaximum(translate, responsiveTextSize, text) : ""

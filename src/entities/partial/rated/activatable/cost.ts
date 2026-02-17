@@ -12,11 +12,17 @@ import {
   OneTimeCost,
   SingleOneTimeCost,
   SustainedCost,
+  type DurationUnitValue,
   type OneTimeCostMap,
+  type ResponsiveTextOptional,
   type SustainedCostMap,
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import {
+  responsiveTranslate,
+  type Translate,
+} from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
 import {
   appendNoteIfRequested,
@@ -556,4 +562,45 @@ export const getSustainedCostTranslation = (
     default:
       return assertExhaustive(value)
   }
+}
+
+/**
+ * Adds the interval to a cost translation if an interval is given, e.g. "10 AE per hour".
+ */
+export const addCostInterval = (
+  translate: Translate,
+  responsiveTextSize: ResponsiveTextSize,
+  interval: DurationUnitValue | undefined,
+  text: string,
+) =>
+  interval === undefined
+    ? text
+    : responsiveTranslate(
+        translate,
+        responsiveTextSize,
+        "{$cost} per {$interval}",
+        "{$cost}/{$interval}",
+        {
+          cost: text,
+          interval: formatTimeSpan(
+            translate,
+            responsiveTextSize,
+            interval.unit,
+            interval.value,
+          ),
+        },
+      )
+
+/**
+ * Adds the per countable part to a cost translation if a per countable is given, e.g. "10 AE per target".
+ */
+export const addPerCountableToCost = (
+  responsiveTextSize: ResponsiveTextSize,
+  translation: { per?: ResponsiveTextOptional } | undefined,
+  text: string,
+) => {
+  const per = translation?.per
+  return per === undefined
+    ? text
+    : (getResponsiveTextOptional(per, responsiveTextSize) ?? text)
 }

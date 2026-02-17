@@ -99,7 +99,8 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
   )
 
   const duration = getDurationTranslationForBlessing(
-    locale,
+    translate,
+    translateMap,
     ResponsiveTextSize.Full,
     entry.parameters.duration,
   )

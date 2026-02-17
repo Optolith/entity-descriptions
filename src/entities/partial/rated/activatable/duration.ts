@@ -5,7 +5,6 @@ import type {
   CantripDuration,
   CastingTimeDuringLovemaking,
   CheckResultBasedDuration,
-  DurationForOneTime,
   DurationForSustained,
   FixedDuration,
   Immediate,
@@ -15,7 +14,7 @@ import type {
   IndefiniteDurationTranslation,
   PermanentDuration,
 } from "optolith-database-schema/gen"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { Translate, TranslateMap } from "../../../../helpers/translate.js"
 import {
   getResponsiveText,
   replaceTextIfRequested,
@@ -28,14 +27,15 @@ import { wrapAsMaximum, wrapIfMaximum } from "./isMinimumMaximum.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
 const getImmediateDurationTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
-  value: Immediate,
+  value?: Immediate,
 ): string => {
   const text = appendInParensIfNotEmpty(
-    mapNullable(value.maximum, max => {
+    mapNullable(value?.maximum, max => {
       const maxText = formatTimeSpan(
-        locale.translate,
+        translate,
         responsiveTextSize,
         max.unit,
         max.value,
@@ -43,49 +43,51 @@ const getImmediateDurationTranslation = (
 
       return responsive(
         responsiveTextSize,
-        () => locale.translate("no more than {$value}", { value: maxText }),
-        () => locale.translate("max. {$value}", { value: maxText }),
+        () => translate("no more than {$value}", { value: maxText }),
+        () => translate("max. {$value}", { value: maxText }),
       )
     }),
-    locale.translate("Immediate"),
+    translate("Immediate"),
   )
 
   return replaceTextIfRequested(
     "replacement",
-    value.translations,
-    locale.translateMap,
+    value?.translations,
+    translateMap,
     responsiveTextSize,
     text,
   )
 }
 
 const getPermanentDurationTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
   value: PermanentDuration,
 ): string =>
   replaceTextIfRequested(
     "replacement",
     value.translations,
-    locale.translateMap,
+    translateMap,
     responsiveTextSize,
-    locale.translate("Permanent"),
+    translate("Permanent"),
   )
 
 const getFixedDurationTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
   value: FixedDuration,
 ): string => {
   const duration = formatTimeSpan(
-    locale.translate,
+    translate,
     responsiveTextSize,
     value.unit,
     value.value,
   )
 
   const durationWrappedIfMaximum = wrapIfMaximum(
-    locale,
+    translate,
     responsiveTextSize,
     value.is_maximum,
     duration,
@@ -94,33 +96,38 @@ const getFixedDurationTranslation = (
   return replaceTextIfRequested(
     "replacement",
     value.translations,
-    locale.translateMap,
+    translateMap,
     responsiveTextSize,
     durationWrappedIfMaximum,
   )
 }
 
 const getCheckResultBasedDurationTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   value: CheckResultBasedDuration,
 ): string => {
   const duration = formatTimeSpan(
-    locale.translate,
+    translate,
     responsiveTextSize,
     value.unit,
-    getCheckResultBasedValueTranslation(locale.translate, value),
+    getCheckResultBasedValueTranslation(translate, value),
   )
 
-  return wrapIfMaximum(locale, responsiveTextSize, value.is_maximum, duration)
+  return wrapIfMaximum(
+    translate,
+    responsiveTextSize,
+    value.is_maximum,
+    duration,
+  )
 }
 
 const getIndefiniteDurationTranslation = (
-  locale: LocaleEnvironment,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
   value: IndefiniteDuration | IndefiniteBlessingDuration,
 ) => {
-  const description = locale.translateMap<
+  const description = translateMap<
     IndefiniteDurationTranslation | IndefiniteBlessingDurationTranslation
   >(value.translations)?.description
 
@@ -133,38 +140,62 @@ const getIndefiniteDurationTranslation = (
  * Returns the text for the duration of a one-time activatable skill.
  */
 export const getDurationForOneTimeTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
-  value: DurationForOneTime,
+  value:
+    | {
+        kind: "Immediate"
+        Immediate?: Immediate
+      }
+    | {
+        kind: "Permanent"
+        Permanent: PermanentDuration
+      }
+    | {
+        kind: "Fixed"
+        Fixed: FixedDuration
+      }
+    | {
+        kind: "CheckResultBased"
+        CheckResultBased: CheckResultBasedDuration
+      }
+    | {
+        kind: "Indefinite"
+        Indefinite: IndefiniteDuration
+      },
 ): string => {
   switch (value.kind) {
     case "Immediate":
       return getImmediateDurationTranslation(
-        locale,
+        translate,
+        translateMap,
         responsiveTextSize,
         value.Immediate,
       )
     case "Permanent":
       return getPermanentDurationTranslation(
-        locale,
+        translate,
+        translateMap,
         responsiveTextSize,
         value.Permanent,
       )
     case "Fixed":
       return getFixedDurationTranslation(
-        locale,
+        translate,
+        translateMap,
         responsiveTextSize,
         value.Fixed,
       )
     case "CheckResultBased":
       return getCheckResultBasedDurationTranslation(
-        locale,
+        translate,
         responsiveTextSize,
         value.CheckResultBased,
       )
     case "Indefinite":
       return getIndefiniteDurationTranslation(
-        locale,
+        translateMap,
         responsiveTextSize,
         value.Indefinite,
       )
@@ -177,21 +208,21 @@ export const getDurationForOneTimeTranslation = (
  * Returns the text for the duration of a sustained activatable skill.
  */
 export const getDurationForSustainedTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   value: DurationForSustained | undefined,
 ): string =>
   value === undefined
     ? responsive(
         responsiveTextSize,
-        () => locale.translate("Sustained"),
-        () => locale.translate("(S)"),
+        () => translate("Sustained"),
+        () => translate("(S)"),
       )
     : wrapAsMaximum(
-        locale,
+        translate,
         responsiveTextSize,
         formatTimeSpan(
-          locale.translate,
+          translate,
           responsiveTextSize,
           value.maximum.unit,
           value.maximum.value,
@@ -199,38 +230,45 @@ export const getDurationForSustainedTranslation = (
       )
 
 const getDurationDuringLovemakingTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   value: CastingTimeDuringLovemaking,
 ): string =>
-  formatTimeSpan(locale.translate, responsiveTextSize, value.unit, value.value)
+  formatTimeSpan(translate, responsiveTextSize, value.unit, value.value)
 
 /**
  * Returns the text for the duration of a cantrip.
  */
 export const getDurationTranslationForCantrip = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
   value: CantripDuration,
 ): string => {
   switch (value.kind) {
     case "Immediate":
-      return getImmediateDurationTranslation(locale, responsiveTextSize, {})
+      return getImmediateDurationTranslation(
+        translate,
+        translateMap,
+        responsiveTextSize,
+        {},
+      )
     case "Fixed":
       return getFixedDurationTranslation(
-        locale,
+        translate,
+        translateMap,
         responsiveTextSize,
         value.Fixed,
       )
     case "Indefinite":
       return getIndefiniteDurationTranslation(
-        locale,
+        translateMap,
         responsiveTextSize,
         value.Indefinite,
       )
     case "DuringLovemaking":
       return getDurationDuringLovemakingTranslation(
-        locale,
+        translate,
         responsiveTextSize,
         value.DuringLovemaking,
       )
@@ -243,22 +281,29 @@ export const getDurationTranslationForCantrip = (
  * Returns the text for the duration of a blessing.
  */
 export const getDurationTranslationForBlessing = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
   value: BlessingDuration,
 ): string => {
   switch (value.kind) {
     case "Immediate":
-      return getImmediateDurationTranslation(locale, responsiveTextSize, {})
+      return getImmediateDurationTranslation(
+        translate,
+        translateMap,
+        responsiveTextSize,
+        {},
+      )
     case "Fixed":
       return getFixedDurationTranslation(
-        locale,
+        translate,
+        translateMap,
         responsiveTextSize,
         value.Fixed,
       )
     case "Indefinite":
       return getIndefiniteDurationTranslation(
-        locale,
+        translateMap,
         responsiveTextSize,
         value.Indefinite,
       )

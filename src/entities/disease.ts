@@ -16,6 +16,7 @@ import type {
   TranslateMap,
 } from "../helpers/translate.js"
 import type { IdMap } from "../index.js"
+import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import {
   renderAlternativeNames,
   renderChance,
@@ -141,22 +142,13 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
         { label: translate("Treatment"), value: translation.treatment },
         { label: translate("Antidote"), value: translation.cure },
         entity === "AnimalDisease"
-          ? {
-              label: translate("Animal Types"),
-              value:
-                entry.animal_types.length === 0
-                  ? translate("All")
-                  : entry.animal_types
-                      .map(
-                        animalTypeId =>
-                          translateMap(
-                            getInstanceById("AnimalType", animalTypeId)
-                              ?.translations,
-                          )?.name ?? MISSING_VALUE,
-                      )
-                      .toSorted(localeCompare)
-                      .join(", "),
-            }
+          ? renderAnimalTypesSection(
+              translate,
+              translateMap,
+              localeCompare,
+              getInstanceById,
+              entry.animal_types,
+            )
           : undefined,
         entity === "AnimalDisease"
           ? {

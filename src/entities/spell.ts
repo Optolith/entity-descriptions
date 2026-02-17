@@ -10,6 +10,11 @@ import type {
   DominationRitualCost,
   DominationRitualDuration,
   ElvenMagicalSongCost,
+  FamiliarsTrickOneTimeCost,
+  FamiliarsTrickOneTimeIntervalCost,
+  FamiliarsTrickPerformanceParameters,
+  FamiliarsTrickProperty,
+  FamiliarsTrickSustainedCost,
   MagicalDanceCost,
   MagicalMelodyCost,
   MagicalTradition_ID,
@@ -23,12 +28,21 @@ import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
+import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { additionFormatter } from "./partial/mathOperation.js"
 import {
   appendCheckResultModifier,
   getCheckResultBasedValueTranslation,
 } from "./partial/rated/activatable/checkResultBased.js"
-import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
+import {
+  addCostInterval,
+  addPerCountableToCost,
+} from "./partial/rated/activatable/cost.js"
+import {
+  getDurationForOneTimeTranslation,
+  getDurationForSustainedTranslation,
+  getDurationTranslationForCantrip,
+} from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
 import {
@@ -168,7 +182,8 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
   )
 
   const duration = getDurationTranslationForCantrip(
-    locale,
+    translate,
+    translateMap,
     ResponsiveTextSize.Full,
     entry.parameters.duration,
   )
@@ -468,19 +483,12 @@ const renderCurseCost = (
   switch (cost.kind) {
     case "Fixed": {
       const translation = translateMap(cost.Fixed.translations)
-      const wrapInPer: (text: string) => string =
-        translation?.per === undefined
-          ? text => text
-          : text =>
-              translate("{$cost} per {$countable}", {
-                cost: text,
-                countable: getResponsiveText(
-                  translation.per,
-                  responsiveTextSize,
-                ),
-              })
       return (
-        wrapInPer(translate("{$value} AE", { value: cost.Fixed.value })) +
+        addPerCountableToCost(
+          responsiveTextSize,
+          translation,
+          translate("{$value} AE", { value: cost.Fixed.value }),
+        ) +
         parensIf(
           mapNullable(translation?.note, note =>
             getResponsiveTextOptional(note, responsiveTextSize),
@@ -628,33 +636,7 @@ const renderElvenMagicalSongCost = (
   cost: ElvenMagicalSongCost,
 ) => {
   const translation = translateMap(cost.translations)
-
   const base = translate("{$value} AE", { value: cost.value })
-
-  const wrapInPer: (text: string) => string =
-    translation?.per === undefined
-      ? text => text
-      : text =>
-          translate("{$cost} per {$countable}", {
-            cost: text,
-            countable: getResponsiveText(translation.per, responsiveTextSize),
-          })
-
-  const { interval } = cost
-
-  const wrapInInterval: (text: string) => string =
-    interval === undefined
-      ? text => text
-      : text =>
-          translate("{$cost} per {$interval}", {
-            cost: text,
-            interval: formatTimeSpan(
-              translate,
-              responsiveTextSize,
-              interval.unit,
-              interval.value,
-            ),
-          })
 
   const permanent =
     cost.permanent === undefined
@@ -676,7 +658,14 @@ const renderElvenMagicalSongCost = (
           return `, ${permanentFull}`
         })()
 
-  return wrapInInterval(wrapInPer(base)) + permanent
+  return (
+    addCostInterval(
+      translate,
+      responsiveTextSize,
+      cost.interval,
+      addPerCountableToCost(responsiveTextSize, translation, base),
+    ) + permanent
+  )
 }
 
 const renderMagicalActionSkill = (
@@ -883,16 +872,7 @@ const renderMagicalDanceCost = (
     case "Fixed": {
       const base = translate("{$value} AE", { value: cost.Fixed.value })
       const translation = translateMap(cost.Fixed.translations)
-      return translation?.per === undefined
-        ? base
-        : (mapNullable(
-            getResponsiveTextOptional(translation.per, responsiveTextSize),
-            countable =>
-              translate("{$cost} per {$countable}", {
-                cost: base,
-                countable,
-              }),
-          ) ?? base)
+      return addPerCountableToCost(responsiveTextSize, translation, base)
     }
     case "Indefinite": {
       const translation = translateMap(cost.Indefinite.translations)
@@ -1121,3 +1101,194 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
     references: entry.src,
   }
 })
+
+const renderFamiliarsTrickProperty = (
+  translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<"Property">,
+  responsiveTextSize: ResponsiveTextSize,
+  property: FamiliarsTrickProperty,
+) => {
+  switch (property.kind) {
+    case "Fixed":
+      return (
+        translateMap(getInstanceById("Property", property.Fixed)?.translations)
+          ?.name ?? MISSING_VALUE
+      )
+    case "Indefinite":
+      return getResponsiveText(
+        translateMap(property.Indefinite.translations)?.description,
+        responsiveTextSize,
+      )
+    default:
+      return assertExhaustive(property)
+  }
+}
+
+const renderFamiliarsTrickOneTimeCost = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  responsiveTextSize: ResponsiveTextSize,
+  cost: FamiliarsTrickOneTimeCost,
+): string => {
+  switch (cost.kind) {
+    case "Fixed":
+      return addCostInterval(
+        translate,
+        responsiveTextSize,
+        cost.Fixed.interval,
+        addPerCountableToCost(
+          responsiveTextSize,
+          translateMap(cost.Fixed.translations),
+          translate("{$value} AE", { value: cost.Fixed.value }),
+        ),
+      )
+    case "All":
+      return cost.All.minimum === undefined
+        ? translate("All AE")
+        : translate("All AE, at least {$value} AE", { value: cost.All.minimum })
+    case "Indefinite":
+      return getResponsiveText(
+        translateMap(cost.Indefinite.translations)?.description,
+        responsiveTextSize,
+      )
+    default:
+      return assertExhaustive(cost)
+  }
+}
+
+const renderFamiliarsTrickSustainedCost = (
+  translate: Translate,
+  responsiveTextSize: ResponsiveTextSize,
+  cost: FamiliarsTrickOneTimeIntervalCost | FamiliarsTrickSustainedCost,
+): string =>
+  addCostInterval(
+    translate,
+    responsiveTextSize,
+    cost.interval,
+    translate("{$value} AE", { value: cost.value }),
+  )
+
+const renderFamiliarsTrickPerformanceParameters = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  responsiveTextSize: ResponsiveTextSize,
+  params: FamiliarsTrickPerformanceParameters,
+): { cost: string; duration: string } => {
+  switch (params.kind) {
+    case "OneTime":
+      return {
+        cost: renderFamiliarsTrickOneTimeCost(
+          translate,
+          translateMap,
+          responsiveTextSize,
+          params.OneTime.cost,
+        ),
+        duration: getDurationForOneTimeTranslation(
+          translate,
+          translateMap,
+          responsiveTextSize,
+          params.OneTime.duration,
+        ),
+      }
+    case "OneTimeInterval":
+      return {
+        cost: renderFamiliarsTrickSustainedCost(
+          translate,
+          responsiveTextSize,
+          params.OneTimeInterval.cost,
+        ),
+        duration: translate("depends on spent AE"),
+      }
+    case "Sustained":
+      return {
+        cost: renderFamiliarsTrickSustainedCost(
+          translate,
+          responsiveTextSize,
+          params.Sustained.cost,
+        ),
+        duration: getDurationForSustainedTranslation(
+          translate,
+          responsiveTextSize,
+          undefined,
+        ),
+      }
+    default:
+      return assertExhaustive(params)
+  }
+}
+
+/**
+ * Get a JSON representation of the rules text for a familiar’s trick.
+ */
+export const getFamiliarsTrickEntityDescription =
+  createEntityDescriptionCreator<
+    "FamiliarsTrick",
+    {
+      getInstanceById: GetInstanceById<
+        "Attribute" | "Property" | "DerivedCharacteristic"
+      >
+    }
+  >(({ getInstanceById }, locale, { content: entry }) => {
+    const { translate, translateMap } = locale
+    const translation = translateMap(entry.translations)
+
+    if (translation === undefined) {
+      return undefined
+    }
+
+    const { cost, duration } = renderFamiliarsTrickPerformanceParameters(
+      translate,
+      translateMap,
+      ResponsiveTextSize.Full,
+      entry.parameters,
+    )
+
+    return {
+      title: translation.name,
+      className: "magical-dance",
+      body: [
+        {
+          label: locale.translate("Effect"),
+          value: translation.effect,
+        },
+        renderAnimalTypesSection(
+          translate,
+          translateMap,
+          locale.compare,
+          getInstanceById,
+          entry.animal_types,
+        ),
+        combineGeneratedTextWithStaticTranslation(
+          translate("AE Cost"),
+          cost,
+          translation.cost,
+        ),
+        combineGeneratedTextWithStaticTranslation(
+          translate("Duration"),
+          duration,
+          translation.duration,
+        ),
+        {
+          label: translate("Property"),
+          value: renderFamiliarsTrickProperty(
+            translateMap,
+            getInstanceById,
+            ResponsiveTextSize.Full,
+            entry.property,
+          ),
+        },
+        {
+          label: translate("AP Value"),
+          value:
+            entry.ap_value === undefined
+              ? translate("All familiars know this trick by default.")
+              : translate(
+                  ".input {$value :number} {{{$value} Adventure Points}}",
+                  { value: entry.ap_value },
+                ),
+        },
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  })

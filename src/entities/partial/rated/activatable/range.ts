@@ -105,7 +105,7 @@ const getCheckResultBasedRangeTranslation = (
   const rangeWrappedIfRadius = wrapIfRadius(locale, value.is_radius, range)
 
   const rangeWrappedIfRadiusAndIfMaximum = wrapIfMaximum(
-    locale,
+    locale.translate,
     responsiveTextSize,
     value.is_maximum,
     rangeWrappedIfRadius,

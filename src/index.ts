@@ -48,6 +48,7 @@ import {
   getCurseEntityDescription,
   getDominationRitualEntityDescription,
   getElvenMagicalSongEntityDescription,
+  getFamiliarsTrickEntityDescription,
   getMagicalDanceEntityDescription,
   getMagicalMelodyEntityDescription,
   getRitualEntityDescription,
@@ -168,9 +169,9 @@ const registeredEntityDescriptionCreators = {
   MagicalMelody: getMagicalMelodyEntityDescription,
   // MagicalRune: getMagicalRuneEntityDescription,
   // ZibiljaRitual: getZibiljaRitualEntityDescription,
-  // FamiliarsTrick: getFamiliarsTrickEntityDescription,
   // auxiliary magical
   Curriculum: getCurriculumEntityDescription,
+  FamiliarsTrick: getFamiliarsTrickEntityDescription,
   // work of the gods
   Blessing: getBlessingEntityDescription,
   LiturgicalChant: getLiturgicalChantEntityDescription,

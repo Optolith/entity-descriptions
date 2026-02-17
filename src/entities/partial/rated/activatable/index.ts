@@ -62,7 +62,8 @@ export const getFastOneTimePerformanceParametersTranslations = (
     value.range,
   ),
   duration: getDurationForOneTimeTranslation(
-    locale,
+    locale.translate,
+    locale.translateMap,
     responsiveTextSize,
     value.duration,
   ),
@@ -107,7 +108,7 @@ export const getFastSustainedPerformanceParametersTranslations = (
     value.range,
   ),
   duration: getDurationForSustainedTranslation(
-    locale,
+    locale.translate,
     responsiveTextSize,
     value.duration,
   ),
@@ -152,7 +153,8 @@ export const getSlowOneTimePerformanceParametersTranslations = (
     value.range,
   ),
   duration: getDurationForOneTimeTranslation(
-    locale,
+    locale.translate,
+    locale.translateMap,
     responsiveTextSize,
     value.duration,
   ),
@@ -197,7 +199,7 @@ export const getSlowSustainedPerformanceParametersTranslations = (
     value.range,
   ),
   duration: getDurationForSustainedTranslation(
-    locale,
+    locale.translate,
     responsiveTextSize,
     value.duration,
   ),
