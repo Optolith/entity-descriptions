@@ -15,6 +15,7 @@ import type {
   MagicalTradition_ID,
   MusicDuration,
   Property_ID,
+  ResponsiveTextOptional,
   SpellworkTraditions,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -53,6 +54,24 @@ import {
 } from "./partial/responsiveText.js"
 import { formatTimeSpan } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
+
+const combineGeneratedTextWithStaticTranslation = (
+  label: string,
+  generatedText: string,
+  staticText: ResponsiveTextOptional | string | undefined,
+): EntityDescriptionSection => {
+  const normalizedStaticText =
+    typeof staticText === "string" ? staticText : staticText?.full
+
+  return {
+    label,
+    value:
+      normalizedStaticText !== undefined &&
+      generatedText !== normalizedStaticText
+        ? `***${generatedText}*** (${normalizedStaticText})`
+        : generatedText,
+  }
+}
 
 const getTextForProperty = (
   deps: {
@@ -162,20 +181,16 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
         label: translate("Effect"),
         value: translation.effect,
       },
-      {
-        label: translate("Range"),
-        value:
-          range !== translation.range
-            ? `***${range}*** (${translation.range})`
-            : range,
-      },
-      {
-        label: translate("Duration"),
-        value:
-          duration !== translation.duration
-            ? `***${duration}*** (${translation.duration})`
-            : duration,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("Range"),
+        range,
+        translation.range,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
       getTargetCategoryTranslation(getInstanceById, locale, entry.target),
       getTextForProperty(
         { translate, translateMap, getInstanceById },
@@ -308,35 +323,26 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
         },
       ),
       ...getTextForEffect(locale, translation.effect),
-      {
-        label: translate("Casting Time"),
-        value:
-          translation.casting_time &&
-          castingTime !== translation.casting_time.full
-            ? `***${castingTime}*** (${translation.casting_time.full})`
-            : castingTime,
-      },
-      {
-        label: translate("AE Cost"),
-        value:
-          translation.cost && cost !== translation.cost.full
-            ? `***${cost}*** (${translation.cost.full})`
-            : cost,
-      },
-      {
-        label: translate("Range"),
-        value:
-          translation.range && range !== translation.range.full
-            ? `***${range}*** (${translation.range.full})`
-            : range,
-      },
-      {
-        label: translate("Duration"),
-        value:
-          translation.duration && duration !== translation.duration.full
-            ? `***${duration}*** (${translation.duration.full})`
-            : duration,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("Casting Time"),
+        castingTime,
+        translation.casting_time,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Range"),
+        range,
+        translation.range,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
       getTargetCategoryTranslation(getInstanceById, locale, entry.target),
       getTextForProperty(
         { translate, translateMap, getInstanceById },
@@ -417,35 +423,26 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
         },
       ),
       ...getTextForEffect(locale, translation.effect),
-      {
-        label: translate("Ritual Time"),
-        value:
-          translation.casting_time &&
-          castingTime !== translation.casting_time.full
-            ? `***${castingTime}*** (${translation.casting_time.full})`
-            : castingTime,
-      },
-      {
-        label: translate("AE Cost"),
-        value:
-          translation.cost && cost !== translation.cost.full
-            ? `***${cost}*** (${translation.cost.full})`
-            : cost,
-      },
-      {
-        label: translate("Range"),
-        value:
-          translation.range && range !== translation.range.full
-            ? `***${range}*** (${translation.range.full})`
-            : range,
-      },
-      {
-        label: translate("Duration"),
-        value:
-          translation.duration && duration !== translation.duration.full
-            ? `***${duration}*** (${translation.duration.full})`
-            : duration,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("Ritual Time"),
+        castingTime,
+        translation.casting_time,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Range"),
+        range,
+        translation.range,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
       getTargetCategoryTranslation(getInstanceById, locale, entry.target),
       getTextForProperty(
         { translate, translateMap, getInstanceById },
@@ -600,20 +597,16 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
         },
       ),
       ...getTextForEffect(locale, translation.effect),
-      {
-        label: translate("AE Cost"),
-        value:
-          translation.cost && cost !== translation.cost.full
-            ? `***${cost}*** (${translation.cost.full})`
-            : cost,
-      },
-      {
-        label: translate("Duration"),
-        value:
-          translation.duration && duration !== translation.duration.full
-            ? `***${duration}*** (${translation.duration.full})`
-            : duration,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
       getTextForProperty(
         { translate, translateMap, getInstanceById },
         entry.property,
@@ -757,13 +750,11 @@ export const getElvenMagicalSongEntityDescription =
           getInstanceById,
           entry.skill,
         ),
-        {
-          label: translate("AE Cost"),
-          value:
-            translation.cost && cost !== translation.cost.full
-              ? `***${cost}*** (${translation.cost.full})`
-              : cost,
-        },
+        combineGeneratedTextWithStaticTranslation(
+          translate("AE Cost"),
+          cost,
+          translation.cost,
+        ),
         getTextForProperty(
           { translate, translateMap, getInstanceById },
           entry.property,
@@ -858,20 +849,16 @@ export const getDominationRitualEntityDescription =
           },
         ),
         ...getTextForEffect(locale, translation.effect),
-        {
-          label: translate("AE Cost"),
-          value:
-            translation.cost && cost !== translation.cost.full
-              ? `***${cost}*** (${translation.cost.full})`
-              : cost,
-        },
-        {
-          label: translate("Duration"),
-          value:
-            translation.duration && duration !== translation.duration.full
-              ? `***${duration}*** (${translation.duration.full})`
-              : duration,
-        },
+        combineGeneratedTextWithStaticTranslation(
+          translate("AE Cost"),
+          cost,
+          translation.cost,
+        ),
+        combineGeneratedTextWithStaticTranslation(
+          translate("Duration"),
+          duration,
+          translation.duration,
+        ),
         getTextForProperty(
           { translate, translateMap, getInstanceById },
           entry.property,
@@ -1015,20 +1002,16 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
         entry.check,
       ),
       ...getTextForEffect(locale, translation.effect),
-      {
-        label: translate("Duration"),
-        value:
-          translation.duration && duration !== translation.duration.full
-            ? `***${duration}*** (${translation.duration.full})`
-            : duration,
-      },
-      {
-        label: translate("AE Cost"),
-        value:
-          translation.cost && cost !== translation.cost.full
-            ? `***${cost}*** (${translation.cost.full})`
-            : cost,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
       getTextForProperty(
         { translate, translateMap, getInstanceById },
         entry.property,
@@ -1102,13 +1085,11 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
         entry.check,
       ),
       ...getTextForEffect(locale, translation.effect),
-      {
-        label: translate("Duration"),
-        value:
-          translation.duration && duration !== translation.duration.full
-            ? `***${duration}*** (${translation.duration.full})`
-            : duration,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
       renderMagicalActionSkill(
         translate,
         translateMap,
@@ -1117,13 +1098,11 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
         getInstanceById,
         entry.skill,
       ),
-      {
-        label: translate("AE Cost"),
-        value:
-          translation.cost && cost !== translation.cost.full
-            ? `***${cost}*** (${translation.cost.full})`
-            : cost,
-      },
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
       getTextForProperty(
         { translate, translateMap, getInstanceById },
         entry.property,
