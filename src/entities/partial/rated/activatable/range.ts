@@ -37,12 +37,7 @@ const getModifiableRangeTranslation = (
   mapNullable(
     getInstanceById("SkillModificationLevel", value.initial_modification_level),
     modificationLevel => {
-      const range = getModifiableBySpeed(
-        config => config.range,
-        config => config.range,
-        speed,
-        modificationLevel,
-      )
+      const range = getModifiableBySpeed(speed, "range", modificationLevel)
 
       if (range === 1) {
         return locale.translate("Touch")

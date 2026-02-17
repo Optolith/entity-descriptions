@@ -4,6 +4,8 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CurseCost,
   CurseDuration,
+  DominationRitualCost,
+  DominationRitualDuration,
   ElvenMagicalSongCost,
   MagicalTradition_ID,
   Property_ID,
@@ -13,6 +15,7 @@ import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
+import { additionFormatter } from "./partial/mathOperation.js"
 import { getCheckResultBasedValueTranslation } from "./partial/rated/activatable/checkResultBased.js"
 import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
@@ -25,15 +28,21 @@ import {
 } from "./partial/rated/activatable/index.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { getTextForCantripRange } from "./partial/rated/activatable/range.js"
+import {
+  getModifiableBySpeed,
+  Speed,
+} from "./partial/rated/activatable/speed.js"
 import { getTargetCategoryTranslation } from "./partial/rated/activatable/targetCategory.js"
 import { createImprovementCost } from "./partial/rated/improvementCost.js"
 import { getTextForCheck } from "./partial/rated/skillCheck.js"
 import {
   getResponsiveText,
   getResponsiveTextOptional,
+  replaceTextIfRequested,
   ResponsiveTextSize,
 } from "./partial/responsiveText.js"
 import { formatTimeSpan } from "./partial/units/timeSpan.js"
+import { MISSING_VALUE } from "./partial/unknown.js"
 
 const getTextForProperty = (
   deps: {
@@ -482,11 +491,11 @@ const renderCurseCost = (
   }
 }
 
-const renderCurseDuration = (
+const renderMagicalActionDuration = (
   translate: Translate,
   translateMap: TranslateMap,
   responsiveTextSize: ResponsiveTextSize,
-  duration: CurseDuration,
+  duration: CurseDuration | DominationRitualDuration,
 ) => {
   switch (duration.kind) {
     case "Immediate":
@@ -503,11 +512,31 @@ const renderCurseDuration = (
         translate,
         duration.CheckResultBased,
       )
-    case "Indefinite":
-      return getResponsiveText(
-        translateMap(duration.Indefinite.translations)?.description,
+    case "Indefinite": {
+      const translation = translateMap(duration.Indefinite.translations)
+      const { maximum } = duration.Indefinite
+      const wrapInMaximum: (text: string) => string =
+        maximum === undefined
+          ? text => text
+          : text =>
+              translate(
+                "{$defaultDuration}, but no more than {$maximumDuration}",
+                {
+                  defaultDuration: text,
+                  maximumDuration: renderMagicalActionDuration(
+                    translate,
+                    translateMap,
+                    responsiveTextSize,
+                    maximum,
+                  ),
+                },
+              )
+      const base = getResponsiveText(
+        translation?.description,
         responsiveTextSize,
       )
+      return wrapInMaximum(base)
+    }
     default:
       return assertExhaustive(duration)
   }
@@ -520,12 +549,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
   "Curse",
   {
     getInstanceById: GetInstanceById<
-      | "Attribute"
-      | "SkillModificationLevel"
-      | "TargetCategory"
-      | "Property"
-      | "MagicalTradition"
-      | "DerivedCharacteristic"
+      "Attribute" | "Property" | "DerivedCharacteristic"
     >
     idMap: IdMap
   }
@@ -544,7 +568,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     entry.parameters.cost,
   )
 
-  const duration = renderCurseDuration(
+  const duration = renderMagicalActionDuration(
     translate,
     translateMap,
     ResponsiveTextSize.Full,
@@ -633,20 +657,20 @@ const renderElvenMagicalSongCost = (
     cost.permanent === undefined
       ? ""
       : (() => {
-          const permanentTranslation = translateMap(cost.permanent.translations)
           const permanentBase = translate(
             ".input {$value :number} {{{$value} permanent AE}}",
             { value: cost.permanent.value },
           )
 
-          if (permanentTranslation?.replacement === undefined) {
-            return `, ${permanentBase}`
-          }
-
-          return `, ${getResponsiveText(
-            permanentTranslation.replacement,
+          const permanentFull = replaceTextIfRequested(
+            "replacement",
+            cost.permanent.translations,
+            translateMap,
             responsiveTextSize,
-          ).replace("$1", permanentBase)}`
+            permanentBase,
+          )
+
+          return `, ${permanentFull}`
         })()
 
   return wrapInInterval(wrapInPer(base)) + permanent
@@ -660,12 +684,7 @@ export const getElvenMagicalSongEntityDescription =
     "ElvenMagicalSong",
     {
       getInstanceById: GetInstanceById<
-        | "Attribute"
-        | "SkillModificationLevel"
-        | "TargetCategory"
-        | "Property"
-        | "MagicalTradition"
-        | "DerivedCharacteristic"
+        "Attribute" | "Property" | "DerivedCharacteristic"
       >
       idMap: IdMap
     }
@@ -718,6 +737,117 @@ export const getElvenMagicalSongEntityDescription =
           entry.property,
         ),
         createImprovementCost(translate, entry.improvement_cost),
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  })
+
+const renderDominationRitualCost = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<"SkillModificationLevel">,
+  responsiveTextSize: ResponsiveTextSize,
+  cost: DominationRitualCost,
+) => {
+  const modificationLevel = getInstanceById(
+    "SkillModificationLevel",
+    cost.initial_modification_level,
+  )
+
+  if (modificationLevel === undefined) {
+    return MISSING_VALUE
+  }
+
+  const base = translate("{$value} AE", {
+    value: getModifiableBySpeed(Speed.Slow, "cost", modificationLevel),
+  })
+
+  const translation = translateMap(cost.translations)
+
+  return translation?.additional === undefined
+    ? base
+    : additionFormatter(
+        base,
+        getResponsiveText(translation.additional, responsiveTextSize),
+      )
+}
+
+/**
+ * Get a JSON representation of the rules text for a domination ritual.
+ */
+export const getDominationRitualEntityDescription =
+  createEntityDescriptionCreator<
+    "DominationRitual",
+    {
+      getInstanceById: GetInstanceById<
+        | "Attribute"
+        | "Property"
+        | "DerivedCharacteristic"
+        | "SkillModificationLevel"
+      >
+      idMap: IdMap
+    }
+  >(({ getInstanceById, idMap }, locale, { content: entry }) => {
+    const { translate, translateMap } = locale
+    const translation = translateMap(entry.translations)
+
+    if (translation === undefined) {
+      return undefined
+    }
+
+    const cost = renderDominationRitualCost(
+      translate,
+      translateMap,
+      getInstanceById,
+      ResponsiveTextSize.Full,
+      entry.parameters.cost,
+    )
+
+    const duration = renderMagicalActionDuration(
+      translate,
+      translateMap,
+      ResponsiveTextSize.Full,
+      entry.parameters.duration,
+    )
+
+    return {
+      title: translation.name,
+      className: "domination-ritual",
+      body: [
+        getTextForCheck(
+          { translate, translateMap, getInstanceById },
+          entry.check,
+          {
+            value: entry.check_penalty,
+            responsiveText: ResponsiveTextSize.Full,
+            getInstanceById,
+            idMap,
+          },
+        ),
+        ...getTextForEffect(locale, translation.effect),
+        {
+          label: translate("AE Cost"),
+          value:
+            translation.cost && cost !== translation.cost.full
+              ? `***${cost}*** (${translation.cost.full})`
+              : cost,
+        },
+        {
+          label: translate("Duration"),
+          value:
+            translation.duration && duration !== translation.duration.full
+              ? `***${duration}*** (${translation.duration.full})`
+              : duration,
+        },
+        getTextForProperty(
+          { translate, translateMap, getInstanceById },
+          entry.property,
+        ),
+        {
+          label: translate("Improvement Cost"),
+          value: "B",
+        },
       ],
       errata: translation.errata,
       references: entry.src,

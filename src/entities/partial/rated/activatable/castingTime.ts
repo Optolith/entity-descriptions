@@ -21,7 +21,7 @@ import {
   getNonModifiableSuffixTranslation,
   ModifiableParameter,
 } from "./nonModifiableSuffix.js"
-import { getModifiableBySpeed, Speed } from "./speed.js"
+import { getMapModifiableBySpeed, Speed } from "./speed.js"
 
 const getModifiableCastingTimeTranslation = (
   getInstanceById: GetInstanceById<"SkillModificationLevel">,
@@ -33,7 +33,7 @@ const getModifiableCastingTimeTranslation = (
   mapNullable(
     getInstanceById("SkillModificationLevel", value.initial_modification_level),
     modificationLevel =>
-      getModifiableBySpeed(
+      getMapModifiableBySpeed(
         config =>
           formatTimeSpan(
             locale.translate,

@@ -48,12 +48,7 @@ const getModifiableOneTimeCostTranslation = (
   mapNullable(
     getInstanceById("SkillModificationLevel", value.initial_modification_level),
     modificationLevel => {
-      const cost = getModifiableBySpeed(
-        config => config.cost,
-        config => config.cost,
-        speed,
-        modificationLevel,
-      )
+      const cost = getModifiableBySpeed(speed, "cost", modificationLevel)
 
       return replaceTextIfRequested(
         "replacement",
@@ -418,12 +413,7 @@ const getModifiableSustainedCostTranslation = (
   mapNullable(
     getInstanceById("SkillModificationLevel", value.initial_modification_level),
     modificationLevel => {
-      const cost = getModifiableBySpeed(
-        config => config.cost,
-        config => config.cost,
-        speed,
-        modificationLevel,
-      )
+      const cost = getModifiableBySpeed(speed, "cost", modificationLevel)
 
       const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
 

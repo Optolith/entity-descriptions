@@ -46,6 +46,7 @@ import { getSkillEntityDescription } from "./entities/skill.js"
 import {
   getCantripEntityDescription,
   getCurseEntityDescription,
+  getDominationRitualEntityDescription,
   getElvenMagicalSongEntityDescription,
   getRitualEntityDescription,
   getSpellEntityDescription,
@@ -157,7 +158,7 @@ const registeredEntityDescriptionCreators = {
   // magical actions
   // AnimistPower: getAnimistPowerEntityDescription,
   Curse: getCurseEntityDescription,
-  // DominationRitual: getDominationRitualEntityDescription,
+  DominationRitual: getDominationRitualEntityDescription,
   ElvenMagicalSong: getElvenMagicalSongEntityDescription,
   // GeodeRitual: getGeodeRitualEntityDescription,
   // JesterTrick: getJesterTrickEntityDescription,
