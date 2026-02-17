@@ -1,22 +1,32 @@
+import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
+  ArcaneBardTraditionReference,
+  ArcaneDancerTraditionReference,
   CurseCost,
   CurseDuration,
   DominationRitualCost,
   DominationRitualDuration,
   ElvenMagicalSongCost,
+  MagicalDanceCost,
+  MagicalMelodyCost,
   MagicalTradition_ID,
+  MusicDuration,
   Property_ID,
   SpellworkTraditions,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
+import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
 import { additionFormatter } from "./partial/mathOperation.js"
-import { getCheckResultBasedValueTranslation } from "./partial/rated/activatable/checkResultBased.js"
+import {
+  appendCheckResultModifier,
+  getCheckResultBasedValueTranslation,
+} from "./partial/rated/activatable/checkResultBased.js"
 import { getDurationTranslationForCantrip } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
@@ -676,6 +686,27 @@ const renderElvenMagicalSongCost = (
   return wrapInInterval(wrapInPer(base)) + permanent
 }
 
+const renderMagicalActionSkill = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  localeCompare: LocaleCompare,
+  localeJoin: LocaleJoin,
+  getInstanceById: GetInstanceById<"Skill">,
+  skill: string[],
+): EntityDescriptionSection => ({
+  label: translate("Skill"),
+  value: localeJoin(
+    skill
+      .map(
+        id =>
+          translateMap(getInstanceById("Skill", id)?.translations)?.name ??
+          MISSING_VALUE,
+      )
+      .toSorted(localeCompare),
+    "disjunction",
+  ),
+})
+
 /**
  * Get a JSON representation of the rules text for an Elven magical song.
  */
@@ -718,13 +749,14 @@ export const getElvenMagicalSongEntityDescription =
           },
         ),
         ...getTextForEffect(locale, translation.effect),
-        {
-          label: translate("Skill"),
-          value:
-            translation.cost && cost !== translation.cost.full
-              ? `***${cost}*** (${translation.cost.full})`
-              : cost,
-        },
+        renderMagicalActionSkill(
+          translate,
+          translateMap,
+          locale.compare,
+          locale.join,
+          getInstanceById,
+          entry.skill,
+        ),
         {
           label: translate("AE Cost"),
           value:
@@ -853,3 +885,260 @@ export const getDominationRitualEntityDescription =
       references: entry.src,
     }
   })
+
+const renderMagicalDanceCost = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  responsiveTextSize: ResponsiveTextSize,
+  cost: MagicalDanceCost,
+): string => {
+  switch (cost.kind) {
+    case "Fixed": {
+      const base = translate("{$value} AE", { value: cost.Fixed.value })
+      const translation = translateMap(cost.Fixed.translations)
+      return translation?.per === undefined
+        ? base
+        : (mapNullable(
+            getResponsiveTextOptional(translation.per, responsiveTextSize),
+            countable =>
+              translate("{$cost} per {$countable}", {
+                cost: base,
+                countable,
+              }),
+          ) ?? base)
+    }
+    case "Indefinite": {
+      const translation = translateMap(cost.Indefinite.translations)
+      const { maximum } = cost.Indefinite
+      const wrapInMaximum: (text: string) => string =
+        maximum === undefined
+          ? text => text
+          : text => appendCheckResultModifier(text, maximum)
+      const base = getResponsiveText(
+        translation?.description,
+        responsiveTextSize,
+      )
+      return wrapInMaximum(base)
+    }
+    default:
+      return assertExhaustive(cost)
+  }
+}
+
+const renderMusicTradition = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  localeCompare: LocaleCompare,
+  getInstanceById: GetInstanceById<
+    "ArcaneBardTradition" | "ArcaneDancerTradition"
+  >,
+  entity: "ArcaneBardTradition" | "ArcaneDancerTradition",
+  musicTraditions:
+    | ArcaneBardTraditionReference[]
+    | ArcaneDancerTraditionReference[],
+): EntityDescriptionSection => ({
+  label: translate("Music Tradition"),
+  value:
+    ensureNonEmpty(
+      musicTraditions
+        .map(
+          trad =>
+            translateMap(getInstanceById(entity, trad.id)?.translations)?.name,
+        )
+        .filter(isNotNullish)
+        .toSorted(localeCompare),
+    )?.join(", ") ?? MISSING_VALUE,
+})
+
+const renderMusicDuration = (
+  translate: Translate,
+  duration: MusicDuration,
+): string => {
+  const length = (() => {
+    switch (duration.length.kind) {
+      case "Long":
+        return translate("long")
+      case "Short":
+        return translate("short")
+      default:
+        return assertExhaustive(duration.length)
+    }
+  })()
+
+  const reusability = (() => {
+    switch (duration.reusability.kind) {
+      case "OneTime":
+        return translate("one-time")
+      case "Sustainable":
+        return translate("sustainable")
+      default:
+        return assertExhaustive(duration.reusability)
+    }
+  })()
+
+  return `${length}, ${reusability}`
+}
+
+/**
+ * Get a JSON representation of the rules text for a magical dance.
+ */
+export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
+  "MagicalDance",
+  {
+    getInstanceById: GetInstanceById<
+      "Attribute" | "Property" | "DerivedCharacteristic"
+    >
+  }
+>(({ getInstanceById }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const duration = renderMusicDuration(translate, entry.parameters.duration)
+
+  const cost = renderMagicalDanceCost(
+    translate,
+    translateMap,
+    ResponsiveTextSize.Full,
+    entry.parameters.cost,
+  )
+
+  return {
+    title: translation.name,
+    className: "magical-dance",
+    body: [
+      getTextForCheck(
+        { translate, translateMap, getInstanceById },
+        entry.check,
+      ),
+      ...getTextForEffect(locale, translation.effect),
+      {
+        label: translate("Duration"),
+        value:
+          translation.duration && duration !== translation.duration.full
+            ? `***${duration}*** (${translation.duration.full})`
+            : duration,
+      },
+      {
+        label: translate("AE Cost"),
+        value:
+          translation.cost && cost !== translation.cost.full
+            ? `***${cost}*** (${translation.cost.full})`
+            : cost,
+      },
+      getTextForProperty(
+        { translate, translateMap, getInstanceById },
+        entry.property,
+      ),
+      renderMusicTradition(
+        translate,
+        translateMap,
+        locale.compare,
+        getInstanceById,
+        "ArcaneDancerTradition",
+        entry.music_tradition,
+      ),
+      createImprovementCost(translate, entry.improvement_cost),
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})
+
+const renderMagicalMelodyCost = (
+  translate: Translate,
+  cost: MagicalMelodyCost,
+): string => {
+  switch (cost.kind) {
+    case "Fixed":
+      return translate("{$value} AE", { value: cost.Fixed.value })
+    case "FirstPerson":
+      return translate(
+        "{$firstPersonValue} for the first person; {$additionalPersonValue} for each additional person",
+        {
+          firstPersonValue: translate("{$value} AE", {
+            value: cost.FirstPerson.value,
+          }),
+          additionalPersonValue: translate("{$value} AE", {
+            value: cost.FirstPerson.value / 2,
+          }),
+        },
+      )
+    default:
+      return assertExhaustive(cost)
+  }
+}
+
+/**
+ * Get a JSON representation of the rules text for a magical melody.
+ */
+export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
+  "MagicalMelody",
+  {
+    getInstanceById: GetInstanceById<
+      "Attribute" | "Property" | "DerivedCharacteristic"
+    >
+  }
+>(({ getInstanceById }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const duration = renderMusicDuration(translate, entry.parameters.duration)
+  const cost = renderMagicalMelodyCost(translate, entry.parameters.cost)
+
+  return {
+    title: translation.name,
+    className: "magical-dance",
+    body: [
+      getTextForCheck(
+        { translate, translateMap, getInstanceById },
+        entry.check,
+      ),
+      ...getTextForEffect(locale, translation.effect),
+      {
+        label: translate("Duration"),
+        value:
+          translation.duration && duration !== translation.duration.full
+            ? `***${duration}*** (${translation.duration.full})`
+            : duration,
+      },
+      renderMagicalActionSkill(
+        translate,
+        translateMap,
+        locale.compare,
+        locale.join,
+        getInstanceById,
+        entry.skill,
+      ),
+      {
+        label: translate("AE Cost"),
+        value:
+          translation.cost && cost !== translation.cost.full
+            ? `***${cost}*** (${translation.cost.full})`
+            : cost,
+      },
+      getTextForProperty(
+        { translate, translateMap, getInstanceById },
+        entry.property,
+      ),
+      renderMusicTradition(
+        translate,
+        translateMap,
+        locale.compare,
+        getInstanceById,
+        "ArcaneBardTradition",
+        entry.music_tradition,
+      ),
+      createImprovementCost(translate, entry.improvement_cost),
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})

@@ -2,11 +2,7 @@ import { filterNonNullable } from "@optolith/helpers/array"
 import type { EntityMap } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "./helpers/getTypes.js"
 import { LocaleEnvironment } from "./helpers/locale.js"
-import {
-  EntityDescription,
-  RawEntityDescription,
-  type TypedCreatorData,
-} from "./index.js"
+import { EntityDescription, RawEntityDescription } from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
 
 /**
@@ -23,9 +19,9 @@ export type TaggedEntity<ES extends keyof EntityMap> = {
 export const createEntityDescriptionCreator =
   <
     ES extends keyof EntityMap,
-    A extends Partial<TypedCreatorData> & {
+    A extends {
       getInstanceById: GetInstanceById<"Publication">
-    } = Partial<TypedCreatorData> & {
+    } = {
       getInstanceById: GetInstanceById<"Publication">
     },
   >(

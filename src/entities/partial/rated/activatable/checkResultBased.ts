@@ -6,6 +6,10 @@ import type {
   CheckResultValue,
 } from "optolith-database-schema/gen"
 import { Translate } from "../../../../helpers/translate.js"
+import {
+  divisionFormatter,
+  multiplicationFormatter,
+} from "../../mathOperation.js"
 
 const getCheckResultBaseValueTranslation = (
   translate: Translate,
@@ -21,12 +25,12 @@ const getCheckResultBaseValueTranslation = (
   }
 }
 
-const getArithmeticSymbol = (arithmetic: CheckResultArithmetic) => {
+const getArithmeticFormatter = (arithmetic: CheckResultArithmetic) => {
   switch (arithmetic.kind) {
     case "Divide":
-      return ` / `
+      return divisionFormatter
     case "Multiply":
-      return ` × `
+      return multiplicationFormatter
     default:
       return assertExhaustive(arithmetic)
   }
@@ -45,16 +49,28 @@ interface CheckResultBased {
 }
 
 /**
+ * Appends the modifier of a check-result-based parameter of an activatable skill to the base value, using the appropriate arithmetic formatter.
+ */
+export const appendCheckResultModifier = (
+  left: string,
+  modifier: CheckResultBasedModifier,
+) => {
+  const formatter = getArithmeticFormatter(modifier.arithmetic)
+  return formatter(left, modifier.value.toString())
+}
+
+/**
  * Returns the value text for a check-result-based parameter of an activatable
  * skill.
  */
 export const getCheckResultBasedValueTranslation = (
   translate: Translate,
   value: CheckResultBased,
-): string =>
-  getCheckResultBaseValueTranslation(translate, value.base) +
-  mapNullableDefault(
+): string => {
+  const base = getCheckResultBaseValueTranslation(translate, value.base)
+  return mapNullableDefault(
     value.modifier,
-    modifier => getArithmeticSymbol(modifier.arithmetic) + modifier.value,
-    "",
+    modifier => appendCheckResultModifier(base, modifier),
+    base,
   )
+}
