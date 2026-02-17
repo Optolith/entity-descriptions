@@ -75,8 +75,7 @@ const localeEnv: LocaleEnvironment = {
       localeId,
       localeInstance.translations?.[key] ?? key,
     ).format(rest[0] as Record<string, unknown> | undefined),
-  translateMap: translations =>
-    translations?.[localeId] ?? translations?.[Object.keys(translations)[0]],
+  translateMap: translations => translations?.[localeId],
   measurementAdjustments: {
     milesMultiplier: 1,
     stepsMultiplier: 1,
