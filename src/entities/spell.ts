@@ -4,6 +4,7 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CurseCost,
   CurseDuration,
+  ElvenMagicalSongCost,
   MagicalTradition_ID,
   Property_ID,
   SpellworkTraditions,
@@ -552,7 +553,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
 
   return {
     title: translation.name,
-    className: "ritual",
+    className: "curse",
     body: [
       getTextForCheck(
         { translate, translateMap, getInstanceById },
@@ -583,8 +584,142 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
         { translate, translateMap, getInstanceById },
         entry.property,
       ),
+      {
+        label: translate("Improvement Cost"),
+        value: "B",
+      },
     ],
     errata: translation.errata,
     references: entry.src,
   }
 })
+
+const renderElvenMagicalSongCost = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  responsiveTextSize: ResponsiveTextSize,
+  cost: ElvenMagicalSongCost,
+) => {
+  const translation = translateMap(cost.translations)
+
+  const base = translate("{$value} AE", { value: cost.value })
+
+  const wrapInPer: (text: string) => string =
+    translation?.per === undefined
+      ? text => text
+      : text =>
+          translate("{$cost} per {$countable}", {
+            cost: text,
+            countable: getResponsiveText(translation.per, responsiveTextSize),
+          })
+
+  const { interval } = cost
+
+  const wrapInInterval: (text: string) => string =
+    interval === undefined
+      ? text => text
+      : text =>
+          translate("{$cost} per {$interval}", {
+            cost: text,
+            interval: formatTimeSpan(
+              translate,
+              responsiveTextSize,
+              interval.unit,
+              interval.value,
+            ),
+          })
+
+  const permanent =
+    cost.permanent === undefined
+      ? ""
+      : (() => {
+          const permanentTranslation = translateMap(cost.permanent.translations)
+          const permanentBase = translate(
+            ".input {$value :number} {{{$value} permanent AE}}",
+            { value: cost.permanent.value },
+          )
+
+          if (permanentTranslation?.replacement === undefined) {
+            return `, ${permanentBase}`
+          }
+
+          return `, ${getResponsiveText(
+            permanentTranslation.replacement,
+            responsiveTextSize,
+          ).replace("$1", permanentBase)}`
+        })()
+
+  return wrapInInterval(wrapInPer(base)) + permanent
+}
+
+/**
+ * Get a JSON representation of the rules text for an Elven magical song.
+ */
+export const getElvenMagicalSongEntityDescription =
+  createEntityDescriptionCreator<
+    "ElvenMagicalSong",
+    {
+      getInstanceById: GetInstanceById<
+        | "Attribute"
+        | "SkillModificationLevel"
+        | "TargetCategory"
+        | "Property"
+        | "MagicalTradition"
+        | "DerivedCharacteristic"
+      >
+      idMap: IdMap
+    }
+  >(({ getInstanceById, idMap }, locale, { content: entry }) => {
+    const { translate, translateMap } = locale
+    const translation = translateMap(entry.translations)
+
+    if (translation === undefined) {
+      return undefined
+    }
+
+    const cost = renderElvenMagicalSongCost(
+      translate,
+      translateMap,
+      ResponsiveTextSize.Full,
+      entry.parameters.cost,
+    )
+
+    return {
+      title: translation.name,
+      className: "elven-magical-song",
+      body: [
+        getTextForCheck(
+          { translate, translateMap, getInstanceById },
+          entry.check,
+          {
+            value: entry.check_penalty,
+            responsiveText: ResponsiveTextSize.Full,
+            getInstanceById,
+            idMap,
+          },
+        ),
+        ...getTextForEffect(locale, translation.effect),
+        {
+          label: translate("Skill"),
+          value:
+            translation.cost && cost !== translation.cost.full
+              ? `***${cost}*** (${translation.cost.full})`
+              : cost,
+        },
+        {
+          label: translate("AE Cost"),
+          value:
+            translation.cost && cost !== translation.cost.full
+              ? `***${cost}*** (${translation.cost.full})`
+              : cost,
+        },
+        getTextForProperty(
+          { translate, translateMap, getInstanceById },
+          entry.property,
+        ),
+        createImprovementCost(translate, entry.improvement_cost),
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  })
