@@ -15,6 +15,9 @@ import {
   ProfessionPrerequisiteGroup,
   PublicationPrerequisiteGroup,
   SpellworkPrerequisiteGroup,
+  type ActivatableIdentifier,
+  type RatedIdentifier,
+  type SkillWithEnhancementsIdentifier,
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
@@ -100,64 +103,8 @@ export const printGeneralPrerequisiteGroup = (
     | "PactCategory"
     | "SocialStatus"
     | "State"
-    | "Advantage"
-    | "Disadvantage"
-    | "AdvancedCombatSpecialAbility"
-    | "AdvancedKarmaSpecialAbility"
-    | "AdvancedMagicalSpecialAbility"
-    | "AdvancedSkillSpecialAbility"
-    | "AncestorGlyph"
-    | "ArcaneOrbEnchantment"
-    | "AttireEnchantment"
-    | "BlessedTradition"
-    | "BowlEnchantment"
-    | "BrawlingSpecialAbility"
-    | "CauldronEnchantment"
-    | "CeremonialItemSpecialAbility"
-    | "ChronicleEnchantment"
-    | "CombatSpecialAbility"
-    | "CombatStyleSpecialAbility"
-    | "CommandSpecialAbility"
-    | "DaggerRitual"
-    | "FamiliarSpecialAbility"
-    | "FatePointSexSpecialAbility"
-    | "FatePointSpecialAbility"
-    | "FoolsHatEnchantment"
-    | "GeneralSpecialAbility"
-    | "InstrumentEnchantment"
-    | "KarmaSpecialAbility"
-    | "Krallenkettenzauber"
-    | "LiturgicalStyleSpecialAbility"
-    | "LycantropicGift"
-    | "MagicalSign"
-    | "MagicalSpecialAbility"
-    | "MagicalTradition"
-    | "MagicStyleSpecialAbility"
-    | "OrbEnchantment"
-    | "PactGift"
-    | "ProtectiveWardingCircleSpecialAbility"
-    | "RingEnchantment"
-    | "Sermon"
-    | "SexSpecialAbility"
-    | "SickleRitual"
-    | "SikaryanDrainSpecialAbility"
-    | "SkillStyleSpecialAbility"
-    | "SpellSwordEnchantment"
-    | "StaffEnchantment"
-    | "ToyEnchantment"
-    | "Trinkhornzauber"
-    | "VampiricGift"
-    | "Vision"
-    | "WandEnchantment"
-    | "WeaponEnchantment"
-    | "Attribute"
-    | "Skill"
-    | "CloseCombatTechnique"
-    | "RangedCombatTechnique"
-    | "Spell"
-    | "Ritual"
-    | "LiturgicalChant"
-    | "Ceremony"
+    | ActivatableIdentifier["kind"]
+    | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
   >,
@@ -249,64 +196,8 @@ export const printProfessionPrerequisiteGroup = (
   getInstanceById: GetInstanceById<
     | "Race"
     | "Culture"
-    | "Advantage"
-    | "Disadvantage"
-    | "AdvancedCombatSpecialAbility"
-    | "AdvancedKarmaSpecialAbility"
-    | "AdvancedMagicalSpecialAbility"
-    | "AdvancedSkillSpecialAbility"
-    | "AncestorGlyph"
-    | "ArcaneOrbEnchantment"
-    | "AttireEnchantment"
-    | "BlessedTradition"
-    | "BowlEnchantment"
-    | "BrawlingSpecialAbility"
-    | "CauldronEnchantment"
-    | "CeremonialItemSpecialAbility"
-    | "ChronicleEnchantment"
-    | "CombatSpecialAbility"
-    | "CombatStyleSpecialAbility"
-    | "CommandSpecialAbility"
-    | "DaggerRitual"
-    | "FamiliarSpecialAbility"
-    | "FatePointSexSpecialAbility"
-    | "FatePointSpecialAbility"
-    | "FoolsHatEnchantment"
-    | "GeneralSpecialAbility"
-    | "InstrumentEnchantment"
-    | "KarmaSpecialAbility"
-    | "Krallenkettenzauber"
-    | "LiturgicalStyleSpecialAbility"
-    | "LycantropicGift"
-    | "MagicalSign"
-    | "MagicalSpecialAbility"
-    | "MagicalTradition"
-    | "MagicStyleSpecialAbility"
-    | "OrbEnchantment"
-    | "PactGift"
-    | "ProtectiveWardingCircleSpecialAbility"
-    | "RingEnchantment"
-    | "Sermon"
-    | "SexSpecialAbility"
-    | "SickleRitual"
-    | "SikaryanDrainSpecialAbility"
-    | "SkillStyleSpecialAbility"
-    | "SpellSwordEnchantment"
-    | "StaffEnchantment"
-    | "ToyEnchantment"
-    | "Trinkhornzauber"
-    | "VampiricGift"
-    | "Vision"
-    | "WandEnchantment"
-    | "WeaponEnchantment"
-    | "Attribute"
-    | "Skill"
-    | "CloseCombatTechnique"
-    | "RangedCombatTechnique"
-    | "Spell"
-    | "Ritual"
-    | "LiturgicalChant"
-    | "Ceremony"
+    | ActivatableIdentifier["kind"]
+    | RatedIdentifier["kind"]
     | "Aspect"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
@@ -348,64 +239,8 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
     | "PactCategory"
     | "SocialStatus"
     | "State"
-    | "Advantage"
-    | "Disadvantage"
-    | "AdvancedCombatSpecialAbility"
-    | "AdvancedKarmaSpecialAbility"
-    | "AdvancedMagicalSpecialAbility"
-    | "AdvancedSkillSpecialAbility"
-    | "AncestorGlyph"
-    | "ArcaneOrbEnchantment"
-    | "AttireEnchantment"
-    | "BlessedTradition"
-    | "BowlEnchantment"
-    | "BrawlingSpecialAbility"
-    | "CauldronEnchantment"
-    | "CeremonialItemSpecialAbility"
-    | "ChronicleEnchantment"
-    | "CombatSpecialAbility"
-    | "CombatStyleSpecialAbility"
-    | "CommandSpecialAbility"
-    | "DaggerRitual"
-    | "FamiliarSpecialAbility"
-    | "FatePointSexSpecialAbility"
-    | "FatePointSpecialAbility"
-    | "FoolsHatEnchantment"
-    | "GeneralSpecialAbility"
-    | "InstrumentEnchantment"
-    | "KarmaSpecialAbility"
-    | "Krallenkettenzauber"
-    | "LiturgicalStyleSpecialAbility"
-    | "LycantropicGift"
-    | "MagicalSign"
-    | "MagicalSpecialAbility"
-    | "MagicalTradition"
-    | "MagicStyleSpecialAbility"
-    | "OrbEnchantment"
-    | "PactGift"
-    | "ProtectiveWardingCircleSpecialAbility"
-    | "RingEnchantment"
-    | "Sermon"
-    | "SexSpecialAbility"
-    | "SickleRitual"
-    | "SikaryanDrainSpecialAbility"
-    | "SkillStyleSpecialAbility"
-    | "SpellSwordEnchantment"
-    | "StaffEnchantment"
-    | "ToyEnchantment"
-    | "Trinkhornzauber"
-    | "VampiricGift"
-    | "Vision"
-    | "WandEnchantment"
-    | "WeaponEnchantment"
-    | "Attribute"
-    | "Skill"
-    | "CloseCombatTechnique"
-    | "RangedCombatTechnique"
-    | "Spell"
-    | "Ritual"
-    | "LiturgicalChant"
-    | "Ceremony"
+    | ActivatableIdentifier["kind"]
+    | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
   >,
@@ -418,78 +253,30 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
   switch (prerequisite.kind) {
     case "CommonSuggestedByRCP":
       return printCommonSuggestedByRCPPrerequisite(locale, name, type)
+    case "NoOtherAncestorBloodAdvantage":
+      return printNoOtherAncestorBloodAdvantagePrerequisite(locale)
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.Sex)
     case "Race":
-      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
-      return printCulturePrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Culture,
-      )
     case "Pact":
-      return printPactPrerequisite(getInstanceById, locale, prerequisite.Pact)
     case "SocialStatus":
-      return printSocialStatusPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.SocialStatus,
-      )
     case "State":
-      return printStatePrerequisite(getInstanceById, locale, prerequisite.State)
     case "Rule":
-      return printRulePrerequisite(locale, prerequisite.Rule)
     case "PrimaryAttribute":
-      return printPrimaryAttributePrerequisite(
-        locale,
-        prerequisite.PrimaryAttribute,
-      )
     case "Activatable":
-      return printActivatablePrerequisite(
+    case "BlessedTradition":
+    case "MagicalTradition":
+    case "Rated":
+    case "RatedMinimumNumber":
+    case "RatedSum":
+    case "Enhancement":
+    case "Text":
+    case "SexualCharacteristic":
+      return printGeneralPrerequisiteGroup(
         getInstanceById,
         getResolvedSelectOptionById,
         locale,
-        prerequisite.Activatable,
-      )
-    case "BlessedTradition":
-      return printBlessedTraditionPrerequisite(
-        locale,
-        prerequisite.BlessedTradition,
-      )
-    case "MagicalTradition":
-      return printMagicalTraditionPrerequisite(
-        locale,
-        prerequisite.MagicalTradition,
-      )
-    case "Rated":
-      return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
-    case "RatedMinimumNumber":
-      return printRatedMinimumNumberPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.RatedMinimumNumber,
-      )
-    case "RatedSum":
-      return printRatedSumPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.RatedSum,
-      )
-    case "Enhancement":
-      return printEnhancementPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Enhancement,
-      )
-    case "Text":
-      return printTextPrerequisite(locale, prerequisite.Text)
-    case "NoOtherAncestorBloodAdvantage":
-      return printNoOtherAncestorBloodAdvantagePrerequisite(locale)
-    case "SexualCharacteristic":
-      return printSexualCharacteristicPrerequisite(
-        locale,
-        prerequisite.SexualCharacteristic,
+        prerequisite,
       )
     default:
       return assertExhaustive(prerequisite)
@@ -552,16 +339,7 @@ export const printPersonalityTraitPrerequisiteGroup = (
  * Print the translation of a spellwork prerequisite group.
  */
 export const printSpellworkPrerequisiteGroup = (
-  getInstanceById: GetInstanceById<
-    | "Attribute"
-    | "Skill"
-    | "CloseCombatTechnique"
-    | "RangedCombatTechnique"
-    | "Spell"
-    | "Ritual"
-    | "LiturgicalChant"
-    | "Ceremony"
-  >,
+  getInstanceById: GetInstanceById<RatedIdentifier["kind"]>,
   locale: LocaleEnvironment,
   prerequisite: SpellworkPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
@@ -611,58 +389,7 @@ export const printInfluencePrerequisiteGroup = (
  */
 export const printLanguagePrerequisiteGroup = (
   getInstanceById: GetInstanceById<
-    | "Race"
-    | "Advantage"
-    | "Disadvantage"
-    | "AdvancedCombatSpecialAbility"
-    | "AdvancedKarmaSpecialAbility"
-    | "AdvancedMagicalSpecialAbility"
-    | "AdvancedSkillSpecialAbility"
-    | "AncestorGlyph"
-    | "ArcaneOrbEnchantment"
-    | "AttireEnchantment"
-    | "BlessedTradition"
-    | "BowlEnchantment"
-    | "BrawlingSpecialAbility"
-    | "CauldronEnchantment"
-    | "CeremonialItemSpecialAbility"
-    | "ChronicleEnchantment"
-    | "CombatSpecialAbility"
-    | "CombatStyleSpecialAbility"
-    | "CommandSpecialAbility"
-    | "DaggerRitual"
-    | "FamiliarSpecialAbility"
-    | "FatePointSexSpecialAbility"
-    | "FatePointSpecialAbility"
-    | "FoolsHatEnchantment"
-    | "GeneralSpecialAbility"
-    | "InstrumentEnchantment"
-    | "KarmaSpecialAbility"
-    | "Krallenkettenzauber"
-    | "LiturgicalStyleSpecialAbility"
-    | "LycantropicGift"
-    | "MagicalSign"
-    | "MagicalSpecialAbility"
-    | "MagicalTradition"
-    | "MagicStyleSpecialAbility"
-    | "OrbEnchantment"
-    | "PactGift"
-    | "ProtectiveWardingCircleSpecialAbility"
-    | "RingEnchantment"
-    | "Sermon"
-    | "SexSpecialAbility"
-    | "SickleRitual"
-    | "SikaryanDrainSpecialAbility"
-    | "SkillStyleSpecialAbility"
-    | "SpellSwordEnchantment"
-    | "StaffEnchantment"
-    | "ToyEnchantment"
-    | "Trinkhornzauber"
-    | "VampiricGift"
-    | "Vision"
-    | "WandEnchantment"
-    | "WeaponEnchantment"
-    | "Aspect"
+    "Race" | ActivatableIdentifier["kind"] | "Aspect"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -722,9 +449,7 @@ export const printGeodeRitualPrerequisiteGroup = (
  * Print the translation of an enhancement prerequisite group.
  */
 export const printEnhancementPrerequisiteGroup = (
-  getInstanceById: GetInstanceById<
-    "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony"
-  >,
+  getInstanceById: GetInstanceById<SkillWithEnhancementsIdentifier["kind"]>,
   locale: LocaleEnvironment,
   prerequisite: EnhancementPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
