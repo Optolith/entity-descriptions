@@ -1,6 +1,5 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { LocaleEnvironment } from "../../../helpers/locale.js"
-import type { Translations } from "../../../helpers/translate.js"
+import type { Translate, Translations } from "../../../helpers/translate.js"
 import { Entity } from "../rated/activatable/entity.js"
 
 type EnergyUnit = "ArcaneEnergy" | "KarmaPoints"
@@ -16,20 +15,20 @@ const lengthUnitTranslationKeys = {
  * Returns the text for an energy unit.
  */
 export const formatEnergy = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   unit: EnergyUnit,
   value: number | string,
 ): string => {
   const key = lengthUnitTranslationKeys[unit]
 
-  return locale.translate(key, { value })
+  return translate(key, { value })
 }
 
 /**
  * Returns the text for an energy unit that is based on the entity type.
  */
 export const formatEnergyByEntity = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   entity: Entity,
   value: number | string,
 ) => {
@@ -37,11 +36,11 @@ export const formatEnergyByEntity = (
     case Entity.Cantrip:
     case Entity.Spell:
     case Entity.Ritual:
-      return formatEnergy(locale, "ArcaneEnergy", value)
+      return formatEnergy(translate, "ArcaneEnergy", value)
     case Entity.Blessing:
     case Entity.LiturgicalChant:
     case Entity.Ceremony:
-      return formatEnergy(locale, "KarmaPoints", value)
+      return formatEnergy(translate, "KarmaPoints", value)
     default:
       return assertExhaustive(entity)
   }

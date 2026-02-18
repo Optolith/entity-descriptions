@@ -16,6 +16,7 @@ import type {
   FamiliarsTrickPerformanceParameters,
   FamiliarsTrickProperty,
   FamiliarsTrickSustainedCost,
+  GeodeRitualCost,
   MagicalDanceCost,
   MagicalMelodyCost,
   MagicalTradition_ID,
@@ -31,6 +32,7 @@ import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { additionFormatter } from "./partial/mathOperation.js"
+import { printGeodeRitualPrerequisites } from "./partial/prerequisites/index.js"
 import {
   getCastingTimeTranslation,
   getSlowCastingTimeTranslation,
@@ -43,6 +45,7 @@ import {
 import {
   addCostInterval,
   addPerCountableToCost,
+  getOneTimeCostMapTranslation,
 } from "./partial/rated/activatable/cost.js"
 import {
   getDurationForOneTimeTranslation,
@@ -1299,6 +1302,132 @@ export const getFamiliarsTrickEntityDescription =
       references: entry.src,
     }
   })
+
+const renderGeodeRitualCost = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  responsiveTextSize: ResponsiveTextSize,
+  cost: GeodeRitualCost,
+): string => {
+  switch (cost.kind) {
+    case "Fixed":
+      return translate("{$value} AE", { value: cost.Fixed.value })
+    case "Map":
+      return getOneTimeCostMapTranslation(
+        translate,
+        translateMap,
+        Entity.Ritual,
+        responsiveTextSize,
+        cost.Map,
+      )
+    default:
+      return assertExhaustive(cost)
+  }
+}
+
+/**
+ * Get a JSON representation of the rules text for a Goede ritual.
+ */
+export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
+  "GeodeRitual",
+  {
+    getInstanceById: GetInstanceById<
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Property"
+      | "MagicalTradition"
+      | "DerivedCharacteristic"
+    >
+  }
+>(({ getInstanceById }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const castingTime = getSlowSkillNonModifiableCastingTimeTranslation(
+    translate,
+    ResponsiveTextSize.Full,
+    entry.parameters.casting_time,
+  )
+
+  const cost = renderGeodeRitualCost(
+    translate,
+    translateMap,
+    ResponsiveTextSize.Full,
+    entry.parameters.cost,
+  )
+
+  const range = getTextForCantripRange(
+    translate,
+    ResponsiveTextSize.Full,
+    entry.parameters.range.kind === "Fixed"
+      ? {
+          kind: "Fixed",
+          Fixed: { ...entry.parameters.range.Fixed, unit: { kind: "Steps" } },
+        }
+      : entry.parameters.range,
+  )
+
+  const duration = getDurationForOneTimeTranslation(
+    translate,
+    translateMap,
+    ResponsiveTextSize.Full,
+    entry.parameters.duration,
+  )
+
+  return {
+    title: translation.name,
+    className: "geode-ritual",
+    body: [
+      getTextForCheck(
+        { translate, translateMap, getInstanceById },
+        entry.check,
+      ),
+      ...getTextForEffect(locale, translation.effect),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Ritual Time"),
+        castingTime,
+        translation.casting_time,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Range"),
+        range,
+        translation.range,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
+      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+      entry.prerequisites === undefined
+        ? undefined
+        : {
+            label: translate("Prerequisites"),
+            value: printGeodeRitualPrerequisites(locale, entry.prerequisites),
+          },
+      getTextForProperty(
+        { translate, translateMap, getInstanceById },
+        entry.property,
+      ),
+      {
+        label: translate("Improvement Cost"),
+        value: "B",
+      },
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})
 
 /**
  * Get a JSON representation of the rules text for a jester trick.

@@ -22,6 +22,7 @@ import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import {
   responsiveTranslate,
   type Translate,
+  type TranslateMap,
 } from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
 import {
@@ -61,7 +62,7 @@ const getModifiableOneTimeCostTranslation = (
         value.translations,
         locale.translateMap,
         responsiveTextSize,
-        formatEnergyByEntity(locale, entity, cost),
+        formatEnergyByEntity(locale.translate, entity, cost),
       )
     },
   ) ?? MISSING_VALUE
@@ -119,7 +120,7 @@ const getNonModifiableOneTimeCostTranslation = (
   responsiveTextSize: ResponsiveTextSize,
   value: NonModifiableOneTimeCost,
 ): string => {
-  const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
+  const formatCostP = formatEnergyByEntity.bind(this, locale.translate, entity)
 
   const perCountable = getNonModifiableOneTimeCostPerCountableTranslation(
     formatCostP,
@@ -266,19 +267,23 @@ const getMultipleOneTimeCostsTranslation = (
   )
 }
 
-const getOneTimeCostMapTranslation = (
-  locale: LocaleEnvironment,
+/**
+ * Returns the text for a one-time cost map of an activatable skill.
+ */
+export const getOneTimeCostMapTranslation = (
+  translate: Translate,
+  translateMap: TranslateMap,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
   value: OneTimeCostMap,
 ): string =>
   renderResponsiveMap(
-    locale.translate,
-    locale.translateMap,
+    translate,
+    translateMap,
     responsiveTextSize,
     value,
     option => option.value,
-    bind(formatEnergyByEntity, locale, entity),
+    bind(formatEnergyByEntity, translate, entity),
     optionTranslation => optionTranslation.label,
     translation => translation.list_prepend,
     translation => translation.list_append,
@@ -286,7 +291,7 @@ const getOneTimeCostMapTranslation = (
     value.options.every(option => option.permanent_value !== undefined)
       ? {
           surround: values =>
-            locale.translate(", {$value} of which are permanent", {
+            translate(", {$value} of which are permanent", {
               value: values,
             }),
           getAdditionalValue: option => option.permanent_value!,
@@ -294,19 +299,20 @@ const getOneTimeCostMapTranslation = (
       : undefined,
   ) +
   getNonModifiableSuffixTranslation(
-    locale.translate,
+    translate,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
   )
 
 const getSustainedCostMapTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
+  translateMap: TranslateMap,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
   value: SustainedCostMap,
 ): string => {
-  const translation = locale.translateMap(value.translations)
+  const translation = translateMap(value.translations)
 
   if (value.translations !== undefined && translation === undefined) {
     return MISSING_VALUE
@@ -324,18 +330,15 @@ const getSustainedCostMapTranslation = (
   }
 
   const labels = value.options
-    .map(
-      option =>
-        locale.translateMap(option.translations)?.label ?? MISSING_VALUE,
-    )
+    .map(option => translateMap(option.translations)?.label ?? MISSING_VALUE)
     .join("/")
 
   const costs = value.options.map(option => option.value).join("/")
 
-  const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
+  const formatCostP = formatEnergyByEntity.bind(this, translate, entity)
 
   const notModifiable = getNonModifiableSuffixTranslation(
-    locale.translate,
+    translate,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
@@ -343,7 +346,7 @@ const getSustainedCostMapTranslation = (
 
   return (
     formatCostP(costs) +
-    locale.translate(" for ") +
+    translate(" for ") +
     mapNullableDefault(
       translation?.listPrefix,
       listPrepend => `${listPrepend} `,
@@ -398,7 +401,8 @@ export const getOneTimeCostTranslation = (
       )
     case "Map":
       return getOneTimeCostMapTranslation(
-        locale,
+        locale.translate,
+        locale.translateMap,
         entity,
         responsiveTextSize,
         value.Map,
@@ -421,7 +425,11 @@ const getModifiableSustainedCostTranslation = (
     modificationLevel => {
       const cost = getModifiableBySpeed(speed, "cost", modificationLevel)
 
-      const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
+      const formatCostP = formatEnergyByEntity.bind(
+        this,
+        locale.translate,
+        entity,
+      )
 
       const interval = formatTimeSpan(
         locale.translate,
@@ -452,7 +460,7 @@ const getNonModifiableSustainedCostTranslation = (
   responsiveTextSize: ResponsiveTextSize,
   value: NonModifiableSustainedCost,
 ) => {
-  const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
+  const formatCostP = formatEnergyByEntity.bind(this, locale.translate, entity)
 
   const per = (() => {
     if (value.per === undefined) {
@@ -554,7 +562,8 @@ export const getSustainedCostTranslation = (
       )
     case "Map":
       return getSustainedCostMapTranslation(
-        locale,
+        locale.translate,
+        locale.translateMap,
         entity,
         responsiveTextSize,
         value.Map,
