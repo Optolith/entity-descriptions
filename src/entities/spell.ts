@@ -182,7 +182,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
   }
 
   const range = getTextForCantripRange(
-    locale,
+    translate,
     ResponsiveTextSize.Full,
     entry.parameters.range,
   )
@@ -1299,6 +1299,104 @@ export const getFamiliarsTrickEntityDescription =
       references: entry.src,
     }
   })
+
+/**
+ * Get a JSON representation of the rules text for a jester trick.
+ */
+export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
+  "JesterTrick",
+  {
+    getInstanceById: GetInstanceById<
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Property"
+      | "MagicalTradition"
+      | "DerivedCharacteristic"
+    >
+    idMap: IdMap
+  }
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const castingTime = formatTimeSpan(
+    translate,
+    ResponsiveTextSize.Full,
+    { kind: "Actions" },
+    entry.parameters.casting_time.value,
+  )
+
+  const cost = translate("{$value} AE", { value: entry.parameters.cost.value })
+
+  const range = getTextForCantripRange(
+    translate,
+    ResponsiveTextSize.Full,
+    entry.parameters.range.kind === "Fixed"
+      ? {
+          kind: "Fixed",
+          Fixed: { ...entry.parameters.range.Fixed, unit: { kind: "Steps" } },
+        }
+      : entry.parameters.range,
+  )
+
+  const duration = getDurationForOneTimeTranslation(
+    translate,
+    translateMap,
+    ResponsiveTextSize.Full,
+    entry.parameters.duration,
+  )
+
+  return {
+    title: translation.name,
+    className: "jester-trick",
+    body: [
+      getTextForCheck(
+        { translate, translateMap, getInstanceById },
+        entry.check,
+        {
+          value: entry.check_penalty,
+          responsiveText: ResponsiveTextSize.Full,
+          getInstanceById,
+          idMap,
+        },
+      ),
+      ...getTextForEffect(locale, translation.effect),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Casting Time"),
+        castingTime,
+        translation.casting_time,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Range"),
+        range,
+        translation.range,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
+      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+      getTextForProperty(
+        { translate, translateMap, getInstanceById },
+        entry.property,
+      ),
+      createImprovementCost(translate, entry.improvement_cost),
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})
 
 /**
  * Get a JSON representation of the rules text for a Zibilja ritual.

@@ -56,7 +56,8 @@ export const getFastOneTimePerformanceParametersTranslations = (
   ),
   range: getTextForActivatableSkillRange(
     getInstanceById,
-    locale,
+    locale.translate,
+    locale.translateMap,
     Speed.Fast,
     responsiveTextSize,
     entity,
@@ -102,7 +103,8 @@ export const getFastSustainedPerformanceParametersTranslations = (
   ),
   range: getTextForActivatableSkillRange(
     getInstanceById,
-    locale,
+    locale.translate,
+    locale.translateMap,
     Speed.Fast,
     responsiveTextSize,
     entity,
@@ -154,7 +156,8 @@ export const getSlowOneTimePerformanceParametersTranslations = <CastingTime>(
   ),
   range: getTextForActivatableSkillRange(
     getInstanceById,
-    locale,
+    locale.translate,
+    locale.translateMap,
     Speed.Slow,
     responsiveTextSize,
     entity,
@@ -200,7 +203,8 @@ export const getSlowSustainedPerformanceParametersTranslations = (
   ),
   range: getTextForActivatableSkillRange(
     getInstanceById,
-    locale,
+    locale.translate,
+    locale.translateMap,
     Speed.Slow,
     responsiveTextSize,
     entity,

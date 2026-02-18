@@ -94,7 +94,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
   }
 
   const range = getTextForBlessingRange(
-    locale,
+    translate,
     ResponsiveTextSize.Full,
     entry.parameters.range,
   )

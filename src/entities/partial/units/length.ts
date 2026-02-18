@@ -1,5 +1,4 @@
-import { LocaleEnvironment } from "../../../helpers/locale.js"
-import type { Translations } from "../../../helpers/translate.js"
+import type { Translate, Translations } from "../../../helpers/translate.js"
 import { responsive, ResponsiveTextSize } from "../responsiveText.js"
 
 type LengthUnit = "Steps" | "Miles"
@@ -27,7 +26,7 @@ const lengthUnitTranslationKeys = {
  * Returns the text for a length unit.
  */
 export const formatLength = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   unit: LengthUnit,
   value: number | string,
@@ -38,9 +37,9 @@ export const formatLength = (
   return responsive(
     responsiveTextSize,
     () =>
-      locale.translate(typeof value === "number" ? fullNumberKey : fullKey, {
+      translate(typeof value === "number" ? fullNumberKey : fullKey, {
         value,
       }),
-    () => locale.translate(compressedKey, { value }),
+    () => translate(compressedKey, { value }),
   )
 }
