@@ -63,7 +63,7 @@ const getTouchTranslation = (
 ) =>
   locale.translate("Touch") +
   getNonModifiableSuffixTranslation(
-    locale,
+    locale.translate,
     entity,
     ModifiableParameter.Range,
     responsiveTextSize,
@@ -77,7 +77,7 @@ const getFixedRangeTranslation = (
 ) =>
   formatLength(locale, responsiveTextSize, value.unit.kind, value.value) +
   getNonModifiableSuffixTranslation(
-    locale,
+    locale.translate,
     entity,
     ModifiableParameter.Range,
     responsiveTextSize,
@@ -114,7 +114,7 @@ const getCheckResultBasedRangeTranslation = (
   return (
     rangeWrappedIfRadiusAndIfMaximum +
     getNonModifiableSuffixTranslation(
-      locale,
+      locale.translate,
       entity,
       ModifiableParameter.Range,
       responsiveTextSize,

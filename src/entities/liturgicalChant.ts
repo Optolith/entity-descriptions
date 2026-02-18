@@ -6,6 +6,7 @@ import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
+import { getSlowCastingTimeTranslation } from "./partial/rated/activatable/castingTime.js"
 import { getDurationTranslationForBlessing } from "./partial/rated/activatable/duration.js"
 import { getTextForEffect } from "./partial/rated/activatable/effect.js"
 import { Entity } from "./partial/rated/activatable/entity.js"
@@ -278,6 +279,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
           Entity.Ritual,
           ResponsiveTextSize.Full,
           entry.parameters.OneTime,
+          getSlowCastingTimeTranslation,
         )
 
       case "Sustained":

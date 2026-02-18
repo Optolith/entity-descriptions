@@ -53,6 +53,7 @@ import {
   getMagicalMelodyEntityDescription,
   getRitualEntityDescription,
   getSpellEntityDescription,
+  getZibiljaRitualEntityDescription,
 } from "./entities/spell.js"
 import { getStateEntityDescription } from "./entities/state.js"
 import type {
@@ -168,7 +169,7 @@ const registeredEntityDescriptionCreators = {
   MagicalDance: getMagicalDanceEntityDescription,
   MagicalMelody: getMagicalMelodyEntityDescription,
   // MagicalRune: getMagicalRuneEntityDescription,
-  // ZibiljaRitual: getZibiljaRitualEntityDescription,
+  ZibiljaRitual: getZibiljaRitualEntityDescription,
   // auxiliary magical
   Curriculum: getCurriculumEntityDescription,
   FamiliarsTrick: getFamiliarsTrickEntityDescription,

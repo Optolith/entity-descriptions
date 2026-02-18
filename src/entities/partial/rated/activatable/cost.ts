@@ -150,7 +150,7 @@ const getNonModifiableOneTimeCostTranslation = (
   )
 
   const cannotModify = getNonModifiableSuffixTranslation(
-    locale,
+    locale.translate,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
@@ -170,7 +170,7 @@ const getIndefiniteOneTimeCostTranslation = (
     responsiveTextSize,
   ) +
   getNonModifiableSuffixTranslation(
-    locale,
+    locale.translate,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
@@ -224,7 +224,7 @@ const getMultipleOneTimeCostsTranslation = (
 ): string => {
   const modifiable = !value.every(part => part.kind === "Modifiable")
     ? getNonModifiableSuffixTranslation(
-        locale,
+        locale.translate,
         entity,
         ModifiableParameter.Cost,
         responsiveTextSize,
@@ -294,7 +294,7 @@ const getOneTimeCostMapTranslation = (
       : undefined,
   ) +
   getNonModifiableSuffixTranslation(
-    locale,
+    locale.translate,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
@@ -335,7 +335,7 @@ const getSustainedCostMapTranslation = (
   const formatCostP = formatEnergyByEntity.bind(this, locale, entity)
 
   const notModifiable = getNonModifiableSuffixTranslation(
-    locale,
+    locale.translate,
     entity,
     ModifiableParameter.Cost,
     responsiveTextSize,
@@ -516,7 +516,7 @@ const getNonModifiableSustainedCostTranslation = (
   return (
     costWrappedIfMinimum +
     getNonModifiableSuffixTranslation(
-      locale,
+      locale.translate,
       entity,
       ModifiableParameter.Cost,
       responsiveTextSize,

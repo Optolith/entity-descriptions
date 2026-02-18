@@ -1,4 +1,5 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
+import { bind } from "@elyukai/utils/function"
 import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
@@ -30,6 +31,11 @@ import { Translate, TranslateMap } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { additionFormatter } from "./partial/mathOperation.js"
+import {
+  getCastingTimeTranslation,
+  getSlowCastingTimeTranslation,
+  getSlowSkillNonModifiableCastingTimeTranslation,
+} from "./partial/rated/activatable/castingTime.js"
 import {
   appendCheckResultModifier,
   getCheckResultBasedValueTranslation,
@@ -407,6 +413,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
           Entity.Ritual,
           ResponsiveTextSize.Full,
           entry.parameters.OneTime,
+          getSlowCastingTimeTranslation,
         )
 
       case "Sustained":
@@ -1292,3 +1299,88 @@ export const getFamiliarsTrickEntityDescription =
       references: entry.src,
     }
   })
+
+/**
+ * Get a JSON representation of the rules text for a Zibilja ritual.
+ */
+export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
+  "ZibiljaRitual",
+  {
+    getInstanceById: GetInstanceById<
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Property"
+      | "MagicalTradition"
+      | "DerivedCharacteristic"
+    >
+    idMap: IdMap
+  }
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const { castingTime, cost, range, duration } =
+    getSlowOneTimePerformanceParametersTranslations(
+      getInstanceById,
+      locale,
+      Entity.Ritual,
+      ResponsiveTextSize.Full,
+      entry.parameters,
+      bind(
+        getCastingTimeTranslation,
+        getSlowSkillNonModifiableCastingTimeTranslation,
+        Speed.Slow,
+      ),
+    )
+
+  return {
+    title: translation.name,
+    className: "zibilja-ritual",
+    body: [
+      getTextForCheck(
+        { translate, translateMap, getInstanceById },
+        entry.check,
+        {
+          value: entry.check_penalty,
+          responsiveText: ResponsiveTextSize.Full,
+          getInstanceById,
+          idMap,
+        },
+      ),
+      ...getTextForEffect(locale, translation.effect),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Ritual Time"),
+        castingTime,
+        translation.casting_time,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Range"),
+        range,
+        translation.range,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
+      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+      getTextForProperty(
+        { translate, translateMap, getInstanceById },
+        entry.property,
+      ),
+      createImprovementCost(translate, entry.improvement_cost),
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})

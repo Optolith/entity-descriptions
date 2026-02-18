@@ -1,11 +1,12 @@
 import type {
   FastOneTimePerformanceParameters,
   FastSustainedPerformanceParameters,
-  SlowOneTimePerformanceParameters,
+  OneTimePerformanceParameters,
   SlowSustainedPerformanceParameters,
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { Translate } from "../../../../helpers/translate.js"
 import { ResponsiveTextSize } from "../../responsiveText.js"
 import {
   getFastCastingTimeTranslation,
@@ -40,7 +41,7 @@ export const getFastOneTimePerformanceParametersTranslations = (
 } => ({
   castingTime: getFastCastingTimeTranslation(
     getInstanceById,
-    locale,
+    locale.translate,
     entity,
     responsiveTextSize,
     value.casting_time,
@@ -86,7 +87,7 @@ export const getFastSustainedPerformanceParametersTranslations = (
 } => ({
   castingTime: getFastCastingTimeTranslation(
     getInstanceById,
-    locale,
+    locale.translate,
     entity,
     responsiveTextSize,
     value.casting_time,
@@ -117,21 +118,28 @@ export const getFastSustainedPerformanceParametersTranslations = (
 /**
  * Get the texts for all slow one-time performance parameters.
  */
-export const getSlowOneTimePerformanceParametersTranslations = (
+export const getSlowOneTimePerformanceParametersTranslations = <CastingTime>(
   getInstanceById: GetInstanceById<"SkillModificationLevel">,
   locale: LocaleEnvironment,
   entity: Entity,
   responsiveTextSize: ResponsiveTextSize,
-  value: SlowOneTimePerformanceParameters,
+  value: OneTimePerformanceParameters<CastingTime>,
+  renderCastingTime: (
+    getInstanceById: GetInstanceById<"SkillModificationLevel">,
+    translate: Translate,
+    entity: Entity,
+    responsiveTextSize: ResponsiveTextSize,
+    value: CastingTime,
+  ) => string,
 ): {
   castingTime: string
   cost: string
   range: string
   duration: string
 } => ({
-  castingTime: getSlowCastingTimeTranslation(
+  castingTime: renderCastingTime(
     getInstanceById,
-    locale,
+    locale.translate,
     entity,
     responsiveTextSize,
     value.casting_time,
@@ -177,7 +185,7 @@ export const getSlowSustainedPerformanceParametersTranslations = (
 } => ({
   castingTime: getSlowCastingTimeTranslation(
     getInstanceById,
-    locale,
+    locale.translate,
     entity,
     responsiveTextSize,
     value.casting_time,

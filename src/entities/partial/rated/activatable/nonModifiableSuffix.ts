@@ -1,7 +1,6 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import type { Translations } from "../../../../helpers/translate.js"
+import type { Translate, Translations } from "../../../../helpers/translate.js"
 import { responsive, ResponsiveTextSize } from "../../responsiveText.js"
 import { Entity } from "./entity.js"
 
@@ -62,7 +61,7 @@ const translationKeyForNonModifiableSuffix = {
  * that the parameter cannot be modified.
  */
 export const getNonModifiableSuffixTranslation = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   entity: Entity,
   param: ModifiableParameter,
   responsiveTextSize: ResponsiveTextSize,
@@ -71,7 +70,7 @@ export const getNonModifiableSuffixTranslation = (
     responsiveTextSize,
     () =>
       mapNullable(translationKeyForNonModifiableSuffix[entity]?.[param], key =>
-        locale.translate(key),
+        translate(key),
       ) ?? "",
     () => {
       switch (entity) {
@@ -79,7 +78,7 @@ export const getNonModifiableSuffixTranslation = (
         case Entity.Ritual:
         case Entity.LiturgicalChant:
         case Entity.Ceremony:
-          return locale.translate(" (cannot modify)")
+          return translate(" (cannot modify)")
         case Entity.Cantrip:
         case Entity.Blessing:
           return ""
