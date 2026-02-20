@@ -84,30 +84,26 @@ const combineGeneratedTextWithStaticTranslation = (
   }
 }
 
-const getTextForProperty = (
-  deps: {
-    translate: Translate
-    translateMap: TranslateMap
-    getInstanceById: GetInstanceById<"Property">
-  },
+const renderProperty = (
   id: Property_ID,
-): EntityDescriptionSection => {
-  const text = (() => {
-    const staticEntry = deps.getInstanceById("Property", id)
-    const staticEntryTranslation = deps.translateMap(staticEntry?.translations)
+): StdReader<EntityDescriptionSection, "t" | "tm" | "ibi", "Property"> =>
+  Reader.asks(({ translate, translateMap, getInstanceById }) => {
+    const text = (() => {
+      const staticEntry = getInstanceById("Property", id)
+      const staticEntryTranslation = translateMap(staticEntry?.translations)
 
-    if (staticEntryTranslation === undefined) {
-      return ""
+      if (staticEntryTranslation === undefined) {
+        return ""
+      }
+
+      return staticEntryTranslation.name
+    })()
+
+    return {
+      label: translate("Property"),
+      value: text,
     }
-
-    return staticEntryTranslation.name
-  })()
-
-  return {
-    label: deps.translate("Property"),
-    value: text,
-  }
-}
+  })
 
 const getTextForTraditions = (
   deps: {
@@ -205,10 +201,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
         translation.duration,
       ),
       renderTargetCategory(entry.target).run(env),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       mapNullable(entry.note, note => ({
         label: translate("Note"),
         value: (() => {
@@ -352,10 +345,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
         translation.duration,
       ),
       renderTargetCategory(entry.target).run(env),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       getTextForTraditions(
         { translate, translateMap, localeCompare, getInstanceById },
         entry.traditions,
@@ -447,10 +437,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
         translation.duration,
       ),
       renderTargetCategory(entry.target).run(env),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       getTextForTraditions(
         { translate, translateMap, localeCompare, getInstanceById },
         entry.traditions,
@@ -510,10 +497,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
         duration,
         translation.duration,
       ),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       {
         label: translate("Improvement Cost"),
         value: "B",
@@ -608,10 +592,7 @@ export const getElvenMagicalSongEntityDescription =
           cost,
           translation.cost,
         ),
-        getTextForProperty(
-          { translate, translateMap, getInstanceById },
-          entry.property,
-        ),
+        renderProperty(entry.property).run(env),
         renderImprovementCost(entry.improvement_cost).run(env),
       ],
       errata: translation.errata,
@@ -675,10 +656,7 @@ export const getDominationRitualEntityDescription =
           duration,
           translation.duration,
         ),
-        getTextForProperty(
-          { translate, translateMap, getInstanceById },
-          entry.property,
-        ),
+        renderProperty(entry.property).run(env),
         {
           label: translate("Improvement Cost"),
           value: "B",
@@ -764,10 +742,7 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
         cost,
         translation.cost,
       ),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       renderMusicTradition(
         translate,
         translateMap,
@@ -837,10 +812,7 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
         cost,
         translation.cost,
       ),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       renderMusicTradition(
         translate,
         translateMap,
@@ -1086,10 +1058,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
             label: translate("Prerequisites"),
             value: printGeodeRitualPrerequisites(locale, entry.prerequisites),
           },
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       {
         label: translate("Improvement Cost"),
         value: "B",
@@ -1184,10 +1153,7 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
         translation.duration,
       ),
       renderTargetCategory(entry.target).run(env),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       renderImprovementCost(entry.improvement_cost).run(env),
     ],
     errata: translation.errata,
@@ -1269,10 +1235,7 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
         translation.duration,
       ),
       renderTargetCategory(entry.target).run(env),
-      getTextForProperty(
-        { translate, translateMap, getInstanceById },
-        entry.property,
-      ),
+      renderProperty(entry.property).run(env),
       renderImprovementCost(entry.improvement_cost).run(env),
     ],
     errata: translation.errata,
