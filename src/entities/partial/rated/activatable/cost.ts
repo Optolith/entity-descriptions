@@ -430,6 +430,9 @@ type MagicalActionCost =
       FirstPerson: FirstPersonMagicalMelodyCost
     }
   | {
+      kind: "ByPrimaryPatron"
+    }
+  | {
       kind: "All"
       All: {
         minimum?: number
@@ -465,6 +468,8 @@ export const renderMagicalActionCost = (
           },
         ),
       )
+    case "ByPrimaryPatron":
+      return translateR("Depends on animal type")
     case "All":
       return Reader.asks(({ translate }) =>
         cost.All.minimum === undefined

@@ -1,9 +1,13 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { Reader } from "@elyukai/utils/reader"
+import { romanize } from "@elyukai/utils/roman"
 import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
+  ActivatableSkillEffect,
+  AnimistPowerImprovementCost,
+  AnimistPowerPerformanceParameters,
   ArcaneBardTraditionReference,
   ArcaneDancerTraditionReference,
   FamiliarsTrickPerformanceParameters,
@@ -12,7 +16,9 @@ import type {
   Property_ID,
   ResponsiveTextOptional,
   SpellworkTraditions,
+  Tribe_ID,
 } from "optolith-database-schema/gen"
+import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare } from "../helpers/locale.js"
@@ -23,7 +29,10 @@ import {
 } from "../helpers/translate.js"
 import { EntityDescriptionSection, type IdMap } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
-import { printGeodeRitualPrerequisites } from "./partial/prerequisites/index.js"
+import {
+  printAnimistPowerPrerequisites,
+  printGeodeRitualPrerequisites,
+} from "./partial/prerequisites/index.js"
 import {
   renderCastingTime,
   renderFastSkillNonModifiableCastingTime,
@@ -974,6 +983,206 @@ export const getFamiliarsTrickEntityDescription =
       references: entry.src,
     }
   })
+
+const renderAnimistPowerPerformanceParameters = (
+  params: AnimistPowerPerformanceParameters,
+): StdReader<
+  {
+    cost: string
+    duration: string
+  },
+  "t" | "tm" | "rts" | "eu" | "nms"
+> => {
+  switch (params.kind) {
+    case "OneTime":
+      return renderMagicalActionCost(params.OneTime.cost).then(cost =>
+        renderOneTimeDuration(params.OneTime.duration).map(duration => ({
+          cost,
+          duration,
+        })),
+      )
+    case "Sustained":
+      return renderMagicalActionCost(params.Sustained.cost).then(cost =>
+        renderSustainedDuration(undefined).map(duration => ({
+          cost,
+          duration,
+        })),
+      )
+    default:
+      return assertExhaustive(params)
+  }
+}
+
+const renderAnimistPowerTribeTradition = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  localeCompare: LocaleCompare,
+  getInstanceById: GetInstanceById<"Tribe">,
+  tribeTradition: Tribe_ID[],
+): string => {
+  if (tribeTradition.length === 0) {
+    return translate("General")
+  }
+
+  return (
+    ensureNonEmpty(
+      tribeTradition
+        .map(
+          id => translateMap(getInstanceById("Tribe", id)?.translations)?.name,
+        )
+        .filter(isNotNullish)
+        .toSorted(localeCompare),
+    )?.join(", ") ?? MISSING_VALUE
+  )
+}
+
+const renderAnimistPowerImprovementCost = (
+  improvementCost: AnimistPowerImprovementCost,
+): StdReader<EntityDescriptionSection, "t"> => {
+  switch (improvementCost.kind) {
+    case "Fixed":
+      return renderImprovementCost(improvementCost.Fixed)
+    case "ByPrimaryPatron":
+      return Reader.asks(({ translate }) => ({
+        label: translate("Improvement Cost"),
+        value: translate("Depends on animal type"),
+      }))
+    default:
+      return assertExhaustive(improvementCost)
+  }
+}
+
+/**
+ * Get a JSON representation of the rules text for a animist power.
+ */
+export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
+  "AnimistPower",
+  {
+    getInstanceById: GetInstanceById<
+      | "Publication"
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Property"
+      | "MagicalTradition"
+      | "DerivedCharacteristic"
+      | "AnimistPower"
+      | "Tribe"
+    >
+  }
+>(({ getInstanceById }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+    energyUnit: "ArcaneEnergy",
+    responsiveTextSize: ResponsiveTextSize.Full,
+  } satisfies Partial<EnvMap>
+
+  const { cost, duration } = renderAnimistPowerPerformanceParameters(
+    entry.parameters,
+  ).run(env)
+
+  const levels = entry.levels?.length ?? 1
+
+  const prerequisites =
+    entry.prerequisites === undefined
+      ? undefined
+      : printAnimistPowerPrerequisites(
+          getInstanceById,
+          locale,
+          entry.prerequisites,
+        )
+
+  const additionalEffectsFromLevels =
+    entry.levels
+      ?.map(level => translateMap(level.translations)?.effect)
+      .filter(isNotNullish)
+      .map(text => text)
+      .join("\n\n") ?? ""
+
+  const mergedEffect = ((): ActivatableSkillEffect => {
+    switch (translation.effect.kind) {
+      case "Plain":
+        return Case("Plain", {
+          text: `${translation.effect.Plain.text}\n\n${additionalEffectsFromLevels}`,
+        })
+      case "ForEachQualityLevel":
+        return Case("ForEachQualityLevel", {
+          ...translation.effect.ForEachQualityLevel,
+          text_after: [
+            translation.effect.ForEachQualityLevel.text_after,
+            additionalEffectsFromLevels,
+          ]
+            .filter(isNotNullish)
+            .join("\n\n"),
+        })
+      case "ForEachTwoQualityLevels":
+        return Case("ForEachTwoQualityLevels", {
+          ...translation.effect.ForEachTwoQualityLevels,
+          text_after: [
+            translation.effect.ForEachTwoQualityLevels.text_after,
+            additionalEffectsFromLevels,
+          ]
+            .filter(isNotNullish)
+            .join("\n\n"),
+        })
+      default:
+        return assertExhaustive(translation.effect)
+    }
+  })()
+
+  return {
+    title:
+      (translation.name_in_library ?? translation.name) +
+      parensIf(
+        levels > 2
+          ? Array.from({ length: levels }, (_, i) => romanize(i + 1)).join("/")
+          : undefined,
+      ),
+    className: "animist-power",
+    body: [
+      renderSkillCheck(entry.check).run(env),
+      ...renderEffect(mergedEffect).run(env),
+      combineGeneratedTextWithStaticTranslation(
+        translate("AE Cost"),
+        cost,
+        translation.cost,
+      ),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Duration"),
+        duration,
+        translation.duration,
+      ),
+      renderProperty(entry.property).run(env),
+      {
+        label: translate("Tribe Tradition"),
+        value: renderAnimistPowerTribeTradition(
+          translate,
+          translateMap,
+          locale.compare,
+          getInstanceById,
+          entry.tribe_tradition,
+        ),
+      },
+      renderAnimistPowerImprovementCost(entry.improvement_cost).run(env),
+      combineGeneratedTextWithStaticTranslation(
+        translate("Prerequisites"),
+        prerequisites,
+        translation.prerequisites,
+      ),
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})
 
 /**
  * Get a JSON representation of the rules text for a Goede ritual.

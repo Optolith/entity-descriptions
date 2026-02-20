@@ -44,6 +44,7 @@ import { getPoisonEntityDescription } from "./entities/poison.js"
 import { getSexPracticeEntityDescription } from "./entities/sexPractice.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
 import {
+  getAnimistPowerEntityDescription,
   getCantripEntityDescription,
   getCurseEntityDescription,
   getDominationRitualEntityDescription,
@@ -162,7 +163,7 @@ const registeredEntityDescriptionCreators = {
   Spell: getSpellEntityDescription,
   Ritual: getRitualEntityDescription,
   // magical actions
-  // AnimistPower: getAnimistPowerEntityDescription,
+  AnimistPower: getAnimistPowerEntityDescription,
   Curse: getCurseEntityDescription,
   DominationRitual: getDominationRitualEntityDescription,
   ElvenMagicalSong: getElvenMagicalSongEntityDescription,
