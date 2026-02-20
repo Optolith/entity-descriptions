@@ -17,7 +17,6 @@ import {
   SpellworkPrerequisiteGroup,
   type ActivatableIdentifier,
   type RatedIdentifier,
-  type SkillWithEnhancementsIdentifier,
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
@@ -101,12 +100,14 @@ export const printGeneralPrerequisiteGroup = (
     | "Race"
     | "Culture"
     | "PactCategory"
+    | "PactDomain"
     | "SocialStatus"
     | "State"
     | ActivatableIdentifier["kind"]
     | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
+    | "Enhancement"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -237,12 +238,14 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
     | "Race"
     | "Culture"
     | "PactCategory"
+    | "PactDomain"
     | "SocialStatus"
     | "State"
     | ActivatableIdentifier["kind"]
     | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
+    | "Enhancement"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -449,7 +452,7 @@ export const printGeodeRitualPrerequisiteGroup = (
  * Print the translation of an enhancement prerequisite group.
  */
 export const printEnhancementPrerequisiteGroup = (
-  getInstanceById: GetInstanceById<SkillWithEnhancementsIdentifier["kind"]>,
+  getInstanceById: GetInstanceById<RatedIdentifier["kind"] | "Enhancement">,
   locale: LocaleEnvironment,
   prerequisite: EnhancementPrerequisiteGroup,
 ): PrerequisitePart | undefined => {

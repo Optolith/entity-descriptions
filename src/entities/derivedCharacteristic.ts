@@ -121,7 +121,9 @@ export const getDerivedCharacteristicEntityDescription =
   createEntityDescriptionCreator<
     "DerivedCharacteristic",
     {
-      getInstanceById: GetInstanceById<"Attribute" | "DerivedCharacteristic">
+      getInstanceById: GetInstanceById<
+        "Publication" | "Attribute" | "DerivedCharacteristic"
+      >
       idMap: IdMap
     }
   >(

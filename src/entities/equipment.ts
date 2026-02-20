@@ -884,6 +884,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
   Exclude<EquipmentIdentifier["kind"], "Elixir" | "Poison">,
   {
     getInstanceById: GetInstanceById<
+      | "Publication"
       | "Attribute"
       | "Reach"
       | "SocialStatus"
@@ -892,6 +893,10 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
       | "MagicalTradition"
       | "BlessedTradition"
       | "DerivedCharacteristic"
+      | "Ammunition"
+      | "Race"
+      | "Culture"
+      | "Profession"
     >
     idMap: IdMap
   }

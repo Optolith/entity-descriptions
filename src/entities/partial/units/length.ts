@@ -1,4 +1,6 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { Translate, Translations } from "../../../helpers/translate.js"
+import type { StdReader } from "../reader.js"
 import { responsive, ResponsiveTextSize } from "../responsiveText.js"
 
 type LengthUnit = "Steps" | "Miles"
@@ -28,11 +30,11 @@ const lengthUnitTranslationKeys = {
 export const formatLength = (
   translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
-  unit: LengthUnit,
+  unit: LengthUnit | { kind: LengthUnit },
   value: number | string,
 ) => {
   const [fullNumberKey, fullKey, compressedKey] =
-    lengthUnitTranslationKeys[unit]
+    lengthUnitTranslationKeys[typeof unit === "string" ? unit : unit.kind]
 
   return responsive(
     responsiveTextSize,
@@ -43,3 +45,30 @@ export const formatLength = (
     () => translate(compressedKey, { value }),
   )
 }
+
+/**
+ * Returns the text for a length unit.
+ */
+export const formatLengthR = (
+  unit: LengthUnit | { kind: LengthUnit },
+  value: number | string,
+): StdReader<string, "t" | "rts"> =>
+  Reader.asks(env =>
+    formatLength(env.translate, env.responsiveTextSize, unit, value),
+  )
+
+/**
+ * Returns the text for a length unit.
+ */
+export const formatCombinedLengthR = (object: {
+  unit: LengthUnit | { kind: LengthUnit }
+  value: number | string
+}): StdReader<string, "t" | "rts"> =>
+  Reader.asks(env =>
+    formatLength(
+      env.translate,
+      env.responsiveTextSize,
+      object.unit,
+      object.value,
+    ),
+  )

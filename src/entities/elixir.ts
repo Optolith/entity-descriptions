@@ -1,5 +1,9 @@
 import { mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
+import type {
+  ActivatableIdentifier,
+  RatedIdentifier,
+} from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import {
@@ -16,7 +20,21 @@ import { parensIf } from "./partial/rated/activatable/parensIf.js"
 export const getElixirEntityDescription = createEntityDescriptionCreator<
   "Elixir",
   {
-    getInstanceById: GetInstanceById<"DerivedCharacteristic">
+    getInstanceById: GetInstanceById<
+      | "Publication"
+      | "DerivedCharacteristic"
+      | ActivatableIdentifier["kind"]
+      | RatedIdentifier["kind"]
+      | "Race"
+      | "Culture"
+      | "State"
+      | "Enhancement"
+      | "PactCategory"
+      | "PactDomain"
+      | "SocialStatus"
+      | "Aspect"
+      | "Property"
+    >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }
 >(

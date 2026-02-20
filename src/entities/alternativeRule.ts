@@ -8,7 +8,7 @@ import { MISSING_VALUE } from "./partial/unknown.js"
 export const getAlternativeRuleEntityDescription =
   createEntityDescriptionCreator<
     "AlternativeRule",
-    { getInstanceById: GetInstanceById<"PlayerType"> }
+    { getInstanceById: GetInstanceById<"Publication" | "PlayerType"> }
   >(({ getInstanceById }, { translateMap }, { content: entry }) => {
     const translation = translateMap(entry.translations)
 

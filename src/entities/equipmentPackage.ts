@@ -316,7 +316,7 @@ export const getEquipmentPackageEntityDescription =
     "EquipmentPackage",
     {
       getInstanceById: GetInstanceById<
-        EquipmentIdentifier["kind"] | "SocialStatus"
+        "Publication" | EquipmentIdentifier["kind"] | "SocialStatus"
       >
     }
   >(({ getInstanceById }, locale, { content }) => {

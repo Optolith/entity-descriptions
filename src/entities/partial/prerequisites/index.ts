@@ -29,7 +29,6 @@ import {
   type ActivatableIdentifier,
   type GeneralPrerequisiteGroup,
   type RatedIdentifier,
-  type SkillWithEnhancementsIdentifier,
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
@@ -268,12 +267,14 @@ export const printPlainGeneralPrerequisites = (
     | "Race"
     | "Culture"
     | "PactCategory"
+    | "PactDomain"
     | "SocialStatus"
     | "State"
     | ActivatableIdentifier["kind"]
     | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
+    | "Enhancement"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -299,12 +300,14 @@ export const printGeneralPrerequisites = (
     | "Race"
     | "Culture"
     | "PactCategory"
+    | "PactDomain"
     | "SocialStatus"
     | "State"
     | ActivatableIdentifier["kind"]
     | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
+    | "Enhancement"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -374,12 +377,14 @@ export const printAdvantageDisadvantagePrerequisites = (
     | "Race"
     | "Culture"
     | "PactCategory"
+    | "PactDomain"
     | "SocialStatus"
     | "State"
     | ActivatableIdentifier["kind"]
     | RatedIdentifier["kind"]
     | "Property"
     | "Aspect"
+    | "Enhancement"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -424,7 +429,7 @@ export const printArcaneTraditionPrerequisites = (
  * Print personality trait prerequisites as a string.
  */
 export const printPersonalityTraitPrerequisites = (
-  getInstanceById: GetInstanceById<"Culture">,
+  getInstanceById: GetInstanceById<"Race" | "Culture" | "PersonalityTrait">,
   locale: LocaleEnvironment,
   value: PersonalityTraitPrerequisites,
 ): string =>
@@ -535,7 +540,7 @@ export const printGeodeRitualPrerequisites = (
  * Print enhancement prerequisites as a string.
  */
 export const printEnhancementPrerequisites = (
-  getInstanceById: GetInstanceById<SkillWithEnhancementsIdentifier["kind"]>,
+  getInstanceById: GetInstanceById<RatedIdentifier["kind"] | "Enhancement">,
   locale: LocaleEnvironment,
   value: EnhancementPrerequisites,
 ): string =>

@@ -33,6 +33,7 @@ import type {
   PropertyDeclaration,
   PublicationRefs,
   RangedCombatTechnique,
+  RatedIdentifier,
   SelectOptions,
   SpecialRule,
   Volume,
@@ -544,17 +545,14 @@ const renderVolumeValue = (
       })
     case "Map":
       return renderResponsiveMap(
-        translate,
-        translateMap,
-        responsiveTextSize,
         volume.Map,
         option => option.points,
         values => translate("{$points} points", { points: values }),
-        optionTranslation => optionTranslation.label,
-        translation => translation.list_prepend,
-        translation => translation.list_append,
-        translation => translation.replacement,
-      )
+      ).run({
+        translate,
+        translateMap,
+        responsiveTextSize,
+      })
     case "DerivedFromSelection": {
       const groups = Map.groupBy(
         getAllResolvedSelectOptions(),
@@ -736,16 +734,9 @@ const renderArcaneEnergyCost = (
       })
     case "Map":
       return renderResponsiveMap(
-        translate,
-        translateMap,
-        responsiveTextSize,
         cost.Map,
         option => option.value,
         values => translate("{$value} AE", { value: values }),
-        optionTranslation => optionTranslation.label,
-        translation => translation.list_prepend,
-        translation => translation.list_append,
-        translation => translation.replacement,
         cost.Map.options.every(option => option.permanent_value !== undefined)
           ? {
               surround: values =>
@@ -755,7 +746,11 @@ const renderArcaneEnergyCost = (
               getAdditionalValue: option => option.permanent_value!,
             }
           : undefined,
-      )
+      ).run({
+        translate,
+        translateMap,
+        responsiveTextSize,
+      })
     case "Variable":
       return translate("Variable")
     case "ByLevel":
@@ -809,17 +804,14 @@ const renderBindingCost = (
       })
     case "Map":
       return renderResponsiveMap(
-        translate,
-        translateMap,
-        responsiveTextSize,
         cost.Map,
         option => option.permanent_value,
         values => translate("{$value} permanent AE", { value: values }),
-        optionTranslation => optionTranslation.label,
-        translation => translation.list_prepend,
-        translation => translation.list_append,
-        translation => translation.replacement,
-      )
+      ).run({
+        translate,
+        translateMap,
+        responsiveTextSize,
+      })
     case "DerivedFromSelection": {
       const groups = Map.groupBy(
         getAllResolvedSelectOptions(),
@@ -937,11 +929,21 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
   ActivatableIdentifier["kind"],
   {
     getInstanceById: GetInstanceById<
+      | "Publication"
       | "Subject"
       | ActivatableIdentifier["kind"]
+      | RatedIdentifier["kind"]
       | "TradeSecret"
       | "Aspect"
       | "Property"
+      | "Race"
+      | "Culture"
+      | "State"
+      | "Enhancement"
+      | "PactCategory"
+      | "PactDomain"
+      | "SocialStatus"
+      | "Weapon"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

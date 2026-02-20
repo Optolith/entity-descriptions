@@ -464,6 +464,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
   "Curriculum",
   {
     getInstanceById: GetInstanceById<
+      | "Publication"
       | "Skill"
       | "CloseCombatTechnique"
       | "RangedCombatTechnique"
@@ -471,6 +472,8 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
       | "Spell"
       | "Ritual"
       | "MagicalTradition"
+      | "Property"
+      | "Element"
     >
     getAllInstances: GetAllInstances<"Profession">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<

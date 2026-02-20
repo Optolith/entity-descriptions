@@ -13,7 +13,11 @@ import { MISSING_VALUE } from "./partial/unknown.js"
 export const getPersonalityTraitEntityDescription =
   createEntityDescriptionCreator<
     "PersonalityTrait",
-    { getInstanceById: GetInstanceById<"Culture" | "PersonalityTrait"> }
+    {
+      getInstanceById: GetInstanceById<
+        "Publication" | "Race" | "Culture" | "PersonalityTrait"
+      >
+    }
   >(({ getInstanceById }, locale, { content: entry }) => {
     const { translate, translateMap, join: localeJoin } = locale
     const translation = translateMap(entry.translations)

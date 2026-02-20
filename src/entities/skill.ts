@@ -18,8 +18,8 @@ import type {
   GetAllResolvedSkillUses,
 } from "../index.js"
 import { BaseActivatableTranslation } from "./activatable.js"
-import { createImprovementCost } from "./partial/rated/improvementCost.js"
-import { getTextForCheck } from "./partial/rated/skillCheck.js"
+import { renderImprovementCost } from "./partial/rated/improvementCost.js"
+import { renderSkillCheck } from "./partial/rated/skillCheck.js"
 
 const getUsesOrNewApplications = <
   T extends ResolvedNewSkillApplication | ResolvedSkillUse,
@@ -69,7 +69,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
   "Skill",
   {
     getInstanceById: GetInstanceById<
-      "Attribute" | ActivatableIdentifier["kind"]
+      "Publication" | "Attribute" | ActivatableIdentifier["kind"] | "Aspect"
     >
     getAllInstances: GetAllInstances<
       | "BlessedTradition"
@@ -159,10 +159,11 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
               label: translate("Uses"),
               value: uses.join(", "),
             },
-        getTextForCheck(
-          { translate, translateMap, getInstanceById },
-          entry.check,
-        ),
+        renderSkillCheck(entry.check).run({
+          translate,
+          translateMap,
+          getInstanceById,
+        }),
         {
           label: translate("Applications"),
           value: applications.join(", "),
@@ -198,7 +199,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
           label: translate("Botch"),
           value: translation.botch,
         },
-        createImprovementCost(translate, entry.improvement_cost),
+        renderImprovementCost(entry.improvement_cost).run({ translate }),
       ],
     }
   },

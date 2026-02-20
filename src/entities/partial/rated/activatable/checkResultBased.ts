@@ -5,21 +5,18 @@ import type {
   CheckResultBasedModifier,
   CheckResultValue,
 } from "optolith-database-schema/gen"
-import { Translate } from "../../../../helpers/translate.js"
 import {
   divisionFormatter,
   multiplicationFormatter,
 } from "../../mathOperation.js"
+import { translateR, type StdReader } from "../../reader.js"
 
-const getCheckResultBaseValueTranslation = (
-  translate: Translate,
-  baseValue: CheckResultValue,
-) => {
+const renderCheckResultBaseValue = (baseValue: CheckResultValue) => {
   switch (baseValue.kind) {
     case "QualityLevels":
-      return translate("QL")
+      return translateR("QL")
     case "SkillPoints":
-      return translate("SP")
+      return translateR("SP")
     default:
       return assertExhaustive(baseValue)
   }
@@ -56,21 +53,20 @@ export const appendCheckResultModifier = (
   modifier: CheckResultBasedModifier,
 ) => {
   const formatter = getArithmeticFormatter(modifier.arithmetic)
-  return formatter(left, modifier.value.toString())
+  return formatter(left, modifier.value)
 }
 
 /**
  * Returns the value text for a check-result-based parameter of an activatable
  * skill.
  */
-export const getCheckResultBasedValueTranslation = (
-  translate: Translate,
+export const renderCheckResultBasedValue = (
   value: CheckResultBased,
-): string => {
-  const base = getCheckResultBaseValueTranslation(translate, value.base)
-  return mapNullableDefault(
-    value.modifier,
-    modifier => appendCheckResultModifier(base, modifier),
-    base,
+): StdReader<string, "t"> =>
+  renderCheckResultBaseValue(value.base).map(base =>
+    mapNullableDefault(
+      value.modifier,
+      modifier => appendCheckResultModifier(base, modifier),
+      base,
+    ),
   )
-}

@@ -23,7 +23,10 @@ export type TranslationParams<K extends keyof Translations> =
     ? Params
     : undefined
 
-type TranslationParamsInArray<K extends keyof Translations> =
+/**
+ * Extracts the parameters for a given translation key as an array, or an empty array if the key does not have parameters.
+ */
+export type TranslationParamsInArray<K extends keyof Translations> =
   Translations[K] extends string & { __params: infer Params }
     ? [params: Params]
     : []
@@ -38,7 +41,10 @@ export type LocaleMap<T> = Record<string, T>
  */
 export type TranslateMap = <T>(map: LocaleMap<T> | undefined) => T | undefined
 
-type TranslationKeysWithoutParams = {
+/**
+ * The set of translation keys that do not have parameters.
+ */
+export type TranslationKeysWithoutParams = {
   [K in keyof Translations]-?: Translations[K] extends string & {
     __params: object
   }
@@ -46,37 +52,45 @@ type TranslationKeysWithoutParams = {
     : K
 }[keyof Translations]
 
-type TranslationKeyMatchingParams<Params> = Params extends object
+/**
+ * Extracts the translation keys that match the parameters.
+ */
+export type TranslationKeyMatchingParams<Params> = Params extends object
   ? {
-      [K in keyof Translations]-?: Translations[K] extends string & {
-        __params: Params
-      }
-        ? K
+      [K in keyof Translations]-?: keyof Params extends keyof TranslationParams<K>
+        ? keyof TranslationParams<K> extends keyof Params
+          ? K
+          : never
         : never
     }[keyof Translations]
   : TranslationKeysWithoutParams
 
-type TranslationKeyMatchingParamsOfKey<K extends keyof Translations> =
-  TranslationKeyMatchingParams<TranslationParams<K>>
+/**
+ * Extracts the translation keys that match the parameters of the given key.
+ */
+export type TranslationKeyMatchingParamsOfKey<T extends keyof Translations> =
+  Translations[T] extends object
+    ? TranslationKeyMatchingParams<TranslationParams<T>>
+    : TranslationKeysWithoutParams
 
 /**
  * Translates a key that has different translations based on the responsive text size, e.g. a full and a compressed version of the same translation.
  */
-export const responsiveTranslate = <K extends keyof Translations>(
+export const responsiveTranslate = <
+  K extends keyof Translations,
+  K2 extends TranslationKeyMatchingParamsOfKey<K>,
+>(
   translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
   fullKey: K,
-  compressedKey: TranslationKeyMatchingParamsOfKey<K>,
-  ...rest: TranslationParamsInArray<K>
+  compressedKey: K2,
+  ...rest: TranslationParamsInArray<K> & TranslationParamsInArray<K2>
 ): string => {
   switch (responsiveTextSize) {
     case ResponsiveTextSize.Full:
-      return translate(fullKey, ...rest)
+      return translate(fullKey, ...(rest as TranslationParamsInArray<K>))
     case ResponsiveTextSize.Compressed:
-      return translate(
-        compressedKey,
-        ...(rest as unknown as TranslationParamsInArray<typeof compressedKey>),
-      )
+      return translate(compressedKey, ...(rest as TranslationParamsInArray<K2>))
     default:
       return assertExhaustive(responsiveTextSize)
   }

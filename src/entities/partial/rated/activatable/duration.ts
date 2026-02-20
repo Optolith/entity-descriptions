@@ -1,204 +1,156 @@
+import { Reader } from "@elyukai/utils/reader"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
-  BlessingDuration,
-  CantripDuration,
   CastingTimeDuringLovemaking,
   CheckResultBasedDuration,
   DurationForSustained,
   FixedDuration,
   Immediate,
-  IndefiniteBlessingDuration,
-  IndefiniteBlessingDurationTranslation,
-  IndefiniteDuration,
-  IndefiniteDurationTranslation,
+  MusicDuration,
   PermanentDuration,
+  ResponsiveText,
 } from "optolith-database-schema/gen"
-import type { Translate, TranslateMap } from "../../../../helpers/translate.js"
+import type { LocaleMap } from "../../../../helpers/translate.js"
 import {
-  getResponsiveText,
-  replaceTextIfRequested,
-  responsive,
-  ResponsiveTextSize,
-} from "../../responsiveText.js"
-import { formatTimeSpan } from "../../units/timeSpan.js"
-import { getCheckResultBasedValueTranslation } from "./checkResultBased.js"
+  responsiveTextR,
+  responsiveTranslateR,
+  translateMapR,
+  translateR,
+  type StdReader,
+} from "../../reader.js"
+import { replaceTextIfNeeded } from "../../responsiveText.js"
+import {
+  formatCombinedTimeSpanR,
+  formatTimeSpanR,
+} from "../../units/timeSpan.js"
+import { MISSING_VALUE } from "../../unknown.js"
+import { renderCheckResultBasedValue } from "./checkResultBased.js"
 import { wrapAsMaximum, wrapIfMaximum } from "./isMinimumMaximum.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
-const getImmediateDurationTranslation = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
+const renderImmediateDuration = (
   value?: Immediate,
-): string => {
-  const text = appendInParensIfNotEmpty(
-    mapNullable(value?.maximum, max => {
-      const maxText = formatTimeSpan(
-        translate,
-        responsiveTextSize,
-        max.unit,
-        max.value,
-      )
+): StdReader<string, "t" | "tm" | "rts"> =>
+  translateR("Immediate")
+    .thenW(
+      base =>
+        mapNullable(value?.maximum, max =>
+          formatTimeSpanR(max.unit, max.value)
+            .then(wrapAsMaximum)
+            .map(maxText => appendInParensIfNotEmpty(maxText, base)),
+        ) ?? Reader.of(base),
+    )
+    .thenW(text => replaceTextIfNeeded(value?.translations, text))
 
-      return responsive(
-        responsiveTextSize,
-        () => translate("no more than {$value}", { value: maxText }),
-        () => translate("max. {$value}", { value: maxText }),
-      )
-    }),
-    translate("Immediate"),
-  )
-
-  return replaceTextIfRequested(
-    "replacement",
-    value?.translations,
-    translateMap,
-    responsiveTextSize,
-    text,
-  )
-}
-
-const getPermanentDurationTranslation = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
+const renderPermanentDuration = (
   value: PermanentDuration,
-): string =>
-  replaceTextIfRequested(
-    "replacement",
-    value.translations,
-    translateMap,
-    responsiveTextSize,
-    translate("Permanent"),
+): StdReader<string, "t" | "tm" | "rts"> =>
+  translateR("Permanent").thenW(text =>
+    replaceTextIfNeeded(value.translations, text),
   )
 
-const getFixedDurationTranslation = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
+const renderFixedDuration = (
   value: FixedDuration,
-): string => {
-  const duration = formatTimeSpan(
-    translate,
-    responsiveTextSize,
-    value.unit,
-    value.value,
-  )
+): StdReader<string, "t" | "tm" | "rts"> =>
+  formatCombinedTimeSpanR(value)
+    .then(text => wrapIfMaximum(value.is_maximum, text))
+    .thenW(text => replaceTextIfNeeded(value.translations, text))
 
-  const durationWrappedIfMaximum = wrapIfMaximum(
-    translate,
-    responsiveTextSize,
-    value.is_maximum,
-    duration,
-  )
-
-  return replaceTextIfRequested(
-    "replacement",
-    value.translations,
-    translateMap,
-    responsiveTextSize,
-    durationWrappedIfMaximum,
-  )
-}
-
-const getCheckResultBasedDurationTranslation = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
+const renderCheckResultBasedDuration = (
   value: CheckResultBasedDuration,
-): string => {
-  const duration = formatTimeSpan(
-    translate,
-    responsiveTextSize,
-    value.unit,
-    getCheckResultBasedValueTranslation(translate, value),
-  )
+): StdReader<string, "t" | "tm" | "rts"> =>
+  renderCheckResultBasedValue(value)
+    .thenW(text => formatTimeSpanR(value.unit, text))
+    .then(text => wrapIfMaximum(value.is_maximum, text))
 
-  return wrapIfMaximum(
-    translate,
-    responsiveTextSize,
-    value.is_maximum,
-    duration,
-  )
+const renderIndefiniteDuration = (value: {
+  maximum?: OneTimeDuration
+  translations: LocaleMap<{
+    description: ResponsiveText | string
+  }>
+}): StdReader<string, "t" | "tm" | "rts"> => {
+  const { maximum, translations } = value
+  return translateMapR<{
+    description: ResponsiveText | string
+  }>(translations)
+    .thenW(translation =>
+      typeof translation?.description === "object"
+        ? responsiveTextR(translation.description)
+        : Reader.of(translation?.description ?? MISSING_VALUE),
+    )
+    .thenW(
+      maximum === undefined
+        ? Reader.of
+        : text =>
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            renderOneTimeDuration(maximum).then(maximumText =>
+              translateR(
+                "{$defaultDuration}, but no more than {$maximumDuration}",
+                {
+                  defaultDuration: text,
+                  maximumDuration: maximumText,
+                },
+              ),
+            ),
+    )
 }
 
-const getIndefiniteDurationTranslation = (
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
-  value: IndefiniteDuration | IndefiniteBlessingDuration,
-) => {
-  const description = translateMap<
-    IndefiniteDurationTranslation | IndefiniteBlessingDurationTranslation
-  >(value.translations)?.description
+const renderDurationDuringLovemaking = (
+  value: CastingTimeDuringLovemaking,
+): StdReader<string, "t" | "rts"> => formatCombinedTimeSpanR(value)
 
-  return typeof description === "string"
-    ? description
-    : getResponsiveText(description, responsiveTextSize)
-}
+type OneTimeDuration =
+  | {
+      kind: "Immediate"
+      Immediate?: Immediate
+    }
+  | {
+      kind: "Permanent"
+      Permanent: PermanentDuration
+    }
+  | {
+      kind: "Fixed"
+      Fixed: FixedDuration
+    }
+  | {
+      kind: "CheckResultBased"
+      CheckResultBased: CheckResultBasedDuration
+    }
+  | {
+      kind: "Indefinite"
+      Indefinite: {
+        maximum?: OneTimeDuration
+        translations: LocaleMap<{
+          description: ResponsiveText | string
+        }>
+      }
+    }
+  // used for cantrips:
+  | {
+      kind: "DuringLovemaking"
+      DuringLovemaking: CastingTimeDuringLovemaking
+    }
 
 /**
  * Returns the text for the duration of a one-time activatable skill.
  */
-export const getDurationForOneTimeTranslation = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
-  value:
-    | {
-        kind: "Immediate"
-        Immediate?: Immediate
-      }
-    | {
-        kind: "Permanent"
-        Permanent: PermanentDuration
-      }
-    | {
-        kind: "Fixed"
-        Fixed: FixedDuration
-      }
-    | {
-        kind: "CheckResultBased"
-        CheckResultBased: CheckResultBasedDuration
-      }
-    | {
-        kind: "Indefinite"
-        Indefinite: IndefiniteDuration
-      },
-): string => {
+export const renderOneTimeDuration = (
+  value: OneTimeDuration,
+): StdReader<string, "t" | "tm" | "rts"> => {
   switch (value.kind) {
     case "Immediate":
-      return getImmediateDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        value.Immediate,
-      )
+      return renderImmediateDuration(value.Immediate)
     case "Permanent":
-      return getPermanentDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        value.Permanent,
-      )
+      return renderPermanentDuration(value.Permanent)
     case "Fixed":
-      return getFixedDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        value.Fixed,
-      )
+      return renderFixedDuration(value.Fixed)
     case "CheckResultBased":
-      return getCheckResultBasedDurationTranslation(
-        translate,
-        responsiveTextSize,
-        value.CheckResultBased,
-      )
+      return renderCheckResultBasedDuration(value.CheckResultBased)
     case "Indefinite":
-      return getIndefiniteDurationTranslation(
-        translateMap,
-        responsiveTextSize,
-        value.Indefinite,
-      )
+      return renderIndefiniteDuration(value.Indefinite)
+    case "DuringLovemaking":
+      return renderDurationDuringLovemaking(value.DuringLovemaking)
     default:
       return assertExhaustive(value)
   }
@@ -207,107 +159,43 @@ export const getDurationForOneTimeTranslation = (
 /**
  * Returns the text for the duration of a sustained activatable skill.
  */
-export const getDurationForSustainedTranslation = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
+export const renderSustainedDuration = (
   value: DurationForSustained | undefined,
-): string =>
+): StdReader<string, "t" | "rts"> =>
   value === undefined
-    ? responsive(
-        responsiveTextSize,
-        () => translate("Sustained"),
-        () => translate("(S)"),
+    ? responsiveTranslateR("Sustained", "(S)")
+    : formatCombinedTimeSpanR(value.maximum).then(maxText =>
+        wrapAsMaximum(maxText),
       )
-    : wrapAsMaximum(
-        translate,
-        responsiveTextSize,
-        formatTimeSpan(
-          translate,
-          responsiveTextSize,
-          value.maximum.unit,
-          value.maximum.value,
-        ),
-      )
-
-const getDurationDuringLovemakingTranslation = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
-  value: CastingTimeDuringLovemaking,
-): string =>
-  formatTimeSpan(translate, responsiveTextSize, value.unit, value.value)
 
 /**
- * Returns the text for the duration of a cantrip.
+ *  Returns the text for the duration of a musical activatable skill.
  */
-export const getDurationTranslationForCantrip = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
-  value: CantripDuration,
-): string => {
-  switch (value.kind) {
-    case "Immediate":
-      return getImmediateDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        {},
-      )
-    case "Fixed":
-      return getFixedDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        value.Fixed,
-      )
-    case "Indefinite":
-      return getIndefiniteDurationTranslation(
-        translateMap,
-        responsiveTextSize,
-        value.Indefinite,
-      )
-    case "DuringLovemaking":
-      return getDurationDuringLovemakingTranslation(
-        translate,
-        responsiveTextSize,
-        value.DuringLovemaking,
-      )
-    default:
-      return assertExhaustive(value)
-  }
-}
+export const renderMusicDuration = (
+  duration: MusicDuration,
+): StdReader<string, "t"> =>
+  Reader.asks(({ translate }) => {
+    const length = (() => {
+      switch (duration.length.kind) {
+        case "Long":
+          return translate("long")
+        case "Short":
+          return translate("short")
+        default:
+          return assertExhaustive(duration.length)
+      }
+    })()
 
-/**
- * Returns the text for the duration of a blessing.
- */
-export const getDurationTranslationForBlessing = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  responsiveTextSize: ResponsiveTextSize,
-  value: BlessingDuration,
-): string => {
-  switch (value.kind) {
-    case "Immediate":
-      return getImmediateDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        {},
-      )
-    case "Fixed":
-      return getFixedDurationTranslation(
-        translate,
-        translateMap,
-        responsiveTextSize,
-        value.Fixed,
-      )
-    case "Indefinite":
-      return getIndefiniteDurationTranslation(
-        translateMap,
-        responsiveTextSize,
-        value.Indefinite,
-      )
-    default:
-      return assertExhaustive(value)
-  }
-}
+    const reusability = (() => {
+      switch (duration.reusability.kind) {
+        case "OneTime":
+          return translate("one-time")
+        case "Sustainable":
+          return translate("sustainable")
+        default:
+          return assertExhaustive(duration.reusability)
+      }
+    })()
+
+    return `${length}, ${reusability}`
+  })

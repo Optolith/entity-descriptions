@@ -1,59 +1,51 @@
+import { Reader } from "@elyukai/utils/reader"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   AffectedTargetCategories,
   SpecificAffectedTargetCategoryIdentifier,
+  TargetCategory_ID,
 } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { EntityDescriptionSection } from "../../../../index.js"
+import {
+  getInstanceByIdR,
+  translateMapR,
+  translateR,
+  type StdReader,
+} from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
-const getSelfTranslation = (locale: LocaleEnvironment) =>
-  locale.translate("Self")
-
-const getZoneTranslation = (locale: LocaleEnvironment) =>
-  locale.translate("Zone")
-
-const getLiturgicalChantsAndCeremoniesTranslation = (
-  locale: LocaleEnvironment,
-) => locale.translate("Liturgical Chants and Ceremonies")
-
-const getSpellworksTranslation = (locale: LocaleEnvironment) =>
-  locale.translate("Spellworks")
-
-const getCantripsTranslation = (locale: LocaleEnvironment) =>
-  locale.translate("Cantrips")
-
-const getPredefinedTranslation = (
-  getInstanceById: GetInstanceById<"TargetCategory">,
-  locale: LocaleEnvironment,
-  id: string,
-) =>
-  mapNullable(
-    locale.translateMap(getInstanceById("TargetCategory", id)?.translations),
-    translation => translation.name,
-  ) ?? MISSING_VALUE
+const renderPredefined = (targetCategoryId: TargetCategory_ID) =>
+  getInstanceByIdR<"TargetCategory">()
+    .thenW(
+      getInstanceById =>
+        mapNullable(
+          getInstanceById("TargetCategory", targetCategoryId),
+          targetCategory =>
+            translateMapR(targetCategory.translations).map(
+              translation => translation?.name,
+            ),
+        ) ?? Reader.of(undefined),
+    )
+    .map(translation => translation ?? MISSING_VALUE)
 
 const getTargetCategoryTranslationByType = (
-  getInstanceById: GetInstanceById<"TargetCategory">,
-  locale: LocaleEnvironment,
   id: SpecificAffectedTargetCategoryIdentifier,
-) => {
+): StdReader<string, "t" | "tm" | "ibi", "TargetCategory"> => {
   switch (id.kind) {
     case "Self":
-      return getSelfTranslation(locale)
+      return translateR("Self")
     case "Zone":
-      return getZoneTranslation(locale)
+      return translateR("Zone")
     case "LiturgicalChantsAndCeremonies":
-      return getLiturgicalChantsAndCeremoniesTranslation(locale)
+      return translateR("Liturgical Chants and Ceremonies")
     case "Spellworks":
-      return getSpellworksTranslation(locale)
+      return translateR("Spellworks")
     case "Cantrips":
-      return getCantripsTranslation(locale)
+      return translateR("Cantrips")
     case "Predefined":
-      return getPredefinedTranslation(getInstanceById, locale, id.Predefined)
+      return renderPredefined(id.Predefined)
     default:
       return assertExhaustive(id)
   }
@@ -62,21 +54,21 @@ const getTargetCategoryTranslationByType = (
 /**
  * Get the text for the target category.
  */
-export const getTargetCategoryTranslation = (
-  getInstanceById: GetInstanceById<"TargetCategory">,
-  locale: LocaleEnvironment,
+export const renderTargetCategory = (
   values: AffectedTargetCategories,
-): EntityDescriptionSection => ({
-  label: locale.translate("Target Category"),
-  value:
-    values.length === 0
-      ? locale.translate("all")
-      : values
-          .map(({ id, translations }) =>
-            appendInParensIfNotEmpty(
-              locale.translateMap(translations)?.note,
-              getTargetCategoryTranslationByType(getInstanceById, locale, id),
+): StdReader<EntityDescriptionSection, "t" | "tm" | "ibi", "TargetCategory"> =>
+  translateR("Target Category").thenW(label =>
+    (values.length === 0
+      ? translateR("all")
+      : Reader.sequence(
+          values.map(({ id, translations }) =>
+            getTargetCategoryTranslationByType(id).then(
+              text =>
+                translateMapR(translations)
+                  .map(translation => translation?.note)
+                  .map(note => appendInParensIfNotEmpty(note, text)) ?? text,
             ),
-          )
-          .join(", "),
-})
+          ),
+        ).map(texts => texts.join(", "))
+    ).map(value => ({ label, value })),
+  )

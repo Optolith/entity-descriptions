@@ -4,22 +4,24 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { type LiturgyTradition } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import { Translate, TranslateMap } from "../helpers/translate.js"
-import { EntityDescriptionSection, type IdMap } from "../index.js"
-import { getSlowCastingTimeTranslation } from "./partial/rated/activatable/castingTime.js"
-import { getDurationTranslationForBlessing } from "./partial/rated/activatable/duration.js"
-import { getTextForEffect } from "./partial/rated/activatable/effect.js"
-import { Entity } from "./partial/rated/activatable/entity.js"
 import {
-  getFastOneTimePerformanceParametersTranslations,
-  getFastSustainedPerformanceParametersTranslations,
-  getSlowOneTimePerformanceParametersTranslations,
-  getSlowSustainedPerformanceParametersTranslations,
+  Translate,
+  TranslateMap,
+  type TranslationKeysWithoutParams,
+} from "../helpers/translate.js"
+import { EntityDescriptionSection, type IdMap } from "../index.js"
+import { renderOneTimeDuration } from "./partial/rated/activatable/duration.js"
+import { renderEffect } from "./partial/rated/activatable/effect.js"
+import {
+  renderFastPerformanceParameters,
+  renderSlowPerformanceParameters,
 } from "./partial/rated/activatable/index.js"
-import { getTextForBlessingRange } from "./partial/rated/activatable/range.js"
-import { getTargetCategoryTranslation } from "./partial/rated/activatable/targetCategory.js"
-import { createImprovementCost } from "./partial/rated/improvementCost.js"
-import { getTextForCheck } from "./partial/rated/skillCheck.js"
+import { ModifiableParameter } from "./partial/rated/activatable/nonModifiableSuffix.js"
+import { renderNonModifiableRange } from "./partial/rated/activatable/range.js"
+import { renderTargetCategory } from "./partial/rated/activatable/targetCategory.js"
+import { renderImprovementCost } from "./partial/rated/improvementCost.js"
+import { renderSkillCheckWithPenalty } from "./partial/rated/skillCheck.js"
+import type { EnvMap } from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
 
 const getTextForTraditions = (
@@ -83,7 +85,7 @@ const getTextForTraditions = (
 export const getBlessingEntityDescription = createEntityDescriptionCreator<
   "Blessing",
   {
-    getInstanceById: GetInstanceById<"TargetCategory">
+    getInstanceById: GetInstanceById<"Publication" | "TargetCategory">
   }
 >(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap } = locale
@@ -93,18 +95,15 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
     return undefined
   }
 
-  const range = getTextForBlessingRange(
-    translate,
-    ResponsiveTextSize.Full,
-    entry.parameters.range,
-  )
-
-  const duration = getDurationTranslationForBlessing(
+  const env = {
     translate,
     translateMap,
-    ResponsiveTextSize.Full,
-    entry.parameters.duration,
-  )
+    getInstanceById,
+    responsiveTextSize: ResponsiveTextSize.Full,
+  } satisfies Partial<EnvMap>
+
+  const range = renderNonModifiableRange(entry.parameters.range, false).run(env)
+  const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
 
   return {
     title: translation.name,
@@ -128,7 +127,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
             ? `***${duration}*** (${translation.duration})`
             : duration,
       },
-      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+      renderTargetCategory(entry.target).run(env),
     ],
     errata: translation.errata,
     references: entry.src,
@@ -143,6 +142,7 @@ export const getLiturgicalChantEntityDescription =
     "LiturgicalChant",
     {
       getInstanceById: GetInstanceById<
+        | "Publication"
         | "Attribute"
         | "SkillModificationLevel"
         | "TargetCategory"
@@ -160,46 +160,42 @@ export const getLiturgicalChantEntityDescription =
       return undefined
     }
 
-    const { castingTime, cost, range, duration } = (() => {
-      switch (entry.parameters.kind) {
-        case "OneTime":
-          return getFastOneTimePerformanceParametersTranslations(
-            getInstanceById,
-            locale,
-            Entity.LiturgicalChant,
-            ResponsiveTextSize.Full,
-            entry.parameters.OneTime,
-          )
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      localeJoin: locale.join,
+      energyUnit: "KarmaPoints",
+      responsiveTextSize: ResponsiveTextSize.Full,
+      nonModifiableSuffix: (
+        param: ModifiableParameter,
+      ): TranslationKeysWithoutParams => {
+        switch (param) {
+          case ModifiableParameter.CastingTime:
+            return " (you cannot use a modification on this chant’s liturgical time)"
+          case ModifiableParameter.Cost:
+            return " (you cannot use a modification on this chant’s cost)"
+          case ModifiableParameter.Range:
+            return " (you cannot use a modification on this chant’s range)"
+          default:
+            return assertExhaustive(param)
+        }
+      },
+    } satisfies Partial<EnvMap>
 
-        case "Sustained":
-          return getFastSustainedPerformanceParametersTranslations(
-            getInstanceById,
-            locale,
-            Entity.LiturgicalChant,
-            ResponsiveTextSize.Full,
-            entry.parameters.Sustained,
-          )
-
-        default:
-          return assertExhaustive(entry.parameters)
-      }
-    })()
+    const { castingTime, cost, range, duration } =
+      renderFastPerformanceParameters(entry.parameters).run(env)
 
     return {
       title: translation.name,
       className: "liturgical-chant",
       body: [
-        getTextForCheck(
-          { translate, translateMap, getInstanceById },
+        renderSkillCheckWithPenalty(
           entry.check,
-          {
-            value: entry.check_penalty,
-            responsiveText: ResponsiveTextSize.Full,
-            getInstanceById,
-            idMap,
-          },
-        ),
-        ...getTextForEffect(locale, translation.effect),
+          entry.check_penalty,
+          idMap,
+        ).run(env),
+        ...renderEffect(translation.effect).run(env),
         {
           label: translate("Liturgical Time"),
           value:
@@ -229,7 +225,7 @@ export const getLiturgicalChantEntityDescription =
               ? `***${duration}*** (${translation.duration.full})`
               : duration,
         },
-        getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+        renderTargetCategory(entry.target).run(env),
         getTextForTraditions(
           {
             translate,
@@ -239,7 +235,7 @@ export const getLiturgicalChantEntityDescription =
           },
           entry.traditions,
         ),
-        createImprovementCost(translate, entry.improvement_cost),
+        renderImprovementCost(entry.improvement_cost).run(env),
       ],
       errata: translation.errata,
       references: entry.src,
@@ -253,6 +249,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
   "Ceremony",
   {
     getInstanceById: GetInstanceById<
+      | "Publication"
       | "Attribute"
       | "SkillModificationLevel"
       | "TargetCategory"
@@ -270,47 +267,40 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     return undefined
   }
 
-  const { castingTime, cost, range, duration } = (() => {
-    switch (entry.parameters.kind) {
-      case "OneTime":
-        return getSlowOneTimePerformanceParametersTranslations(
-          getInstanceById,
-          locale,
-          Entity.Ritual,
-          ResponsiveTextSize.Full,
-          entry.parameters.OneTime,
-          getSlowCastingTimeTranslation,
-        )
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+    localeJoin: locale.join,
+    energyUnit: "KarmaPoints",
+    responsiveTextSize: ResponsiveTextSize.Full,
+    nonModifiableSuffix: (
+      param: ModifiableParameter,
+    ): TranslationKeysWithoutParams => {
+      switch (param) {
+        case ModifiableParameter.CastingTime:
+          return " (you cannot use a modification on this ceremony’s ceremonial time)"
+        case ModifiableParameter.Cost:
+          return " (you cannot use a modification on this ceremony’s cost)"
+        case ModifiableParameter.Range:
+          return " (you cannot use a modification on this ceremony’s range)"
+        default:
+          return assertExhaustive(param)
+      }
+    },
+  } satisfies Partial<EnvMap>
 
-      case "Sustained":
-        return getSlowSustainedPerformanceParametersTranslations(
-          getInstanceById,
-          locale,
-          Entity.Ceremony,
-          ResponsiveTextSize.Full,
-          entry.parameters.Sustained,
-        )
-
-      default:
-        return assertExhaustive(entry.parameters)
-    }
-  })()
+  const { castingTime, cost, range, duration } =
+    renderSlowPerformanceParameters(entry.parameters).run(env)
 
   return {
     title: translation.name,
     className: "ceremony",
     body: [
-      getTextForCheck(
-        { translate, translateMap, getInstanceById },
-        entry.check,
-        {
-          value: entry.check_penalty,
-          responsiveText: ResponsiveTextSize.Full,
-          getInstanceById,
-          idMap,
-        },
+      renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(
+        env,
       ),
-      ...getTextForEffect(locale, translation.effect),
+      ...renderEffect(translation.effect).run(env),
       {
         label: translate("Ceremonial Time"),
         value:
@@ -340,7 +330,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             ? `***${duration}*** (${translation.duration.full})`
             : duration,
       },
-      getTargetCategoryTranslation(getInstanceById, locale, entry.target),
+      renderTargetCategory(entry.target).run(env),
       getTextForTraditions(
         {
           translate,
@@ -350,7 +340,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
         },
         entry.traditions,
       ),
-      createImprovementCost(translate, entry.improvement_cost),
+      renderImprovementCost(entry.improvement_cost).run(env),
     ],
     errata: translation.errata,
     references: entry.src,

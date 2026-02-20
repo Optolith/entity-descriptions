@@ -79,7 +79,9 @@ const renderCauses = (
 export const getDiseaseEntityDescription = createEntityDescriptionCreator<
   "AnimalDisease" | "Disease",
   {
-    getInstanceById: GetInstanceById<"AnimalType" | "DerivedCharacteristic">
+    getInstanceById: GetInstanceById<
+      "Publication" | "AnimalType" | "DerivedCharacteristic"
+    >
     idMap: IdMap
   }
 >(

@@ -1,12 +1,19 @@
-import { mapNullable } from "@optolith/helpers/nullable"
+import { identity } from "@elyukai/utils/function"
+import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   ResponsiveText,
   ResponsiveTextOptional,
   ResponsiveTextReplace,
 } from "optolith-database-schema/gen"
-import { TranslateMap, type LocaleMap } from "../../helpers/translate.js"
+import { type LocaleMap } from "../../helpers/translate.js"
 import { appendInParensIfNotEmpty } from "./rated/activatable/parensIf.js"
+import {
+  responsiveTextOptionalR,
+  responsiveTextR,
+  translateMapR,
+  type StdEnv,
+} from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**
@@ -78,34 +85,38 @@ export const getResponsiveTextOptional = (
  * Replaces a text with a given value if a replacement is requested, otherwise
  * just return the given value.
  */
-export const replaceTextIfRequested = <Key extends string>(
-  key: Key,
-  translation: LocaleMap<{ [K in Key]?: ResponsiveTextReplace }> | undefined,
-  translateMap: TranslateMap,
-  responsiveText: ResponsiveTextSize,
+export const replaceTextIfNeeded = (
+  translations: LocaleMap<{ replacement?: ResponsiveTextReplace }> | undefined,
   valueToReplace: string,
 ) =>
-  mapNullable(translateMap(translation)?.[key], replacement =>
-    getResponsiveText(replacement, responsiveText).replace(
-      "$1",
-      valueToReplace,
-    ),
-  ) ?? valueToReplace
+  translateMapR(translations)
+    .with<StdEnv<"tm" | "rts">>(identity)
+    .then(translation => {
+      if (translation?.replacement === undefined) {
+        return Reader.of(valueToReplace)
+      }
+
+      return responsiveTextR(translation.replacement).map(note =>
+        note.replace("$1", valueToReplace),
+      )
+    })
 
 /**
  * Appends a note to a given value if a note is requested, otherwise just return
  * the given value.
  */
-export const appendNoteIfRequested = <Key extends string>(
-  key: Key,
-  translation: LocaleMap<{ [K in Key]?: ResponsiveTextOptional }> | undefined,
-  translateMap: TranslateMap,
-  responsiveText: ResponsiveTextSize,
+export const appendNoteIfNeeded = (
+  translations: LocaleMap<{ note?: ResponsiveTextOptional }> | undefined,
   valueToAppendTo: string,
 ) =>
-  mapNullable(translateMap(translation)?.[key], note =>
-    appendInParensIfNotEmpty(
-      getResponsiveTextOptional(note, responsiveText),
-      valueToAppendTo,
-    ),
-  ) ?? valueToAppendTo
+  translateMapR(translations)
+    .with<StdEnv<"tm" | "rts">>(identity)
+    .then(translation => {
+      if (translation?.note === undefined) {
+        return Reader.of(valueToAppendTo)
+      }
+
+      return responsiveTextOptionalR(translation.note).map(note =>
+        appendInParensIfNotEmpty(note, valueToAppendTo),
+      )
+    })

@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
-    "@elyukai/utils": "^0.2.2",
+    "@elyukai/utils": "^0.2.4",
     "@optolith/helpers": "^0.2.2",
     "messageformat": "^4.0.0",
     "tsondb": "^0.19.8"

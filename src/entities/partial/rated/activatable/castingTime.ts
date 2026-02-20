@@ -1,3 +1,4 @@
+import { Reader } from "@elyukai/utils/reader"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
@@ -9,192 +10,133 @@ import {
   ModifiableCastingTime,
   SlowCastingTime,
   SlowSkillNonModifiableCastingTime,
+  type DurationUnitValue,
+  type SkillModificationLevel_ID,
 } from "optolith-database-schema/gen"
 import { Case } from "../../../../helpers/enums.js"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { Translate } from "../../../../helpers/translate.js"
-import { ResponsiveTextSize } from "../../responsiveText.js"
-import { formatTimeSpan } from "../../units/timeSpan.js"
-import { MISSING_VALUE } from "../../unknown.js"
-import { Entity } from "./entity.js"
 import {
-  getNonModifiableSuffixTranslation,
+  getInstanceByIdR,
+  modifiableBySpeedR,
+  type StdReader,
+} from "../../reader.js"
+import {
+  formatCombinedTimeSpanR,
+  formatTimeSpanR,
+} from "../../units/timeSpan.js"
+import { MISSING_VALUE } from "../../unknown.js"
+import {
+  appendNonModifiableSuffix,
   ModifiableParameter,
 } from "./nonModifiableSuffix.js"
-import { getMapModifiableBySpeed, Speed } from "./speed.js"
+import { Speed } from "./speed.js"
 
-const getModifiableCastingTimeTranslation = (
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  speed: Speed,
-  responsiveTextSize: ResponsiveTextSize,
+const deriveModifiableCastingTime = (
+  modificationLevelId: SkillModificationLevel_ID,
+): StdReader<
+  DurationUnitValue | undefined,
+  "s" | "ibi",
+  "SkillModificationLevel"
+> =>
+  getInstanceByIdR<"SkillModificationLevel">().thenW(
+    getInstanceById =>
+      mapNullable(
+        getInstanceById("SkillModificationLevel", modificationLevelId),
+        modificationLevel =>
+          modifiableBySpeedR("casting_time", modificationLevel).map(
+            castingTime =>
+              typeof castingTime === "number"
+                ? { value: castingTime, unit: Case("Actions") }
+                : castingTime,
+          ),
+      ) ?? Reader.of(undefined),
+  )
+
+const renderModifiableCastingTime = (
   value: ModifiableCastingTime,
-): string =>
-  mapNullable(
-    getInstanceById("SkillModificationLevel", value.initial_modification_level),
-    modificationLevel =>
-      getMapModifiableBySpeed(
-        config =>
-          formatTimeSpan(
-            translate,
-            responsiveTextSize,
-            Case("Actions"),
-            config.casting_time,
-          ),
-        config =>
-          formatTimeSpan(
-            translate,
-            responsiveTextSize,
-            config.casting_time.unit,
-            config.casting_time.value,
-          ),
-        speed,
-        modificationLevel,
-      ),
-  ) ?? MISSING_VALUE
+): StdReader<string, "t" | "rts" | "s" | "ibi", "SkillModificationLevel"> =>
+  deriveModifiableCastingTime(value.initial_modification_level).thenW(
+    castingTime =>
+      castingTime === undefined
+        ? Reader.of(MISSING_VALUE)
+        : formatCombinedTimeSpanR(castingTime),
+  )
 
-const getFastSkillNonModifiableCastingTimeTranslation = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
+const renderCastingTimeDuringLovemaking = (
+  value: CastingTimeDuringLovemaking,
+): StdReader<string, "t" | "rts"> => formatCombinedTimeSpanR(value)
+
+/**
+ * Renders the text for a non-modifiable casting time of a fast activatable skill.
+ */
+export const renderFastSkillNonModifiableCastingTime = (
   value: FastSkillNonModifiableCastingTime,
-): string =>
-  formatTimeSpan(translate, responsiveTextSize, Case("Actions"), value.actions)
+): StdReader<string, "t" | "rts"> =>
+  formatTimeSpanR(Case("Actions"), value.actions)
 
 /**
  * Get the text for a non-modifiable casting time of a slow activatable skill.
  */
-export const getSlowSkillNonModifiableCastingTimeTranslation = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
+export const renderSlowSkillNonModifiableCastingTime = (
   value: SlowSkillNonModifiableCastingTime,
-): string =>
-  formatTimeSpan(translate, responsiveTextSize, value.unit, value.value)
+): StdReader<string, "t" | "rts"> => formatCombinedTimeSpanR(value)
 
 /**
  * Translate casting time.
  */
-export const getCastingTimeTranslation = <NonModifiable extends object>(
-  getNonModifiableCastingTimeTranslation: (
-    translate: Translate,
-    responsiveTextSize: ResponsiveTextSize,
+export const renderCastingTime = <NonModifiable extends object>(
+  renderNonModifiableCastingTime: (
     value: NonModifiable,
-  ) => string,
-  speed: Speed,
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
+  ) => StdReader<string, "t" | "rts" | "s" | "nms">,
   value: CastingTime<NonModifiable>,
-): string => {
+): StdReader<
+  string,
+  "t" | "rts" | "s" | "nms" | "ibi",
+  "SkillModificationLevel"
+> => {
   switch (value.kind) {
     case "Modifiable":
-      return getModifiableCastingTimeTranslation(
-        getInstanceById,
-        translate,
-        speed,
-        responsiveTextSize,
-        value.Modifiable,
-      )
+      return renderModifiableCastingTime(value.Modifiable)
     case "NonModifiable":
-      return (
-        getNonModifiableCastingTimeTranslation(
-          translate,
-          responsiveTextSize,
-          value.NonModifiable,
-        ) +
-        getNonModifiableSuffixTranslation(
-          translate,
-          entity,
-          ModifiableParameter.CastingTime,
-          responsiveTextSize,
-        )
+      return renderNonModifiableCastingTime(value.NonModifiable).then(base =>
+        appendNonModifiableSuffix(ModifiableParameter.CastingTime, base),
       )
     default:
       return assertExhaustive(value)
   }
 }
 
-const getCastingTimeDuringLovemakingTranslation = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
-  value: CastingTimeDuringLovemaking,
-): string =>
-  formatTimeSpan(translate, responsiveTextSize, value.unit, value.value)
-
-const getCastingTimeIncludingLovemakingTranslation = <
-  NonModifiable extends object,
->(
-  getNonModifiableCastingTimeTranslation: (
-    translate: Translate,
-    responsiveTextSize: ResponsiveTextSize,
+const renderCastingTimeIncludingLovemaking = <NonModifiable extends object>(
+  renderNonModifiableCastingTime: (
     value: NonModifiable,
-  ) => string,
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  speed: Speed,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
+  ) => StdReader<string, "t" | "rts" | "s" | "nms">,
   value: CastingTimeIncludingLovemaking<NonModifiable>,
 ) =>
-  [
+  Reader.sequence([
     mapNullable(value.default, def =>
-      getCastingTimeTranslation(
-        getNonModifiableCastingTimeTranslation,
-        speed,
-        getInstanceById,
-        translate,
-        entity,
-        responsiveTextSize,
-        def,
-      ),
-    ),
-    mapNullable(value.during_lovemaking, duringLovemaking =>
-      getCastingTimeDuringLovemakingTranslation(
-        translate,
-        responsiveTextSize,
-        duringLovemaking,
-      ),
-    ),
-  ]
-    .filter(isNotNullish)
-    .join(" / ")
+      renderCastingTime(renderNonModifiableCastingTime, def),
+    ) ?? Reader.of(undefined),
+    mapNullable(value.during_lovemaking, renderCastingTimeDuringLovemaking) ??
+      Reader.of(undefined),
+  ]).map(texts => texts.filter(isNotNullish).join(" / "))
 
 /**
  * Get the text for the casting time of a fast activatable skill.
  */
-export const getFastCastingTimeTranslation = (
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
+export const renderFastCastingTime = (
   value: FastCastingTime,
-): string =>
-  getCastingTimeIncludingLovemakingTranslation(
-    getFastSkillNonModifiableCastingTimeTranslation,
-    getInstanceById,
-    translate,
-    Speed.Fast,
-    entity,
-    responsiveTextSize,
+): StdReader<string, "t" | "rts" | "nms" | "ibi", "SkillModificationLevel"> =>
+  renderCastingTimeIncludingLovemaking(
+    renderFastSkillNonModifiableCastingTime,
     value,
-  )
+  ).with(env => ({ ...env, speed: Speed.Fast }))
 
 /**
  * Get the text for the casting time of a slow activatable skill.
  */
-export const getSlowCastingTimeTranslation = (
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
+export const renderSlowCastingTime = (
   value: SlowCastingTime,
-): string =>
-  getCastingTimeIncludingLovemakingTranslation(
-    getSlowSkillNonModifiableCastingTimeTranslation,
-    getInstanceById,
-    translate,
-    Speed.Slow,
-    entity,
-    responsiveTextSize,
+): StdReader<string, "t" | "rts" | "nms" | "ibi", "SkillModificationLevel"> =>
+  renderCastingTimeIncludingLovemaking(
+    renderSlowSkillNonModifiableCastingTime,
     value,
-  )
+  ).with(env => ({ ...env, speed: Speed.Slow }))

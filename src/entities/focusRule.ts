@@ -7,7 +7,7 @@ import type { GetInstanceById } from "../helpers/getTypes.js"
  */
 export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
   "FocusRule",
-  { getInstanceById: GetInstanceById<"Subject"> }
+  { getInstanceById: GetInstanceById<"Publication" | "Subject"> }
 >(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
   const translation = translateMap(entry.translations)
   const topicTranslation = translateMap(

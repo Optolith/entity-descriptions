@@ -1,4 +1,9 @@
-import type { Translate, Translations } from "../../../helpers/translate.js"
+import { Reader } from "@elyukai/utils/reader"
+import type {
+  Translate,
+  TranslationKeyMatchingParams,
+} from "../../../helpers/translate.js"
+import type { StdEnv } from "../reader.js"
 import { ResponsiveTextSize, responsive } from "../responsiveText.js"
 
 type TimeSpanUnit =
@@ -31,9 +36,9 @@ const timeSpanUnitTranslationKeys = {
   Rounds: [".input {$value :number} {{{$value} rounds}}", "{$value} rounds", "{$value} rnds"],
 } as const satisfies {
   [key in TimeSpanUnit]: [
-    fullNumber: keyof Translations,
-    full: keyof Translations,
-    compressed: keyof Translations,
+    fullNumber: TranslationKeyMatchingParams<{ value: number }>,
+    full: TranslationKeyMatchingParams<{ value: number }>,
+    compressed: TranslationKeyMatchingParams<{ value: number }>,
   ]
 }
 
@@ -58,3 +63,22 @@ export const formatTimeSpan = (
     () => translate(compressedKey, { value }),
   )
 }
+
+/**
+ * Returns the text for a time span unit.
+ */
+export const formatTimeSpanR = (
+  unit: { kind: TimeSpanUnit },
+  value: number | string,
+): Reader<StdEnv<"t" | "rts">, string> =>
+  Reader.asks(({ translate, responsiveTextSize }) =>
+    formatTimeSpan(translate, responsiveTextSize, unit, value),
+  )
+/**
+ * Returns the text for a time span unit.
+ */
+export const formatCombinedTimeSpanR = (object: {
+  unit: { kind: TimeSpanUnit }
+  value: number | string
+}): Reader<StdEnv<"t" | "rts">, string> =>
+  formatTimeSpanR(object.unit, object.value)

@@ -3,6 +3,7 @@ import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
+  ActivatableIdentifier,
   AnimalVenomLevel,
   DemonicPoisonLevel,
   Intoxicant,
@@ -13,6 +14,7 @@ import type {
   PoisonDuration,
   PoisonSourceType,
   PoisonStart,
+  RatedIdentifier,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
@@ -423,7 +425,22 @@ const renderValueCost = (
 export const getPoisonEntityDescription = createEntityDescriptionCreator<
   "Poison",
   {
-    getInstanceById: GetInstanceById<"DerivedCharacteristic" | "Disease">
+    getInstanceById: GetInstanceById<
+      | "Publication"
+      | "DerivedCharacteristic"
+      | "Disease"
+      | ActivatableIdentifier["kind"]
+      | RatedIdentifier["kind"]
+      | "Race"
+      | "Culture"
+      | "State"
+      | "Enhancement"
+      | "PactCategory"
+      | "PactDomain"
+      | "SocialStatus"
+      | "Aspect"
+      | "Property"
+    >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     idMap: IdMap
   }

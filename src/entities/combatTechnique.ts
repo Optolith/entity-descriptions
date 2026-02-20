@@ -1,7 +1,7 @@
 import { mapNullable } from "@optolith/helpers/nullable"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import { createImprovementCost } from "./partial/rated/improvementCost.js"
+import { renderImprovementCost } from "./partial/rated/improvementCost.js"
 
 /**
  * Get a JSON representation of the rules text for a close combat technique.
@@ -10,7 +10,7 @@ export const getCloseCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
     "CloseCombatTechnique",
     {
-      getInstanceById: GetInstanceById<"Attribute">
+      getInstanceById: GetInstanceById<"Publication" | "Attribute">
     }
   >(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
     const translation = translateMap(entry.translations)
@@ -37,7 +37,7 @@ export const getCloseCombatTechniqueEntityDescription =
             )
             .join("/"),
         },
-        createImprovementCost(translate, entry.improvement_cost),
+        renderImprovementCost(entry.improvement_cost).run({ translate }),
       ],
       errata: translation.errata,
       references: entry.src,
@@ -51,7 +51,7 @@ export const getRangedCombatTechniqueEntityDescription =
   createEntityDescriptionCreator<
     "RangedCombatTechnique",
     {
-      getInstanceById: GetInstanceById<"Attribute">
+      getInstanceById: GetInstanceById<"Publication" | "Attribute">
     }
   >(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
     const translation = translateMap(entry.translations)
@@ -78,7 +78,7 @@ export const getRangedCombatTechniqueEntityDescription =
             )
             .join("/"),
         },
-        createImprovementCost(translate, entry.improvement_cost),
+        renderImprovementCost(entry.improvement_cost).run({ translate }),
       ],
       errata: translation.errata,
       references: entry.src,

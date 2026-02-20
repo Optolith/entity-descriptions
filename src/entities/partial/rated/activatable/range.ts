@@ -1,166 +1,140 @@
+import { Reader } from "@elyukai/utils/reader"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
-  BlessingRange,
-  CantripRange,
   CheckResultBasedRange,
   FixedRange,
   ModifiableRange,
   Range,
   RangeValue,
+  SkillModificationLevel_ID,
 } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { Translate, TranslateMap } from "../../../../helpers/translate.js"
 import {
-  appendNoteIfRequested,
-  replaceTextIfRequested,
-  ResponsiveTextSize,
+  getInstanceByIdR,
+  modifiableBySpeedOptionalR,
+  modifiableBySpeedR,
+  translateFnR,
+  translateMapR,
+  translateR,
+  type StdReader,
+} from "../../reader.js"
+import {
+  appendNoteIfNeeded,
+  replaceTextIfNeeded,
 } from "../../responsiveText.js"
-import { formatLength } from "../../units/length.js"
+import { formatCombinedLengthR, formatLengthR } from "../../units/length.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { getCheckResultBasedValueTranslation } from "./checkResultBased.js"
-import { Entity } from "./entity.js"
+import { renderCheckResultBasedValue } from "./checkResultBased.js"
 import { wrapIfMaximum } from "./isMinimumMaximum.js"
 import {
-  getNonModifiableSuffixTranslation,
+  appendNonModifiableSuffix,
   ModifiableParameter,
 } from "./nonModifiableSuffix.js"
-import { getModifiableBySpeed, Speed } from "./speed.js"
 
-const getModifiableRangeTranslation = (
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  speed: Speed,
-  responsiveTextSize: ResponsiveTextSize,
-  value: ModifiableRange,
-) =>
-  mapNullable(
-    getInstanceById("SkillModificationLevel", value.initial_modification_level),
-    modificationLevel => {
-      const range = getModifiableBySpeed(speed, "range", modificationLevel)
-
-      if (range === 1) {
-        return translate("Touch")
-      }
-
-      return formatLength(translate, responsiveTextSize, "Steps", range)
-    },
-  ) ?? MISSING_VALUE
-
-const getSightTranslation = (translate: Translate) => translate("Sight")
-
-const getSelfTranslation = (translate: Translate) => translate("Self")
-
-const getGlobalTranslation = (translate: Translate) => translate("Global")
-
-const getTouchTranslation = (
-  translate: Translate,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
-) =>
-  translate("Touch") +
-  getNonModifiableSuffixTranslation(
-    translate,
-    entity,
-    ModifiableParameter.Range,
-    responsiveTextSize,
+const deriveModifiableRange = (
+  modificationLevelId: SkillModificationLevel_ID,
+): StdReader<
+  { value: number; translation: string | undefined } | undefined,
+  "s" | "tm" | "ibi",
+  "SkillModificationLevel"
+> =>
+  getInstanceByIdR<"SkillModificationLevel">().thenW(
+    getInstanceById =>
+      mapNullable(
+        getInstanceById("SkillModificationLevel", modificationLevelId),
+        modificationLevel =>
+          modifiableBySpeedR("range", modificationLevel).thenW(value =>
+            translateMapR(modificationLevel.translations).thenW(translation =>
+              translation === undefined
+                ? Reader.of({ value, translation: undefined })
+                : modifiableBySpeedOptionalR("range", translation).map(
+                    valueTranslation => ({
+                      value,
+                      translation: valueTranslation,
+                    }),
+                  ),
+            ),
+          ),
+      ) ?? Reader.of(undefined),
   )
 
-const getFixedRangeTranslation = (
-  translate: Translate,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
-  value: FixedRange,
-) =>
-  formatLength(translate, responsiveTextSize, value.unit.kind, value.value) +
-  getNonModifiableSuffixTranslation(
-    translate,
-    entity,
-    ModifiableParameter.Range,
-    responsiveTextSize,
+const wrapIfRadius = (is_radius: boolean | undefined, text: string) =>
+  translateFnR.map(translate =>
+    is_radius === true ? `${text} ${translate("Radius")}` : text,
   )
 
-const wrapIfRadius = (
-  translate: Translate,
-  is_radius: boolean | undefined,
-  text: string,
-) => (is_radius === true ? `${text} ${translate("Radius")}` : text)
-
-const getCheckResultBasedRangeTranslation = (
-  translate: Translate,
-  entity: Entity,
-  responsiveTextSize: ResponsiveTextSize,
-  value: CheckResultBasedRange,
-) => {
-  const range = formatLength(
-    translate,
-    responsiveTextSize,
-    value.unit.kind,
-    getCheckResultBasedValueTranslation(translate, value),
-  )
-
-  const rangeWrappedIfRadius = wrapIfRadius(translate, value.is_radius, range)
-
-  const rangeWrappedIfRadiusAndIfMaximum = wrapIfMaximum(
-    translate,
-    responsiveTextSize,
-    value.is_maximum,
-    rangeWrappedIfRadius,
-  )
-
-  return (
-    rangeWrappedIfRadiusAndIfMaximum +
-    getNonModifiableSuffixTranslation(
-      translate,
-      entity,
-      ModifiableParameter.Range,
-      responsiveTextSize,
+const renderModifiableRange = (value: ModifiableRange) =>
+  deriveModifiableRange(value.initial_modification_level)
+    .thenW(range =>
+      range === undefined
+        ? Reader.of(MISSING_VALUE)
+        : typeof range === "string"
+          ? Reader.of(range)
+          : formatLengthR("Steps", range.value),
     )
-  )
-}
+    .then(text => wrapIfRadius(value.is_radius, text))
+    .then(text => wrapIfMaximum(value.is_maximum, text))
+
+const renderFixedRange = (value: FixedRange) =>
+  formatCombinedLengthR(value)
+    .then(text => wrapIfRadius(value.is_radius, text))
+    .then(text => wrapIfMaximum(value.is_maximum, text))
+
+const getCheckResultBasedRangeTranslation = (value: CheckResultBasedRange) =>
+  renderCheckResultBasedValue(value)
+    .thenW(text => formatLengthR(value.unit, text))
+    .then(text => wrapIfRadius(value.is_radius, text))
+    .then(text => wrapIfMaximum(value.is_maximum, text))
 
 /**
- * Returns the text for the range of an activatable skill.
+ * Returns the text for the non-modifiable range of an activatable skill.
  */
-export const getRangeValueTranslation = (
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  speed: Speed,
-  responsiveTextSize: ResponsiveTextSize,
-  entity: Entity,
-  value: RangeValue,
-) => {
+export const renderNonModifiableRange = (
+  value:
+    | {
+        kind: "Sight"
+      }
+    | {
+        kind: "Self"
+      }
+    | {
+        kind: "Global"
+      }
+    | {
+        kind: "Touch"
+      }
+    | {
+        kind: "Fixed"
+        Fixed: FixedRange
+      }
+    | {
+        kind: "CheckResultBased"
+        CheckResultBased: CheckResultBasedRange
+      },
+  shouldAppendNonModifiableSuffix: boolean,
+): StdReader<string, "t" | "tm" | "rts" | "nms"> => {
+  const appendNonModifiableSuffixIfNeeded = shouldAppendNonModifiableSuffix
+    ? (text: string) =>
+        appendNonModifiableSuffix(ModifiableParameter.Range, text)
+    : Reader.of
+
   switch (value.kind) {
-    case "Modifiable":
-      return getModifiableRangeTranslation(
-        getInstanceById,
-        translate,
-        speed,
-        responsiveTextSize,
-        value.Modifiable,
-      )
     case "Sight":
-      return getSightTranslation(translate)
+      return translateR("Sight")
     case "Self":
-      return getSelfTranslation(translate)
+      return translateR("Self")
     case "Global":
-      return getGlobalTranslation(translate)
+      return translateR("Global")
     case "Touch":
-      return getTouchTranslation(translate, entity, responsiveTextSize)
+      return translateR("Touch").thenW(appendNonModifiableSuffixIfNeeded)
     case "Fixed": {
-      return getFixedRangeTranslation(
-        translate,
-        entity,
-        responsiveTextSize,
-        value.Fixed,
+      return renderFixedRange(value.Fixed).thenW(
+        appendNonModifiableSuffixIfNeeded,
       )
     }
     case "CheckResultBased":
-      return getCheckResultBasedRangeTranslation(
-        translate,
-        entity,
-        responsiveTextSize,
-        value.CheckResultBased,
+      return getCheckResultBasedRangeTranslation(value.CheckResultBased).then(
+        appendNonModifiableSuffixIfNeeded,
       )
     default:
       return assertExhaustive(value)
@@ -170,90 +144,39 @@ export const getRangeValueTranslation = (
 /**
  * Returns the text for the range of an activatable skill.
  */
-export const getTextForActivatableSkillRange = (
-  getInstanceById: GetInstanceById<"SkillModificationLevel">,
-  translate: Translate,
-  translateMap: TranslateMap,
-  speed: Speed,
-  responsiveTextSize: ResponsiveTextSize,
-  entity: Entity,
-  value: Range,
-): string => {
-  const rangeValue = getRangeValueTranslation(
-    getInstanceById,
-    translate,
-    speed,
-    responsiveTextSize,
-    entity,
-    value.value,
-  )
-
-  const withReplacement = replaceTextIfRequested(
-    "replacement",
-    value.translations,
-    translateMap,
-    responsiveTextSize,
-    rangeValue,
-  )
-
-  return appendNoteIfRequested(
-    "note",
-    value.translations,
-    translateMap,
-    responsiveTextSize,
-    withReplacement,
-  )
-}
-
-const getTextForTinyActivatableRange = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
-  entity: Entity,
-  value: CantripRange | BlessingRange,
-): string => {
+export const renderRangeValue = (
+  value: RangeValue,
+  shouldAppendNonModifiableSuffix: boolean,
+): StdReader<
+  string,
+  "t" | "tm" | "rts" | "s" | "nms" | "ibi",
+  "SkillModificationLevel"
+> => {
   switch (value.kind) {
+    case "Modifiable":
+      return renderModifiableRange(value.Modifiable)
+    case "Sight":
     case "Self":
-      return getSelfTranslation(translate)
+    case "Global":
     case "Touch":
-      return getTouchTranslation(translate, entity, responsiveTextSize)
     case "Fixed":
-      return getFixedRangeTranslation(
-        translate,
-        entity,
-        responsiveTextSize,
-        value.Fixed,
-      )
+    case "CheckResultBased":
+      return renderNonModifiableRange(value, shouldAppendNonModifiableSuffix)
     default:
       return assertExhaustive(value)
   }
 }
 
 /**
- * Returns the text for the range of a cantrip.
+ * Returns the text for the range of an activatable skill.
  */
-export const getTextForCantripRange = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
-  value: CantripRange,
-): string =>
-  getTextForTinyActivatableRange(
-    translate,
-    responsiveTextSize,
-    Entity.Cantrip,
-    value,
-  )
-
-/**
- * Returns the text for the range of a blessing.
- */
-export const getTextForBlessingRange = (
-  translate: Translate,
-  responsiveTextSize: ResponsiveTextSize,
-  value: BlessingRange,
-): string =>
-  getTextForTinyActivatableRange(
-    translate,
-    responsiveTextSize,
-    Entity.Blessing,
-    value,
-  )
+export const renderRange = (
+  value: Range,
+): StdReader<
+  string,
+  "t" | "tm" | "rts" | "s" | "nms" | "ibi",
+  "SkillModificationLevel"
+> =>
+  renderRangeValue(value.value, true)
+    .then(text => replaceTextIfNeeded(value.translations, text))
+    .then(text => appendNoteIfNeeded(value.translations, text))
