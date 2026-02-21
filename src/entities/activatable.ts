@@ -55,6 +55,7 @@ import type {
 } from "../index.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
 import { renderResponsiveMap } from "./partial/map.js"
+import { additionFormatter } from "./partial/mathOperation.js"
 import {
   printAdvantageDisadvantagePrerequisites,
   printGeneralPrerequisites,
@@ -689,20 +690,22 @@ const renderArcaneEnergyCost = (
         ),
       })
     case "ActivationAndHalfInterval":
-      return translate("{$cost} (activation) + {$halvedCost} per {$interval}", {
-        cost: translate("{$value} AE", {
+      return additionFormatter(
+        translate("{$value} AE", {
           value: cost.ActivationAndHalfInterval.value,
+        }) + parensIf(translate("activation")),
+        translate("{$cost} per {$interval}", {
+          cost: translate("{$value} AE", {
+            value: Math.round(cost.ActivationAndHalfInterval.value / 2),
+          }),
+          interval: formatTimeSpan(
+            translate,
+            responsiveTextSize,
+            cost.ActivationAndHalfInterval.interval.unit,
+            cost.ActivationAndHalfInterval.interval.value,
+          ),
         }),
-        halvedCost: translate("{$value} AE", {
-          value: Math.round(cost.ActivationAndHalfInterval.value / 2),
-        }),
-        interval: formatTimeSpan(
-          translate,
-          responsiveTextSize,
-          cost.ActivationAndHalfInterval.interval.unit,
-          cost.ActivationAndHalfInterval.interval.value,
-        ),
-      })
+      )
     case "Indefinite":
       return (
         mapNullable(
