@@ -445,6 +445,10 @@ type MagicalActionCost =
     }
   | {
       kind: "ByPrimaryPatron"
+      ByPrimaryPatron?: {
+        interval?: DurationUnitValue
+        translations?: LocaleMap<{ note: ResponsiveTextOptional }>
+      }
     }
   | {
       kind: "All"
@@ -483,7 +487,9 @@ export const renderMagicalActionCost = (
         ),
       )
     case "ByPrimaryPatron":
-      return translateR("Depends on animal type")
+      return translateR("Depends on animal type").thenW(base =>
+        appendNoteIfNeeded(cost.ByPrimaryPatron?.translations, base),
+      )
     case "All":
       return Reader.asks(({ translate }) =>
         cost.All.minimum === undefined
