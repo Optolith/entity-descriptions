@@ -54,6 +54,7 @@ import {
   getJesterTrickEntityDescription,
   getMagicalDanceEntityDescription,
   getMagicalMelodyEntityDescription,
+  getMagicalRuneEntityDescription,
   getRitualEntityDescription,
   getSpellEntityDescription,
   getZibiljaRitualEntityDescription,
@@ -219,7 +220,7 @@ const registeredEntityDescriptionCreators = {
   JesterTrick: getJesterTrickEntityDescription,
   MagicalDance: getMagicalDanceEntityDescription,
   MagicalMelody: getMagicalMelodyEntityDescription,
-  // MagicalRune: getMagicalRuneEntityDescription,
+  MagicalRune: getMagicalRuneEntityDescription,
   ZibiljaRitual: getZibiljaRitualEntityDescription,
   // auxiliary magical
   Curriculum: getCurriculumEntityDescription,

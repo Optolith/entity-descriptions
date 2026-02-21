@@ -1726,12 +1726,12 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
       | "Skill"
     >
-    getAllChildInstancesForParent: GetAllChildInstancesForParent<"MagicalRuneOption">
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"MagicalRuneOption">
     idMap: IdMap
   }
 >(
   (
-    { getInstanceById, getAllChildInstancesForParent, idMap },
+    { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { id, content: entry },
   ) => {
@@ -1753,7 +1753,7 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
     } satisfies Partial<EnvMap>
 
     const options = Lazy.of(() =>
-      getAllChildInstancesForParent("MagicalRuneOption", id).map(
+      getChildInstancesForInstanceId("MagicalRuneOption", id).map(
         item => item.content,
       ),
     )
