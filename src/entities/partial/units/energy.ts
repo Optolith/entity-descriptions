@@ -3,9 +3,10 @@ import type { Translate, Translations } from "../../../helpers/translate.js"
 /**
  * The unit of an energy cost.
  */
-export type EnergyUnit = "ArcaneEnergy" | "KarmaPoints"
+export type EnergyUnit = "LifePoints" | "ArcaneEnergy" | "KarmaPoints"
 
 const lengthUnitTranslationKeys = {
+  LifePoints: "{$value} LP",
   ArcaneEnergy: "{$value} AE",
   KarmaPoints: "{$value} KP",
 } as const satisfies {

@@ -507,6 +507,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     translate,
     translateMap,
     getInstanceById,
+    localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -771,6 +772,7 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
     translate,
     translateMap,
     getInstanceById,
+    localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -919,7 +921,7 @@ const renderFamiliarsTrickPerformanceParameters = (
     cost: string
     duration: string
   },
-  "t" | "tm" | "rts" | "eu" | "nms"
+  "t" | "tm" | "rts" | "eu" | "nms" | "lj"
 > => {
   switch (params.kind) {
     case "OneTime":
@@ -979,6 +981,7 @@ export const getFamiliarsTrickEntityDescription =
       translate,
       translateMap,
       getInstanceById,
+      localeJoin: locale.join,
       energyUnit: "ArcaneEnergy",
       responsiveTextSize: ResponsiveTextSize.Full,
     } satisfies Partial<EnvMap>
@@ -1049,7 +1052,7 @@ const renderAnimistPowerPerformanceParameters = (
     cost: string
     duration: string
   },
-  "t" | "tm" | "rts" | "eu" | "nms"
+  "t" | "tm" | "rts" | "eu" | "nms" | "lj"
 > => {
   switch (params.kind) {
     case "OneTime":
@@ -1140,6 +1143,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
     translate,
     translateMap,
     getInstanceById,
+    localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -1275,6 +1279,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
     translate,
     translateMap,
     getInstanceById,
+    localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -1378,6 +1383,7 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
     translate,
     translateMap,
     getInstanceById,
+    localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>

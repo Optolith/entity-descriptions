@@ -130,6 +130,18 @@ const appendElvenPermanentCostIfNeeded = (
       .map(text => baseCost + text),
   ) ?? Reader.of(baseCost)
 
+const appendFamiliarsTrickLPCostIfNeeded = (
+  lpValue: number | undefined,
+  baseCost: string,
+): StdReader<string, "t" | "lj" | "rts"> =>
+  lpValue === undefined
+    ? Reader.of(baseCost)
+    : formatEnergyR(lpValue)
+        .with((env: StdEnv<"t">) => ({ ...env, energyUnit: "LifePoints" }))
+        .thenW(formattedLpCost =>
+          responsiveLocaleJoinR([baseCost, formattedLpCost], "conjunction"),
+        )
+
 /**
  * Returns the text for the modifiable one-time cost of an activatable skill.
  */
@@ -179,6 +191,7 @@ const appendIntervalToCost = (
 type NonModifiableOneTimeCost = {
   is_minimum?: boolean
   value: number
+  lp_value?: number
   permanent_value?: number
   interval?: DurationUnitValue
   permanent?: ElvenMagicalSongPermanentCost
@@ -194,8 +207,9 @@ type NonModifiableOneTimeCost = {
 export const renderNonModifiableOneTimeCost = (
   value: NonModifiableOneTimeCost,
   shouldAppendNonModifiableSuffix: boolean,
-): StdReader<string, "t" | "tm" | "rts" | "eu" | "nms"> =>
+): StdReader<string, "t" | "tm" | "rts" | "eu" | "nms" | "lj"> =>
   formatEnergyR(value.value)
+    .thenW(base => appendFamiliarsTrickLPCostIfNeeded(value.lp_value, base))
     .thenW(base => appendPerCountableToCostIfNeeded(value.per, base))
     .then(base => appendPermanentCostIfNeeded(value.permanent_value, base))
     .then(base => appendIntervalToCost(value.interval, base))
@@ -245,7 +259,7 @@ const renderSingleOneTimeCost = (
   value: SingleOneTimeCost,
 ): StdReader<
   string,
-  "t" | "tm" | "rts" | "eu" | "s" | "nms" | "ibi",
+  "t" | "tm" | "rts" | "eu" | "s" | "nms" | "ibi" | "lj",
   "SkillModificationLevel"
 > => {
   switch (value.kind) {
@@ -448,7 +462,7 @@ type MagicalActionCost =
  */
 export const renderMagicalActionCost = (
   cost: MagicalActionCost,
-): StdReader<string, "t" | "tm" | "rts" | "eu" | "nms"> => {
+): StdReader<string, "t" | "tm" | "rts" | "eu" | "nms" | "lj"> => {
   switch (cost.kind) {
     case "Fixed":
       return renderNonModifiableOneTimeCost(cost.Fixed, false)
