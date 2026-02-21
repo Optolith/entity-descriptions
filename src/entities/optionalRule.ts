@@ -15,7 +15,7 @@ export const getOptionalRuleEntityDescription =
       return {
         title: translation.name,
         className: "optional-rule",
-        body: [{ value: translation.description }],
+        body: [{ type: "plain", text: translation.description }],
         errata: translation.errata,
         references: entry.src,
       }

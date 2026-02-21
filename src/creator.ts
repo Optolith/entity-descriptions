@@ -1,8 +1,14 @@
-import { filterNonNullable } from "@optolith/helpers/array"
+import { isNotNullish } from "@elyukai/utils/nullable"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { EntityMap } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "./helpers/getTypes.js"
 import { LocaleEnvironment } from "./helpers/locale.js"
-import { EntityDescription, RawEntityDescription } from "./index.js"
+import {
+  EntityDescription,
+  RawEntityDescription,
+  type EntityDescriptionSection,
+  type RawEntityDescriptionSection,
+} from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
 
 /**
@@ -11,6 +17,29 @@ import { getReferencesTranslation } from "./references/index.js"
 export type TaggedEntity<ES extends keyof EntityMap> = {
   [E in ES]: { entity: E; content: EntityMap[E]; id: string }
 }[ES]
+
+const mapRawSection = (
+  section: RawEntityDescriptionSection,
+): EntityDescriptionSection => {
+  switch (section.type) {
+    case "plain":
+    case "table":
+      return section
+    case "definitionList":
+      return {
+        ...section,
+        items: section.items.filter(isNotNullish).map(item => ({
+          ...item,
+          value:
+            typeof item.value === "string"
+              ? item.value
+              : item.value.filter(isNotNullish).map(mapRawSection),
+        })),
+      }
+    default:
+      return assertExhaustive(section)
+  }
+}
 
 /**
  * Creates a function that creates the JSON representation of the rules text for
@@ -36,7 +65,7 @@ export const createEntityDescriptionCreator =
 
     return {
       ...rawEntry,
-      body: filterNonNullable(rawEntry.body),
+      body: rawEntry.body.filter(isNotNullish).map(mapRawSection),
       errata: rawEntry.errata?.map(({ date, description }) => ({
         date: date.toLocaleDateString(locale.id),
         description: description.trim(),

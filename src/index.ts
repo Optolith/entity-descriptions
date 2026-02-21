@@ -79,6 +79,14 @@ export type EntityDescription = {
 }
 
 /**
+ * A slice of the content of a library entry text.
+ */
+export type EntityDescriptionSection =
+  | PlainEntityDescriptionSection
+  | DefinitionListEntityDescriptionSection
+  | TableEntityDescriptionSection
+
+/**
  * A JSON representation of the rules text for a library entry that has not been
  * cleaned up.
  */
@@ -86,7 +94,7 @@ export type RawEntityDescription = {
   title: string
   subtitle?: string
   className: string
-  body: (EntityDescriptionSection | undefined)[]
+  body: (RawEntityDescriptionSection | undefined)[]
   errata?: Errata
   references?: PublicationRefs
 }
@@ -94,20 +102,60 @@ export type RawEntityDescription = {
 /**
  * A slice of the content of a library entry text.
  */
-export type EntityDescriptionSection =
-  | {
-      type?: undefined
-      label?: string
-      value: string | number | EntityDescriptionAtom[]
-      noIndent?: boolean
-      className?: string
-    }
-  | {
-      type: "table"
-      header: string[]
-      rows: string[][]
-      footer?: string[]
-    }
+export type RawEntityDescriptionSection =
+  | PlainEntityDescriptionSection
+  | RawDefinitionListEntityDescriptionSection
+  | TableEntityDescriptionSection
+
+/**
+ * A plain text, possibly containing Markdown syntax.
+ */
+export type PlainEntityDescriptionSection = {
+  type: "plain"
+  text: string
+}
+
+/**
+ * A list of labeled values, such as prerequisites or quality levels.
+ */
+export type DefinitionListEntityDescriptionSection = {
+  type: "definitionList"
+  items: DefinitionListEntityDescriptionSectionItem[]
+}
+
+/**
+ * A list of labeled values, such as prerequisites or quality levels.
+ */
+export type RawDefinitionListEntityDescriptionSection = {
+  type: "definitionList"
+  items: (RawDefinitionListEntityDescriptionSectionItem | undefined)[]
+}
+
+/**
+ * A single labeled value in a definition list.
+ */
+export type DefinitionListEntityDescriptionSectionItem = {
+  label: string
+  value: string | EntityDescriptionSection[]
+}
+
+/**
+ * A single labeled value in a definition list.
+ */
+export type RawDefinitionListEntityDescriptionSectionItem = {
+  label: string
+  value: string | (RawEntityDescriptionSection | undefined)[]
+}
+
+/**
+ * A table with a header, rows, and an optional footer.
+ */
+export type TableEntityDescriptionSection = {
+  type: "table"
+  header: string[]
+  rows: string[][]
+  footer?: string[]
+}
 
 /**
  * A single aspect of a library entry text, such as a standalone text or a labeled text.

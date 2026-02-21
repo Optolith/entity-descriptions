@@ -145,17 +145,23 @@ export const getDerivedCharacteristicEntityDescription =
           translation.description === undefined
             ? undefined
             : {
-                value: translation.description,
+                type: "plain",
+                text: translation.description,
               },
           {
-            label: translate("Base Value"),
-            value: renderBaseCalculation(
-              getInstanceById,
-              translate,
-              translateMap,
-              idMap,
-              entry.calculation.base,
-            ),
+            type: "definitionList",
+            items: [
+              {
+                label: translate("Base Value"),
+                value: renderBaseCalculation(
+                  getInstanceById,
+                  translate,
+                  translateMap,
+                  idMap,
+                  entry.calculation.base,
+                ),
+              },
+            ],
           },
         ],
       }

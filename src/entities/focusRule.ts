@@ -24,12 +24,13 @@ export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
     className: "focus-rule",
     body: [
       {
-        value: translate(
+        type: "plain",
+        text: translate(
           "The following rule is a Level {$level} focus rule for the topic {$topic}.",
           { level: romanize(entry.level), topic: topicTranslation.name },
         ),
       },
-      { value: translation.description },
+      { type: "plain", text: translation.description },
     ],
     errata: translation.errata,
     references: entry.src,

@@ -147,59 +147,65 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       title: translation.name,
       className: "skill",
       body: [
-        newApplications.length === 0
-          ? undefined
-          : {
-              label: translate("New Applications"),
-              value: newApplications.join(", "),
+        {
+          type: "definitionList",
+          items: [
+            newApplications.length === 0
+              ? undefined
+              : {
+                  label: translate("New Applications"),
+                  value: newApplications.join(", "),
+                },
+            uses.length === 0
+              ? undefined
+              : {
+                  label: translate("Uses"),
+                  value: uses.join(", "),
+                },
+            renderSkillCheck(entry.check).run({
+              translate,
+              translateMap,
+              getInstanceById,
+            }),
+            {
+              label: translate("Applications"),
+              value: applications.join(", "),
             },
-        uses.length === 0
-          ? undefined
-          : {
-              label: translate("Uses"),
-              value: uses.join(", "),
+            {
+              label: translate("Encumbrance"),
+              value:
+                entry.encumbrance.kind === "Yes"
+                  ? translate("Yes")
+                  : entry.encumbrance.kind === "No"
+                    ? translate("No")
+                    : (translation.encumbrance_description ??
+                      translate("Maybe")),
             },
-        renderSkillCheck(entry.check).run({
-          translate,
-          translateMap,
-          getInstanceById,
-        }),
-        {
-          label: translate("Applications"),
-          value: applications.join(", "),
-        },
-        {
-          label: translate("Encumbrance"),
-          value:
-            entry.encumbrance.kind === "Yes"
-              ? translate("Yes")
-              : entry.encumbrance.kind === "No"
-                ? translate("No")
-                : (translation.encumbrance_description ?? translate("Maybe")),
-        },
-        translation?.tools === undefined
-          ? undefined
-          : {
-              label: translate("Tools"),
-              value: translation.tools,
+            translation?.tools === undefined
+              ? undefined
+              : {
+                  label: translate("Tools"),
+                  value: translation.tools,
+                },
+            {
+              label: translate("Quality"),
+              value: translation.quality,
             },
-        {
-          label: translate("Quality"),
-          value: translation.quality,
+            {
+              label: translate("Failed Check"),
+              value: translation.failed,
+            },
+            {
+              label: translate("Critical Success"),
+              value: translation.critical,
+            },
+            {
+              label: translate("Botch"),
+              value: translation.botch,
+            },
+            renderImprovementCost(entry.improvement_cost).run({ translate }),
+          ],
         },
-        {
-          label: translate("Failed Check"),
-          value: translation.failed,
-        },
-        {
-          label: translate("Critical Success"),
-          value: translation.critical,
-        },
-        {
-          label: translate("Botch"),
-          value: translation.botch,
-        },
-        renderImprovementCost(entry.improvement_cost).run({ translate }),
       ],
     }
   },

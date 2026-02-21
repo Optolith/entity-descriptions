@@ -1,10 +1,11 @@
+import { isNotNullish } from "@elyukai/utils/nullable"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { deepEqual } from "@optolith/helpers/compare"
 import { MessageFormat } from "messageformat"
 import { findPackageJSON } from "node:module"
 import { dirname, join } from "node:path"
 import { argv } from "node:process"
-import { styleText } from "node:util"
+import { styleText, type InspectColor } from "node:util"
 import { schema } from "optolith-database-schema"
 import {
   createCache,
@@ -16,7 +17,9 @@ import type { LocaleEnvironment } from "../lib/helpers/locale.js"
 import {
   getEntityDescription,
   isSupportedEntity,
+  type EntityDescriptionSection,
   type IdMap,
+  type TableEntityDescriptionSection,
 } from "../lib/index.js"
 
 const dataRootPath = join(
@@ -71,10 +74,9 @@ const localeEnv: LocaleEnvironment = {
   id: localeId,
   compare: collator.compare.bind(collator),
   translate: (key, ...rest) =>
-    new MessageFormat(
-      localeId,
-      localeInstance.translations?.[key] ?? key,
-    ).format(rest[0] as Record<string, unknown> | undefined),
+    new MessageFormat(localeId, localeInstance.translations?.[key] ?? key, {
+      bidiIsolation: "none",
+    }).format(rest[0] as Record<string, unknown> | undefined),
   translateMap: translations => translations?.[localeId],
   measurementAdjustments: {
     milesMultiplier: 1,
@@ -145,25 +147,77 @@ if (result === undefined) {
 console.log(styleText(["bold", "underline"], result.title))
 if (result.subtitle) console.log(styleText("italic", result.subtitle))
 
-console.log()
-result.body.forEach(section => {
-  if (section.type === "table") {
-  } else {
-    if (section.label) {
-      if (Array.isArray(section.value)) {
-        console.log(styleText("italic", section.label))
-        section.value.forEach(subsection => {
-          console.log("  " + styleText("bold", subsection.label + ":"))
-          console.log("    " + subsection.value)
-        })
-      } else {
-        console.log(styleText("bold", section.label + ":"))
-        console.log("  " + section.value)
+const getColumnWidthForIndex = (
+  table: TableEntityDescriptionSection,
+  index: number,
+): number =>
+  Math.max(
+    0,
+    ...[
+      table.header[index],
+      ...table.rows.map(row => row[index]),
+      table.footer?.[index],
+    ]
+      .filter(isNotNullish)
+      .map(cell => cell.length),
+  )
+
+const getColumnWiths = (table: TableEntityDescriptionSection): number[] =>
+  table.header.map((_, index) => getColumnWidthForIndex(table, index))
+
+const logTableRow = (
+  row: string[],
+  columnWidths: number[],
+  format?: InspectColor | InspectColor[],
+): void => {
+  const formatter =
+    format === undefined
+      ? (text: string) => text
+      : (text: string) => styleText(format, text)
+
+  console.log(
+    row
+      .map(
+        (cell, index) =>
+          formatter(cell) +
+          " ".repeat((columnWidths[index] ?? 0) - cell.length),
+      )
+      .join("  "),
+  )
+}
+
+const logSection = (section: EntityDescriptionSection, indent = ""): void => {
+  switch (section.type) {
+    case "plain":
+      console.log(section.text)
+      break
+    case "definitionList":
+      section.items.forEach(item => {
+        if (Array.isArray(item.value)) {
+          console.log(styleText("italic", item.label))
+          item.value.forEach(subsection => {
+            logSection(subsection, indent + "  ")
+          })
+        } else {
+          console.log(styleText("bold", item.label + ":"))
+          console.log("  " + item.value)
+        }
+      })
+      break
+    case "table":
+      const columnWidths = getColumnWiths(section)
+      logTableRow(section.header, columnWidths, "bold")
+      section.rows.forEach(row => logTableRow(row, columnWidths))
+      if (section.footer) {
+        logTableRow(section.footer, columnWidths, ["italic", "underline"])
       }
-    } else {
-      console.log(section.value)
-    }
+      break
   }
+}
+
+result.body.forEach(section => {
+  console.log()
+  logSection(section)
 })
 
 if (result.errata) {

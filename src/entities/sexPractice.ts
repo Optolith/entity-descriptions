@@ -16,17 +16,22 @@ export const getSexPracticeEntityDescription =
         title: translation.name,
         className: "sex-practice",
         body: [
-          { label: translate("Rules"), value: translation.rules },
-          { label: translate("Duration"), value: translation.duration },
-          translation.prerequisites === undefined
-            ? undefined
-            : {
-                label: translate("Prerequisites"),
-                value: translation.prerequisites,
-              },
-          translation.failed === undefined
-            ? undefined
-            : { label: translate("Failed"), value: translation.failed },
+          {
+            type: "definitionList",
+            items: [
+              { label: translate("Rules"), value: translation.rules },
+              { label: translate("Duration"), value: translation.duration },
+              translation.prerequisites === undefined
+                ? undefined
+                : {
+                    label: translate("Prerequisites"),
+                    value: translation.prerequisites,
+                  },
+              translation.failed === undefined
+                ? undefined
+                : { label: translate("Failed"), value: translation.failed },
+            ],
+          },
         ],
         references: entry.src,
       }

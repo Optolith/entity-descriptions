@@ -15,7 +15,7 @@ export const getAttributeEntityDescription =
       return {
         title: `${translation.name} (${translation.abbreviation})`,
         className: "attribute",
-        body: [{ value: translation.description }],
+        body: [{ type: "plain", text: translation.description }],
       }
     },
   )

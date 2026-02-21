@@ -23,21 +23,27 @@ export const getCloseCombatTechniqueEntityDescription =
       title: translation.name,
       className: "combat-technique close-combat-technique",
       body: [
-        mapNullable(translation.special, value => ({
-          label: translate("Special"),
-          value,
-        })),
         {
-          label: translate("Primary Attribute"),
-          value: entry.primary_attribute
-            .map(
-              attrId =>
-                translateMap(getInstanceById("Attribute", attrId)?.translations)
-                  ?.name,
-            )
-            .join("/"),
+          type: "definitionList",
+          items: [
+            mapNullable(translation.special, value => ({
+              label: translate("Special"),
+              value,
+            })),
+            {
+              label: translate("Primary Attribute"),
+              value: entry.primary_attribute
+                .map(
+                  attrId =>
+                    translateMap(
+                      getInstanceById("Attribute", attrId)?.translations,
+                    )?.name,
+                )
+                .join("/"),
+            },
+            renderImprovementCost(entry.improvement_cost).run({ translate }),
+          ],
         },
-        renderImprovementCost(entry.improvement_cost).run({ translate }),
       ],
       errata: translation.errata,
       references: entry.src,
@@ -64,21 +70,27 @@ export const getRangedCombatTechniqueEntityDescription =
       title: translation.name,
       className: "combat-technique ranged-combat-technique",
       body: [
-        mapNullable(translation.special, value => ({
-          label: translate("Special"),
-          value,
-        })),
         {
-          label: translate("Primary Attribute"),
-          value: entry.primary_attribute
-            .map(
-              attrId =>
-                translateMap(getInstanceById("Attribute", attrId)?.translations)
-                  ?.name,
-            )
-            .join("/"),
+          type: "definitionList",
+          items: [
+            mapNullable(translation.special, value => ({
+              label: translate("Special"),
+              value,
+            })),
+            {
+              label: translate("Primary Attribute"),
+              value: entry.primary_attribute
+                .map(
+                  attrId =>
+                    translateMap(
+                      getInstanceById("Attribute", attrId)?.translations,
+                    )?.name,
+                )
+                .join("/"),
+            },
+            renderImprovementCost(entry.improvement_cost).run({ translate }),
+          ],
         },
-        renderImprovementCost(entry.improvement_cost).run({ translate }),
       ],
       errata: translation.errata,
       references: entry.src,

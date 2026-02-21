@@ -48,10 +48,10 @@ import type {
 } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type {
-  EntityDescriptionSection,
   GetAllResolvedNewSkillApplications,
   GetAllResolvedSelectOptions,
   GetAllResolvedSkillUses,
+  RawDefinitionListEntityDescriptionSectionItem,
 } from "../index.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
 import { renderResponsiveMap } from "./partial/map.js"
@@ -862,7 +862,7 @@ const renderCost = (
   responsiveTextSize: ResponsiveTextSize,
   levels: number | undefined,
   cost: EnchantmentCost | DaggerRitualCost | MagicalSignCost | number,
-): EntityDescriptionSection => {
+): RawDefinitionListEntityDescriptionSectionItem => {
   if (typeof cost === "number") {
     return {
       label: translate("AE Cost"),
@@ -997,24 +997,9 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       }),
       className: "special-ability",
       body: [
-        mapNullable(translation.rules, rules => ({
-          label: translate("Rules"),
-          value: rules,
-        })),
-        mapNullable(translation.effect, effect => ({
-          label: translate("Effect"),
-          value: effect,
-        })),
-        mapNullable(translation.protective_circle, protectiveCircle => ({
-          label: translate("Protective Circle"),
-          value: protectiveCircle,
-        })),
-        mapNullable(translation.warding_circle, wardingCircle => ({
-          label: translate("Warding Circle"),
-          value: wardingCircle,
-        })),
         mapNullable(translation.special_rules, specialRules => ({
-          value: specialRules
+          type: "plain",
+          text: specialRules
             .map(specialRule =>
               specialRule.label === undefined
                 ? `- ${specialRule.text}`
@@ -1022,134 +1007,158 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             )
             .join("\n"),
         })),
-        mapNullable(baseEntry.aspect, aspect => ({
-          label: translate("Aspect"),
-          value:
-            translateMap(getInstanceById("Aspect", aspect)?.translations)
-              ?.name ?? MISSING_VALUE,
-        })),
-        mapNullable(translation.range, range => ({
-          label: translate("Range"),
-          value: range,
-        })),
-        mapNullable(baseEntry.penalty, penalty => ({
-          label: translate("Penalty"),
-          value: renderPenaltyValue(
-            getInstanceById,
-            translate,
-            translateMap,
-            translation.name,
-            penalty,
-          ),
-        })),
-        mapNullable(entry.prerequisites, prerequisites => ({
-          label: translate("Prerequisites"),
-          value:
-            wrappedId.kind === "Advantage" || wrappedId.kind === "Disadvantage"
-              ? printAdvantageDisadvantagePrerequisites(
-                  getInstanceById,
-                  getResolvedSelectOptionById,
-                  locale,
-                  prerequisites as AdvantageDisadvantagePrerequisites,
-                  translation.name,
-                  wrappedId.kind,
-                )
-              : printGeneralPrerequisites(
-                  getInstanceById,
-                  getResolvedSelectOptionById,
-                  locale,
-                  prerequisites as GeneralPrerequisites,
-                  mapNullable(baseEntry.levels, levels => ({
-                    id: wrappedId,
-                    levels,
-                  })),
-                ),
-        })),
-        mapNullable(baseEntry.combat_techniques, combatTechniques => ({
-          label: translate("Combat Techniques"),
-          value: renderApplicableCombatTechniquesValue(
-            getInstanceById,
-            locale,
-            translation,
-            combatTechniques,
-          ),
-        })),
-        mapNullable(baseEntry.volume, volume => ({
-          label: translate("Volume"),
-          value: renderVolumeValue(
-            translate,
-            translateMap,
-            () => getAllResolvedSelectOptions(wrappedId),
-            responsiveTextSize,
-            volume,
-          ),
-        })),
-        mapNullable(baseEntry.cost, cost =>
-          renderCost(
-            translate,
-            translateMap,
-            locale.join,
-            locale.compare,
-            () => getAllResolvedSelectOptions(wrappedId),
-            responsiveTextSize,
-            baseEntry.levels,
-            cost,
-          ),
-        ),
-        mapNullable(baseEntry.property, property => ({
-          label: translate("Property"),
-          value: renderPropertyValue(
-            getInstanceById,
-            translate,
-            translateMap,
-            property,
-          ),
-        })),
-        mapNullable(entry.ap_value, apValue => {
-          const append =
-            translation.ap_value_append !== undefined
-              ? ` ${translation.ap_value_append}`
-              : ""
-          return {
-            label: translate("AP Value"),
-            value:
-              renderAdventurePointsValue(
+        {
+          type: "definitionList",
+          items: [
+            mapNullable(translation.rules, rules => ({
+              label: translate("Rules"),
+              value: rules,
+            })),
+            mapNullable(translation.effect, effect => ({
+              label: translate("Effect"),
+              value: effect,
+            })),
+            mapNullable(translation.protective_circle, protectiveCircle => ({
+              label: translate("Protective Circle"),
+              value: protectiveCircle,
+            })),
+            mapNullable(translation.warding_circle, wardingCircle => ({
+              label: translate("Warding Circle"),
+              value: wardingCircle,
+            })),
+            mapNullable(baseEntry.aspect, aspect => ({
+              label: translate("Aspect"),
+              value:
+                translateMap(getInstanceById("Aspect", aspect)?.translations)
+                  ?.name ?? MISSING_VALUE,
+            })),
+            mapNullable(translation.range, range => ({
+              label: translate("Range"),
+              value: range,
+            })),
+            mapNullable(baseEntry.penalty, penalty => ({
+              label: translate("Penalty"),
+              value: renderPenaltyValue(
+                getInstanceById,
+                translate,
+                translateMap,
+                translation.name,
+                penalty,
+              ),
+            })),
+            mapNullable(entry.prerequisites, prerequisites => ({
+              label: translate("Prerequisites"),
+              value:
+                wrappedId.kind === "Advantage" ||
+                wrappedId.kind === "Disadvantage"
+                  ? printAdvantageDisadvantagePrerequisites(
+                      getInstanceById,
+                      getResolvedSelectOptionById,
+                      locale,
+                      prerequisites as AdvantageDisadvantagePrerequisites,
+                      translation.name,
+                      wrappedId.kind,
+                    )
+                  : printGeneralPrerequisites(
+                      getInstanceById,
+                      getResolvedSelectOptionById,
+                      locale,
+                      prerequisites as GeneralPrerequisites,
+                      mapNullable(baseEntry.levels, levels => ({
+                        id: wrappedId,
+                        levels,
+                      })),
+                    ),
+            })),
+            mapNullable(baseEntry.combat_techniques, combatTechniques => ({
+              label: translate("Combat Techniques"),
+              value: renderApplicableCombatTechniquesValue(
+                getInstanceById,
                 locale,
-                activatableId =>
-                  locale.translateMap<BaseActivatableTranslation>(
-                    getInstanceById(
-                      activatableId.kind,
-                      fromUniformCase(activatableId),
-                    )?.translations,
-                  )?.name,
-                selectOptionId => {
-                  const selectOption = getResolvedSelectOptionById(
-                    wrappedId,
-                    selectOptionId,
-                  )
-                  if (selectOption === undefined) {
-                    return undefined
-                  }
-                  const name = locale.translateMap(
-                    selectOption.content.translations,
-                  )?.name
-                  if (name !== undefined) {
-                    return name
-                  }
-                  const { parent: parentId } = selectOption.content
-                  return locale.translateMap<BaseActivatableTranslation>(
-                    getInstanceById(parentId.kind, fromUniformCase(parentId))
-                      ?.translations,
-                  )?.name
-                },
-                () => getAllResolvedSelectOptions(wrappedId),
-                getAllInstances,
-                apValue,
-                entry,
                 translation,
-              ) + append,
-          }
-        }),
+                combatTechniques,
+              ),
+            })),
+            mapNullable(baseEntry.volume, volume => ({
+              label: translate("Volume"),
+              value: renderVolumeValue(
+                translate,
+                translateMap,
+                () => getAllResolvedSelectOptions(wrappedId),
+                responsiveTextSize,
+                volume,
+              ),
+            })),
+            mapNullable(baseEntry.cost, cost =>
+              renderCost(
+                translate,
+                translateMap,
+                locale.join,
+                locale.compare,
+                () => getAllResolvedSelectOptions(wrappedId),
+                responsiveTextSize,
+                baseEntry.levels,
+                cost,
+              ),
+            ),
+            mapNullable(baseEntry.property, property => ({
+              label: translate("Property"),
+              value: renderPropertyValue(
+                getInstanceById,
+                translate,
+                translateMap,
+                property,
+              ),
+            })),
+            mapNullable(entry.ap_value, apValue => {
+              const append =
+                translation.ap_value_append !== undefined
+                  ? ` ${translation.ap_value_append}`
+                  : ""
+              return {
+                label: translate("AP Value"),
+                value:
+                  renderAdventurePointsValue(
+                    locale,
+                    activatableId =>
+                      locale.translateMap<BaseActivatableTranslation>(
+                        getInstanceById(
+                          activatableId.kind,
+                          fromUniformCase(activatableId),
+                        )?.translations,
+                      )?.name,
+                    selectOptionId => {
+                      const selectOption = getResolvedSelectOptionById(
+                        wrappedId,
+                        selectOptionId,
+                      )
+                      if (selectOption === undefined) {
+                        return undefined
+                      }
+                      const name = locale.translateMap(
+                        selectOption.content.translations,
+                      )?.name
+                      if (name !== undefined) {
+                        return name
+                      }
+                      const { parent: parentId } = selectOption.content
+                      return locale.translateMap<BaseActivatableTranslation>(
+                        getInstanceById(
+                          parentId.kind,
+                          fromUniformCase(parentId),
+                        )?.translations,
+                      )?.name
+                    },
+                    () => getAllResolvedSelectOptions(wrappedId),
+                    getAllInstances,
+                    apValue,
+                    entry,
+                    translation,
+                  ) + append,
+              }
+            }),
+          ],
+        },
       ],
       errata: translation.errata,
       references: entry.src,

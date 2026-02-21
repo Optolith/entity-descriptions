@@ -101,70 +101,75 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
       title: translation.name,
       className: "disease",
       body: [
-        renderAlternativeNames(translate, translation.alternative_names),
-        { label: translate("Level"), value: baseEntry.level },
-        { label: translate("Progress"), value: translation.progress },
         {
-          label: translate("Resistance"),
-          value: renderResistance(
-            translate,
-            translateMap,
-            getInstanceById,
-            idMap,
-            baseEntry.resistance,
-          ),
-        },
-        {
-          label: translate("Incubation Time"),
-          value: translation.incubation_time,
-        },
-        {
-          label: translate("Damage"),
-          value:
-            translation.damage.default +
-            (translation.damage.reduced === undefined
-              ? ""
-              : ` / ${translation.damage.reduced}`),
-        },
-        {
-          label: translate("Duration"),
-          value:
-            translation.duration.default +
-            (translation.duration.reduced === undefined
-              ? ""
-              : ` / ${translation.duration.reduced}`),
-        },
-        {
-          label: translate("Causes"),
-          value: renderCauses(translate, translateMap, baseEntry.cause),
-        },
-        translation.special === undefined
-          ? undefined
-          : { label: translate("Special"), value: translation.special },
-        { label: translate("Treatment"), value: translation.treatment },
-        { label: translate("Antidote"), value: translation.cure },
-        entity === "AnimalDisease"
-          ? renderAnimalTypesSection(
-              translate,
-              translateMap,
-              localeCompare,
-              getInstanceById,
-              entry.animal_types,
-            )
-          : undefined,
-        entity === "AnimalDisease"
-          ? {
-              label: translate("Communicability to Intelligent Creatures"),
+          type: "definitionList",
+          items: [
+            renderAlternativeNames(translate, translation.alternative_names),
+            { label: translate("Level"), value: baseEntry.level.toString() },
+            { label: translate("Progress"), value: translation.progress },
+            {
+              label: translate("Resistance"),
+              value: renderResistance(
+                translate,
+                translateMap,
+                getInstanceById,
+                idMap,
+                baseEntry.resistance,
+              ),
+            },
+            {
+              label: translate("Incubation Time"),
+              value: translation.incubation_time,
+            },
+            {
+              label: translate("Damage"),
               value:
-                entry.communicability_to_intelligent_creatures.length === 0
-                  ? translate("No")
-                  : `${translate("Yes")}; ${renderCauses(
-                      translate,
-                      translateMap,
-                      entry.communicability_to_intelligent_creatures,
-                    )}`,
-            }
-          : undefined,
+                translation.damage.default +
+                (translation.damage.reduced === undefined
+                  ? ""
+                  : ` / ${translation.damage.reduced}`),
+            },
+            {
+              label: translate("Duration"),
+              value:
+                translation.duration.default +
+                (translation.duration.reduced === undefined
+                  ? ""
+                  : ` / ${translation.duration.reduced}`),
+            },
+            {
+              label: translate("Causes"),
+              value: renderCauses(translate, translateMap, baseEntry.cause),
+            },
+            translation.special === undefined
+              ? undefined
+              : { label: translate("Special"), value: translation.special },
+            { label: translate("Treatment"), value: translation.treatment },
+            { label: translate("Antidote"), value: translation.cure },
+            entity === "AnimalDisease"
+              ? renderAnimalTypesSection(
+                  translate,
+                  translateMap,
+                  localeCompare,
+                  getInstanceById,
+                  entry.animal_types,
+                )
+              : undefined,
+            entity === "AnimalDisease"
+              ? {
+                  label: translate("Communicability to Intelligent Creatures"),
+                  value:
+                    entry.communicability_to_intelligent_creatures.length === 0
+                      ? translate("No")
+                      : `${translate("Yes")}; ${renderCauses(
+                          translate,
+                          translateMap,
+                          entry.communicability_to_intelligent_creatures,
+                        )}`,
+                }
+              : undefined,
+          ],
+        },
       ],
       errata: translation.errata,
       references: baseEntry.src,

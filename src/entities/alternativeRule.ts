@@ -27,7 +27,7 @@ export const getAlternativeRuleEntityDescription =
         )
         .join(", "),
       className: "alternative-rule",
-      body: [{ value: translation.description }],
+      body: [{ type: "plain", text: translation.description }],
       errata: translation.errata,
       references: entry.src,
     }

@@ -1,5 +1,5 @@
 import type { ImprovementCost } from "optolith-database-schema/gen"
-import { EntityDescriptionSection } from "../../../index.js"
+import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../index.js"
 import { translateR, type StdReader } from "../reader.js"
 
 /**
@@ -7,7 +7,7 @@ import { translateR, type StdReader } from "../reader.js"
  */
 export const renderImprovementCost = (
   improvementCost: ImprovementCost,
-): StdReader<EntityDescriptionSection, "t"> =>
+): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
   translateR("Improvement Cost").map(label => ({
     label,
     value: improvementCost.kind,

@@ -1,8 +1,7 @@
-import { filterNonNullable } from "@optolith/helpers/array"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { ActivatableSkillEffect } from "optolith-database-schema/gen"
-import { EntityDescriptionSection } from "../../../../index.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import { translateFnR, type StdReader } from "../../reader.js"
 
 const getContentPartsForQualityLevels = (
@@ -12,24 +11,30 @@ const getContentPartsForQualityLevels = (
     quality_levels: string[]
     text_after?: string
   },
-): StdReader<EntityDescriptionSection[], "t"> =>
-  translateFnR.map(translate =>
-    filterNonNullable([
-      {
-        label: translate("Effect"),
-        value: source.text_before,
-      },
-      ...source.quality_levels.map((text, index) => ({
-        value: text,
-        label: translate("QL {$value}", {
-          value: getQualityLevelString(index),
-        }),
-      })),
-      mapNullable(source.text_after, textAfter => ({
-        value: textAfter,
-        className: "effect-after",
-      })),
-    ]),
+): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
+  translateFnR.map(
+    (translate): RawDefinitionListEntityDescriptionSectionItem => ({
+      label: translate("Effect"),
+      value: [
+        {
+          type: "plain",
+          text: source.text_before,
+        },
+        {
+          type: "definitionList",
+          items: source.quality_levels.map((text, index) => ({
+            label: translate("QL {$value}", {
+              value: getQualityLevelString(index),
+            }),
+            value: text,
+          })),
+        },
+        mapNullable(source.text_after, textAfter => ({
+          type: "plain",
+          text: textAfter,
+        })),
+      ],
+    }),
   )
 
 /**
@@ -37,15 +42,13 @@ const getContentPartsForQualityLevels = (
  */
 export const renderEffect = (
   effect: ActivatableSkillEffect,
-): StdReader<EntityDescriptionSection[], "t"> => {
+): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> => {
   switch (effect.kind) {
     case "Plain":
-      return translateFnR.map(translate => [
-        {
-          label: translate("Effect"),
-          value: effect.Plain.text,
-        },
-      ])
+      return translateFnR.map(translate => ({
+        label: translate("Effect"),
+        value: effect.Plain.text,
+      }))
     case "ForEachQualityLevel":
       return getContentPartsForQualityLevels(
         index => index + 1,

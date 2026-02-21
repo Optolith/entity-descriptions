@@ -18,16 +18,24 @@ export const getInfluenceEntityDescription =
         title: translation.name,
         className: "influence",
         body: [
-          ...(translation.effects?.map(effect => ({
-            label: effect.label,
-            value: effect.text,
-          })) ?? []),
-          entry.prerequisites === undefined
-            ? undefined
-            : {
-                label: translate("Prerequisites"),
-                value: printInfluencePrerequisites(locale, entry.prerequisites),
-              },
+          {
+            type: "definitionList",
+            items: [
+              ...(translation.effects?.map(effect => ({
+                label: effect.label,
+                value: effect.text,
+              })) ?? []),
+              entry.prerequisites === undefined
+                ? undefined
+                : {
+                    label: translate("Prerequisites"),
+                    value: printInfluencePrerequisites(
+                      locale,
+                      entry.prerequisites,
+                    ),
+                  },
+            ],
+          },
         ],
         errata: translation.errata,
         references: entry.src,

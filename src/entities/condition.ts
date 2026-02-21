@@ -18,13 +18,18 @@ export const getConditionEntityDescription =
         body: [
           translation.rules === undefined
             ? undefined
-            : { value: translation.rules },
-          ...translation.effects.map((effect, index) => ({
-            label: translate("Level {$level}", {
-              level: index + 1,
-            }),
-            value: effect,
-          })),
+            : { type: "plain", text: translation.rules },
+          {
+            type: "definitionList",
+            items: [
+              ...translation.effects.map((effect, index) => ({
+                label: translate("Level {$level}", {
+                  level: index + 1,
+                }),
+                value: effect,
+              })),
+            ],
+          },
         ],
         errata: translation.errata,
         references: entry.src,
@@ -50,13 +55,18 @@ export const getMetaConditionEntityDescription =
         body: [
           translation.rules === undefined
             ? undefined
-            : { value: translation.rules },
-          ...translation.effects.map((effect, index) => ({
-            label: translate("Level {$level}", {
-              level: index + 1,
-            }),
-            value: effect,
-          })),
+            : { type: "plain", text: translation.rules },
+          {
+            type: "definitionList",
+            items: [
+              ...translation.effects.map((effect, index) => ({
+                label: translate("Level {$level}", {
+                  level: index + 1,
+                }),
+                value: effect,
+              })),
+            ],
+          },
         ],
         errata: translation.errata,
         references: entry.src,

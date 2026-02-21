@@ -6,7 +6,7 @@ import type {
   SpecificAffectedTargetCategoryIdentifier,
   TargetCategory_ID,
 } from "optolith-database-schema/gen"
-import { EntityDescriptionSection } from "../../../../index.js"
+import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import {
   getInstanceByIdR,
   translateMapR,
@@ -56,7 +56,11 @@ const getTargetCategoryTranslationByType = (
  */
 export const renderTargetCategory = (
   values: AffectedTargetCategories,
-): StdReader<EntityDescriptionSection, "t" | "tm" | "ibi", "TargetCategory"> =>
+): StdReader<
+  RawDefinitionListEntityDescriptionSectionItem,
+  "t" | "tm" | "ibi",
+  "TargetCategory"
+> =>
   translateR("Target Category").thenW(label =>
     (values.length === 0
       ? translateR("all")
