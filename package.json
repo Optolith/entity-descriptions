@@ -41,7 +41,6 @@
     "commit-and-tag-version": "^12.6.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.5.4",
-    "glob": "^13.0.1",
     "globals": "^17.3.0",
     "optolith-database-schema": "^0.32.0",
     "tsx": "^4.21.0",
