@@ -1,8 +1,9 @@
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
+  SkillCheckPenalty as GeneralSkillCheckPenalty,
+  MagicalRuneCombatTechniqueCheckPenalty,
   SkillCheck,
-  SkillCheckPenalty,
 } from "optolith-database-schema/gen"
 import { type IdMap } from "../../../index.js"
 import {
@@ -37,6 +38,13 @@ export const renderSkillCheck = (
       .join("/"),
   }))
 
+type SkillCheckPenalty =
+  | GeneralSkillCheckPenalty
+  | {
+      kind: "CombatTechnique"
+      CombatTechnique: MagicalRuneCombatTechniqueCheckPenalty
+    }
+
 const renderSkillCheckPenalty = (
   idMap: IdMap,
   penalty: SkillCheckPenalty,
@@ -67,13 +75,10 @@ const renderSkillCheckPenalty = (
   switch (penalty.kind) {
     case "Spirit":
       return getSpiritTranslation()
-
     case "HalfOfSpirit":
       return getSpiritTranslation().map(translation => `${translation}/2`)
-
     case "Toughness":
       return getToughnessTranslation()
-
     case "HigherOfSpiritAndToughness":
       return getSpiritTranslation().thenW(spirit =>
         getToughnessTranslation().thenW(toughness =>
@@ -90,16 +95,14 @@ const renderSkillCheckPenalty = (
           ),
         ),
       )
-
     case "SummoningDifficulty":
       return responsiveTranslateR("Invocation Difficulty", "ID")
-
     case "CreationDifficulty":
       return responsiveTranslateR("Creation Difficulty", "CD")
-
     case "Object":
       return translateR("Object")
-
+    case "CombatTechnique":
+      return responsiveTranslateR("Combat Technique", "CT")
     default:
       return assertExhaustive(penalty)
   }

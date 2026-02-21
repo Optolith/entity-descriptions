@@ -1,26 +1,38 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
+import { on } from "@elyukai/utils/function"
+import { Lazy } from "@elyukai/utils/lazy"
+import { compareNullish } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
-import { Compare } from "@optolith/helpers/compare"
+import { Compare, numAsc } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type {
-  ActivatableSkillEffect,
-  AnimistPowerImprovementCost,
-  AnimistPowerPerformanceParameters,
-  ArcaneBardTraditionReference,
-  ArcaneDancerTraditionReference,
-  FamiliarsTrickPerformanceParameters,
-  FamiliarsTrickProperty,
-  MagicalTradition_ID,
-  Property_ID,
-  ResponsiveTextOptional,
-  SpellworkTraditions,
-  Tribe_ID,
+import {
+  type ActivatableSkillEffect,
+  type AnimistPowerImprovementCost,
+  type AnimistPowerPerformanceParameters,
+  type ArcaneBardTraditionReference,
+  type ArcaneDancerTraditionReference,
+  type FamiliarsTrickPerformanceParameters,
+  type FamiliarsTrickProperty,
+  type MagicalRuneCost,
+  type MagicalRuneCraftingTime,
+  type MagicalRuneDuration,
+  type MagicalRuneImprovementCost,
+  type MagicalRuneOption,
+  type MagicalTradition_ID,
+  type OldParameterBySpeed,
+  type Property_ID,
+  type ResponsiveTextOptional,
+  type SpellworkTraditions,
+  type Tribe_ID,
 } from "optolith-database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import type { GetInstanceById } from "../helpers/getTypes.js"
+import type {
+  GetAllChildInstancesForParent,
+  GetInstanceById,
+} from "../helpers/getTypes.js"
 import type { LocaleCompare } from "../helpers/locale.js"
 import {
   Translate,
@@ -47,6 +59,7 @@ import {
   renderNonModifiableOneTimeCost,
 } from "./partial/rated/activatable/cost.js"
 import {
+  renderCheckResultBasedDuration,
   renderMusicDuration,
   renderOneTimeDuration,
   renderSustainedDuration,
@@ -62,16 +75,32 @@ import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { renderNonModifiableRange } from "./partial/rated/activatable/range.js"
 import { Speed } from "./partial/rated/activatable/speed.js"
 import { renderTargetCategory } from "./partial/rated/activatable/targetCategory.js"
-import { renderImprovementCost } from "./partial/rated/improvementCost.js"
+import {
+  renderImprovementCost,
+  renderImprovementCostValue,
+} from "./partial/rated/improvementCost.js"
 import {
   renderSkillCheck,
   renderSkillCheckWithPenalty,
 } from "./partial/rated/skillCheck.js"
-import { translateR, type EnvMap, type StdReader } from "./partial/reader.js"
 import {
+  formatEnergyR,
+  localeJoinR,
+  responsiveR,
+  responsiveTextR,
+  responsiveTranslateR,
+  translateMapR,
+  translateR,
+  type EnvMap,
+  type StdEnv,
+  type StdReader,
+} from "./partial/reader.js"
+import {
+  appendNoteIfNeeded,
   getResponsiveText,
   ResponsiveTextSize,
 } from "./partial/responsiveText.js"
+import { formatTimeSpanR, type TimeSpanUnit } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
 const combineGeneratedTextWithStaticTranslation = (
@@ -1542,3 +1571,249 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
     references: entry.src,
   }
 })
+
+const deriveValueGroupsFromMagicalRuneOptions = <T>(
+  options: Lazy<MagicalRuneOption[]>,
+  grouper: (option: MagicalRuneOption) => T,
+  comparator: Compare<T>,
+  printValue: (value: T) => string,
+): StdReader<string, "t" | "tm" | "lc" | "lj"> =>
+  Reader.sequence(
+    Map.groupBy(options.value, grouper)
+      .entries()
+      .toArray()
+      .toSorted(on(item => item[0], comparator))
+      .map(([value, matchingOptions]) =>
+        Reader.asks(
+          ({
+            translateMap,
+            localeJoin,
+            localeCompare,
+          }: StdEnv<"tm" | "lj" | "lc">) =>
+            `${printValue(value)} (${localeJoin(
+              matchingOptions
+                .map(
+                  option =>
+                    translateMap(option.translations)?.name ?? MISSING_VALUE,
+                )
+                .toSorted(localeCompare),
+              "conjunction",
+            )})`,
+        ),
+      ),
+  ).then(formattedOptions => localeJoinR(formattedOptions, "disjunction"))
+
+const renderMagicalRuneCost = (
+  options: Lazy<MagicalRuneOption[]>,
+  cost: MagicalRuneCost,
+) => {
+  switch (cost.kind) {
+    case "Single":
+      return formatEnergyR(cost.Single.value).thenW(text =>
+        appendNoteIfNeeded(cost.Single.translations, text),
+      )
+    case "Disjunction":
+      return Reader.sequence(
+        cost.Disjunction.list.map(costItem =>
+          formatEnergyR(costItem.value).thenW(text =>
+            appendNoteIfNeeded(costItem.translations, text),
+          ),
+        ),
+      ).thenW(text => localeJoinR(text, "disjunction"))
+    case "DerivedFromOption":
+      return deriveValueGroupsFromMagicalRuneOptions(
+        options,
+        option => option.cost?.value,
+        compareNullish(numAsc),
+        num => num?.toString() ?? MISSING_VALUE,
+      ).thenW(formatEnergyR)
+    default:
+      return assertExhaustive(cost)
+  }
+}
+
+const renderSplitMagicalRuneParameterTranslation = (
+  parameter: OldParameterBySpeed,
+): StdReader<string, "rts"> =>
+  responsiveR(
+    () => parameter.fast.full,
+    () => parameter.fast.abbr,
+  ).map2(
+    responsiveR(
+      () => parameter.slow.full,
+      () => parameter.slow.abbr,
+    ),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
+const renderMagicalRunCraftingTimePart = (
+  craftingTime: MagicalRuneCraftingTime,
+  unit: TimeSpanUnit,
+) =>
+  formatTimeSpanR(unit, craftingTime.value).thenW(text => {
+    if (craftingTime.per === undefined) {
+      return Reader.of(text)
+    }
+
+    const { translations } = craftingTime.per
+
+    return translateMapR(translations).thenW(translation => {
+      if (translation === undefined) {
+        return Reader.of(text)
+      }
+
+      return responsiveTextR(translation.countable).thenW(countable =>
+        responsiveTranslateR(
+          "{$cost} per {$countable}",
+          "{$cost}/{$countable}",
+          { cost: text, countable },
+        ),
+      )
+    })
+  })
+
+const renderMagicalRuneCraftingTime = (craftingTime: MagicalRuneCraftingTime) =>
+  renderMagicalRunCraftingTimePart(craftingTime, "Actions").map2(
+    renderMagicalRunCraftingTimePart(craftingTime, "Days"),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
+const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
+  renderCheckResultBasedDuration(duration.fast).map2(
+    renderCheckResultBasedDuration(duration.slow),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
+const renderMagicalRuneImprovementCost = (
+  options: Lazy<MagicalRuneOption[]>,
+  improvementCost: MagicalRuneImprovementCost,
+): StdReader<
+  RawDefinitionListEntityDescriptionSectionItem,
+  "t" | "tm" | "lc" | "lj" | "eu"
+> => {
+  switch (improvementCost.kind) {
+    case "Constant":
+      return renderImprovementCost(improvementCost.Constant)
+    case "DerivedFromOption":
+      return deriveValueGroupsFromMagicalRuneOptions(
+        options,
+        option =>
+          option.improvement_cost === undefined
+            ? undefined
+            : renderImprovementCostValue(option.improvement_cost),
+        compareNullish((a, b) => a.localeCompare(b)),
+        selectedImprovementCost => selectedImprovementCost ?? MISSING_VALUE,
+      )
+        .thenW(formatEnergyR)
+        .then(value =>
+          translateR("Improvement Cost").map(label => ({ label, value })),
+        )
+    default:
+      return assertExhaustive(improvementCost)
+  }
+}
+
+/**
+ * Get a JSON representation of the rules text for a magical rune.
+ */
+export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
+  "MagicalRune",
+  {
+    getInstanceById: GetInstanceById<
+      | "Publication"
+      | "Attribute"
+      | "Property"
+      | "DerivedCharacteristic"
+      | "Skill"
+    >
+    getAllChildInstancesForParent: GetAllChildInstancesForParent<"MagicalRuneOption">
+    idMap: IdMap
+  }
+>(
+  (
+    { getInstanceById, getAllChildInstancesForParent, idMap },
+    locale,
+    { id, content: entry },
+  ) => {
+    const { translate, translateMap } = locale
+    const translation = translateMap(entry.translations)
+
+    if (translation === undefined) {
+      return undefined
+    }
+
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      localeCompare: locale.compare,
+      localeJoin: locale.join,
+      energyUnit: "ArcaneEnergy",
+      responsiveTextSize: ResponsiveTextSize.Full,
+    } satisfies Partial<EnvMap>
+
+    const options = Lazy.of(() =>
+      getAllChildInstancesForParent("MagicalRuneOption", id).map(
+        item => item.content,
+      ),
+    )
+
+    const cost = renderMagicalRuneCost(options, entry.parameters.cost).run(env)
+    const craftingTime = renderMagicalRuneCraftingTime(
+      entry.parameters.crafting_time,
+    ).run(env)
+    const duration = renderMagicalRuneDuration(entry.parameters.duration).run(
+      env,
+    )
+
+    return {
+      title:
+        (translation.name_in_library ?? translation.name) +
+        parensIf(translation.native_name),
+      className: "magical-rune",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheckWithPenalty(
+              entry.check,
+              entry.check_penalty,
+              idMap,
+            ).run(env),
+            renderEffect(translation.effect).run(env),
+            combineGeneratedTextWithStaticTranslation(
+              translate("AE Cost"),
+              cost,
+              translation.cost,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Crafting Time (slow / fast)"),
+              craftingTime,
+              translation.crafting_time === undefined
+                ? undefined
+                : renderSplitMagicalRuneParameterTranslation(
+                    translation.crafting_time,
+                  ).run(env),
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration (slow / fast)"),
+              duration,
+              translation.duration === undefined
+                ? undefined
+                : renderSplitMagicalRuneParameterTranslation(
+                    translation.duration,
+                  ).run(env),
+            ),
+            renderProperty(entry.property).run(env),
+            renderMagicalRuneImprovementCost(
+              options,
+              entry.improvement_cost,
+            ).run(env),
+          ],
+        },
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)

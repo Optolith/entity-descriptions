@@ -46,7 +46,10 @@ export type EnvMap<E extends keyof EntityMap = never> = {
   getInstanceById: GetInstanceById<E>
 }
 
-type EnvMapAbbr = {
+/**
+ * Shortcuts for selecting keys of the shared environment map type.
+ */
+export type EnvMapAbbr = {
   t: "translate"
   tm: "translateMap"
   lj: "localeJoin"

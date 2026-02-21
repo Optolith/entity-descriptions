@@ -6,7 +6,10 @@ import type {
 import type { StdEnv } from "../reader.js"
 import { ResponsiveTextSize, responsive } from "../responsiveText.js"
 
-type TimeSpanUnit =
+/**
+ * Possible units to use for time spans.
+ */
+export type TimeSpanUnit =
   | "Seconds"
   | "Minutes"
   | "Hours"
@@ -48,11 +51,11 @@ const timeSpanUnitTranslationKeys = {
 export const formatTimeSpan = (
   translate: Translate,
   responsiveTextSize: ResponsiveTextSize,
-  unit: { kind: TimeSpanUnit },
+  unit: { kind: TimeSpanUnit } | TimeSpanUnit,
   value: number | string,
 ): string => {
   const [fullNumberKey, fullKey, compressedKey] =
-    timeSpanUnitTranslationKeys[unit.kind]
+    timeSpanUnitTranslationKeys[typeof unit === "string" ? unit : unit.kind]
 
   return responsive(
     responsiveTextSize,
@@ -68,7 +71,7 @@ export const formatTimeSpan = (
  * Returns the text for a time span unit.
  */
 export const formatTimeSpanR = (
-  unit: { kind: TimeSpanUnit },
+  unit: { kind: TimeSpanUnit } | TimeSpanUnit,
   value: number | string,
 ): Reader<StdEnv<"t" | "rts">, string> =>
   Reader.asks(({ translate, responsiveTextSize }) =>

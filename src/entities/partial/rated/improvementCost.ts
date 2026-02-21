@@ -3,6 +3,13 @@ import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../ind
 import { translateR, type StdReader } from "../reader.js"
 
 /**
+ * Renders an improvement cost value as a string.
+ */
+export const renderImprovementCostValue = (
+  improvementCost: ImprovementCost,
+): string => improvementCost.kind
+
+/**
  * Returns the improvement cost as an inline library property.
  */
 export const renderImprovementCost = (
@@ -10,5 +17,5 @@ export const renderImprovementCost = (
 ): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
   translateR("Improvement Cost").map(label => ({
     label,
-    value: improvementCost.kind,
+    value: renderImprovementCostValue(improvementCost),
   }))

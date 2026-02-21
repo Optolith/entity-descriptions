@@ -57,7 +57,10 @@ const renderFixedDuration = (
     .then(text => wrapIfMaximum(value.is_maximum, text))
     .thenW(text => replaceTextIfNeeded(value.translations, text))
 
-const renderCheckResultBasedDuration = (
+/**
+ * Renders a duration that is based on the result of the skill check.
+ */
+export const renderCheckResultBasedDuration = (
   value: CheckResultBasedDuration,
 ): StdReader<string, "t" | "tm" | "rts"> =>
   renderCheckResultBasedValue(value)
