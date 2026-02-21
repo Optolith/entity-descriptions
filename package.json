@@ -36,16 +36,16 @@
     "tsondb": "^0.19.8"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "@types/node": "^25.2.1",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.3.0",
     "commit-and-tag-version": "^12.6.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^62.5.4",
+    "eslint-plugin-jsdoc": "^62.7.0",
     "globals": "^17.3.0",
     "optolith-database-schema": "^0.32.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.56.0"
   },
   "type": "module",
   "engines": {
