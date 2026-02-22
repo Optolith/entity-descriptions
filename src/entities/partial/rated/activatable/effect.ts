@@ -22,6 +22,7 @@ const getContentPartsForQualityLevels = (
         },
         {
           type: "definitionList",
+          style: "hidden",
           items: source.quality_levels.map((text, index) => ({
             label: translate("QL {$value}", {
               value: getQualityLevelString(index),

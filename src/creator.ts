@@ -6,8 +6,14 @@ import { LocaleEnvironment } from "./helpers/locale.js"
 import {
   EntityDescription,
   RawEntityDescription,
+  type DefinitionListEntityDescriptionSection,
   type EntityDescriptionSection,
+  type EntityDescriptionSectionContent,
+  type NestedDefinitionListEntityDescriptionSection,
+  type RawDefinitionListEntityDescriptionSection,
   type RawEntityDescriptionSection,
+  type RawEntityDescriptionSectionContent,
+  type RawNestedDefinitionListEntityDescriptionSection,
 } from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
 
@@ -18,24 +24,71 @@ export type TaggedEntity<ES extends keyof EntityMap> = {
   [E in ES]: { entity: E; content: EntityMap[E]; id: string }
 }[ES]
 
-const mapRawSection = (
-  section: RawEntityDescriptionSection,
-): EntityDescriptionSection => {
+const mapRawSectionContent = <
+  RDL extends { type: "definitionList" },
+  DL extends { type: "definitionList" },
+>(
+  mapDefinitionList: (definitionList: RDL) => DL,
+  section: RawEntityDescriptionSectionContent<RDL>,
+): EntityDescriptionSectionContent<DL> => {
   switch (section.type) {
     case "plain":
     case "table":
       return section
     case "definitionList":
+      return mapDefinitionList(section)
+    default:
+      return assertExhaustive(section)
+  }
+}
+
+const mapNestedDefinitionList = (
+  definitionListSection: RawNestedDefinitionListEntityDescriptionSection,
+): NestedDefinitionListEntityDescriptionSection => ({
+  ...definitionListSection,
+  items: definitionListSection.items.filter(isNotNullish).map(item => ({
+    ...item,
+    value:
+      typeof item.value === "string"
+        ? item.value
+        : item.value
+            .filter(isNotNullish)
+            .map(subsection =>
+              mapRawSectionContent(mapNestedDefinitionList, subsection),
+            ),
+  })),
+})
+
+const mapDefinitionList = (
+  section: RawDefinitionListEntityDescriptionSection,
+): DefinitionListEntityDescriptionSection => ({
+  ...section,
+  items: section.items.filter(isNotNullish).map(item => ({
+    ...item,
+    value:
+      typeof item.value === "string"
+        ? item.value
+        : item.value
+            .filter(isNotNullish)
+            .map(subsection =>
+              mapRawSectionContent(mapNestedDefinitionList, subsection),
+            ),
+  })),
+})
+
+const mapRawSection = (
+  section: RawEntityDescriptionSection,
+): EntityDescriptionSection => {
+  switch (section.type) {
+    case "labeled":
       return {
         ...section,
-        items: section.items.filter(isNotNullish).map(item => ({
-          ...item,
-          value:
-            typeof item.value === "string"
-              ? item.value
-              : item.value.filter(isNotNullish).map(mapRawSection),
-        })),
+        value: mapRawSectionContent(mapDefinitionList, section.value),
       }
+    case "plain":
+    case "table":
+    case "definitionList":
+      return mapRawSectionContent(mapDefinitionList, section)
     default:
       return assertExhaustive(section)
   }

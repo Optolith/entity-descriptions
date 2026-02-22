@@ -25,7 +25,8 @@ import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   IdMap,
-  RawDefinitionListEntityDescriptionSectionItem,
+  LabeledEntityDescriptionSection,
+  RawEntityDescriptionSectionContent,
 } from "../index.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
@@ -544,92 +545,88 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                       entry.restricted_spellworks,
                     ),
             },
-            ...getChildInstancesForInstanceId("LessonPackage", id)
-              .map(lessonPackage =>
-                mapNullable(
-                  translateMap(lessonPackage.content.translations),
-                  (
-                    lessonPackageTranslation,
-                  ): RawDefinitionListEntityDescriptionSectionItem => {
-                    const [boni, mali] = partition(
-                      lessonPackage.content.skills ?? [],
-                      adjustment => {
-                        switch (adjustment.kind) {
-                          case "Skill":
-                            return adjustment.Skill.points > 0
-                          case "CombatTechnique":
-                            return adjustment.CombatTechnique.points > 0
-                          case "Spellwork":
-                            return adjustment.Spellwork.points > 0
-                          default:
-                            return assertExhaustive(adjustment)
-                        }
-                      },
-                    )
-
-                    return {
-                      label: lessonPackageTranslation.name,
-                      value: [
-                        {
-                          type: "definitionList",
-                          items: [
-                            {
-                              label: translate("Spellwork Changes"),
-                              value:
-                                lessonPackageTranslation?.spellwork_changes ??
-                                lessonPackage.content.spellwork_changes
-                                  ?.map(change =>
-                                    translate(
-                                      "{$replacement} instead of {$base}",
-                                      {
-                                        base: renderSpellworkAdjustment(
-                                          translateMap,
-                                          getInstanceById,
-                                          change.base,
-                                        ),
-                                        replacement: renderSpellworkAdjustment(
-                                          translateMap,
-                                          getInstanceById,
-                                          change.replacement,
-                                        ),
-                                      },
-                                    ),
-                                  )
-                                  .join(", ") ??
-                                translate("none"),
-                            },
-                            {
-                              label: translate("Skills (+)"),
-                              value: renderAbilityAdjustments(
-                                translate,
-                                translateMap,
-                                localeCompare,
-                                getInstanceById,
-                                baseProfessionPackage,
-                                boni,
-                              ),
-                            },
-                            {
-                              label: translate("Skills (−)"),
-                              value: renderAbilityAdjustments(
-                                translate,
-                                translateMap,
-                                localeCompare,
-                                getInstanceById,
-                                baseProfessionPackage,
-                                mali,
-                              ),
-                            },
-                          ],
-                        },
-                      ],
-                    }
-                  },
-                ),
-              )
-              .filter(isNotNullish),
           ],
         },
+        ...getChildInstancesForInstanceId("LessonPackage", id)
+          .map(lessonPackage =>
+            mapNullable(
+              translateMap(lessonPackage.content.translations),
+              (
+                lessonPackageTranslation,
+              ): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
+                const [boni, mali] = partition(
+                  lessonPackage.content.skills ?? [],
+                  adjustment => {
+                    switch (adjustment.kind) {
+                      case "Skill":
+                        return adjustment.Skill.points > 0
+                      case "CombatTechnique":
+                        return adjustment.CombatTechnique.points > 0
+                      case "Spellwork":
+                        return adjustment.Spellwork.points > 0
+                      default:
+                        return assertExhaustive(adjustment)
+                    }
+                  },
+                )
+
+                return {
+                  type: "labeled",
+                  label: lessonPackageTranslation.name,
+                  value: {
+                    type: "definitionList",
+                    items: [
+                      {
+                        label: translate("Spellwork Changes"),
+                        value:
+                          lessonPackageTranslation?.spellwork_changes ??
+                          lessonPackage.content.spellwork_changes
+                            ?.map(change =>
+                              translate("{$replacement} instead of {$base}", {
+                                base: renderSpellworkAdjustment(
+                                  translateMap,
+                                  getInstanceById,
+                                  change.base,
+                                ),
+                                replacement: renderSpellworkAdjustment(
+                                  translateMap,
+                                  getInstanceById,
+                                  change.replacement,
+                                ),
+                              }),
+                            )
+                            .join(", ") ??
+                          translate("none"),
+                      },
+                      {
+                        label: translate("Skills (+)"),
+                        value: renderAbilityAdjustments(
+                          translate,
+                          translateMap,
+                          localeCompare,
+                          getInstanceById,
+                          baseProfessionPackage,
+                          boni,
+                        ),
+                      },
+                      {
+                        label: translate("Skills (−)"),
+                        value: renderAbilityAdjustments(
+                          translate,
+                          translateMap,
+                          localeCompare,
+                          getInstanceById,
+                          baseProfessionPackage,
+                          mali,
+                        ),
+                      },
+                    ],
+                  },
+                }
+              },
+            ),
+          )
+          .filter(isNotNullish),
       ],
       errata: translation.errata,
       references: entry.src,

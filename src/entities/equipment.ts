@@ -12,6 +12,7 @@ import type {
   BookCostVariant,
   BurningTime,
   CloseCombatTechnique,
+  CloseCombatTechniqueSpecialRules,
   CombatUse,
   Complexity,
   Cost,
@@ -60,7 +61,9 @@ import type {
 } from "../helpers/translate.js"
 import type {
   IdMap,
+  LabeledEntityDescriptionSection,
   RawDefinitionListEntityDescriptionSectionItem,
+  RawEntityDescriptionSectionContent,
 } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
 import {
@@ -215,51 +218,64 @@ export const renderMeleeWeapon = <Damage>(
   renderDamage: (damage: Damage) => string,
   closeCombatTechniqueId: string,
   use: GenMeleeWeapon<Damage>,
-): RawDefinitionListEntityDescriptionSectionItem => {
+): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
   const combatTechnique = getInstanceById(
     "CloseCombatTechnique",
     closeCombatTechniqueId,
   )
 
+  const fields: CloseCombatTechniqueSpecialRules = combatTechnique?.special ?? {
+    can_parry: { kind: "Prohibited" },
+    has_damage_threshold: { kind: "Prohibited" },
+    has_reach: { kind: "Prohibited" },
+    has_length: { kind: "Prohibited" },
+    has_shield_size: { kind: "Prohibited" },
+  }
+
   return {
+    type: "labeled",
     label: translate("Combat Technique {$name}", {
       name: translateMap(combatTechnique?.translations)?.name ?? MISSING_VALUE,
     }),
-    value: [
-      {
-        type: "definitionList",
-        items: [
-          {
-            label: translate("Damage Points"),
-            value: renderDamage(use.damage),
-          },
-          {
-            label: translate("Primary Attribute + Damage Threshold"),
-            value: renderPrimaryAttributeAndDamageThreshold(
-              translateMap,
-              getInstanceById,
-              combatTechnique,
-              use.damage_threshold,
-            ),
-          },
-          {
-            label: translate("Attack/Parry Modifier"),
-            value: renderAttackParryModifier(
-              use.attackModifier,
-              use.parryModifier,
-            ),
-          },
-          {
-            label: translate("Reach"),
-            value: renderReach(translateMap, getInstanceById, use.reach),
-          },
-          {
-            label: translate("Length"),
-            value: renderLength(translate, measurements, use.length),
-          },
-        ],
-      },
-    ],
+    value: {
+      type: "definitionList",
+      items: [
+        {
+          label: translate("Damage Points"),
+          value: renderDamage(use.damage),
+        },
+        fields.has_damage_threshold.kind === "Prohibited"
+          ? undefined
+          : {
+              label: translate("Primary Attribute + Damage Threshold"),
+              value: renderPrimaryAttributeAndDamageThreshold(
+                translateMap,
+                getInstanceById,
+                combatTechnique,
+                use.damage_threshold,
+              ),
+            },
+        {
+          label: translate("Attack/Parry Modifier"),
+          value: renderAttackParryModifier(
+            use.attackModifier,
+            use.parryModifier,
+          ),
+        },
+        fields.has_reach.kind === "Prohibited"
+          ? undefined
+          : {
+              label: translate("Reach"),
+              value: renderReach(translateMap, getInstanceById, use.reach),
+            },
+        fields.has_length.kind === "Prohibited"
+          ? undefined
+          : {
+              label: translate("Length"),
+              value: renderLength(translate, measurements, use.length),
+            },
+      ],
+    },
   }
 }
 
@@ -301,47 +317,46 @@ export const renderRangedWeapon = <Damage>(
   renderDamage: (damage: Damage) => string,
   rangedCombatTechniqueId: string,
   use: GenRangedWeapon<Damage>,
-): RawDefinitionListEntityDescriptionSectionItem => {
+): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
   const combatTechnique = getInstanceById(
     "RangedCombatTechnique",
     rangedCombatTechniqueId,
   )
 
   return {
+    type: "labeled",
     label: translate("Combat Technique {$name}", {
       name: translateMap(combatTechnique?.translations)?.name ?? MISSING_VALUE,
     }),
-    value: [
-      {
-        type: "definitionList",
-        items: [
-          {
-            label: translate("Damage Points"),
-            value: renderDamage(use.damage),
-          },
-          {
-            label: translate("Reload Time"),
-            value: renderReloadTime(translate, use.reload_time),
-          },
-          {
-            label: translate("Range Brackets"),
-            value: renderRangeBrackets(use.range),
-          },
-          {
-            label: translate("Ammunition"),
-            value: renderAmmunition(
-              translateMap,
-              getInstanceById,
-              use.ammunition,
-            ),
-          },
-          {
-            label: translate("Length"),
-            value: renderLength(translate, measurements, use.length),
-          },
-        ],
-      },
-    ],
+    value: {
+      type: "definitionList",
+      items: [
+        {
+          label: translate("Damage Points"),
+          value: renderDamage(use.damage),
+        },
+        {
+          label: translate("Reload Time"),
+          value: renderReloadTime(translate, use.reload_time),
+        },
+        {
+          label: translate("Range Brackets"),
+          value: renderRangeBrackets(use.range),
+        },
+        {
+          label: translate("Ammunition"),
+          value: renderAmmunition(
+            translateMap,
+            getInstanceById,
+            use.ammunition,
+          ),
+        },
+        {
+          label: translate("Length"),
+          value: renderLength(translate, measurements, use.length),
+        },
+      ],
+    },
   }
 }
 
@@ -947,38 +962,38 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
     title: name,
     className: "equipment",
     body: [
+      ...(combatValues?.type === "Weapon"
+        ? Object.entries(combatValues.values.melee_uses ?? {}).map(
+            ([combatTechniqueId, use]) =>
+              renderMeleeWeapon(
+                translate,
+                translateMap,
+                getInstanceById,
+                locale.measurementAdjustments,
+                renderMeleeDamage(translate),
+                combatTechniqueId,
+                use,
+              ),
+          )
+        : []),
+      ...(combatValues?.type === "Weapon"
+        ? Object.entries(combatValues.values.ranged_uses ?? {}).map(
+            ([combatTechniqueId, use]) =>
+              renderRangedWeapon(
+                translate,
+                translateMap,
+                getInstanceById,
+                locale.measurementAdjustments,
+                renderRangedDamage(translate),
+                combatTechniqueId,
+                use,
+              ),
+          )
+        : []),
       {
         type: "definitionList",
         items: [
           renderComplexity(translate, baseItem.complexity),
-          ...(combatValues?.type === "Weapon"
-            ? Object.entries(combatValues.values.melee_uses ?? {}).map(
-                ([combatTechniqueId, use]) =>
-                  renderMeleeWeapon(
-                    translate,
-                    translateMap,
-                    getInstanceById,
-                    locale.measurementAdjustments,
-                    renderMeleeDamage(translate),
-                    combatTechniqueId,
-                    use,
-                  ),
-              )
-            : []),
-          ...(combatValues?.type === "Weapon"
-            ? Object.entries(combatValues.values.ranged_uses ?? {}).map(
-                ([combatTechniqueId, use]) =>
-                  renderRangedWeapon(
-                    translate,
-                    translateMap,
-                    getInstanceById,
-                    locale.measurementAdjustments,
-                    renderRangedDamage(translate),
-                    combatTechniqueId,
-                    use,
-                  ),
-              )
-            : []),
           ...(combatValues?.type === "Armor"
             ? renderArmorValues(
                 translate,

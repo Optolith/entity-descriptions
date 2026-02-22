@@ -116,6 +116,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
               value: [
                 {
                   type: "definitionList",
+                  style: "nested",
                   items: translation.quality_levels.map(
                     (effectForLevel, index) => ({
                       label: (index + 1).toString(),

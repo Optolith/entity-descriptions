@@ -80,12 +80,31 @@ export type EntityDescription = {
 }
 
 /**
- * A slice of the content of a library entry text.
+ * A labeled or unlabeled section of a library entry text.
  */
 export type EntityDescriptionSection =
-  | PlainEntityDescriptionSection
-  | DefinitionListEntityDescriptionSection
-  | TableEntityDescriptionSection
+  | EntityDescriptionSectionContent
+  | LabeledEntityDescriptionSection<EntityDescriptionSectionContent>
+
+/**
+ * A labeled section of a library entry text.
+ */
+export type LabeledEntityDescriptionSection<
+  Content extends
+    | EntityDescriptionSectionContent
+    | RawEntityDescriptionSectionContent,
+> = {
+  type: "labeled"
+  label: string
+  value: EntityDescriptionSectionContent<Content>
+}
+
+/**
+ * A slice of the content of a library entry text.
+ */
+export type EntityDescriptionSectionContent<
+  DL = DefinitionListEntityDescriptionSection,
+> = PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
 
 /**
  * A JSON representation of the rules text for a library entry that has not been
@@ -101,12 +120,18 @@ export type RawEntityDescription = {
 }
 
 /**
- * A slice of the content of a library entry text.
+ * A labeled or unlabeled section of a library entry text.
  */
 export type RawEntityDescriptionSection =
-  | PlainEntityDescriptionSection
-  | RawDefinitionListEntityDescriptionSection
-  | TableEntityDescriptionSection
+  | RawEntityDescriptionSectionContent
+  | LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent>
+
+/**
+ * A slice of the content of a library entry text.
+ */
+export type RawEntityDescriptionSectionContent<
+  DL = RawDefinitionListEntityDescriptionSection,
+> = PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
 
 /**
  * A plain text, possibly containing Markdown syntax.
@@ -125,6 +150,23 @@ export type DefinitionListEntityDescriptionSection = {
 }
 
 /**
+ * A list of labeled values, such as prerequisites or quality levels, nested within another definition list.
+ */
+export type NestedDefinitionListEntityDescriptionSection = {
+  type: "definitionList"
+
+  /**
+   * How to render this definition list.
+   *
+   * - `"hidden"`: The definition list does not look like it is nested, it just looks like it belongs to its parent definition list.
+   * - `"nested"`: The definition list is visually nested inside its parent definition list, usually indented and with italic labels instead of bold ones.
+   */
+  style: "hidden" | "nested"
+
+  items: DefinitionListEntityDescriptionSectionItem[]
+}
+
+/**
  * A list of labeled values, such as prerequisites or quality levels.
  */
 export type RawDefinitionListEntityDescriptionSection = {
@@ -133,11 +175,29 @@ export type RawDefinitionListEntityDescriptionSection = {
 }
 
 /**
+ * A list of labeled values, such as prerequisites or quality levels, nested within another definition list.
+ */
+export type RawNestedDefinitionListEntityDescriptionSection = {
+  type: "definitionList"
+
+  /**
+   * How to render this definition list.
+   *
+   * - `"hidden"`: The definition list does not look like it is nested, it just looks like it belongs to its parent definition list.
+   * - `"nested"`: The definition list is visually nested inside its parent definition list, usually indented and with italic labels instead of bold ones.
+   */
+  style: "hidden" | "nested"
+  items: (RawDefinitionListEntityDescriptionSectionItem | undefined)[]
+}
+
+/**
  * A single labeled value in a definition list.
  */
 export type DefinitionListEntityDescriptionSectionItem = {
   label: string
-  value: string | EntityDescriptionSection[]
+  value:
+    | string
+    | EntityDescriptionSectionContent<NestedDefinitionListEntityDescriptionSection>[]
 }
 
 /**
@@ -145,7 +205,12 @@ export type DefinitionListEntityDescriptionSectionItem = {
  */
 export type RawDefinitionListEntityDescriptionSectionItem = {
   label: string
-  value: string | (RawEntityDescriptionSection | undefined)[]
+  value:
+    | string
+    | (
+        | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
+        | undefined
+      )[]
 }
 
 /**
@@ -156,14 +221,6 @@ export type TableEntityDescriptionSection = {
   header: string[]
   rows: string[][]
   footer?: string[]
-}
-
-/**
- * A single aspect of a library entry text, such as a standalone text or a labeled text.
- */
-export type EntityDescriptionAtom = {
-  label?: string
-  value: string | number
 }
 
 /**

@@ -168,6 +168,7 @@ const getColumnWiths = (table: TableEntityDescriptionSection): number[] =>
 const logTableRow = (
   row: string[],
   columnWidths: number[],
+  indent: string,
   format?: InspectColor | InspectColor[],
 ): void => {
   const formatter =
@@ -176,48 +177,72 @@ const logTableRow = (
       : (text: string) => styleText(format, text)
 
   console.log(
-    row
-      .map(
-        (cell, index) =>
-          formatter(cell) +
-          " ".repeat((columnWidths[index] ?? 0) - cell.length),
-      )
-      .join("  "),
+    indent +
+      row
+        .map(
+          (cell, index) =>
+            formatter(cell) +
+            " ".repeat((columnWidths[index] ?? 0) - cell.length),
+        )
+        .join("  "),
   )
 }
 
-const logSection = (section: EntityDescriptionSection, indent = ""): void => {
+const logSection = (
+  section: EntityDescriptionSection,
+  level: number,
+  indent = "",
+): void => {
   switch (section.type) {
-    case "plain":
-      console.log(section.text)
+    case "labeled":
+      console.log(indent + styleText("bold", section.label))
+      logSection(section.value, level, indent + "  ")
       break
-    case "definitionList":
+    case "plain":
+      console.log(indent + section.text)
+      break
+    case "definitionList": {
+      const listIndent =
+        "style" in section && section.style === "hidden"
+          ? indent.slice(0, -2)
+          : indent
+
+      const actualLevel =
+        "style" in section && section.style === "hidden" ? level - 1 : level
+
       section.items.forEach(item => {
+        console.log(
+          listIndent +
+            styleText(actualLevel > 1 ? "italic" : "bold", item.label + ":"),
+        )
         if (Array.isArray(item.value)) {
-          console.log(styleText("italic", item.label))
           item.value.forEach(subsection => {
-            logSection(subsection, indent + "  ")
+            logSection(subsection, actualLevel + 1, listIndent + "  ")
           })
         } else {
-          console.log(styleText("bold", item.label + ":"))
-          console.log("  " + item.value)
+          console.log(listIndent + "  " + item.value)
         }
       })
       break
-    case "table":
+    }
+    case "table": {
       const columnWidths = getColumnWiths(section)
-      logTableRow(section.header, columnWidths, "bold")
-      section.rows.forEach(row => logTableRow(row, columnWidths))
+      logTableRow(section.header, columnWidths, indent, "bold")
+      section.rows.forEach(row => logTableRow(row, columnWidths, indent))
       if (section.footer) {
-        logTableRow(section.footer, columnWidths, ["italic", "underline"])
+        logTableRow(section.footer, columnWidths, indent, [
+          "italic",
+          "underline",
+        ])
       }
       break
+    }
   }
 }
 
 result.body.forEach(section => {
   console.log()
-  logSection(section)
+  logSection(section, 1)
 })
 
 if (result.errata) {
