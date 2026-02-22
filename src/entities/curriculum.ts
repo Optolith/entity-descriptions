@@ -1,5 +1,4 @@
 import { partition } from "@elyukai/utils/array/groups"
-import { reduceWhile } from "@elyukai/utils/array/reductions"
 import { Dictionary } from "@elyukai/utils/dictionary"
 import { deepEqual } from "@elyukai/utils/equality"
 import { sign } from "@elyukai/utils/string/number"
@@ -28,6 +27,7 @@ import type {
   LabeledEntityDescriptionSection,
   RawEntityDescriptionSectionContent,
 } from "../index.js"
+import { getBaseProfessionPackageForCurriculum } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
@@ -264,38 +264,6 @@ const renderSpellworkAdjustment = (
         )?.name,
   )}`
 
-const getBaseProfessionPackage = (
-  getAllInstances: GetAllInstances<"Profession">,
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<
-    "ProfessionVersion" | "ProfessionPackage"
-  >,
-  idMap: IdMap,
-  curriculumId: string,
-) => {
-  const baseProfession = getAllInstances("Profession").find(
-    profession =>
-      profession.content.group.kind === "Magical" &&
-      profession.content.group.Magical.curriculum === curriculumId,
-  )
-
-  if (baseProfession === undefined) {
-    return undefined
-  }
-
-  return reduceWhile(
-    getChildInstancesForInstanceId("ProfessionVersion", baseProfession.id),
-    (_acc: { id: string; content: ProfessionPackage } | undefined, version) =>
-      getChildInstancesForInstanceId("ProfessionPackage", version.id).find(
-        professionPackage =>
-          professionPackage.content.experience_level === undefined ||
-          professionPackage.content.experience_level ===
-            idMap.ExperienceLevel.Experienced,
-      ),
-    isNotNullish,
-    undefined,
-  )
-}
-
 const renderAbilityAdjustmentName = (
   translateMap: TranslateMap,
   getInstanceById: GetInstanceById<
@@ -497,7 +465,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
       return undefined
     }
 
-    const baseProfessionPackage = getBaseProfessionPackage(
+    const baseProfessionPackage = getBaseProfessionPackageForCurriculum(
       getAllInstances,
       getChildInstancesForInstanceId,
       idMap,

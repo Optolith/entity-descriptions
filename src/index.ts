@@ -23,6 +23,7 @@ import {
   getConditionEntityDescription,
   getMetaConditionEntityDescription,
 } from "./entities/condition.js"
+import { getCultureEntityDescription } from "./entities/culture.js"
 import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
 import { getDiseaseEntityDescription } from "./entities/disease.js"
@@ -258,7 +259,7 @@ const registeredEntityDescriptionCreators = {
   ExperienceLevel: getExperienceLevelEntityDescription,
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
   Race: getRaceEntityDescription,
-  // Culture: getCultureEntityDescription,
+  Culture: getCultureEntityDescription,
   // ProfessionVersion: getProfessionVersionEntityDescription,
   Advantage: getActivatableEntityDescription,
   Disadvantage: getActivatableEntityDescription,

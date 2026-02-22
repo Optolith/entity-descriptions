@@ -1,14 +1,13 @@
 import { anySameIndices } from "@elyukai/utils/array/filters"
-import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
-import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
+import { isNotNullish } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
 import type {
   AttributeAdjustments,
   AutomaticAdvantageDisadvantage,
-  CommonnessRatedAdvantageDisadvantage,
   Culture_ID,
   RaceVariant,
   RaceVariantTranslation,
@@ -19,12 +18,13 @@ import type {
   GetAllChildInstancesForParent,
   GetInstanceById,
 } from "../helpers/getTypes.js"
-import type {
-  TranslateMap,
-  TranslationKeysWithoutParams,
-} from "../helpers/translate.js"
+import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
-import { parensIf } from "./partial/rated/activatable/parensIf.js"
+import {
+  renderCommonnessRatedAdvantagesAndDisadvantages,
+  renderCommonnessRatedAdvantagesOrDisadvantages,
+  renderValueWithPossibleTranslation,
+} from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import type { EnvMap, StdReader } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
@@ -70,19 +70,6 @@ const renderAttributeAdjustmentsItem = (
         ].join("; "),
       }
     },
-  )
-
-const renderValueWithPossibleTranslation = <T>(
-  label: TranslationKeysWithoutParams,
-  value: T,
-  renderValue: (value: T) => string,
-  valueTranslation: string | undefined,
-): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
-  Reader.asks(
-    ({ translate }): RawDefinitionListEntityDescriptionSectionItem => ({
-      label: translate(label),
-      value: valueTranslation ?? renderValue(value),
-    }),
   )
 
 const renderVariantValues = <T>(
@@ -161,74 +148,6 @@ const renderVariantValues = <T>(
     },
   )
 
-const renderCommonnessRatedAdvantageOrDisadvantageName = <
-  E extends "Advantage" | "Disadvantage",
->(
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<E>,
-  entity: E,
-  item: CommonnessRatedAdvantageDisadvantage<string>,
-): string => {
-  const instance = getInstanceById(entity, item.id)
-  const instanceTranslation = translateMap(instance?.translations)
-  const customTranslation = translateMap(item.translations)
-  const name = instanceTranslation?.name_in_library ?? instanceTranslation?.name
-  return name !== undefined &&
-    customTranslation?.options !== undefined &&
-    name.endsWith(")")
-    ? `${name.slice(0, -1)}; ${customTranslation.options})`
-    : (name ?? MISSING_VALUE) + parensIf(customTranslation?.options)
-}
-
-const renderCommonnessRatedAdvantagesOrDisadvantages = <
-  E extends "Advantage" | "Disadvantage",
->(
-  entity: E,
-  items: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
-): StdReader<string, "t" | "tm" | "lc" | "ibi", E> =>
-  Reader.asks(({ translate, translateMap, getInstanceById, localeCompare }) =>
-    items === undefined || !isNotEmpty(items)
-      ? translate("none")
-      : items
-          .map(item =>
-            renderCommonnessRatedAdvantageOrDisadvantageName(
-              translateMap,
-              getInstanceById,
-              entity,
-              item,
-            ),
-          )
-          .toSorted(localeCompare)
-          .join(", "),
-  )
-
-const renderCommonnessRatedAdvantagesAndDisadvantages = (
-  advantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
-  disadvantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
-): StdReader<string, "t" | "tm" | "lc" | "ibi", "Advantage" | "Disadvantage"> =>
-  Reader.asks(
-    ({ translate, translateMap, getInstanceById, localeCompare }) =>
-      mapNullable(
-        ensureNonEmpty(
-          [
-            ["Advantage", advantages] as const,
-            ["Disadvantage", disadvantages] as const,
-          ].flatMap(
-            ([entity, items]) =>
-              items?.map(item =>
-                renderCommonnessRatedAdvantageOrDisadvantageName(
-                  translateMap,
-                  getInstanceById,
-                  entity,
-                  item,
-                ),
-              ) ?? [],
-          ),
-        ),
-        renderedItems => renderedItems.toSorted(localeCompare).join(", "),
-      ) ?? translate("none"),
-  )
-
 const renderAutomaticAdvantagesOrDisadvantages = <
   E extends "Advantage" | "Disadvantage",
   ID extends string,
@@ -256,28 +175,19 @@ const renderAutomaticAdvantagesOrDisadvantages = <
 
 const renderCommonCultures = (
   items: Culture_ID[] | undefined,
-): StdReader<string, "t" | "tm" | "lc" | "lj" | "ibi", "Culture"> =>
-  Reader.asks(
-    ({
-      translate,
-      translateMap,
-      getInstanceById,
-      localeCompare,
-      localeJoin,
-    }) =>
-      items === undefined || !isNotEmpty(items)
-        ? translate("none")
-        : localeJoin(
-            items
-              .map(
-                itemId =>
-                  translateMap(getInstanceById("Culture", itemId)?.translations)
-                    ?.name,
-              )
-              .filter(isNotNullish)
-              .toSorted(localeCompare),
-            "conjunction",
-          ),
+): StdReader<string, "t" | "tm" | "lc" | "ibi", "Culture"> =>
+  Reader.asks(({ translate, translateMap, getInstanceById, localeCompare }) =>
+    items === undefined || !isNotEmpty(items)
+      ? translate("none")
+      : items
+          .map(
+            itemId =>
+              translateMap(getInstanceById("Culture", itemId)?.translations)
+                ?.name,
+          )
+          .filter(isNotNullish)
+          .toSorted(localeCompare)
+          .join(", "),
   )
 
 /**

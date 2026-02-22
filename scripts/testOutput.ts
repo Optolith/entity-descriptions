@@ -2,6 +2,7 @@ import { isNotNullish } from "@elyukai/utils/nullable"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { deepEqual } from "@optolith/helpers/compare"
 import { MessageFormat } from "messageformat"
+import type { MessageValue } from "messageformat/functions"
 import { findPackageJSON } from "node:module"
 import { dirname, join } from "node:path"
 import { argv } from "node:process"
@@ -76,6 +77,69 @@ const localeEnv: LocaleEnvironment = {
   translate: (key, ...rest) =>
     new MessageFormat(localeId, localeInstance.translations?.[key] ?? key, {
       bidiIsolation: "none",
+      functions: {
+        list: (ctx, options, input): MessageValue<"list"> => {
+          if (!Array.isArray(input)) {
+            ctx.onError(
+              new RangeError("Input for list function must be an array"),
+            )
+            return {
+              type: "list",
+              options,
+            }
+          } else {
+            switch (options.type) {
+              case "conjunction": {
+                const value = conjunctionListFormat.format(input)
+                return {
+                  type: "list",
+                  options,
+                  toString() {
+                    return value
+                  },
+                  valueOf() {
+                    return value
+                  },
+                }
+              }
+              case "disjunction": {
+                const value = disjunctionListFormat.format(input)
+                return {
+                  type: "list",
+                  options,
+                  toString() {
+                    return value
+                  },
+                  valueOf() {
+                    return value
+                  },
+                }
+              }
+              case "unit": {
+                const value = unitListFormat.format(input)
+                return {
+                  type: "list",
+                  options,
+                  toString() {
+                    return value
+                  },
+                  valueOf() {
+                    return value
+                  },
+                }
+              }
+              default:
+                ctx.onError(
+                  new RangeError("Unsupported list type: ${options.type}"),
+                )
+                return {
+                  type: "list",
+                  options,
+                }
+            }
+          }
+        },
+      },
     }).format(rest[0] as Record<string, unknown> | undefined),
   translateMap: translations => translations?.[localeId],
   measurementAdjustments: {
@@ -196,7 +260,7 @@ const logSection = (
   switch (section.type) {
     case "labeled":
       console.log(indent + styleText("bold", section.label))
-      logSection(section.value, level, indent + "  ")
+      logSection(section.value, level, indent)
       break
     case "plain":
       console.log(indent + section.text)
@@ -216,7 +280,10 @@ const logSection = (
             styleText(actualLevel > 1 ? "italic" : "bold", item.label + ":"),
         )
         if (Array.isArray(item.value)) {
-          item.value.forEach(subsection => {
+          item.value.forEach((subsection, subsectionIndex) => {
+            if (subsectionIndex > 0) {
+              console.log()
+            }
             logSection(subsection, actualLevel + 1, listIndent + "  ")
           })
         } else {
