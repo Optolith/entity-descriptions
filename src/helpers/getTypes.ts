@@ -23,6 +23,10 @@ export type GetAllInstances<T extends keyof Database.EntityMap> = <U extends T>(
   entity: U,
 ) => { id: string; content: Database.EntityMap[U] }[]
 
+export type CountInstances<T extends keyof Database.EntityMap> = <U extends T>(
+  entity: U,
+) => number
+
 export type GetAllChildInstancesForParent<
   T extends keyof Database.ChildEntityMap,
 > = <U extends T>(

@@ -41,6 +41,7 @@ import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
+import { getRaceEntityDescription } from "./entities/race.js"
 import { getSexPracticeEntityDescription } from "./entities/sexPractice.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
 import {
@@ -61,6 +62,7 @@ import {
 } from "./entities/spell.js"
 import { getStateEntityDescription } from "./entities/state.js"
 import type {
+  CountInstances,
   GetAllChildInstancesForParent,
   GetAllInstances,
   GetInstanceById,
@@ -229,6 +231,7 @@ export type TableEntityDescriptionSection = {
 export type TypedCreatorData = {
   getInstanceById: GetInstanceById<keyof TSONDBTypes["entityMap"]>
   getAllInstances: GetAllInstances<keyof TSONDBTypes["entityMap"]>
+  countInstances: CountInstances<keyof TSONDBTypes["entityMap"]>
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<
     keyof TSONDBTypes["childEntityMap"]
   >
@@ -254,7 +257,7 @@ const registeredEntityDescriptionCreators = {
   // character creation
   ExperienceLevel: getExperienceLevelEntityDescription,
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
-  // Race: getRaceEntityDescription,
+  Race: getRaceEntityDescription,
   // Culture: getCultureEntityDescription,
   // ProfessionVersion: getProfessionVersionEntityDescription,
   Advantage: getActivatableEntityDescription,
@@ -448,6 +451,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
     {
       getInstanceById: database.getInstanceOfEntityById.bind(database),
       getAllInstances: database.getAllInstanceContainersOfEntity.bind(database),
+      countInstances: database.countInstancesOfEntity.bind(database),
       getChildInstancesForInstanceId: (childEntityName, parentId) =>
         database.getAllChildInstanceContainersForParent(
           childEntityName,
