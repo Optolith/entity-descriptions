@@ -16,7 +16,7 @@ export const printPactPrerequisite = (
   prerequisite: PactPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const pactCategory = getInstanceById("PactCategory", prerequisite.category)
@@ -28,16 +28,14 @@ export const printPactPrerequisite = (
           domain: locale.join(
             prerequisite.domain.map(
               id =>
-                locale.translateMap(
-                  getInstanceById("PactDomain", id)?.translations,
-                )?.name ?? MISSING_VALUE,
+                locale.translateMap(getInstanceById("PactDomain", id)?.translations)?.name ??
+                MISSING_VALUE,
             ),
             "disjunction",
           ),
         }),
     locale.translate("{$pact} level {$pactLevel}", {
-      pact:
-        locale.translateMap(pactCategory?.translations)?.name ?? MISSING_VALUE,
+      pact: locale.translateMap(pactCategory?.translations)?.name ?? MISSING_VALUE,
       pactLevel: romanize(prerequisite.level ?? 1),
     }),
   ].filter(isNotNullish)

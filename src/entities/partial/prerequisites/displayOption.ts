@@ -1,6 +1,6 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { DisplayOption } from "optolith-database-schema/gen"
-import { LocaleEnvironment } from "../../../helpers/locale.js"
+import type { TranslateMap } from "../../../helpers/translate.js"
 import { MISSING_VALUE } from "../unknown.js"
 import { PrerequisitePart } from "./part.js"
 
@@ -8,7 +8,7 @@ import { PrerequisitePart } from "./part.js"
  * Get the translation of a display option.
  */
 export const printDisplayOption = (
-  locale: LocaleEnvironment,
+  translateMap: TranslateMap,
   displayOption: DisplayOption,
 ): PrerequisitePart | undefined => {
   switch (displayOption.kind) {
@@ -16,9 +16,7 @@ export const printDisplayOption = (
       return undefined
     case "ReplaceWith":
       return {
-        value:
-          locale.translateMap(displayOption.ReplaceWith.translations)
-            ?.replacement ?? MISSING_VALUE,
+        value: translateMap(displayOption.ReplaceWith.translations)?.replacement ?? MISSING_VALUE,
         sentenceType: displayOption.ReplaceWith.sentence_type,
         isMeta: false,
       }

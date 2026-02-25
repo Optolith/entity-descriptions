@@ -8,6 +8,11 @@ import { ResponsiveTextSize } from "../entities/partial/responsiveText.js"
 export type Translations = NonNullable<Locale["translations"]>
 
 /**
+ * A function that formats a string with the given arguments.
+ */
+export type Format = (text: string, args?: Record<string, unknown>) => string
+
+/**
  * Translates a given key into a string, optionally with parameters.
  */
 export type Translate = <K extends keyof Translations>(

@@ -73,6 +73,8 @@ const collator = new Intl.Collator(localeId, { usage: "sort" })
 
 const localeEnv: LocaleEnvironment = {
   id: localeId,
+  format: (text, args) =>
+    new MessageFormat(localeId, text, { bidiIsolation: "none" }).format(args),
   compare: collator.compare.bind(collator),
   translate: (key, ...rest) =>
     new MessageFormat(localeId, localeInstance.translations?.[key] ?? key, {

@@ -4,16 +4,14 @@ import type {
 } from "optolith-database-schema/cache"
 import type {
   ActivatableIdentifier,
+  ActivatableNameBuilderRules,
   ActivatablePrerequisite,
   RequirableSelectOptionIdentifier,
 } from "optolith-database-schema/gen"
 import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import type { LocaleMap } from "../../../../helpers/translate.js"
-import {
-  getNameComponents,
-  printActivatableNameChunk,
-} from "../../activatableNameChunks.js"
+import type { LocaleMap, Translate } from "../../../../helpers/translate.js"
+import { getNameComponents } from "../../activatableNameChunks.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
 
@@ -25,31 +23,39 @@ export type GetResolvedSelectOptionById = (
   selectOptionId: ResolvedSelectOptionIdentifier,
 ) => ResolvedSelectOption | undefined
 
-const printActivatableName = (
+/**
+ * Get the name components of an activatable.
+ */
+export const printActivatableName = (
   getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
-  locale: LocaleEnvironment,
+  translate: Translate,
   id: ActivatableIdentifier,
   options: RequirableSelectOptionIdentifier[] | undefined,
   level: number | undefined,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  displayedInProfession: boolean,
 ) => {
-  const entry: { translations: LocaleMap<{ name: string }> } | undefined =
-    getInstanceById(id)
+  const entry:
+    | {
+        nameBuilderRules?: ActivatableNameBuilderRules
+        translations: LocaleMap<{ name: string }>
+      }
+    | undefined = getInstanceById(id)
 
   if (entry === undefined) {
     return undefined
   }
 
   return getNameComponents(
-    getInstanceById,
-    locale,
+    translate,
     id,
     options,
     level,
+    entry.nameBuilderRules,
     entry.translations,
     t => t.name,
-    selectOptionId => getResolvedSelectOptionById(id, selectOptionId),
-    false,
+    getResolvedSelectOptionById,
+    displayedInProfession,
   )
 }
 
@@ -59,20 +65,22 @@ const printActivatableName = (
 export const printActivatablePrerequisite = (
   getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: ActivatablePrerequisite,
+  displayedInProfession: boolean,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const nameComponents = printActivatableName(
     getInstanceById,
-    locale,
+    locale.translate,
     prerequisite.id,
     prerequisite.options,
     prerequisite.level,
     getResolvedSelectOptionById,
+    displayedInProfession,
   )
 
   if (nameComponents === undefined) {
@@ -81,11 +89,19 @@ export const printActivatablePrerequisite = (
 
   return {
     label: `${
-      prerequisite.active
-        ? locale.translate("special ability")
-        : locale.translate("no special ability")
+      prerequisite.id.kind === "Advantage"
+        ? prerequisite.active
+          ? locale.translate("advantage")
+          : locale.translate("no advantage")
+        : prerequisite.id.kind === "Disadvantage"
+          ? prerequisite.active
+            ? locale.translate("disadvantage")
+            : locale.translate("no disadvantage")
+          : prerequisite.active
+            ? locale.translate("special ability")
+            : locale.translate("no special ability")
     } `,
-    value: printActivatableNameChunk(locale, nameComponents.full),
+    value: nameComponents,
     sentenceType: undefined,
     isMeta: false,
   }

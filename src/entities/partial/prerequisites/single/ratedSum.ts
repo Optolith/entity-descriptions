@@ -14,25 +14,18 @@ export const printRatedSumPrerequisite = (
   prerequisite: RatedSumPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const skills = prerequisite.targets
-    .map(
-      skillId =>
-        locale.translateMap(getInstanceById("Skill", skillId)?.translations)
-          ?.name,
-    )
+    .map(skillId => locale.translateMap(getInstanceById("Skill", skillId)?.translations)?.name)
     .filter(isNotNullish)
 
   return {
-    value: locale.translate(
-      "the SR for {$skill} combined must add up to at least {$minRating}",
-      {
-        skill: locale.join(skills, "conjunction"),
-        minRating: prerequisite.sum,
-      },
-    ),
+    value: locale.translate("the SR for {$skill} combined must add up to at least {$minRating}", {
+      skill: locale.join(skills, "conjunction"),
+      minRating: prerequisite.sum,
+    }),
     sentenceType: undefined,
     isMeta: false,
   }

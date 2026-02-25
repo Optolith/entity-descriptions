@@ -13,25 +13,19 @@ export const printPersonalityTraitPrerequisite = (
   prerequisite: PersonalityTraitPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const personalityTrait = getInstanceById("PersonalityTrait", prerequisite.id)
-  const personalityTraitTranslation = locale.translateMap(
-    personalityTrait?.translations,
-  )
+  const personalityTraitTranslation = locale.translateMap(personalityTrait?.translations)
 
-  if (
-    personalityTrait === undefined ||
-    personalityTraitTranslation === undefined
-  ) {
+  if (personalityTrait === undefined || personalityTraitTranslation === undefined) {
     return undefined
   }
 
-  const name = `${personalityTraitTranslation.name} (${locale.translate(
-    "Level {$level}",
-    { level: personalityTrait.level },
-  )})`
+  const name = `${personalityTraitTranslation.name} (${locale.translate("Level {$level}", {
+    level: personalityTrait.level,
+  })})`
 
   return {
     value: prerequisite.active

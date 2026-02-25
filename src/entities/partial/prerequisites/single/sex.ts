@@ -1,14 +1,14 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { BinarySex, SexPrerequisite } from "optolith-database-schema/gen"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { Translate } from "../../../../helpers/translate.js"
 import { PrerequisitePart } from "../part.js"
 
-const printId = (locale: LocaleEnvironment, id: BinarySex): string => {
+const printId = (translate: Translate, id: BinarySex): string => {
   switch (id.kind) {
     case "Male":
-      return locale.translate("Male")
+      return translate("Male")
     case "Female":
-      return locale.translate("Female")
+      return translate("Female")
     default:
       return assertExhaustive(id)
   }
@@ -18,10 +18,10 @@ const printId = (locale: LocaleEnvironment, id: BinarySex): string => {
  * Get the translation of a (binary) sex prerequisite.
  */
 export const printBinarySexPrerequisite = (
-  locale: LocaleEnvironment,
+  translate: Translate,
   prerequisite: SexPrerequisite,
 ): PrerequisitePart | undefined => ({
-  value: printId(locale, prerequisite.id),
+  value: printId(translate, prerequisite.id),
   sentenceType: undefined,
   isMeta: false,
 })

@@ -21,10 +21,7 @@ import {
 import type { GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
 import { PrerequisitePart } from "./part.js"
-import {
-  GetResolvedSelectOptionById,
-  printActivatablePrerequisite,
-} from "./single/activatable.js"
+import { GetResolvedSelectOptionById, printActivatablePrerequisite } from "./single/activatable.js"
 import { printAnimistPowerPrerequisite } from "./single/animistPower.js"
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
 import { printCommonSuggestedByRCPPrerequisite } from "./single/commonSuggestedByRCP.js"
@@ -59,15 +56,9 @@ export const printDerivedCharacteristicPrerequisiteGroup = (
     case "Rule":
       return printRulePrerequisite(locale, prerequisite.Rule)
     case "BlessedTradition":
-      return printBlessedTraditionPrerequisite(
-        locale,
-        prerequisite.BlessedTradition,
-      )
+      return printBlessedTraditionPrerequisite(locale, prerequisite.BlessedTradition)
     case "MagicalTradition":
-      return printMagicalTraditionPrerequisite(
-        locale,
-        prerequisite.MagicalTradition,
-      )
+      return printMagicalTraditionPrerequisite(locale, prerequisite.MagicalTradition)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -86,11 +77,7 @@ export const printPublicationPrerequisiteGroup = (
   //   default:
   //     return assertExhaustive(prerequisite)
   // }
-  printPublicationPrerequisite(
-    getInstanceById,
-    locale,
-    prerequisite.Publication,
-  )
+  printPublicationPrerequisite(getInstanceById, locale, prerequisite.Publication)
 
 /**
  * Print the translation of a general prerequisite group.
@@ -115,49 +102,33 @@ export const printGeneralPrerequisiteGroup = (
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.Sex)
+      return printBinarySexPrerequisite(locale.translate, prerequisite.Sex)
     case "Race":
       return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
-      return printCulturePrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Culture,
-      )
+      return printCulturePrerequisite(getInstanceById, locale, prerequisite.Culture)
     case "Pact":
       return printPactPrerequisite(getInstanceById, locale, prerequisite.Pact)
     case "SocialStatus":
-      return printSocialStatusPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.SocialStatus,
-      )
+      return printSocialStatusPrerequisite(getInstanceById, locale, prerequisite.SocialStatus)
     case "State":
       return printStatePrerequisite(getInstanceById, locale, prerequisite.State)
     case "Rule":
       return printRulePrerequisite(locale, prerequisite.Rule)
     case "PrimaryAttribute":
-      return printPrimaryAttributePrerequisite(
-        locale,
-        prerequisite.PrimaryAttribute,
-      )
+      return printPrimaryAttributePrerequisite(locale, prerequisite.PrimaryAttribute)
     case "Activatable":
       return printActivatablePrerequisite(
         getInstanceById,
         getResolvedSelectOptionById,
         locale,
         prerequisite.Activatable,
+        false,
       )
     case "BlessedTradition":
-      return printBlessedTraditionPrerequisite(
-        locale,
-        prerequisite.BlessedTradition,
-      )
+      return printBlessedTraditionPrerequisite(locale, prerequisite.BlessedTradition)
     case "MagicalTradition":
-      return printMagicalTraditionPrerequisite(
-        locale,
-        prerequisite.MagicalTradition,
-      )
+      return printMagicalTraditionPrerequisite(locale, prerequisite.MagicalTradition)
     case "Rated":
       return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     case "RatedMinimumNumber":
@@ -167,24 +138,13 @@ export const printGeneralPrerequisiteGroup = (
         prerequisite.RatedMinimumNumber,
       )
     case "RatedSum":
-      return printRatedSumPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.RatedSum,
-      )
+      return printRatedSumPrerequisite(getInstanceById, locale, prerequisite.RatedSum)
     case "Enhancement":
-      return printEnhancementPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Enhancement,
-      )
+      return printEnhancementPrerequisite(getInstanceById, locale, prerequisite.Enhancement)
     case "Text":
       return printTextPrerequisite(locale, prerequisite.Text)
     case "SexualCharacteristic":
-      return printSexualCharacteristicPrerequisite(
-        locale,
-        prerequisite.SexualCharacteristic,
-      )
+      return printSexualCharacteristicPrerequisite(locale, prerequisite.SexualCharacteristic)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -195,33 +155,26 @@ export const printGeneralPrerequisiteGroup = (
  */
 export const printProfessionPrerequisiteGroup = (
   getInstanceById: GetInstanceById<
-    | "Race"
-    | "Culture"
-    | ActivatableIdentifier["kind"]
-    | RatedIdentifier["kind"]
-    | "Aspect"
+    "Race" | "Culture" | ActivatableIdentifier["kind"] | RatedIdentifier["kind"] | "Aspect"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: ProfessionPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.Sex)
+      return printBinarySexPrerequisite(locale.translate, prerequisite.Sex)
     case "Race":
       return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
-      return printCulturePrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Culture,
-      )
+      return printCulturePrerequisite(getInstanceById, locale, prerequisite.Culture)
     case "Activatable":
       return printActivatablePrerequisite(
         getInstanceById,
         getResolvedSelectOptionById,
         locale,
         prerequisite.Activatable,
+        true,
       )
     case "Rated":
       return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
@@ -296,13 +249,9 @@ export const printArcaneTraditionPrerequisiteGroup = (
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "Sex":
-      return printBinarySexPrerequisite(locale, prerequisite.Sex)
+      return printBinarySexPrerequisite(locale.translate, prerequisite.Sex)
     case "Culture":
-      return printCulturePrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Culture,
-      )
+      return printCulturePrerequisite(getInstanceById, locale, prerequisite.Culture)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -320,11 +269,7 @@ export const printPersonalityTraitPrerequisiteGroup = (
     case "Race":
       return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
     case "Culture":
-      return printCulturePrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Culture,
-      )
+      return printCulturePrerequisite(getInstanceById, locale, prerequisite.Culture)
     case "PersonalityTrait":
       return printPersonalityTraitPrerequisite(
         getInstanceById,
@@ -374,12 +319,13 @@ export const printLiturgyPrerequisiteGroup = (
  * Print the translation of an influence prerequisite group.
  */
 export const printInfluencePrerequisiteGroup = (
+  getInstanceById: GetInstanceById<"Influence">,
   locale: LocaleEnvironment,
   prerequisite: InfluencePrerequisiteGroup,
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "Influence":
-      return printInfluencePrerequisite(locale, prerequisite.Influence)
+      return printInfluencePrerequisite(getInstanceById, locale, prerequisite.Influence)
     case "Text":
       return printTextPrerequisite(locale, prerequisite.Text)
     default:
@@ -391,9 +337,7 @@ export const printInfluencePrerequisiteGroup = (
  * Print the translation of a language prerequisite group.
  */
 export const printLanguagePrerequisiteGroup = (
-  getInstanceById: GetInstanceById<
-    "Race" | ActivatableIdentifier["kind"] | "Aspect"
-  >,
+  getInstanceById: GetInstanceById<"Race" | ActivatableIdentifier["kind"] | "Aspect">,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: LanguagePrerequisiteGroup,
@@ -407,6 +351,7 @@ export const printLanguagePrerequisiteGroup = (
         getResolvedSelectOptionById,
         locale,
         prerequisite.Activatable,
+        false,
       )
     case "Text":
       return printTextPrerequisite(locale, prerequisite.Text)
@@ -428,16 +373,13 @@ export const printAnimistPowerPrerequisiteGroup = (
   //   default:
   //     return assertExhaustive(prerequisite)
   // }
-  printAnimistPowerPrerequisite(
-    getInstanceById,
-    locale,
-    prerequisite.AnimistPower,
-  )
+  printAnimistPowerPrerequisite(getInstanceById, locale, prerequisite.AnimistPower)
 
 /**
  * Print the translation of a geode ritual prerequisite group.
  */
 export const printGeodeRitualPrerequisiteGroup = (
+  getInstanceById: GetInstanceById<"Influence">,
   locale: LocaleEnvironment,
   prerequisite: GeodeRitualPrerequisiteGroup,
 ): PrerequisitePart | undefined =>
@@ -446,7 +388,7 @@ export const printGeodeRitualPrerequisiteGroup = (
   //   default:
   //     return assertExhaustive(prerequisite)
   // }
-  printInfluencePrerequisite(locale, prerequisite.Influence)
+  printInfluencePrerequisite(getInstanceById, locale, prerequisite.Influence)
 
 /**
  * Print the translation of an enhancement prerequisite group.
@@ -460,11 +402,7 @@ export const printEnhancementPrerequisiteGroup = (
     case "Rated":
       return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     case "Enhancement":
-      return printEnhancementPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Enhancement,
-      )
+      return printEnhancementPrerequisite(getInstanceById, locale, prerequisite.Enhancement)
     default:
       return assertExhaustive(prerequisite)
   }
@@ -480,16 +418,9 @@ export const printPreconditionGroup = (
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "Publication":
-      return printPublicationPrerequisite(
-        getInstanceById,
-        locale,
-        prerequisite.Publication,
-      )
+      return printPublicationPrerequisite(getInstanceById, locale, prerequisite.Publication)
     case "SexualCharacteristic":
-      return printSexualCharacteristicPrerequisite(
-        locale,
-        prerequisite.SexualCharacteristic,
-      )
+      return printSexualCharacteristicPrerequisite(locale, prerequisite.SexualCharacteristic)
     default:
       return assertExhaustive(prerequisite)
   }

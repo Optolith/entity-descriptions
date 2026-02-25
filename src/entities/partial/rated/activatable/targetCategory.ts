@@ -8,7 +8,7 @@ import type {
 } from "optolith-database-schema/gen"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import {
-  getInstanceByIdR,
+  getInstanceByIdFnR,
   translateMapR,
   translateR,
   type StdReader,
@@ -17,7 +17,7 @@ import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
 const renderPredefined = (targetCategoryId: TargetCategory_ID) =>
-  getInstanceByIdR<"TargetCategory">()
+  getInstanceByIdFnR<"TargetCategory">()
     .thenW(
       getInstanceById =>
         mapNullable(

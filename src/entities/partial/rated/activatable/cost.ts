@@ -26,7 +26,7 @@ import { additionFormatter } from "../../mathOperation.js"
 import {
   formatEnergyFnR,
   formatEnergyR,
-  getInstanceByIdR,
+  getInstanceByIdFnR,
   modifiableBySpeedR,
   responsiveLocaleJoinR,
   responsiveR,
@@ -53,7 +53,7 @@ import {
 const deriveModifiableCost = (
   modificationLevelId: SkillModificationLevel_ID,
 ): StdReader<number | undefined, "s" | "ibi", "SkillModificationLevel"> =>
-  getInstanceByIdR<"SkillModificationLevel">().thenW(
+  getInstanceByIdFnR<"SkillModificationLevel">().thenW(
     getInstanceById =>
       mapNullable(
         getInstanceById("SkillModificationLevel", modificationLevelId),

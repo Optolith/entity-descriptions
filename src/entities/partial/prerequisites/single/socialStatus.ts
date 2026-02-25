@@ -13,13 +13,11 @@ export const printSocialStatusPrerequisite = (
   prerequisite: SocialStatusPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const socialStatus = getInstanceById("SocialStatus", prerequisite.id)
-  const socialStatusTranslation = locale.translateMap(
-    socialStatus?.translations,
-  )
+  const socialStatusTranslation = locale.translateMap(socialStatus?.translations)
 
   if (socialStatusTranslation === undefined) {
     return undefined

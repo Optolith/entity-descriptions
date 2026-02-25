@@ -15,7 +15,7 @@ export const printAnimistPowerPrerequisite = (
   prerequisite: AnimistPowerPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const animistPower = getInstanceById("AnimistPower", prerequisite.id)
@@ -23,9 +23,7 @@ export const printAnimistPowerPrerequisite = (
   return {
     value: [
       locale.translateMap(animistPower?.translations)?.name ?? "MISSING_VALUE",
-      prerequisite.level === undefined
-        ? undefined
-        : romanize(prerequisite.level),
+      prerequisite.level === undefined ? undefined : romanize(prerequisite.level),
       prerequisite.value.toString(),
     ]
       .filter(isNotNullish)

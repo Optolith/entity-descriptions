@@ -9,11 +9,11 @@ import { PrerequisitePart } from "../part.js"
  */
 export const printCulturePrerequisite = (
   getInstanceById: GetInstanceById<"Culture">,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: CulturePrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const culture = getInstanceById("Culture", prerequisite.id)

@@ -7,7 +7,7 @@ import type {
 } from "optolith-database-schema/gen"
 import { type IdMap } from "../../../index.js"
 import {
-  getInstanceByIdR,
+  getInstanceByIdFnR,
   responsiveR,
   responsiveThenR,
   responsiveTranslateR,
@@ -50,7 +50,7 @@ const renderSkillCheckPenalty = (
   penalty: SkillCheckPenalty,
 ): StdReader<string, "t" | "tm" | "rts" | "ibi", "DerivedCharacteristic"> => {
   const getDerivedCharacteristicTranslation = (id: string) =>
-    getInstanceByIdR<"DerivedCharacteristic">()
+    getInstanceByIdFnR<"DerivedCharacteristic">()
       .map(getInstanceById => getInstanceById("DerivedCharacteristic", id))
       .thenW(dc =>
         dc === undefined

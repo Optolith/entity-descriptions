@@ -35,7 +35,7 @@ export const printBlessedTraditionPrerequisite = (
   prerequisite: BlessedTraditionPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   return {

@@ -19,7 +19,12 @@ describe("joinPrerequisiteParts", () => {
       },
       { value: "C", sentenceType: undefined, isMeta: false },
     ]
-    const result = joinPrerequisiteParts(defaultLocaleEnvironment, parts)
+    const result = joinPrerequisiteParts(
+      defaultLocaleEnvironment.translate,
+      defaultLocaleEnvironment.translateMap,
+      defaultLocaleEnvironment.compare,
+      parts.map(part => ({ type: "test", part })),
+    )
     assert.equal(result, "A, Label for B, C")
   })
 
@@ -32,7 +37,12 @@ describe("joinPrerequisiteParts", () => {
       { value: "E", sentenceType: undefined, isMeta: false },
       { value: "F", sentenceType: Case("Connected"), isMeta: false },
     ]
-    const result = joinPrerequisiteParts(defaultLocaleEnvironment, parts)
+    const result = joinPrerequisiteParts(
+      defaultLocaleEnvironment.translate,
+      defaultLocaleEnvironment.translateMap,
+      defaultLocaleEnvironment.compare,
+      parts.map(part => ({ type: "test", part })),
+    )
     assert.equal(result, "A; B; C; D, E; F")
   })
 
@@ -49,7 +59,12 @@ describe("joinPrerequisiteParts", () => {
       { value: "I", sentenceType: undefined, isMeta: false },
       { value: "J", sentenceType: Case("Standalone"), isMeta: false },
     ]
-    const result = joinPrerequisiteParts(defaultLocaleEnvironment, parts)
+    const result = joinPrerequisiteParts(
+      defaultLocaleEnvironment.translate,
+      defaultLocaleEnvironment.translateMap,
+      defaultLocaleEnvironment.compare,
+      parts.map(part => ({ type: "test", part })),
+    )
     assert.equal(result, "A. B. C. D, E. F. G. H, I. J.")
   })
 
@@ -59,7 +74,12 @@ describe("joinPrerequisiteParts", () => {
       { value: "B", sentenceType: undefined, isMeta: true },
       { value: "C", sentenceType: undefined, isMeta: true },
     ]
-    const result = joinPrerequisiteParts(defaultLocaleEnvironment, parts)
+    const result = joinPrerequisiteParts(
+      defaultLocaleEnvironment.translate,
+      defaultLocaleEnvironment.translateMap,
+      defaultLocaleEnvironment.compare,
+      parts.map(part => ({ type: "test", part })),
+    )
     assert.equal(result, "none, A, B, C")
   })
 
@@ -68,7 +88,13 @@ describe("joinPrerequisiteParts", () => {
       // @ts-expect-error Testing invalid input
       { value: "A", sentenceType: Case("any"), isMeta: true },
     ]
-    const block = () => joinPrerequisiteParts(defaultLocaleEnvironment, parts)
+    const block = () =>
+      joinPrerequisiteParts(
+        defaultLocaleEnvironment.translate,
+        defaultLocaleEnvironment.translateMap,
+        defaultLocaleEnvironment.compare,
+        parts.map(part => ({ type: "test", part })),
+      )
     assert.throws(block)
   })
 })

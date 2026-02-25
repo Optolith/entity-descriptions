@@ -10,40 +10,25 @@ import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import { PrerequisitePart } from "../part.js"
 
-const printNumberOfTheFollowingSkills = (
-  locale: LocaleEnvironment,
-  number: number,
-): string =>
-  locale.translate(
-    ".input {$count :number} {{{$count} of the following skills}}",
-    { count: number },
-  )
+const printNumberOfTheFollowingSkills = (locale: LocaleEnvironment, number: number): string =>
+  locale.translate(".input {$count :number} {{{$count} of the following skills}}", {
+    count: number,
+  })
 
-const printNumberOfAllCombatTechniques = (
-  locale: LocaleEnvironment,
-  number: number,
-): string =>
+const printNumberOfAllCombatTechniques = (locale: LocaleEnvironment, number: number): string =>
   locale.translate(".input {$count :number} {{{$count} combat techniques}}", {
     count: number,
   })
 
-const printNumberOfCloseCombatTechniques = (
-  locale: LocaleEnvironment,
-  number: number,
-): string =>
-  locale.translate(
-    ".input {$count :number} {{{$count} close combat techniques}}",
-    { count: number },
-  )
+const printNumberOfCloseCombatTechniques = (locale: LocaleEnvironment, number: number): string =>
+  locale.translate(".input {$count :number} {{{$count} close combat techniques}}", {
+    count: number,
+  })
 
-const printNumberOfRangedCombatTechniques = (
-  locale: LocaleEnvironment,
-  number: number,
-): string =>
-  locale.translate(
-    ".input {$count :number} {{{$count} ranged combat techniques}}",
-    { count: number },
-  )
+const printNumberOfRangedCombatTechniques = (locale: LocaleEnvironment, number: number): string =>
+  locale.translate(".input {$count :number} {{{$count} ranged combat techniques}}", {
+    count: number,
+  })
 
 const printNumberOfCombatTechniques = (
   locale: LocaleEnvironment,
@@ -71,17 +56,13 @@ export const printRatedMinimumNumberPrerequisite = (
   prerequisite: RatedMinimumNumberPrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   switch (prerequisite.targets.kind) {
     case "Skills": {
       const skills = prerequisite.targets.Skills.targets
-        .map(
-          id =>
-            locale.translateMap(getInstanceById("Skill", id)?.translations)
-              ?.name,
-        )
+        .map(id => locale.translateMap(getInstanceById("Skill", id)?.translations)?.name)
         .filter(isNotNullish)
 
       return {
@@ -124,10 +105,7 @@ export const printRatedMinimumNumberPrerequisite = (
             count: prerequisite.number,
             property:
               locale.translateMap(
-                getInstanceById(
-                  "Property",
-                  prerequisite.targets.Spellworks.property,
-                )?.translations,
+                getInstanceById("Property", prerequisite.targets.Spellworks.property)?.translations,
               )?.name ?? MISSING_VALUE,
             minRating: prerequisite.value,
           },
@@ -145,8 +123,7 @@ export const printRatedMinimumNumberPrerequisite = (
             count: prerequisite.number,
             aspect:
               locale.translateMap(
-                getInstanceById("Aspect", prerequisite.targets.Liturgies.aspect)
-                  ?.translations,
+                getInstanceById("Aspect", prerequisite.targets.Liturgies.aspect)?.translations,
               )?.name ?? MISSING_VALUE,
             minRating: prerequisite.value,
           },

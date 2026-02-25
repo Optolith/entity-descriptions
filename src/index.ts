@@ -42,6 +42,7 @@ import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
+import { getProfessionVersionEntityDescription } from "./entities/profession.js"
 import { getRaceEntityDescription } from "./entities/race.js"
 import { getSexPracticeEntityDescription } from "./entities/sexPractice.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
@@ -260,7 +261,7 @@ const registeredEntityDescriptionCreators = {
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
   Race: getRaceEntityDescription,
   Culture: getCultureEntityDescription,
-  // ProfessionVersion: getProfessionVersionEntityDescription,
+  ProfessionVersion: getProfessionVersionEntityDescription,
   Advantage: getActivatableEntityDescription,
   Disadvantage: getActivatableEntityDescription,
   // core values

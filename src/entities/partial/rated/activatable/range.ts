@@ -10,7 +10,7 @@ import type {
   SkillModificationLevel_ID,
 } from "optolith-database-schema/gen"
 import {
-  getInstanceByIdR,
+  getInstanceByIdFnR,
   modifiableBySpeedOptionalR,
   modifiableBySpeedR,
   translateFnR,
@@ -38,7 +38,7 @@ const deriveModifiableRange = (
   "s" | "tm" | "ibi",
   "SkillModificationLevel"
 > =>
-  getInstanceByIdR<"SkillModificationLevel">().thenW(
+  getInstanceByIdFnR<"SkillModificationLevel">().thenW(
     getInstanceById =>
       mapNullable(
         getInstanceById("SkillModificationLevel", modificationLevelId),

@@ -2,6 +2,7 @@ import { isNotNullish } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
+  ChildEntityMap,
   EntityMap,
   FastSkillModificationLevelConfig,
   ResponsiveText,
@@ -9,13 +10,15 @@ import type {
   SkillModificationLevel,
   SlowSkillModificationLevelConfig,
 } from "optolith-database-schema/gen"
-import type { GetInstanceById } from "../../helpers/getTypes.js"
+import type { IdArgsVariant } from "tsondb/schema/gen"
 import type {
-  LocaleCompare,
-  LocaleJoin,
-  LocaleJoinType,
-} from "../../helpers/locale.js"
+  GetAllChildInstancesForParent,
+  GetAllInstances,
+  GetInstanceById,
+} from "../../helpers/getTypes.js"
+import type { LocaleCompare, LocaleJoin, LocaleJoinType } from "../../helpers/locale.js"
 import type {
+  Format,
   LocaleMap,
   Translate,
   TranslateMap,
@@ -24,15 +27,22 @@ import type {
   TranslationParamsInArray,
   Translations,
 } from "../../helpers/translate.js"
+import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./rated/activatable/nonModifiableSuffix.js"
 import { Speed } from "./rated/activatable/speed.js"
 import { responsive, ResponsiveTextSize } from "./responsiveText.js"
 import { formatEnergy, type EnergyUnit } from "./units/energy.js"
+import { MISSING_VALUE } from "./unknown.js"
 
 /**
  * The standard set of environment properties for readers in this project.
  */
-export type EnvMap<E extends keyof EntityMap = never> = {
+export type EnvMap<
+  E extends keyof EntityMap = never,
+  AE extends keyof EntityMap = never,
+  CE extends keyof ChildEntityMap = never,
+> = {
+  format: Format
   translate: Translate
   translateMap: TranslateMap
   localeJoin: LocaleJoin
@@ -40,16 +50,18 @@ export type EnvMap<E extends keyof EntityMap = never> = {
   responsiveTextSize: ResponsiveTextSize
   speed: Speed
   energyUnit: EnergyUnit
-  nonModifiableSuffix?: (
-    param: ModifiableParameter,
-  ) => TranslationKeysWithoutParams
+  nonModifiableSuffix?: (param: ModifiableParameter) => TranslationKeysWithoutParams
   getInstanceById: GetInstanceById<E>
+  getAllInstances: GetAllInstances<AE>
+  getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE>
+  getResolvedSelectOptionById: GetResolvedSelectOptionById
 }
 
 /**
  * Shortcuts for selecting keys of the shared environment map type.
  */
 export type EnvMapAbbr = {
+  f: "format"
   t: "translate"
   tm: "translateMap"
   lj: "localeJoin"
@@ -59,6 +71,9 @@ export type EnvMapAbbr = {
   eu: "energyUnit"
   nms: "nonModifiableSuffix"
   ibi: "getInstanceById"
+  ai: "getAllInstances"
+  acibp: "getChildInstancesForInstanceId"
+  rso: "getResolvedSelectOptionById"
 }
 
 /**
@@ -67,9 +82,11 @@ export type EnvMapAbbr = {
  * The keys are abbreviated to keep type annotations short.
  */
 export type StdEnv<
-  in K extends keyof EnvMapAbbr = keyof EnvMapAbbr,
-  in E extends keyof EntityMap = never,
-> = Pick<EnvMap<E>, EnvMapAbbr[K]>
+  K extends keyof EnvMapAbbr = keyof EnvMapAbbr,
+  E extends keyof EntityMap = never,
+  AE extends keyof EntityMap = never,
+  CE extends keyof ChildEntityMap = never,
+> = Pick<EnvMap<E, AE, CE>, EnvMapAbbr[K]>
 
 /**
  * Shortcut for a reader with common environment properties.
@@ -80,9 +97,19 @@ export type StdReader<
   T,
   K extends keyof EnvMapAbbr,
   E extends keyof EntityMap = never,
-> = Reader<StdEnv<K, E>, T>
+  AE extends keyof EntityMap = never,
+  CE extends keyof ChildEntityMap = never,
+> = Reader<StdEnv<K, E, AE, CE>, T>
 
 // Specialized constructors for common contexts
+
+/**
+ * Treats the text as a translation string and applies supplied arguments.
+ */
+export const formatR = (
+  text: string,
+  args?: Record<string, unknown> | undefined,
+): Reader<{ format: Format }, string> => Reader.asks(env => env.format(text, args))
 
 /**
  * Creates a value from a translation key.
@@ -90,14 +117,14 @@ export type StdReader<
 export const translateR = <K extends keyof Translations>(
   key: K,
   ...rest: TranslationParamsInArray<K>
-): Reader<{ translate: Translate }, string> =>
-  Reader.asks(env => env.translate(key, ...rest))
+): Reader<{ translate: Translate }, string> => Reader.asks(env => env.translate(key, ...rest))
 
 /**
  * Returns the `translate` function from the context.
  */
-export const translateFnR: Reader<{ translate: Translate }, Translate> =
-  Reader.asks(env => env.translate)
+export const translateFnR: Reader<{ translate: Translate }, Translate> = Reader.asks(
+  env => env.translate,
+)
 
 /**
  * Takes the appropriate translation from a locale map.
@@ -110,10 +137,80 @@ export const translateMapR = <T>(
 /**
  * Returns the `translateMap` function from the context.
  */
-export const translateMapFnR: Reader<
-  { translateMap: TranslateMap },
-  TranslateMap
-> = Reader.asks(env => env.translateMap)
+export const translateMapFnR: Reader<{ translateMap: TranslateMap }, TranslateMap> = Reader.asks(
+  env => env.translateMap,
+)
+
+/**
+ * Retrieves the translation for the current locale from the given value’s `translations` property.
+ * @returns `undefined` if the value does not exist or does not have a translation for the current locale, otherwise the translation.
+ */
+export const translationR = <T>(
+  value: { translations?: LocaleMap<T> } | undefined,
+): Reader<{ translateMap: TranslateMap }, T | undefined> =>
+  Reader.asks(env => env.translateMap(value?.translations))
+
+/**
+ * Retrieves a specific property of the specified entry.
+ */
+export const mapTranslationR = <
+  E extends keyof EntityMap &
+    {
+      [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<object> } ? K : never
+    }[keyof EntityMap],
+  R,
+>(
+  ...args: [
+    ...IdArgsVariant<EntityMap, E>,
+    fn: (
+      translation: EntityMap[E] extends { translations: LocaleMap<infer T> }
+        ? T | undefined
+        : never,
+    ) => R,
+  ]
+): Reader<{ translateMap: TranslateMap; getInstanceById: GetInstanceById<E> }, R | undefined> =>
+  Reader.asks(env => {
+    const idArgs = args.length === 3 ? ([args[0], args[1]] as const) : ([args[0]] as const)
+    const fn = args.length === 3 ? args[2] : args[1]
+    const translation = env.translateMap<object>(env.getInstanceById(...idArgs)?.translations)
+    return fn(
+      translation as EntityMap[E] extends { translations: LocaleMap<infer T> }
+        ? T | undefined
+        : never,
+    )
+  })
+
+/**
+ * Retrieves the `name` property of the specified entry.
+ */
+export const nameR = <
+  E extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
+      ? K
+      : never
+  }[keyof EntityMap],
+>(
+  ...args: IdArgsVariant<EntityMap, E>
+): Reader<
+  { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
+  string | undefined
+> => Reader.asks(env => env.translateMap(env.getInstanceById(...args)?.translations)?.name)
+
+/**
+ * Retrieves the `name` property of the specified entry.
+ *
+ * Returns {@link MISSING_VALUE} if there is no name for the entry in the locale. This can happen if the entry itself does not exist, or it does not have a translation for the current locale.
+ */
+export const strictNameR = <
+  E extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
+      ? K
+      : never
+  }[keyof EntityMap],
+>(
+  ...args: IdArgsVariant<EntityMap, E>
+): Reader<{ translateMap: TranslateMap; getInstanceById: GetInstanceById<E> }, string> =>
+  nameR(...args).map(name => name ?? MISSING_VALUE)
 
 /**
  * Joins a list of strings according to the locale’s rules for the given type.
@@ -121,16 +218,42 @@ export const translateMapFnR: Reader<
 export const localeJoinR = (
   arr: string[],
   type: LocaleJoinType,
-): Reader<{ localeJoin: LocaleJoin }, string> =>
-  Reader.asks(env => env.localeJoin(arr, type))
+): Reader<{ localeJoin: LocaleJoin }, string> => Reader.asks(env => env.localeJoin(arr, type))
 
 /**
  * Returns a function to retrieve an instance from the database by its entity name and ID.
  */
-export const getInstanceByIdR = <E extends keyof EntityMap = never>(): Reader<
+export const getInstanceByIdFnR = <E extends keyof EntityMap = never>(): Reader<
   { getInstanceById: GetInstanceById<E> },
   GetInstanceById<E>
 > => Reader.asks(env => env.getInstanceById)
+
+/**
+ * Retrieves an instance from the database by its entity name and ID.
+ */
+export const getInstanceByIdR = <E extends keyof EntityMap>(
+  ...args: IdArgsVariant<EntityMap, E>
+): Reader<{ getInstanceById: GetInstanceById<E> }, EntityMap[E] | undefined> =>
+  Reader.asks(env => env.getInstanceById(...args))
+
+/**
+ * Retrieves all instances of an entity from the database by their entity name.
+ */
+export const getAllInstancesR = <E extends keyof EntityMap>(
+  entityName: E,
+): Reader<{ getAllInstances: GetAllInstances<E> }, { id: string; content: EntityMap[E] }[]> =>
+  Reader.asks(env => env.getAllInstances(entityName))
+
+/**
+ * Retrieves all child instances of an entity from the database by their child entity name and their parent’s identifier.
+ */
+export const getChildInstancesForInstanceIdR = <CE extends keyof ChildEntityMap>(
+  entityName: CE,
+  parentId: ChildEntityMap[CE][2],
+): Reader<
+  { getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE> },
+  { id: string; content: ChildEntityMap[CE][0] }[]
+> => Reader.asks(env => env.getChildInstancesForInstanceId(entityName, parentId))
 
 /**
  * Joins a list of strings according to the locale’s rules for the given type.
@@ -138,10 +261,7 @@ export const getInstanceByIdR = <E extends keyof EntityMap = never>(): Reader<
 export const responsiveLocaleJoinR = (
   arr: string[],
   type: LocaleJoinType,
-): Reader<
-  { localeJoin: LocaleJoin; responsiveTextSize: ResponsiveTextSize },
-  string
-> =>
+): Reader<{ localeJoin: LocaleJoin; responsiveTextSize: ResponsiveTextSize }, string> =>
   Reader.asks(({ localeJoin, responsiveTextSize }) =>
     responsive(
       responsiveTextSize,
@@ -164,10 +284,17 @@ export const responsiveLocaleJoinR = (
 /**
  * Compares two strings according to the locale’s sorting rules.
  */
-export const localeCompareR: Reader<
-  { localeCompare: LocaleCompare },
-  LocaleCompare
-> = Reader.asks(env => env.localeCompare)
+export const localeCompareR: Reader<{ localeCompare: LocaleCompare }, LocaleCompare> = Reader.asks(
+  env => env.localeCompare,
+)
+
+/**
+ * Sorts an array of strings according to the locale’s sorting rules.
+ */
+export const localeSortR = <T extends string>(
+  arr: T[],
+): Reader<{ localeCompare: LocaleCompare }, T[]> =>
+  Reader.asks(({ localeCompare }) => arr.toSorted(localeCompare))
 
 /**
  * Creates a responsive value from two functions that return the value for the full and compressed version, respectively.
@@ -176,9 +303,7 @@ export const responsiveR = <T>(
   full: () => T,
   compressed: () => T,
 ): Reader<{ responsiveTextSize: ResponsiveTextSize }, T> =>
-  Reader.asks(({ responsiveTextSize }) =>
-    responsive(responsiveTextSize, full, compressed),
-  )
+  Reader.asks(({ responsiveTextSize }) => responsive(responsiveTextSize, full, compressed))
 
 /**
  * Creates a responsive value from two functions that return the value for the full and compressed version, respectively.
@@ -208,10 +333,7 @@ export const responsiveTranslateR = <
   fullKey: K,
   compressedKey: K2,
   ...rest: TranslationParamsInArray<K> & TranslationParamsInArray<K2>
-): Reader<
-  { translate: Translate; responsiveTextSize: ResponsiveTextSize },
-  string
-> =>
+): Reader<{ translate: Translate; responsiveTextSize: ResponsiveTextSize }, string> =>
   Reader.asks(({ translate, responsiveTextSize }) =>
     responsive(
       responsiveTextSize,
@@ -254,9 +376,7 @@ export const responsiveTextOptionalR = (
 export const formatEnergyR = (
   value: string | number,
 ): Reader<{ translate: Translate; energyUnit: EnergyUnit }, string> =>
-  Reader.asks(({ translate, energyUnit }) =>
-    formatEnergy(translate, energyUnit, value),
-  )
+  Reader.asks(({ translate, energyUnit }) => formatEnergy(translate, energyUnit, value))
 
 /**
  * Formats the given energy cost value with the appropriate unit based on the entity type.
@@ -330,19 +450,12 @@ export const modifyBySpeedR: Reader<
   ) => SpeedMap[S][K]
 > = Reader.asks(
   ({ speed }) =>
-    <S extends Speed, K extends keyof SpeedMap[S]>(
-      key: K,
-      level: SkillModificationLevel,
-    ) => {
+    <S extends Speed, K extends keyof SpeedMap[S]>(key: K, level: SkillModificationLevel) => {
       switch (speed) {
         case Speed.Fast:
-          return level.fast[
-            key as keyof FastSkillModificationLevelConfig
-          ] as SpeedMap[S][K]
+          return level.fast[key as keyof FastSkillModificationLevelConfig] as SpeedMap[S][K]
         case Speed.Slow:
-          return level.slow[
-            key as keyof SlowSkillModificationLevelConfig
-          ] as SpeedMap[S][K]
+          return level.slow[key as keyof SlowSkillModificationLevelConfig] as SpeedMap[S][K]
         default:
           return assertExhaustive(speed)
       }

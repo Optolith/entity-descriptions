@@ -1,6 +1,6 @@
 import { Compare } from "@optolith/helpers/compare"
 import type { LocaleMeasurementAdjustments } from "optolith-database-schema/gen"
-import { Translate, TranslateMap } from "./translate.js"
+import { Translate, TranslateMap, type Format } from "./translate.js"
 
 /**
  * The type of list to join in a locale-aware way.
@@ -12,6 +12,7 @@ export type LocaleJoinType = "conjunction" | "disjunction" | "unit"
  */
 export type LocaleEnvironment = {
   id: string
+  format: Format
   translate: Translate
   translateMap: TranslateMap
   compare: LocaleCompare

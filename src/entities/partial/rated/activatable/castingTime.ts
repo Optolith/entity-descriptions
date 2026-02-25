@@ -15,7 +15,7 @@ import {
 } from "optolith-database-schema/gen"
 import { Case } from "../../../../helpers/enums.js"
 import {
-  getInstanceByIdR,
+  getInstanceByIdFnR,
   modifiableBySpeedR,
   type StdReader,
 } from "../../reader.js"
@@ -37,7 +37,7 @@ const deriveModifiableCastingTime = (
   "s" | "ibi",
   "SkillModificationLevel"
 > =>
-  getInstanceByIdR<"SkillModificationLevel">().thenW(
+  getInstanceByIdFnR<"SkillModificationLevel">().thenW(
     getInstanceById =>
       mapNullable(
         getInstanceById("SkillModificationLevel", modificationLevelId),

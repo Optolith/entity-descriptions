@@ -1,4 +1,5 @@
 import { on } from "@elyukai/utils/function"
+import { mapNullable } from "@elyukai/utils/nullable"
 import { numAsc } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
@@ -32,9 +33,14 @@ import {
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
+import type { TranslateMap } from "../../../helpers/translate.js"
+import {
+  renderActivatableNameComponents,
+  renderActivatableNameComponentsCombinedIfPossible,
+} from "../activatableNameChunks.js"
 import { MISSING_VALUE } from "../unknown.js"
 import { printDisplayOption } from "./displayOption.js"
-import { joinPrerequisiteParts, PrerequisitePart } from "./part.js"
+import { hasPartValueObject, joinPrerequisiteParts, PrerequisitePart } from "./part.js"
 import {
   printAdvantageDisadvantagePrerequisiteGroup,
   printAnimistPowerPrerequisiteGroup,
@@ -56,26 +62,24 @@ import { GetResolvedSelectOptionById } from "./single/activatable.js"
 type Prerequisite = { kind: string }
 
 const printPrerequisiteGroup = (
-  locale: LocaleEnvironment,
+  translateMap: TranslateMap,
   group: PrerequisiteGroup<unknown>,
 ): PrerequisitePart => ({
-  value: locale.translateMap(group.translations)?.text ?? MISSING_VALUE,
+  value: translateMap(group.translations)?.text ?? MISSING_VALUE,
   sentenceType: undefined,
   isMeta: false,
 })
 
 const printPrerequisitesDisjunction = <T extends Prerequisite>(
   getPrerequisiteTranslation: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translateMap" | "join">,
   disjunction: PrerequisitesDisjunction<T>,
 ): PrerequisitePart | undefined => {
   if (disjunction.display_option !== undefined) {
-    return printDisplayOption(locale, disjunction.display_option)
+    return printDisplayOption(locale.translateMap, disjunction.display_option)
   }
 
-  const [first, ...other] = disjunction.list
-    .map(getPrerequisiteTranslation)
-    .filter(isNotNullish)
+  const [first, ...other] = disjunction.list.map(getPrerequisiteTranslation).filter(isNotNullish)
 
   if (first === undefined) {
     return undefined
@@ -83,16 +87,26 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
 
   if (
     disjunction.list.length < 2 ||
-    disjunction.list
-      .slice(1)
-      .every(part => part.kind === disjunction.list[0]!.kind)
+    disjunction.list.slice(1).every(part => part.kind === disjunction.list[0]!.kind)
   ) {
     return {
       label: first.label,
-      value: locale.join(
-        [first, ...other].map(part => part.value),
-        "disjunction",
-      ),
+      value:
+        hasPartValueObject(first) && other.every(hasPartValueObject)
+          ? renderActivatableNameComponentsCombinedIfPossible(
+              locale.translateMap,
+              [first.value, ...other.map(part => part.value)],
+              true,
+              list => locale.join(list, "disjunction"),
+            )
+          : locale.join(
+              [first, ...other].map(part =>
+                typeof part.value === "string"
+                  ? part.value
+                  : renderActivatableNameComponents(locale.translateMap, part.value, true),
+              ),
+              "disjunction",
+            ),
       sentenceType: undefined,
       isMeta: false,
     }
@@ -113,20 +127,16 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
  */
 const printPrerequisitesElement = <T extends Prerequisite>(
   printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translateMap" | "join">,
   element: PrerequisitesElement<T>,
 ): PrerequisitePart | undefined => {
   switch (element.kind) {
     case "Single":
       return printPrerequisite(element.Single)
     case "Disjunction":
-      return printPrerequisitesDisjunction(
-        printPrerequisite,
-        locale,
-        element.Disjunction,
-      )
+      return printPrerequisitesDisjunction(printPrerequisite, locale, element.Disjunction)
     case "Group":
-      return printPrerequisiteGroup(locale, element.Group)
+      return printPrerequisiteGroup(locale.translateMap, element.Group)
     default:
       return assertExhaustive(element)
   }
@@ -137,14 +147,19 @@ const printPrerequisitesElement = <T extends Prerequisite>(
  */
 const printPlainPrerequisites = <T extends Prerequisite>(
   printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "compare" | "join">,
   prerequisites: PlainPrerequisites<T>,
 ): string =>
   joinPrerequisiteParts(
-    locale,
+    locale.translate,
+    locale.translateMap,
+    locale.compare,
     prerequisites
       .map(element =>
-        printPrerequisitesElement(printPrerequisite, locale, element),
+        mapNullable(printPrerequisitesElement(printPrerequisite, locale, element), part => ({
+          type: element.kind === "Single" ? element.Single.kind : element.kind,
+          part,
+        })),
       )
       .filter(isNotNullish),
   )
@@ -173,18 +188,13 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
   const previousLevelPrerequisites: PrerequisitesForLevels<T> =
     printPreviousLevelPrerequisites === undefined
       ? []
-      : Array.from(
-          { length: printPreviousLevelPrerequisites.levels - 1 },
-          (_, i) => ({
-            level: i + 2,
-            prerequisite: {
-              kind: "Single",
-              Single: printPreviousLevelPrerequisites.createPreerequisite(
-                i + 2,
-              ),
-            },
-          }),
-        )
+      : Array.from({ length: printPreviousLevelPrerequisites.levels - 1 }, (_, i) => ({
+          level: i + 2,
+          prerequisite: {
+            kind: "Single",
+            Single: printPreviousLevelPrerequisites.createPreerequisite(i + 2),
+          },
+        }))
 
   const groupedByLevel = Map.groupBy(
     [...value, ...previousLevelPrerequisites],
@@ -198,8 +208,7 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
     .toArray()
     .sort(on(item => item[0], numAsc))
 
-  const hasOnlyBasePrerequisites =
-    groupedByLevel.size === 1 && hasBasePrerequisites
+  const hasOnlyBasePrerequisites = groupedByLevel.size === 1 && hasBasePrerequisites
 
   const printedParts = [
     ...(hasBasePrerequisites
@@ -211,10 +220,18 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
         ]),
     ...sortedByLevel.map(([levelNumber, prerequisites]) => {
       const prerequisitesString = joinPrerequisiteParts(
-        locale,
+        locale.translate,
+        locale.translateMap,
+        locale.compare,
         prerequisites
-          .map(prerequisite =>
-            printPrerequisiteForLevel(printPrerequisite, locale, prerequisite),
+          .map(element =>
+            mapNullable(printPrerequisiteForLevel(printPrerequisite, locale, element), part => ({
+              type:
+                element.prerequisite.kind === "Single"
+                  ? element.prerequisite.Single.kind
+                  : element.prerequisite.kind,
+              part,
+            })),
           )
           .filter(isNotNullish),
       )
@@ -238,8 +255,7 @@ export const printDerivedCharacteristicPrerequisites = (
   value: DerivedCharacteristicPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printDerivedCharacteristicPrerequisiteGroup(locale, prerequisite),
+    prerequisite => printDerivedCharacteristicPrerequisiteGroup(locale, prerequisite),
     locale,
     value,
   )
@@ -253,8 +269,7 @@ export const printPublicationPrerequisites = (
   value: PublicationPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printPublicationPrerequisiteGroup(getInstanceById, locale, prerequisite),
+    prerequisite => printPublicationPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -347,14 +362,10 @@ export const printGeneralPrerequisites = (
  */
 export const printProfessionPrerequisites = (
   getInstanceById: GetInstanceById<
-    | "Race"
-    | "Culture"
-    | ActivatableIdentifier["kind"]
-    | RatedIdentifier["kind"]
-    | "Aspect"
+    "Race" | "Culture" | ActivatableIdentifier["kind"] | RatedIdentifier["kind"] | "Aspect"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "compare" | "join">,
   value: ProfessionPrerequisites,
 ): string =>
   printPlainPrerequisites(
@@ -415,12 +426,7 @@ export const printArcaneTraditionPrerequisites = (
   value: ArcaneTraditionPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printArcaneTraditionPrerequisiteGroup(
-        getInstanceById,
-        locale,
-        prerequisite,
-      ),
+    prerequisite => printArcaneTraditionPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -434,12 +440,7 @@ export const printPersonalityTraitPrerequisites = (
   value: PersonalityTraitPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printPersonalityTraitPrerequisiteGroup(
-        getInstanceById,
-        locale,
-        prerequisite,
-      ),
+    prerequisite => printPersonalityTraitPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -453,8 +454,7 @@ export const printSpellworkPrerequisites = (
   value: SpellworkPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printSpellworkPrerequisiteGroup(getInstanceById, locale, prerequisite),
+    prerequisite => printSpellworkPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -476,11 +476,12 @@ export const printLiturgyPrerequisites = (
  * Print influence prerequisites as a string.
  */
 export const printInfluencePrerequisites = (
+  getInstanceById: GetInstanceById<"Influence">,
   locale: LocaleEnvironment,
   value: InfluencePrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite => printInfluencePrerequisiteGroup(locale, prerequisite),
+    prerequisite => printInfluencePrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -489,9 +490,7 @@ export const printInfluencePrerequisites = (
  * Print language prerequisites as a string.
  */
 export const printLanguagePrerequisites = (
-  getInstanceById: GetInstanceById<
-    "Race" | ActivatableIdentifier["kind"] | "Aspect"
-  >,
+  getInstanceById: GetInstanceById<"Race" | ActivatableIdentifier["kind"] | "Aspect">,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   value: LanguagePrerequisites,
@@ -517,8 +516,7 @@ export const printAnimistPowerPrerequisites = (
   value: AnimistPowerPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printAnimistPowerPrerequisiteGroup(getInstanceById, locale, prerequisite),
+    prerequisite => printAnimistPowerPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -527,11 +525,12 @@ export const printAnimistPowerPrerequisites = (
  * Print geode ritual prerequisites as a string.
  */
 export const printGeodeRitualPrerequisites = (
+  getInstanceById: GetInstanceById<"Influence">,
   locale: LocaleEnvironment,
   value: GeodeRitualPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite => printGeodeRitualPrerequisiteGroup(locale, prerequisite),
+    prerequisite => printGeodeRitualPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )
@@ -545,8 +544,7 @@ export const printEnhancementPrerequisites = (
   value: EnhancementPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite =>
-      printEnhancementPrerequisiteGroup(getInstanceById, locale, prerequisite),
+    prerequisite => printEnhancementPrerequisiteGroup(getInstanceById, locale, prerequisite),
     locale,
     value,
   )

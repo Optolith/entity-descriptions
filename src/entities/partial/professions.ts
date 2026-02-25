@@ -37,9 +37,8 @@ export const getBaseProfessionPackageForCurriculum = (
     (_acc: { id: string; content: ProfessionPackage } | undefined, version) =>
       getChildInstancesForInstanceId("ProfessionPackage", version.id).find(
         professionPackage =>
-          professionPackage.content.experience_level === undefined ||
           professionPackage.content.experience_level ===
-            idMap.ExperienceLevel.Experienced,
+          idMap.ExperienceLevel.Experienced,
       ),
     isNotNullish,
     undefined,

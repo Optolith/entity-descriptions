@@ -1,5 +1,15 @@
 import { MessageFormat } from "messageformat"
-import { Translate, TranslateMap } from "../../src/helpers/translate.js"
+import {
+  Translate,
+  TranslateMap,
+  type Format,
+} from "../../src/helpers/translate.js"
+
+/**
+ * A mocked format function.
+ */
+export const formatMock: Format = (text, args) =>
+  new MessageFormat("en", text).format(args)
 
 /**
  * A mocked translate function.

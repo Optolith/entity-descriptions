@@ -9,11 +9,11 @@ import { PrerequisitePart } from "../part.js"
  */
 export const printRacePrerequisite = (
   getInstanceById: GetInstanceById<"Race">,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: RacePrerequisite,
 ): PrerequisitePart | undefined => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale, prerequisite.display_option)
+    return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
   const race = getInstanceById("Race", prerequisite.id)
