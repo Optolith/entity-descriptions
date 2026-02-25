@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
-    "@elyukai/utils": "^0.2.4",
+    "@elyukai/utils": "^0.2.8",
     "@optolith/helpers": "^0.2.2",
     "messageformat": "^4.0.0",
     "tsondb": "^0.19.8"
@@ -40,12 +40,12 @@
     "@types/node": "^25.3.0",
     "commit-and-tag-version": "^12.6.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^62.7.0",
+    "eslint-plugin-jsdoc": "^62.7.1",
     "globals": "^17.3.0",
-    "optolith-database-schema": "^0.32.0",
+    "optolith-database-schema": "^0.33.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0"
+    "typescript-eslint": "^8.56.1"
   },
   "type": "module",
   "engines": {
