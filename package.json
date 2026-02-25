@@ -15,6 +15,8 @@
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc -b -w",
+    "format": "prettier \"src/{types/**/*.{ts,tsx},*.{ts,tsx}}\" --write",
+    "format:check": "prettier \"src/{types/**/*.{ts,tsx},*.{ts,tsx}}\" --check",
     "release": "commit-and-tag-version",
     "release:sign": "commit-and-tag-version --sign --signoff",
     "test": "node --import tsx --test",
@@ -44,6 +46,7 @@
     "eslint-plugin-jsdoc": "^62.7.1",
     "globals": "^17.3.0",
     "optolith-database-schema": "^0.33.0",
+    "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
