@@ -16,6 +16,7 @@
     "build": "tsc -b",
     "watch": "tsc -b -w",
     "release": "commit-and-tag-version",
+    "release:sign": "commit-and-tag-version --sign --signoff",
     "test": "node --import tsx --test",
     "lint": "eslint"
   },
