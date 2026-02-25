@@ -94,9 +94,7 @@ export type EntityDescriptionSection =
  * A labeled section of a library entry text.
  */
 export type LabeledEntityDescriptionSection<
-  Content extends
-    | EntityDescriptionSectionContent
-    | RawEntityDescriptionSectionContent,
+  Content extends EntityDescriptionSectionContent | RawEntityDescriptionSectionContent,
 > = {
   type: "labeled"
   label: string
@@ -106,9 +104,10 @@ export type LabeledEntityDescriptionSection<
 /**
  * A slice of the content of a library entry text.
  */
-export type EntityDescriptionSectionContent<
-  DL = DefinitionListEntityDescriptionSection,
-> = PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
+export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescriptionSection> =
+  | PlainEntityDescriptionSection
+  | DL
+  | TableEntityDescriptionSection
 
 /**
  * A JSON representation of the rules text for a library entry that has not been
@@ -133,9 +132,10 @@ export type RawEntityDescriptionSection =
 /**
  * A slice of the content of a library entry text.
  */
-export type RawEntityDescriptionSectionContent<
-  DL = RawDefinitionListEntityDescriptionSection,
-> = PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
+export type RawEntityDescriptionSectionContent<DL = RawDefinitionListEntityDescriptionSection> =
+  | PlainEntityDescriptionSection
+  | DL
+  | TableEntityDescriptionSection
 
 /**
  * A plain text, possibly containing Markdown syntax.
@@ -199,9 +199,7 @@ export type RawNestedDefinitionListEntityDescriptionSection = {
  */
 export type DefinitionListEntityDescriptionSectionItem = {
   label: string
-  value:
-    | string
-    | EntityDescriptionSectionContent<NestedDefinitionListEntityDescriptionSection>[]
+  value: string | EntityDescriptionSectionContent<NestedDefinitionListEntityDescriptionSection>[]
 }
 
 /**
@@ -234,9 +232,7 @@ export type TypedCreatorData = {
   getInstanceById: GetInstanceById<keyof TSONDBTypes["entityMap"]>
   getAllInstances: GetAllInstances<keyof TSONDBTypes["entityMap"]>
   countInstances: CountInstances<keyof TSONDBTypes["entityMap"]>
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<
-    keyof TSONDBTypes["childEntityMap"]
-  >
+  getChildInstancesForInstanceId: GetAllChildInstancesForParent<keyof TSONDBTypes["childEntityMap"]>
   getResolvedSelectOptionById: GetResolvedSelectOptionById
   getAllResolvedSelectOptions: GetAllResolvedSelectOptions
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
@@ -244,8 +240,10 @@ export type TypedCreatorData = {
   idMap: IdMap
 }
 
-type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> =
-  EntityDescriptionCreator<E, TypedCreatorData>
+type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> = EntityDescriptionCreator<
+  E,
+  TypedCreatorData
+>
 
 const registeredEntityDescriptionCreators = {
   // rules
@@ -390,9 +388,7 @@ type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
 /**
  * Checks if there is a registered description creator for the given entity name.
  */
-export const isSupportedEntity = (
-  entityName: string,
-): entityName is AvailableCreatorEntity =>
+export const isSupportedEntity = (entityName: string): entityName is AvailableCreatorEntity =>
   entityName in registeredEntityDescriptionCreators
 
 /**
@@ -409,16 +405,12 @@ export type IdMap = {
 /**
  * A function that returns all resolved select options for an activatable entry.
  */
-export type GetAllResolvedSelectOptions = (
-  id: ActivatableIdentifier,
-) => ResolvedSelectOption[]
+export type GetAllResolvedSelectOptions = (id: ActivatableIdentifier) => ResolvedSelectOption[]
 
 /**
  * A function that returns all new skill applications for a skill.
  */
-export type GetAllResolvedNewSkillApplications = (
-  id: Skill_ID,
-) => ResolvedNewSkillApplication[]
+export type GetAllResolvedNewSkillApplications = (id: Skill_ID) => ResolvedNewSkillApplication[]
 
 /**
  * A function that returns all skill uses for a skill.
@@ -439,9 +431,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   entityName: E,
   instanceId: string,
 ): EntityDescription | undefined => {
-  const creator = registeredEntityDescriptionCreators[
-    entityName
-  ] as TypedCreator<E>
+  const creator = registeredEntityDescriptionCreators[entityName] as TypedCreator<E>
 
   const instance = database.getInstanceOfEntityById(entityName, instanceId)
 
@@ -455,10 +445,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
       getAllInstances: database.getAllInstanceContainersOfEntity.bind(database),
       countInstances: database.countInstancesOfEntity.bind(database),
       getChildInstancesForInstanceId: (childEntityName, parentId) =>
-        database.getAllChildInstanceContainersForParent(
-          childEntityName,
-          parentId,
-        ),
+        database.getAllChildInstanceContainersForParent(childEntityName, parentId),
       getResolvedSelectOptionById,
       getAllResolvedSelectOptions,
       getAllResolvedNewSkillApplications,

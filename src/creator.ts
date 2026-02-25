@@ -53,9 +53,7 @@ const mapNestedDefinitionList = (
         ? item.value
         : item.value
             .filter(isNotNullish)
-            .map(subsection =>
-              mapRawSectionContent(mapNestedDefinitionList, subsection),
-            ),
+            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection)),
   })),
 })
 
@@ -70,15 +68,11 @@ const mapDefinitionList = (
         ? item.value
         : item.value
             .filter(isNotNullish)
-            .map(subsection =>
-              mapRawSectionContent(mapNestedDefinitionList, subsection),
-            ),
+            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection)),
   })),
 })
 
-const mapRawSection = (
-  section: RawEntityDescriptionSection,
-): EntityDescriptionSection => {
+const mapRawSection = (section: RawEntityDescriptionSection): EntityDescriptionSection => {
   switch (section.type) {
     case "labeled":
       return {
@@ -144,8 +138,4 @@ export type EntityDescriptionCreator<
     getInstanceById: GetInstanceById<"Publication">
   },
   R = EntityDescription,
-> = (
-  databaseAccessors: A,
-  locale: LocaleEnvironment,
-  entry: TaggedEntity<ES>,
-) => R | undefined
+> = (databaseAccessors: A, locale: LocaleEnvironment, entry: TaggedEntity<ES>) => R | undefined
