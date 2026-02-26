@@ -34,6 +34,7 @@
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
     "@elyukai/utils": "^0.2.8",
+    "@optolith/adventure-points": "^0.1.1",
     "@optolith/helpers": "^0.2.2",
     "messageformat": "^4.0.0",
     "tsondb": "^0.19.8"

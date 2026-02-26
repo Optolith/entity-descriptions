@@ -38,7 +38,6 @@ import {
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { calculateAdventurePointsFromImprovementCost } from "./partial/rated/improvementCost.js"
 import {
   translateR,
   type EnvMap,
@@ -46,6 +45,7 @@ import {
   type StdReader,
 } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
+import { getAdventurePointsForRatingRange } from "@optolith/adventure-points/improvement-cost"
 
 const renderListOperation = (
   operation: CommonProfessionConstraintsOperation,
@@ -407,10 +407,7 @@ const renderCulturalPackage = (
 
         return [
           `${instanceTranslation.name ?? MISSING_VALUE} ${sign(item.points)}`,
-          calculateAdventurePointsFromImprovementCost(
-            instance.improvement_cost,
-            [1, item.points],
-          ),
+          getAdventurePointsForRatingRange(instance.improvement_cost.kind, 0, item.points),
         ]
       },
     )
