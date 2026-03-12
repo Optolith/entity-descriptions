@@ -1,18 +1,13 @@
 import { Compare } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { type LiturgyTradition } from "optolith-database-schema/gen"
+import { type LiturgyTradition, type RatedIdentifier } from "optolith-database-schema/gen"
+import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import type { GetInstanceById } from "../helpers/getTypes.js"
-import {
-  Translate,
-  TranslateMap,
-  type TranslationKeysWithoutParams,
-} from "../helpers/translate.js"
-import {
-  type IdMap,
-  type RawDefinitionListEntityDescriptionSectionItem,
-} from "../index.js"
+import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
+import { Translate, TranslateMap, type TranslationKeysWithoutParams } from "../helpers/translate.js"
+import { type IdMap, type RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
+import { renderEnhancements } from "./partial/enhancements.js"
 import { renderOneTimeDuration } from "./partial/rated/activatable/duration.js"
 import { renderEffect } from "./partial/rated/activatable/effect.js"
 import {
@@ -37,8 +32,7 @@ const getTextForTraditions = (
   values: LiturgyTradition[],
 ): RawDefinitionListEntityDescriptionSectionItem => {
   const getAspectName = (aspectId: string) =>
-    deps.translateMap(deps.getInstanceById("Aspect", aspectId)?.translations)
-      ?.name
+    deps.translateMap(deps.getInstanceById("Aspect", aspectId)?.translations)?.name
 
   const text = values
     .map(trad => {
@@ -47,11 +41,9 @@ const getTextForTraditions = (
           return getAspectName(trad.GeneralAspect)
         case "Tradition": {
           const traditionTranslation = deps.translateMap(
-            deps.getInstanceById("BlessedTradition", trad.Tradition.tradition)
-              ?.translations,
+            deps.getInstanceById("BlessedTradition", trad.Tradition.tradition)?.translations,
           )
-          const name =
-            traditionTranslation?.name_compressed ?? traditionTranslation?.name
+          const name = traditionTranslation?.name_compressed ?? traditionTranslation?.name
 
           if (name === undefined) {
             return undefined
@@ -121,10 +113,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
           },
           {
             label: translate("Range"),
-            value:
-              range !== translation.range
-                ? `***${range}*** (${translation.range})`
-                : range,
+            value: range !== translation.range ? `***${range}*** (${translation.range})` : range,
           },
           {
             label: translate("Duration"),
@@ -145,22 +134,29 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
 /**
  * Get a JSON representation of the rules text for a liturgical chant.
  */
-export const getLiturgicalChantEntityDescription =
-  createEntityDescriptionCreator<
-    "LiturgicalChant",
-    {
-      getInstanceById: GetInstanceById<
-        | "Publication"
-        | "Attribute"
-        | "SkillModificationLevel"
-        | "TargetCategory"
-        | "Aspect"
-        | "BlessedTradition"
-        | "DerivedCharacteristic"
-      >
-      idMap: IdMap
-    }
-  >(({ getInstanceById, idMap }, locale, { content: entry }) => {
+export const getLiturgicalChantEntityDescription = createEntityDescriptionCreator<
+  "LiturgicalChant",
+  {
+    getInstanceById: GetInstanceById<
+      | "Publication"
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Aspect"
+      | "BlessedTradition"
+      | "DerivedCharacteristic"
+      | RatedIdentifier["kind"]
+      | "Enhancement"
+    >
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
+    idMap: IdMap
+  }
+>(
+  (
+    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    locale,
+    { content: entry, entity, id },
+  ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
@@ -172,12 +168,12 @@ export const getLiturgicalChantEntityDescription =
       translate,
       translateMap,
       getInstanceById,
+      getChildInstancesForInstanceId,
       localeJoin: locale.join,
+      localeCompare: locale.compare,
       energyUnit: "KarmaPoints",
       responsiveTextSize: ResponsiveTextSize.Full,
-      nonModifiableSuffix: (
-        param: ModifiableParameter,
-      ): TranslationKeysWithoutParams => {
+      nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
         switch (param) {
           case ModifiableParameter.CastingTime:
             return " (you cannot use a modification on this chant’s liturgical time)"
@@ -191,8 +187,9 @@ export const getLiturgicalChantEntityDescription =
       },
     } satisfies Partial<EnvMap>
 
-    const { castingTime, cost, range, duration } =
-      renderFastPerformanceParameters(entry.parameters).run(env)
+    const { castingTime, cost, range, duration } = renderFastPerformanceParameters(
+      entry.parameters,
+    ).run(env)
 
     return {
       title: translation.name,
@@ -201,17 +198,12 @@ export const getLiturgicalChantEntityDescription =
         {
           type: "definitionList",
           items: [
-            renderSkillCheckWithPenalty(
-              entry.check,
-              entry.check_penalty,
-              idMap,
-            ).run(env),
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
             renderEffect(translation.effect).run(env),
             {
               label: translate("Liturgical Time"),
               value:
-                translation.casting_time &&
-                castingTime !== translation.casting_time.full
+                translation.casting_time && castingTime !== translation.casting_time.full
                   ? `***${castingTime}*** (${translation.casting_time.full})`
                   : castingTime,
             },
@@ -249,11 +241,13 @@ export const getLiturgicalChantEntityDescription =
             renderImprovementCost(entry.improvement_cost).run(env),
           ],
         },
+        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
       ],
       errata: translation.errata,
       references: entry.src,
     }
-  })
+  },
+)
 
 /**
  * Get a JSON representation of the rules text for a ceremony.
@@ -269,100 +263,106 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       | "Aspect"
       | "BlessedTradition"
       | "DerivedCharacteristic"
+      | RatedIdentifier["kind"]
+      | "Enhancement"
     >
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap, compare: localeCompare } = locale
-  const translation = translateMap(entry.translations)
+>(
+  (
+    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    locale,
+    { content: entry, entity, id },
+  ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
+    const translation = translateMap(entry.translations)
 
-  if (translation === undefined) {
-    return undefined
-  }
+    if (translation === undefined) {
+      return undefined
+    }
 
-  const env = {
-    translate,
-    translateMap,
-    getInstanceById,
-    localeJoin: locale.join,
-    energyUnit: "KarmaPoints",
-    responsiveTextSize: ResponsiveTextSize.Full,
-    nonModifiableSuffix: (
-      param: ModifiableParameter,
-    ): TranslationKeysWithoutParams => {
-      switch (param) {
-        case ModifiableParameter.CastingTime:
-          return " (you cannot use a modification on this ceremony’s ceremonial time)"
-        case ModifiableParameter.Cost:
-          return " (you cannot use a modification on this ceremony’s cost)"
-        case ModifiableParameter.Range:
-          return " (you cannot use a modification on this ceremony’s range)"
-        default:
-          return assertExhaustive(param)
-      }
-    },
-  } satisfies Partial<EnvMap>
-
-  const { castingTime, cost, range, duration } =
-    renderSlowPerformanceParameters(entry.parameters).run(env)
-
-  return {
-    title: translation.name,
-    className: "ceremony",
-    body: [
-      {
-        type: "definitionList",
-        items: [
-          renderSkillCheckWithPenalty(
-            entry.check,
-            entry.check_penalty,
-            idMap,
-          ).run(env),
-          renderEffect(translation.effect).run(env),
-          {
-            label: translate("Ceremonial Time"),
-            value:
-              translation.casting_time &&
-              castingTime !== translation.casting_time.full
-                ? `***${castingTime}*** (${translation.casting_time.full})`
-                : castingTime,
-          },
-          {
-            label: translate("KP Cost"),
-            value:
-              translation.cost && cost !== translation.cost.full
-                ? `***${cost}*** (${translation.cost.full})`
-                : cost,
-          },
-          {
-            label: translate("Range"),
-            value:
-              translation.range && range !== translation.range.full
-                ? `***${range}*** (${translation.range.full})`
-                : range,
-          },
-          {
-            label: translate("Duration"),
-            value:
-              translation.duration && duration !== translation.duration.full
-                ? `***${duration}*** (${translation.duration.full})`
-                : duration,
-          },
-          renderTargetCategory(entry.target).run(env),
-          getTextForTraditions(
-            {
-              translate,
-              translateMap,
-              localeCompare,
-              getInstanceById,
-            },
-            entry.traditions,
-          ),
-          renderImprovementCost(entry.improvement_cost).run(env),
-        ],
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      getChildInstancesForInstanceId,
+      localeJoin: locale.join,
+      localeCompare: locale.compare,
+      energyUnit: "KarmaPoints",
+      responsiveTextSize: ResponsiveTextSize.Full,
+      nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
+        switch (param) {
+          case ModifiableParameter.CastingTime:
+            return " (you cannot use a modification on this ceremony’s ceremonial time)"
+          case ModifiableParameter.Cost:
+            return " (you cannot use a modification on this ceremony’s cost)"
+          case ModifiableParameter.Range:
+            return " (you cannot use a modification on this ceremony’s range)"
+          default:
+            return assertExhaustive(param)
+        }
       },
-    ],
-    errata: translation.errata,
-    references: entry.src,
-  }
-})
+    } satisfies Partial<EnvMap>
+
+    const { castingTime, cost, range, duration } = renderSlowPerformanceParameters(
+      entry.parameters,
+    ).run(env)
+
+    return {
+      title: translation.name,
+      className: "ceremony",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderEffect(translation.effect).run(env),
+            {
+              label: translate("Ceremonial Time"),
+              value:
+                translation.casting_time && castingTime !== translation.casting_time.full
+                  ? `***${castingTime}*** (${translation.casting_time.full})`
+                  : castingTime,
+            },
+            {
+              label: translate("KP Cost"),
+              value:
+                translation.cost && cost !== translation.cost.full
+                  ? `***${cost}*** (${translation.cost.full})`
+                  : cost,
+            },
+            {
+              label: translate("Range"),
+              value:
+                translation.range && range !== translation.range.full
+                  ? `***${range}*** (${translation.range.full})`
+                  : range,
+            },
+            {
+              label: translate("Duration"),
+              value:
+                translation.duration && duration !== translation.duration.full
+                  ? `***${duration}*** (${translation.duration.full})`
+                  : duration,
+            },
+            renderTargetCategory(entry.target).run(env),
+            getTextForTraditions(
+              {
+                translate,
+                translateMap,
+                localeCompare,
+                getInstanceById,
+              },
+              entry.traditions,
+            ),
+            renderImprovementCost(entry.improvement_cost).run(env),
+          ],
+        },
+        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)

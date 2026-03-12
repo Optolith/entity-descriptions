@@ -10,7 +10,7 @@ import { MISSING_VALUE } from "../../unknown.js"
 import { PrerequisitePart } from "../part.js"
 
 const printLabel = (
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate">,
   skillId: SkillWithEnhancementsIdentifier,
 ): string => {
   switch (skillId.kind) {
@@ -26,9 +26,7 @@ const printLabel = (
 }
 
 const getSkill = (
-  getInstanceById: GetInstanceById<
-    "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony"
-  >,
+  getInstanceById: GetInstanceById<"Spell" | "Ritual" | "LiturgicalChant" | "Ceremony">,
   parentId: SkillWithEnhancementsIdentifier,
 ): { translations: LocaleMap<{ name: string }> } | undefined => {
   switch (parentId.kind) {
@@ -52,7 +50,7 @@ export const printEnhancementPrerequisite = (
   getInstanceById: GetInstanceById<
     "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony" | "Enhancement"
   >,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: EnhancementPrerequisite,
 ): PrerequisitePart | undefined => {
   const enhancement = getInstanceById("Enhancement", prerequisite.id)
@@ -60,9 +58,7 @@ export const printEnhancementPrerequisite = (
   const skill = enhancement && getSkill(getInstanceById, enhancement.parent)
 
   return {
-    label: `${
-      enhancement ? printLabel(locale, enhancement.parent) : MISSING_VALUE
-    } `,
+    label: `${enhancement ? printLabel(locale, enhancement.parent) : MISSING_VALUE} `,
     value: `*${
       locale.translateMap(enhancement?.translations)?.name ?? MISSING_VALUE
     }* ${locale.translate("for")} ${

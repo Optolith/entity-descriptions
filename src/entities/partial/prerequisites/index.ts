@@ -549,7 +549,7 @@ export const printGeodeRitualPrerequisites = (
  */
 export const printEnhancementPrerequisites = (
   getInstanceById: GetInstanceById<RatedIdentifier["kind"] | "Enhancement">,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "compare" | "join">,
   value: EnhancementPrerequisites,
 ): string =>
   printPlainPrerequisites(

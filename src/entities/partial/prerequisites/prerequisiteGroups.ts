@@ -414,7 +414,7 @@ export const printGeodeRitualPrerequisiteGroup = (
  */
 export const printEnhancementPrerequisiteGroup = (
   getInstanceById: GetInstanceById<RatedIdentifier["kind"] | "Enhancement">,
-  locale: LocaleEnvironment,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: EnhancementPrerequisiteGroup,
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {

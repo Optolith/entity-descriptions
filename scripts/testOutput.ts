@@ -8,10 +8,7 @@ import { dirname, join } from "node:path"
 import { argv } from "node:process"
 import { styleText, type InspectColor } from "node:util"
 import { schema } from "optolith-database-schema"
-import {
-  createCache,
-  type IdMap as CacheIdMap,
-} from "optolith-database-schema/cache"
+import { createCache, type IdMap as CacheIdMap } from "optolith-database-schema/cache"
 import { TSONDB } from "tsondb"
 import { fromUniformCase } from "tsondb/schema/gen"
 import type { LocaleEnvironment } from "../lib/helpers/locale.js"
@@ -26,7 +23,7 @@ import {
 const dataRootPath = join(
   dirname(findPackageJSON(import.meta.url) ?? import.meta.filename),
   "..",
-  "optolith-client",
+  "client",
   "src",
   "database",
   "contents",
@@ -73,8 +70,7 @@ const collator = new Intl.Collator(localeId, { usage: "sort" })
 
 const localeEnv: LocaleEnvironment = {
   id: localeId,
-  format: (text, args) =>
-    new MessageFormat(localeId, text, { bidiIsolation: "none" }).format(args),
+  format: (text, args) => new MessageFormat(localeId, text, { bidiIsolation: "none" }).format(args),
   compare: collator.compare.bind(collator),
   translate: (key, ...rest) =>
     new MessageFormat(localeId, localeInstance.translations?.[key] ?? key, {
@@ -82,9 +78,7 @@ const localeEnv: LocaleEnvironment = {
       functions: {
         list: (ctx, options, input): MessageValue<"list"> => {
           if (!Array.isArray(input)) {
-            ctx.onError(
-              new RangeError("Input for list function must be an array"),
-            )
+            ctx.onError(new RangeError("Input for list function must be an array"))
             return {
               type: "list",
               options,
@@ -131,9 +125,7 @@ const localeEnv: LocaleEnvironment = {
                 }
               }
               default:
-                ctx.onError(
-                  new RangeError("Unsupported list type: ${options.type}"),
-                )
+                ctx.onError(new RangeError("Unsupported list type: ${options.type}"))
                 return {
                   type: "list",
                   options,
@@ -194,12 +186,10 @@ const result = getEntityDescription(
   localeEnv,
   idMap,
   (parentId, id) =>
-    cache.activatableSelectOptions[parentId.kind][
-      fromUniformCase(parentId)
-    ]?.find(option => deepEqual(option.id, id)),
-  parentId =>
-    cache.activatableSelectOptions[parentId.kind][fromUniformCase(parentId)] ??
-    [],
+    cache.activatableSelectOptions[parentId.kind][fromUniformCase(parentId)]?.find(option =>
+      deepEqual(option.id, id),
+    ),
+  parentId => cache.activatableSelectOptions[parentId.kind][fromUniformCase(parentId)] ?? [],
   skillId => cache.newApplicationsAndUses.newApplications[skillId] ?? [],
   skillId => cache.newApplicationsAndUses.uses[skillId] ?? [],
   entity,
@@ -213,17 +203,10 @@ if (result === undefined) {
 console.log(styleText(["bold", "underline"], result.title))
 if (result.subtitle) console.log(styleText("italic", result.subtitle))
 
-const getColumnWidthForIndex = (
-  table: TableEntityDescriptionSection,
-  index: number,
-): number =>
+const getColumnWidthForIndex = (table: TableEntityDescriptionSection, index: number): number =>
   Math.max(
     0,
-    ...[
-      table.header[index],
-      ...table.rows.map(row => row[index]),
-      table.footer?.[index],
-    ]
+    ...[table.header[index], ...table.rows.map(row => row[index]), table.footer?.[index]]
       .filter(isNotNullish)
       .map(cell => cell.length),
   )
@@ -238,27 +221,19 @@ const logTableRow = (
   format?: InspectColor | InspectColor[],
 ): void => {
   const formatter =
-    format === undefined
-      ? (text: string) => text
-      : (text: string) => styleText(format, text)
+    format === undefined ? (text: string) => text : (text: string) => styleText(format, text)
 
   console.log(
     indent +
       row
         .map(
-          (cell, index) =>
-            formatter(cell) +
-            " ".repeat((columnWidths[index] ?? 0) - cell.length),
+          (cell, index) => formatter(cell) + " ".repeat((columnWidths[index] ?? 0) - cell.length),
         )
         .join("  "),
   )
 }
 
-const logSection = (
-  section: EntityDescriptionSection,
-  level: number,
-  indent = "",
-): void => {
+const logSection = (section: EntityDescriptionSection, level: number, indent = ""): void => {
   switch (section.type) {
     case "labeled":
       console.log(indent + styleText("bold", section.label))
@@ -269,18 +244,12 @@ const logSection = (
       break
     case "definitionList": {
       const listIndent =
-        "style" in section && section.style === "hidden"
-          ? indent.slice(0, -2)
-          : indent
+        "style" in section && section.style === "hidden" ? indent.slice(0, -2) : indent
 
-      const actualLevel =
-        "style" in section && section.style === "hidden" ? level - 1 : level
+      const actualLevel = "style" in section && section.style === "hidden" ? level - 1 : level
 
       section.items.forEach(item => {
-        console.log(
-          listIndent +
-            styleText(actualLevel > 1 ? "italic" : "bold", item.label + ":"),
-        )
+        console.log(listIndent + styleText(actualLevel > 1 ? "italic" : "bold", item.label + ":"))
         if (Array.isArray(item.value)) {
           item.value.forEach((subsection, subsectionIndex) => {
             if (subsectionIndex > 0) {
@@ -299,10 +268,7 @@ const logSection = (
       logTableRow(section.header, columnWidths, indent, "bold")
       section.rows.forEach(row => logTableRow(row, columnWidths, indent))
       if (section.footer) {
-        logTableRow(section.footer, columnWidths, indent, [
-          "italic",
-          "underline",
-        ])
+        logTableRow(section.footer, columnWidths, indent, ["italic", "underline"])
       }
       break
     }

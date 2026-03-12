@@ -23,6 +23,7 @@ import {
   type MagicalTradition_ID,
   type OldParameterBySpeed,
   type Property_ID,
+  type RatedIdentifier,
   type ResponsiveTextOptional,
   type SpellworkTraditions,
   type Tribe_ID,
@@ -34,6 +35,7 @@ import type { LocaleCompare } from "../helpers/locale.js"
 import { Translate, TranslateMap, type TranslationKeysWithoutParams } from "../helpers/translate.js"
 import { type IdMap, type RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
+import { renderEnhancements } from "./partial/enhancements.js"
 import {
   printAnimistPowerPrerequisites,
   printGeodeRitualPrerequisites,
@@ -293,77 +295,89 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
       | "Property"
       | "MagicalTradition"
       | "DerivedCharacteristic"
+      | RatedIdentifier["kind"]
+      | "Enhancement"
     >
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap, compare: localeCompare } = locale
-  const translation = translateMap(entry.translations)
+>(
+  (
+    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    locale,
+    { content: entry, entity, id },
+  ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
+    const translation = translateMap(entry.translations)
 
-  if (translation === undefined) {
-    return undefined
-  }
+    if (translation === undefined) {
+      return undefined
+    }
 
-  const env = {
-    translate,
-    translateMap,
-    getInstanceById,
-    localeJoin: locale.join,
-    energyUnit: "ArcaneEnergy",
-    responsiveTextSize: ResponsiveTextSize.Full,
-    nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
-      switch (param) {
-        case ModifiableParameter.CastingTime:
-          return " (you cannot use a modification on this spell’s casting time)"
-        case ModifiableParameter.Cost:
-          return " (you cannot use a modification on this spell’s cost)"
-        case ModifiableParameter.Range:
-          return " (you cannot use a modification on this spell’s range)"
-        default:
-          return assertExhaustive(param)
-      }
-    },
-  } satisfies Partial<EnvMap>
-
-  const { castingTime, cost, range, duration } = renderFastPerformanceParameters(
-    entry.parameters,
-  ).run(env)
-
-  return {
-    title: translation.name,
-    className: "spell",
-    body: [
-      {
-        type: "definitionList",
-        items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
-          renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Casting Time"),
-            castingTime,
-            translation.casting_time,
-          ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Duration"),
-            duration,
-            translation.duration,
-          ),
-          renderTargetCategory(entry.target).run(env),
-          renderProperty(entry.property).run(env),
-          getTextForTraditions(
-            { translate, translateMap, localeCompare, getInstanceById },
-            entry.traditions,
-          ),
-          renderImprovementCost(entry.improvement_cost).run(env),
-        ],
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      getChildInstancesForInstanceId,
+      localeJoin: locale.join,
+      localeCompare: locale.compare,
+      energyUnit: "ArcaneEnergy",
+      responsiveTextSize: ResponsiveTextSize.Full,
+      nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
+        switch (param) {
+          case ModifiableParameter.CastingTime:
+            return " (you cannot use a modification on this spell’s casting time)"
+          case ModifiableParameter.Cost:
+            return " (you cannot use a modification on this spell’s cost)"
+          case ModifiableParameter.Range:
+            return " (you cannot use a modification on this spell’s range)"
+          default:
+            return assertExhaustive(param)
+        }
       },
-    ],
-    errata: translation.errata,
-    references: entry.src,
-  }
-})
+    } satisfies Partial<EnvMap>
+
+    const { castingTime, cost, range, duration } = renderFastPerformanceParameters(
+      entry.parameters,
+    ).run(env)
+
+    return {
+      title: translation.name,
+      className: "spell",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderEffect(translation.effect).run(env),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Casting Time"),
+              castingTime,
+              translation.casting_time,
+            ),
+            combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration"),
+              duration,
+              translation.duration,
+            ),
+            renderTargetCategory(entry.target).run(env),
+            renderProperty(entry.property).run(env),
+            getTextForTraditions(
+              { translate, translateMap, localeCompare, getInstanceById },
+              entry.traditions,
+            ),
+            renderImprovementCost(entry.improvement_cost).run(env),
+          ],
+        },
+        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)
 
 /**
  * Get a JSON representation of the rules text for a ritual.
@@ -379,77 +393,89 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
       | "Property"
       | "MagicalTradition"
       | "DerivedCharacteristic"
+      | RatedIdentifier["kind"]
+      | "Enhancement"
     >
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap, compare: localeCompare } = locale
-  const translation = translateMap(entry.translations)
+>(
+  (
+    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    locale,
+    { content: entry, entity, id },
+  ) => {
+    const { translate, translateMap, compare: localeCompare } = locale
+    const translation = translateMap(entry.translations)
 
-  if (translation === undefined) {
-    return undefined
-  }
+    if (translation === undefined) {
+      return undefined
+    }
 
-  const env = {
-    translate,
-    translateMap,
-    getInstanceById,
-    localeJoin: locale.join,
-    energyUnit: "ArcaneEnergy",
-    responsiveTextSize: ResponsiveTextSize.Full,
-    nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
-      switch (param) {
-        case ModifiableParameter.CastingTime:
-          return " (you cannot use a modification on this ritual’s ritual time)"
-        case ModifiableParameter.Cost:
-          return " (you cannot use a modification on this ritual’s cost)"
-        case ModifiableParameter.Range:
-          return " (you cannot use a modification on this ritual’s range)"
-        default:
-          return assertExhaustive(param)
-      }
-    },
-  } satisfies Partial<EnvMap>
-
-  const { castingTime, cost, range, duration } = renderSlowPerformanceParameters(
-    entry.parameters,
-  ).run(env)
-
-  return {
-    title: translation.name,
-    className: "ritual",
-    body: [
-      {
-        type: "definitionList",
-        items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
-          renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Ritual Time"),
-            castingTime,
-            translation.casting_time,
-          ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Duration"),
-            duration,
-            translation.duration,
-          ),
-          renderTargetCategory(entry.target).run(env),
-          renderProperty(entry.property).run(env),
-          getTextForTraditions(
-            { translate, translateMap, localeCompare, getInstanceById },
-            entry.traditions,
-          ),
-          renderImprovementCost(entry.improvement_cost).run(env),
-        ],
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      getChildInstancesForInstanceId,
+      localeJoin: locale.join,
+      localeCompare: locale.compare,
+      energyUnit: "ArcaneEnergy",
+      responsiveTextSize: ResponsiveTextSize.Full,
+      nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
+        switch (param) {
+          case ModifiableParameter.CastingTime:
+            return " (you cannot use a modification on this ritual’s ritual time)"
+          case ModifiableParameter.Cost:
+            return " (you cannot use a modification on this ritual’s cost)"
+          case ModifiableParameter.Range:
+            return " (you cannot use a modification on this ritual’s range)"
+          default:
+            return assertExhaustive(param)
+        }
       },
-    ],
-    errata: translation.errata,
-    references: entry.src,
-  }
-})
+    } satisfies Partial<EnvMap>
+
+    const { castingTime, cost, range, duration } = renderSlowPerformanceParameters(
+      entry.parameters,
+    ).run(env)
+
+    return {
+      title: translation.name,
+      className: "ritual",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderEffect(translation.effect).run(env),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Ritual Time"),
+              castingTime,
+              translation.casting_time,
+            ),
+            combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration"),
+              duration,
+              translation.duration,
+            ),
+            renderTargetCategory(entry.target).run(env),
+            renderProperty(entry.property).run(env),
+            getTextForTraditions(
+              { translate, translateMap, localeCompare, getInstanceById },
+              entry.traditions,
+            ),
+            renderImprovementCost(entry.improvement_cost).run(env),
+          ],
+        },
+        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)
 
 /**
  * Get a JSON representation of the rules text for a curse.

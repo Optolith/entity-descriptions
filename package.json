@@ -46,7 +46,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.8.0",
     "globals": "^17.4.0",
-    "optolith-database-schema": "^0.34.15",
+    "optolith-database-schema": "^0.34.16",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
