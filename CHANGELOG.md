@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.0](https://github.com/Optolith/entity-descriptions/compare/v0.3.2...v0.4.0) (2026-03-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* require external date formatter
+
+### Features
+
+* export helpful values and types ([5e73ce0](https://github.com/Optolith/entity-descriptions/commit/5e73ce0cb8098df2919694c72c835134bf520aea))
+
+
+### Bug Fixes
+
+* require external date formatter ([9cdf694](https://github.com/Optolith/entity-descriptions/commit/9cdf69443781203c86256dea85918960b1f17c9c))
+
 ## [0.3.2](https://github.com/Optolith/entity-descriptions/compare/v0.3.1...v0.3.2) (2026-03-12)
 
 
