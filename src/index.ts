@@ -71,6 +71,8 @@ import type {
 } from "./helpers/getTypes.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
 
+export { LocaleEnvironment }
+
 /**
  * A JSON representation of the rules text for a library entry.
  */
@@ -383,13 +385,23 @@ const registeredEntityDescriptionCreators = {
   SexPractice: getSexPracticeEntityDescription,
 } satisfies Partial<{ [E in keyof TSONDBTypes["entityMap"]]: TypedCreator<E> }>
 
-type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
+/**
+ * The set of entities for which there is a registered description creator function.
+ */
+export type AvailableCreatorEntity = keyof typeof registeredEntityDescriptionCreators
 
 /**
  * Checks if there is a registered description creator for the given entity name.
  */
 export const isSupportedEntity = (entityName: string): entityName is AvailableCreatorEntity =>
   entityName in registeredEntityDescriptionCreators
+
+/**
+ * The list of entity names for which there is a registered description creator function.
+ */
+export const supportedEntities = Object.keys(
+  registeredEntityDescriptionCreators,
+).toSorted() as AvailableCreatorEntity[]
 
 /**
  * Human-readable aliases for certain identifiers in the database.
