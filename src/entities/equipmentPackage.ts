@@ -6,20 +6,14 @@ import type {
   EquipmentPackageItem,
   LocaleMeasurementAdjustments,
 } from "optolith-database-schema/gen"
-import {
-  createEntityDescriptionCreator,
-  type TaggedEntity,
-} from "../creator.js"
+import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate } from "../helpers/translate.js"
 import { getEquipmentName } from "./equipment.js"
 
 type AtomicCost = number | "Various" | "Invaluable" | [from: number, to: number]
 
-const sumAtomicEquipmentCost = (
-  acc: AtomicCost,
-  current: AtomicCost,
-): AtomicCost => {
+const sumAtomicEquipmentCost = (acc: AtomicCost, current: AtomicCost): AtomicCost => {
   if (typeof acc === "string") {
     return acc
   }
@@ -41,10 +35,7 @@ const sumAtomicEquipmentCost = (
   }
 }
 
-const sumAtomicEquipmentWeight = (
-  acc: AtomicWeight,
-  current: AtomicWeight,
-): AtomicWeight => {
+const sumAtomicEquipmentWeight = (acc: AtomicWeight, current: AtomicWeight): AtomicWeight => {
   if (Array.isArray(current)) {
     if (Array.isArray(acc)) {
       return [acc[0] + current[0], acc[1] + current[1]]
@@ -71,12 +62,8 @@ const rangeAtomicEquipmentCost = (
   }
 
   const normAcc: [number, number] = typeof acc === "number" ? [acc, acc] : acc
-  const normCurrent: [number, number] =
-    typeof current === "number" ? [current, current] : current
-  return [
-    Math.min(normAcc[0], normCurrent[0]),
-    Math.max(normAcc[1], normCurrent[1]),
-  ]
+  const normCurrent: [number, number] = typeof current === "number" ? [current, current] : current
+  return [Math.min(normAcc[0], normCurrent[0]), Math.max(normAcc[1], normCurrent[1])]
 }
 
 const getAtomicCost = (cost: Cost): AtomicCost => {
@@ -96,9 +83,7 @@ const getAtomicCost = (cost: Cost): AtomicCost => {
   }
 }
 
-const getAtomicEquipmentCost = (
-  entry: TaggedEntity<EquipmentIdentifier["kind"]>,
-): AtomicCost => {
+const getAtomicEquipmentCost = (entry: TaggedEntity<EquipmentIdentifier["kind"]>): AtomicCost => {
   switch (entry.entity) {
     case "AnimalCare":
       switch (entry.content.type.kind) {
@@ -122,28 +107,22 @@ const getAtomicEquipmentCost = (
           }
         case "Multiple":
           return (
-            entry.content.cost.Multiple.reduce(
-              (acc: AtomicCost | null, cost): AtomicCost => {
-                if (typeof acc === "string") {
-                  return acc
-                }
+            entry.content.cost.Multiple.reduce((acc: AtomicCost | null, cost): AtomicCost => {
+              if (typeof acc === "string") {
+                return acc
+              }
 
-                switch (cost.kind) {
-                  case "Definite":
-                    return acc === null
-                      ? getAtomicCost(cost.Definite.cost)
-                      : rangeAtomicEquipmentCost(
-                          acc,
-                          getAtomicCost(cost.Definite.cost),
-                        )
-                  case "Indefinite":
-                    return "Various"
-                  default:
-                    return assertExhaustive(cost)
-                }
-              },
-              null,
-            ) ?? 0
+              switch (cost.kind) {
+                case "Definite":
+                  return acc === null
+                    ? getAtomicCost(cost.Definite.cost)
+                    : rangeAtomicEquipmentCost(acc, getAtomicCost(cost.Definite.cost))
+                case "Indefinite":
+                  return "Various"
+                default:
+                  return assertExhaustive(cost)
+              }
+            }, null) ?? 0
           )
         default:
           return assertExhaustive(entry.content.cost)
@@ -184,14 +163,13 @@ const getAtomicEquipmentCost = (
     case "Vehicle":
     case "Weapon":
     case "WeaponAccessory":
+    case "WorkingSupernaturalCreature":
       return getAtomicCost(entry.content.cost)
     case "Elixir":
-      return [
-        entry.content.cost_per_ingredient_level,
-        entry.content.cost_per_ingredient_level * 6,
-      ]
+      return [entry.content.cost_per_ingredient_level, entry.content.cost_per_ingredient_level * 6]
     case "Poison":
-      switch (entry.content.cost.kind) {
+      switch (entry.content.cost?.kind) {
+        case undefined:
         case "CannotBeExtracted":
         case "None":
           return 0
@@ -199,6 +177,8 @@ const getAtomicEquipmentCost = (
           return entry.content.cost.Constant
         case "Indefinite":
           return "Various"
+        case "DependingOnPurchaseOrSale":
+          return entry.content.cost.DependingOnPurchaseOrSale.purchase
         default:
           return assertExhaustive(entry.content.cost)
       }
@@ -220,6 +200,7 @@ const getAtomicEquipmentWeight = (
     case "EquipmentOfBlessedOnes":
     case "Newspaper":
     case "Poison":
+    case "WorkingSupernaturalCreature":
       return 0
     case "AnimalCare":
       switch (entry.content.type.kind) {
@@ -298,90 +279,79 @@ const renderAtomicWeight = (
       value: measurements.stonesMultiplier * cost,
     })
   } else {
-    return translate(
-      ".input {$from :number} .input {$to :number} {{{$from}–{$to} pounds}}",
-      {
-        from: measurements.stonesMultiplier * cost[0],
-        to: measurements.stonesMultiplier * cost[1],
-      },
-    )
+    return translate(".input {$from :number} .input {$to :number} {{{$from}–{$to} pounds}}", {
+      from: measurements.stonesMultiplier * cost[0],
+      to: measurements.stonesMultiplier * cost[1],
+    })
   }
 }
 
 /**
  * Get a JSON representation of the rules text for an equipment package.
  */
-export const getEquipmentPackageEntityDescription =
-  createEntityDescriptionCreator<
-    "EquipmentPackage",
-    {
-      getInstanceById: GetInstanceById<
-        "Publication" | EquipmentIdentifier["kind"] | "SocialStatus"
-      >
-    }
-  >(({ getInstanceById }, locale, { content }) => {
-    const { translate, translateMap } = locale
-    const translation = translateMap(content.translations)
+export const getEquipmentPackageEntityDescription = createEntityDescriptionCreator<
+  "EquipmentPackage",
+  {
+    getInstanceById: GetInstanceById<"Publication" | EquipmentIdentifier["kind"] | "SocialStatus">
+  }
+>(({ getInstanceById }, locale, { content }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(content.translations)
 
-    if (translation === undefined) {
-      return undefined
-    }
+  if (translation === undefined) {
+    return undefined
+  }
 
-    const actualItems =
-      content.items
-        ?.map(item => ({
-          ...item,
-          content: { entity: item.id.kind, content: getInstanceById(item.id) },
-        }))
-        .filter(
-          (
-            item,
-          ): item is EquipmentPackageItem & {
-            content: TaggedEntity<EquipmentIdentifier["kind"]>
-          } => item.content !== undefined,
-        ) ?? []
+  const actualItems =
+    content.items
+      ?.map(item => ({
+        ...item,
+        content: { entity: item.id.kind, content: getInstanceById(item.id) },
+      }))
+      .filter(
+        (
+          item,
+        ): item is EquipmentPackageItem & {
+          content: TaggedEntity<EquipmentIdentifier["kind"]>
+        } => item.content !== undefined,
+      ) ?? []
 
-    return {
-      title: translation.name,
-      className: "equipment-package",
-      body: [
-        {
-          type: "table",
-          header: [translation.name, translate("Weight"), translate("Cost")],
-          rows: actualItems
-            .map((item): [string, string, string] => [
-              getEquipmentName(
-                translate,
-                translateMap,
-                getInstanceById,
-                item.content,
-              ),
-              renderAtomicWeight(
-                translate,
-                locale.measurementAdjustments,
-                getAtomicEquipmentWeight(item.content),
-              ),
-              renderAtomicCost(translate, getAtomicEquipmentCost(item.content)),
-            ])
-            .toSorted(on(item => item[0], locale.compare)),
-          footer: [
-            translate("Total"),
+  return {
+    title: translation.name,
+    className: "equipment-package",
+    body: [
+      {
+        type: "table",
+        header: [translation.name, translate("Weight"), translate("Cost")],
+        rows: actualItems
+          .map((item): [string, string, string] => [
+            getEquipmentName(translate, translateMap, getInstanceById, item.content),
             renderAtomicWeight(
               translate,
               locale.measurementAdjustments,
-              actualItems
-                .map(item => getAtomicEquipmentWeight(item.content))
-                .reduce(sumAtomicEquipmentWeight, 0),
+              getAtomicEquipmentWeight(item.content),
             ),
-            renderAtomicCost(
-              translate,
-              actualItems
-                .map(item => getAtomicEquipmentCost(item.content))
-                .reduce(sumAtomicEquipmentCost, 0),
-            ),
-          ],
-        },
-      ],
-      references: content.src,
-    }
-  })
+            renderAtomicCost(translate, getAtomicEquipmentCost(item.content)),
+          ])
+          .toSorted(on(item => item[0], locale.compare)),
+        footer: [
+          translate("Total"),
+          renderAtomicWeight(
+            translate,
+            locale.measurementAdjustments,
+            actualItems
+              .map(item => getAtomicEquipmentWeight(item.content))
+              .reduce(sumAtomicEquipmentWeight, 0),
+          ),
+          renderAtomicCost(
+            translate,
+            actualItems
+              .map(item => getAtomicEquipmentCost(item.content))
+              .reduce(sumAtomicEquipmentCost, 0),
+          ),
+        ],
+      },
+    ],
+    references: content.src,
+  }
+})

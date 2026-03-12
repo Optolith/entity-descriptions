@@ -31,7 +31,7 @@ import {
   type GeneralPrerequisiteGroup,
   type RatedIdentifier,
 } from "optolith-database-schema/gen"
-import type { GetInstanceById } from "../../../helpers/getTypes.js"
+import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
 import type { TranslateMap } from "../../../helpers/translate.js"
 import {
@@ -476,12 +476,21 @@ export const printLiturgyPrerequisites = (
  * Print influence prerequisites as a string.
  */
 export const printInfluencePrerequisites = (
-  getInstanceById: GetInstanceById<"Influence">,
+  getInstanceById: GetInstanceById<"Influence" | "Race" | ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   locale: LocaleEnvironment,
   value: InfluencePrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite => printInfluencePrerequisiteGroup(getInstanceById, locale, prerequisite),
+    prerequisite =>
+      printInfluencePrerequisiteGroup(
+        getInstanceById,
+        getResolvedSelectOptionById,
+        getChildInstancesForInstanceId,
+        locale,
+        prerequisite,
+      ),
     locale,
     value,
   )

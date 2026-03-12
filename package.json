@@ -33,24 +33,24 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
-    "@elyukai/utils": "^0.2.8",
+    "@elyukai/utils": "^0.3.0",
     "@optolith/adventure-points": "^0.1.1",
     "@optolith/helpers": "^0.2.2",
     "messageformat": "^4.0.0",
-    "tsondb": "^0.19.8"
+    "tsondb": "^0.20.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.4.0",
     "commit-and-tag-version": "^12.6.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^62.7.1",
-    "globals": "^17.3.0",
-    "optolith-database-schema": "^0.33.0",
+    "eslint-plugin-jsdoc": "^62.8.0",
+    "globals": "^17.4.0",
+    "optolith-database-schema": "^0.34.15",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.57.0"
   },
   "type": "module",
   "engines": {

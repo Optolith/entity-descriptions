@@ -20,10 +20,7 @@ import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
-import type {
-  IdMap,
-  RawDefinitionListEntityDescriptionSectionItem,
-} from "../index.js"
+import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
 import {
   renderAlternativeNames,
@@ -64,9 +61,7 @@ const renderApplicationType = (
         })
         .toSorted(localeCompare)
         .map((type, index, arr) =>
-          index === arr.length - 1 && type.at(-1) === "-"
-            ? type.slice(0, -1)
-            : type,
+          index === arr.length - 1 && type.at(-1) === "-" ? type.slice(0, -1) : type,
         ),
       "conjunction",
     ),
@@ -81,15 +76,11 @@ const renderLevel = (
     case "QualityLevel":
       return translate("QL")
     case "Constant":
-      return typeof level.Constant === "number"
-        ? level.Constant
-        : level.Constant.value
+      return typeof level.Constant === "number" ? level.Constant : level.Constant.value
     case "BySubtype":
       return level.BySubtype.map(
         subtype =>
-          `${subtype.value} (${
-            translateMap(subtype.translations)?.name ?? MISSING_VALUE
-          })`,
+          `${subtype.value} (${translateMap(subtype.translations)?.name ?? MISSING_VALUE})`,
       ).join(", ")
     default:
       return assertExhaustive(level)
@@ -133,30 +124,24 @@ const renderAddiction = (
       ].filter(isNotNullish),
     )?.join(", "),
     mapNullable(addiction.withdrawalPrevention, withdrawalPrevention =>
-      translate(
-        ".input {$value :number} {{{$value} applications every {$interval}}}",
-        {
-          value: withdrawalPrevention.amount,
-          interval: formatTimeSpan(
-            translate,
-            ResponsiveTextSize.Full,
-            { kind: "Days" },
-            (() => {
-              switch (withdrawalPrevention.interval.kind) {
-                case "Constant":
-                  return withdrawalPrevention.interval.Constant.value
-                case "DiceBased":
-                  return renderDice(
-                    translate,
-                    withdrawalPrevention.interval.DiceBased.dice,
-                  )
-                default:
-                  return assertExhaustive(withdrawalPrevention.interval)
-              }
-            })(),
-          ),
-        },
-      ),
+      translate(".input {$value :number} {{{$value} applications every {$interval}}}", {
+        value: withdrawalPrevention.amount,
+        interval: formatTimeSpan(
+          translate,
+          ResponsiveTextSize.Full,
+          { kind: "Days" },
+          (() => {
+            switch (withdrawalPrevention.interval.kind) {
+              case "Constant":
+                return withdrawalPrevention.interval.Constant.value
+              case "DiceBased":
+                return renderDice(translate, withdrawalPrevention.interval.DiceBased.dice)
+              default:
+                return assertExhaustive(withdrawalPrevention.interval)
+            }
+          })(),
+        ),
+      }),
     ),
   ]
     .filter(isNotNullish)
@@ -173,19 +158,12 @@ const renderIntoxicantValues = (
     ingestion: translation?.ingestion ?? MISSING_VALUE,
     sideEffect: translation?.side_effect,
     overdose: translation?.overdose ?? MISSING_VALUE,
-    legality: intoxicant.legality.is_legal
-      ? translate("legal")
-      : translate("illegal"),
+    legality: intoxicant.legality.is_legal ? translate("legal") : translate("illegal"),
     special: translation?.special,
     addiction:
       intoxicant?.addiction === undefined
         ? undefined
-        : renderAddiction(
-            translate,
-            translateMap,
-            getInstanceById,
-            intoxicant.addiction,
-          ),
+        : renderAddiction(translate, translateMap, getInstanceById, intoxicant.addiction),
   }
 }
 
@@ -217,18 +195,19 @@ const renderSourceTypeBasedValues = (
   switch (sourceType.kind) {
     case "AnimalVenom":
       return {
-        level: renderLevel(
-          translate,
-          translateMap,
-          sourceType.AnimalVenom.level,
-        ),
+        level: renderLevel(translate, translateMap, sourceType.AnimalVenom.level),
         sourceType: translate("animal venom"),
       }
     case "AlchemicalPoison": {
       const translation = translateMap(sourceType.AlchemicalPoison.translations)
       return {
         level: translate("QL"),
-        sourceType: translate("alchemical poison"),
+        sourceType: [
+          sourceType.AlchemicalPoison.isDemonic === true ? translate("demonic poison") : undefined,
+          translate("alchemical poison"),
+        ]
+          .filter(isNotNullish)
+          .join(", "),
         ...(sourceType.AlchemicalPoison.intoxicant === undefined
           ? undefined
           : renderIntoxicantValues(
@@ -239,27 +218,25 @@ const renderSourceTypeBasedValues = (
             )),
         typicalIngredients: translation?.typical_ingredients.join(", "),
         priceOfIngedientsPerLevel: translate("{$cost} per level", {
-          cost: translate(
-            ".input {$value :number} {{{$value} silverthalers}}",
-            { value: sourceType.AlchemicalPoison.cost_per_ingredient_level },
-          ),
+          cost: translate(".input {$value :number} {{{$value} silverthalers}}", {
+            value: sourceType.AlchemicalPoison.cost_per_ingredient_level,
+          }),
         }),
-        laboratory: renderLaboratoryLevel(
-          translate,
-          sourceType.AlchemicalPoison.laboratory,
-        ),
+        laboratory: renderLaboratoryLevel(translate, sourceType.AlchemicalPoison.laboratory),
         brewingDifficulty: sign(sourceType.AlchemicalPoison.brewing_difficulty),
         prerequisitesBrewingProcess:
           translation?.brewing_process_prerequisites ?? translate("none"),
-        tradeSecret: mapNullable(
-          sourceType.AlchemicalPoison.trade_secret,
-          tradeSecret => ({
-            apValue: tradeSecret.ap_value,
-            prerequisites: tradeSecret.prerequisites,
-          }),
-        ),
+        tradeSecret: mapNullable(sourceType.AlchemicalPoison.trade_secret, tradeSecret => ({
+          apValue: tradeSecret.ap_value,
+          prerequisites: tradeSecret.prerequisites,
+        })),
       }
     }
+    case "AlchemicalPactGiftPoison":
+      return {
+        level: translate("QL"),
+        sourceType: translate("alchemical poison"),
+      }
     case "MineralPoison":
       return {
         level: sourceType.MineralPoison.level,
@@ -281,11 +258,7 @@ const renderSourceTypeBasedValues = (
     case "DemonicPoison": {
       const translation = translateMap(sourceType.DemonicPoison.translations)
       return {
-        level: renderLevel(
-          translate,
-          translateMap,
-          sourceType.DemonicPoison.level,
-        ),
+        level: renderLevel(translate, translateMap, sourceType.DemonicPoison.level),
         sourceType: translate("demonic poison"),
         note: translation?.note,
       }
@@ -295,11 +268,7 @@ const renderSourceTypeBasedValues = (
   }
 }
 
-const renderStart = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  start: PoisonStart,
-) => {
+const renderStart = (translate: Translate, translateMap: TranslateMap, start: PoisonStart) => {
   switch (start.kind) {
     case "Immediate":
       return translate("immediate")
@@ -315,17 +284,10 @@ const renderStart = (
         translate,
         ResponsiveTextSize.Full,
         start.DiceBased.unit,
-        renderDiceAndFlat(
-          translate,
-          start.DiceBased.dice,
-          start.DiceBased.flat,
-        ),
+        renderDiceAndFlat(translate, start.DiceBased.dice, start.DiceBased.flat),
       )
     case "Indefinite":
-      return (
-        translateMap(start.Indefinite.translations)?.description ??
-        MISSING_VALUE
-      )
+      return translateMap(start.Indefinite.translations)?.description ?? MISSING_VALUE
     default:
       return assertExhaustive(start)
   }
@@ -351,11 +313,7 @@ const renderDuration = (
         translate,
         ResponsiveTextSize.Full,
         duration.DiceBased.unit,
-        renderDiceAndFlat(
-          translate,
-          duration.DiceBased.dice,
-          duration.DiceBased.flat,
-        ),
+        renderDiceAndFlat(translate, duration.DiceBased.dice, duration.DiceBased.flat),
       )
     case "ExpressionBased":
       return renderMathOperation(duration.ExpressionBased.value, value => {
@@ -364,25 +322,20 @@ const renderDuration = (
             return value.Constant.toString()
           case "Dice":
             return renderDice(translate, value.Dice)
+          case "CircleOfDamnation":
+            return translate("CoD")
           default:
             return assertExhaustive(value)
         }
       })
     case "Indefinite":
-      return (
-        translateMap(duration.Indefinite.translations)?.description ??
-        UNHANDLED_VALUE
-      )
+      return translateMap(duration.Indefinite.translations)?.description ?? UNHANDLED_VALUE
     default:
       return assertExhaustive(duration)
   }
 }
 
-const renderCost = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  cost: PoisonCost,
-) => {
+const renderCost = (translate: Translate, translateMap: TranslateMap, cost: PoisonCost) => {
   switch (cost.kind) {
     case "CannotBeExtracted":
       return translate("cannot be extracted")
@@ -392,10 +345,17 @@ const renderCost = (
       return translate(".input {$value :number} {{{$value} silverthalers}}", {
         value: cost.Constant,
       })
+    case "DependingOnPurchaseOrSale":
+      return `${translate(".input {$value :number} {{{$value} silverthalers}}", {
+        value: cost.DependingOnPurchaseOrSale.purchase,
+      })} (${translate("purchase")}) / ${translate(
+        ".input {$value :number} {{{$value} silverthalers}}",
+        {
+          value: cost.DependingOnPurchaseOrSale.sale,
+        },
+      )} (${translate("sale")})`
     case "Indefinite":
-      return (
-        translateMap(cost.Indefinite.translations)?.description ?? MISSING_VALUE
-      )
+      return translateMap(cost.Indefinite.translations)?.description ?? MISSING_VALUE
     default:
       return assertExhaustive(cost)
   }
@@ -414,12 +374,9 @@ const renderValueCost = (
       }
     : {
         label: translate("Value/Cost"),
-        value: `${translate(
-          ".input {$value :number} {{{$value} silverthalers}}",
-          {
-            value,
-          },
-        )} / ${renderCost(translate, translateMap, cost)}`,
+        value: `${translate(".input {$value :number} {{{$value} silverthalers}}", {
+          value,
+        })} / ${renderCost(translate, translateMap, cost)}`,
       }
 
 /**
@@ -447,209 +404,185 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     idMap: IdMap
   }
->(
-  (
-    { getInstanceById, getResolvedSelectOptionById, idMap },
-    locale,
-    { content: entry },
-  ) => {
-    const {
-      translate,
-      translateMap,
-      join: localeJoin,
-      compare: localeCompare,
-    } = locale
-    const translation = translateMap(entry.translations)
+>(({ getInstanceById, getResolvedSelectOptionById, idMap }, locale, { content: entry }) => {
+  const { translate, translateMap, join: localeJoin, compare: localeCompare } = locale
+  const translation = translateMap(entry.translations)
 
-    if (translation === undefined) {
-      return undefined
-    }
+  if (translation === undefined) {
+    return undefined
+  }
 
-    const applicationType = renderApplicationType(
-      translate,
-      localeJoin,
-      localeCompare,
-      entry.application_type,
-    )
+  const applicationType = renderApplicationType(
+    translate,
+    localeJoin,
+    localeCompare,
+    entry.application_type,
+  )
 
-    const {
-      level,
-      sourceType,
-      ingestion,
-      sideEffect,
-      overdose,
-      legality,
-      special,
-      addiction,
-      typicalIngredients,
-      priceOfIngedientsPerLevel,
-      laboratory,
-      brewingDifficulty,
-      prerequisitesBrewingProcess,
-      tradeSecret,
-      note,
-    } = renderSourceTypeBasedValues(
-      translate,
-      translateMap,
-      getInstanceById,
-      entry.source_type,
-    )
+  const {
+    level,
+    sourceType,
+    ingestion,
+    sideEffect,
+    overdose,
+    legality,
+    special,
+    addiction,
+    typicalIngredients,
+    priceOfIngedientsPerLevel,
+    laboratory,
+    brewingDifficulty,
+    prerequisitesBrewingProcess,
+    tradeSecret,
+    note,
+  } = renderSourceTypeBasedValues(translate, translateMap, getInstanceById, entry.source_type)
 
-    return {
-      title: translation.name,
-      className: "poison",
-      body: [
-        {
-          type: "definitionList",
-          items: [
-            renderAlternativeNames(translate, translation.alternative_names),
-            {
-              label: translate("Level"),
-              value: level.toString(),
-            },
-            {
-              label: translate("Type"),
-              value: `${applicationType}, ${sourceType}`,
-            },
-            {
-              label: translate("Resistance"),
-              value: renderResistance(
-                translate,
-                translateMap,
-                getInstanceById,
-                idMap,
-                entry.resistance,
-              ),
-            },
-            ingestion === undefined
-              ? undefined
-              : {
-                  label: translate("Ingestion"),
-                  value: ingestion,
-                },
-            {
-              label: translate("Effect"),
-              value:
-                translation.effect.default +
-                (translation.effect.reduced === undefined
-                  ? ""
-                  : ` / ${translation.effect.reduced}`),
-            },
-            sideEffect === undefined
-              ? undefined
-              : {
-                  label: translate("Side Effect"),
-                  value: sideEffect,
-                },
-            overdose === undefined
-              ? undefined
-              : {
-                  label: translate("Overdose"),
-                  value: overdose,
-                },
-            {
-              label: translate("Start"),
-              value: renderStart(translate, translateMap, entry.start),
-            },
-            {
-              label: translate("Duration"),
-              value:
-                renderDuration(
-                  translate,
-                  translateMap,
-                  entry.duration.default,
-                ) +
-                (entry.duration.reduced === undefined
-                  ? ""
-                  : ` / ${renderDuration(translate, translateMap, entry.duration.reduced)}`),
-            },
-            legality === undefined
-              ? undefined
-              : {
-                  label: translate("Legality"),
-                  value: legality,
-                },
-            renderValueCost(translate, translateMap, entry.cost, entry.value),
-            special === undefined
-              ? undefined
-              : {
-                  label: translate("Special"),
-                  value: special,
-                },
-            addiction === undefined
-              ? undefined
-              : {
-                  label: translate("Addiction"),
-                  value: addiction,
-                },
-            typicalIngredients === undefined
-              ? undefined
-              : {
-                  label: translate("Typical Ingredients"),
-                  value: typicalIngredients,
-                },
-            priceOfIngedientsPerLevel === undefined
-              ? undefined
-              : {
-                  label: translate("Price of Ingredients/Level"),
-                  value: priceOfIngedientsPerLevel,
-                },
-            laboratory === undefined
-              ? undefined
-              : {
-                  label: translate("Laboratory"),
-                  value: laboratory,
-                },
-            brewingDifficulty === undefined
-              ? undefined
-              : {
-                  label: translate("Brewing Difficulty"),
-                  value: brewingDifficulty,
-                },
-            prerequisitesBrewingProcess === undefined
-              ? undefined
-              : {
-                  label: `${translate("Prerequisites")} (${translate(
-                    "Brewing Process",
-                  )})`,
-                  value: prerequisitesBrewingProcess,
-                },
-            tradeSecret === undefined
-              ? undefined
-              : {
-                  label: `${translate("AP Value")} (${translate("Trade Secret")})`,
-                  value:
-                    translate("{$value} AP", { value: tradeSecret.apValue }) +
-                    parensIf(
-                      mapNullable(
-                        tradeSecret.prerequisites,
-                        prerequisites =>
-                          `${translate(
-                            "Prerequisites",
-                          )}: ${printPlainGeneralPrerequisites(
-                            getInstanceById,
-                            getResolvedSelectOptionById,
-                            locale,
-                            prerequisites,
-                          )}`,
-                      ),
+  return {
+    title: translation.name,
+    className: "poison",
+    body: [
+      {
+        type: "definitionList",
+        items: [
+          renderAlternativeNames(translate, translation.alternative_names),
+          {
+            label: translate("Level"),
+            value: level.toString(),
+          },
+          {
+            label: translate("Type"),
+            value: `${applicationType}, ${sourceType}`,
+          },
+          {
+            label: translate("Resistance"),
+            value: renderResistance(
+              translate,
+              translateMap,
+              getInstanceById,
+              idMap,
+              entry.resistance,
+            ),
+          },
+          ingestion === undefined
+            ? undefined
+            : {
+                label: translate("Ingestion"),
+                value: ingestion,
+              },
+          {
+            label: translate("Effect"),
+            value:
+              translation.effect.default +
+              (translation.effect.reduced === undefined ? "" : ` / ${translation.effect.reduced}`),
+          },
+          sideEffect === undefined
+            ? undefined
+            : {
+                label: translate("Side Effect"),
+                value: sideEffect,
+              },
+          overdose === undefined
+            ? undefined
+            : {
+                label: translate("Overdose"),
+                value: overdose,
+              },
+          {
+            label: translate("Start"),
+            value: renderStart(translate, translateMap, entry.start),
+          },
+          {
+            label: translate("Duration"),
+            value:
+              renderDuration(translate, translateMap, entry.duration.default) +
+              (entry.duration.reduced === undefined
+                ? ""
+                : ` / ${renderDuration(translate, translateMap, entry.duration.reduced)}`),
+          },
+          legality === undefined
+            ? undefined
+            : {
+                label: translate("Legality"),
+                value: legality,
+              },
+          entry.cost === undefined
+            ? undefined
+            : renderValueCost(translate, translateMap, entry.cost, entry.value),
+          special === undefined
+            ? undefined
+            : {
+                label: translate("Special"),
+                value: special,
+              },
+          addiction === undefined
+            ? undefined
+            : {
+                label: translate("Addiction"),
+                value: addiction,
+              },
+          typicalIngredients === undefined
+            ? undefined
+            : {
+                label: translate("Typical Ingredients"),
+                value: typicalIngredients,
+              },
+          priceOfIngedientsPerLevel === undefined
+            ? undefined
+            : {
+                label: translate("Price of Ingredients/Level"),
+                value: priceOfIngedientsPerLevel,
+              },
+          laboratory === undefined
+            ? undefined
+            : {
+                label: translate("Laboratory"),
+                value: laboratory,
+              },
+          brewingDifficulty === undefined
+            ? undefined
+            : {
+                label: translate("Brewing Difficulty"),
+                value: brewingDifficulty,
+              },
+          prerequisitesBrewingProcess === undefined
+            ? undefined
+            : {
+                label: `${translate("Prerequisites")} (${translate("Brewing Process")})`,
+                value: prerequisitesBrewingProcess,
+              },
+          tradeSecret === undefined
+            ? undefined
+            : {
+                label: `${translate("AP Value")} (${translate("Trade Secret")})`,
+                value:
+                  translate("{$value} AP", { value: tradeSecret.apValue }) +
+                  parensIf(
+                    mapNullable(
+                      tradeSecret.prerequisites,
+                      prerequisites =>
+                        `${translate("Prerequisites")}: ${printPlainGeneralPrerequisites(
+                          getInstanceById,
+                          getResolvedSelectOptionById,
+                          locale,
+                          prerequisites,
+                        )}`,
                     ),
-                },
-            {
-              label: translate("Quality Levels"),
-              value: translate("The poison levels equals the QL."),
-            },
-            note === undefined
-              ? undefined
-              : {
-                  label: translate("Note"),
-                  value: note,
-                },
-          ],
-        },
-      ],
-      errata: translation.errata,
-      references: entry.src,
-    }
-  },
-)
+                  ),
+              },
+          {
+            label: translate("Quality Levels"),
+            value: translate("The poison levels equals the QL."),
+          },
+          note === undefined
+            ? undefined
+            : {
+                label: translate("Note"),
+                value: note,
+              },
+        ],
+      },
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})

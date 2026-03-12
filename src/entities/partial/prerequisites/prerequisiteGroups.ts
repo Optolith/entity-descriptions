@@ -18,7 +18,7 @@ import {
   type ActivatableIdentifier,
   type RatedIdentifier,
 } from "optolith-database-schema/gen"
-import type { GetInstanceById } from "../../../helpers/getTypes.js"
+import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
 import { LocaleEnvironment } from "../../../helpers/locale.js"
 import { PrerequisitePart } from "./part.js"
 import { GetResolvedSelectOptionById, printActivatablePrerequisite } from "./single/activatable.js"
@@ -33,6 +33,7 @@ import { printNoOtherAncestorBloodAdvantagePrerequisite } from "./single/noOther
 import { printPactPrerequisite } from "./single/pact.js"
 import { printPersonalityTraitPrerequisite } from "./single/personalityTrait.js"
 import { printPrimaryAttributePrerequisite } from "./single/primaryAttribute.js"
+import { printProfessionPrerequisite } from "./single/profession.js"
 import { printPublicationPrerequisite } from "./single/publication.js"
 import { printRacePrerequisite } from "./single/race.js"
 import { printRatedPrerequisite } from "./single/rated.js"
@@ -319,13 +320,31 @@ export const printLiturgyPrerequisiteGroup = (
  * Print the translation of an influence prerequisite group.
  */
 export const printInfluencePrerequisiteGroup = (
-  getInstanceById: GetInstanceById<"Influence">,
+  getInstanceById: GetInstanceById<"Influence" | "Race" | ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   locale: LocaleEnvironment,
   prerequisite: InfluencePrerequisiteGroup,
 ): PrerequisitePart | undefined => {
   switch (prerequisite.kind) {
     case "Influence":
       return printInfluencePrerequisite(getInstanceById, locale, prerequisite.Influence)
+    case "Race":
+      return printRacePrerequisite(getInstanceById, locale, prerequisite.Race)
+    case "Profession":
+      return printProfessionPrerequisite(
+        getChildInstancesForInstanceId,
+        locale,
+        prerequisite.Profession,
+      )
+    case "Activatable":
+      return printActivatablePrerequisite(
+        getInstanceById,
+        getResolvedSelectOptionById,
+        locale,
+        prerequisite.Activatable,
+        false,
+      )
     case "Text":
       return printTextPrerequisite(locale, prerequisite.Text)
     default:
@@ -419,6 +438,8 @@ export const printPreconditionGroup = (
   switch (prerequisite.kind) {
     case "Publication":
       return printPublicationPrerequisite(getInstanceById, locale, prerequisite.Publication)
+    case "Rule":
+      return printRulePrerequisite(locale, prerequisite.Rule)
     case "SexualCharacteristic":
       return printSexualCharacteristicPrerequisite(locale, prerequisite.SexualCharacteristic)
     default:
