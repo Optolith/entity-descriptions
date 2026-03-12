@@ -13,6 +13,7 @@ export type LocaleJoinType = "conjunction" | "disjunction" | "unit"
 export type LocaleEnvironment = {
   id: string
   format: Format
+  formatDate: (date: Date) => string
   translate: Translate
   translateMap: TranslateMap
   compare: LocaleCompare
