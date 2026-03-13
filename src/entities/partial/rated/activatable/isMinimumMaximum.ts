@@ -14,8 +14,7 @@ export const wrapAsMinimum = (text: string): StdReader<string, "t" | "rts"> =>
 export const wrapIfMinimum = (
   is_minimum: boolean | undefined,
   text: string,
-): StdReader<string, "t" | "rts"> =>
-  is_minimum === true ? wrapAsMinimum(text) : Reader.of("")
+): StdReader<string, "t" | "rts"> => (is_minimum === true ? wrapAsMinimum(text) : Reader.of(text))
 
 /**
  * Wraps the text in a translation that indicates it’s a maximum value.
@@ -32,5 +31,4 @@ export const wrapAsMaximum = (text: string): StdReader<string, "t" | "rts"> =>
 export const wrapIfMaximum = (
   is_maximum: boolean | undefined,
   text: string,
-): StdReader<string, "t" | "rts"> =>
-  is_maximum === true ? wrapAsMaximum(text) : Reader.of("")
+): StdReader<string, "t" | "rts"> => (is_maximum === true ? wrapAsMaximum(text) : Reader.of(text))
