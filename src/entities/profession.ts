@@ -1168,9 +1168,18 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
     return {
       title:
         translation.name.default +
-        (professionPackages.length > 1
-          ? ` (${professionPackages.map(pkg => translateMap(pkg.experienceLevel.translations)?.name).join("/")})`
-          : ""),
+        parensIf(
+          ensureNonEmpty(
+            [
+              translation.specification?.default,
+              professionPackages.length > 1
+                ? professionPackages
+                    .map(pkg => translateMap(pkg.experienceLevel.translations)?.name)
+                    .join("/")
+                : undefined,
+            ].filter(isNotNullish),
+          )?.join(", "),
+        ),
       className: "profession",
       body: [
         {
