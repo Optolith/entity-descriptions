@@ -147,5 +147,6 @@ export const getDerivedCharacteristicEntityDescription = createEntityDescription
         ],
       },
     ],
+    references: entry.src,
   }
 })
