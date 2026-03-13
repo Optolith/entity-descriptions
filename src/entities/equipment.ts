@@ -259,9 +259,7 @@ const renderReloadTime = (translate: Translate, reloadTime: ReloadTime[]) =>
       ? translate("{$value} actions", {
           value: reloadTime.map(time => time.value).join("/"),
         })
-      : translate(".input {$value :number} {{{$value} actions}}", {
-          value: reloadTime[0].value,
-        })
+      : formatTimeSpan(translate, ResponsiveTextSize.Full, "Actions", reloadTime[0].value)
     : MISSING_VALUE
 
 const renderRangeBrackets = (rangeBrackets: RangeBrackets) =>

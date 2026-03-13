@@ -162,7 +162,7 @@ export const renderModifiableOneTimeCost = (value: {
 const appendIntervalToCost = (interval: DurationUnitValue | undefined, baseCost: string) =>
   interval === undefined
     ? Reader.of(baseCost)
-    : formatCombinedTimeSpanR(interval).then(formattedInterval =>
+    : formatCombinedTimeSpanR(interval, true).then(formattedInterval =>
         responsiveTranslateR("{$cost} per {$interval}", "{$cost}/{$interval}", {
           cost: baseCost,
           interval: formattedInterval,
