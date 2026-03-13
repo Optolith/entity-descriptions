@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.2](https://github.com/Optolith/entity-descriptions/compare/v0.4.1...v0.4.2) (2026-03-13)
+
+
+### Features
+
+* use more compact diff for liturgical chants as well ([a6098be](https://github.com/Optolith/entity-descriptions/commit/a6098be43df35046ec1a4cde47174fb1cfcd7e4c))
+
+
+### Bug Fixes
+
+* add derived characteristic sources ([7d04a10](https://github.com/Optolith/entity-descriptions/commit/7d04a108ca2436c2ba27dc71d0c31870f2787b3b))
+* render condition effects as table ([7fa4692](https://github.com/Optolith/entity-descriptions/commit/7fa46928df8b4c229036b50e7c1a8f0718e6aa28))
+
 ## [0.4.1](https://github.com/Optolith/entity-descriptions/compare/v0.4.0...v0.4.1) (2026-03-13)
 
 
