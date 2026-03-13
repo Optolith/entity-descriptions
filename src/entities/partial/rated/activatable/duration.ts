@@ -43,8 +43,8 @@ const renderPermanentDuration = (value: PermanentDuration): StdReader<string, "t
 
 const renderFixedDuration = (value: FixedDuration): StdReader<string, "t" | "tm" | "rts"> =>
   formatCombinedTimeSpanR(value)
-    .then(text => wrapIfMaximum(value.is_maximum, text))
-    .thenW(text => replaceTextIfNeeded(value.translations, text))
+    .then(text => wrapIfMaximum(value.is_maximum, text).map(wrapped => [wrapped, text] as const))
+    .thenW(([wrapped, text]) => replaceTextIfNeeded(value.translations, wrapped, text))
 
 /**
  * Renders a duration that is based on the result of the skill check.

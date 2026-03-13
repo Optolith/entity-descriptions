@@ -8,12 +8,7 @@ import type {
 } from "optolith-database-schema/gen"
 import { type LocaleMap } from "../../helpers/translate.js"
 import { appendInParensIfNotEmpty } from "./rated/activatable/parensIf.js"
-import {
-  responsiveTextOptionalR,
-  responsiveTextR,
-  translateMapR,
-  type StdEnv,
-} from "./reader.js"
+import { responsiveTextOptionalR, responsiveTextR, translateMapR, type StdEnv } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**
@@ -88,18 +83,17 @@ export const getResponsiveTextOptional = (
 export const replaceTextIfNeeded = (
   translations: LocaleMap<{ replacement?: ResponsiveTextReplace }> | undefined,
   valueToReplace: string,
+  differentValueToInsert = valueToReplace,
 ) =>
-  translateMapR(translations)
-    .with<StdEnv<"tm" | "rts">>(identity)
-    .then(translation => {
-      if (translation?.replacement === undefined) {
-        return Reader.of(valueToReplace)
-      }
+  translateMapR(translations).thenW(translation => {
+    if (translation?.replacement === undefined) {
+      return Reader.of(valueToReplace)
+    }
 
-      return responsiveTextR(translation.replacement).map(note =>
-        note.replace("$1", valueToReplace),
-      )
-    })
+    return responsiveTextR(translation.replacement).map(note =>
+      note.replace("$1", differentValueToInsert),
+    )
+  })
 
 /**
  * Appends a note to a given value if a note is requested, otherwise just return
