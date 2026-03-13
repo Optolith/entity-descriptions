@@ -11,6 +11,7 @@ import { renderEnhancements } from "./partial/enhancements.js"
 import { renderOneTimeDuration } from "./partial/rated/activatable/duration.js"
 import { renderEffect } from "./partial/rated/activatable/effect.js"
 import {
+  combineGeneratedTextWithStaticTranslation,
   renderFastPerformanceParameters,
   renderSlowPerformanceParameters,
 } from "./partial/rated/activatable/index.js"
@@ -111,17 +112,12 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
             label: translate("Effect"),
             value: translation.effect,
           },
-          {
-            label: translate("Range"),
-            value: range !== translation.range ? `***${range}*** (${translation.range})` : range,
-          },
-          {
-            label: translate("Duration"),
-            value:
-              duration !== translation.duration
-                ? `***${duration}*** (${translation.duration})`
-                : duration,
-          },
+          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Duration"),
+            duration,
+            translation.duration,
+          ),
           renderTargetCategory(entry.target).run(env),
         ],
       },
@@ -200,34 +196,18 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
           items: [
             renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
             renderEffect(translation.effect).run(env),
-            {
-              label: translate("Liturgical Time"),
-              value:
-                translation.casting_time && castingTime !== translation.casting_time.full
-                  ? `***${castingTime}*** (${translation.casting_time.full})`
-                  : castingTime,
-            },
-            {
-              label: translate("KP Cost"),
-              value:
-                translation.cost && cost !== translation.cost.full
-                  ? `***${cost}*** (${translation.cost.full})`
-                  : cost,
-            },
-            {
-              label: translate("Range"),
-              value:
-                translation.range && range !== translation.range.full
-                  ? `***${range}*** (${translation.range.full})`
-                  : range,
-            },
-            {
-              label: translate("Duration"),
-              value:
-                translation.duration && duration !== translation.duration.full
-                  ? `***${duration}*** (${translation.duration.full})`
-                  : duration,
-            },
+            combineGeneratedTextWithStaticTranslation(
+              translate("Liturgical Time"),
+              castingTime,
+              translation.casting_time,
+            ),
+            combineGeneratedTextWithStaticTranslation(translate("KP Cost"), cost, translation.cost),
+            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration"),
+              duration,
+              translation.duration,
+            ),
             renderTargetCategory(entry.target).run(env),
             getTextForTraditions(
               {
@@ -318,34 +298,18 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
           items: [
             renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
             renderEffect(translation.effect).run(env),
-            {
-              label: translate("Ceremonial Time"),
-              value:
-                translation.casting_time && castingTime !== translation.casting_time.full
-                  ? `***${castingTime}*** (${translation.casting_time.full})`
-                  : castingTime,
-            },
-            {
-              label: translate("KP Cost"),
-              value:
-                translation.cost && cost !== translation.cost.full
-                  ? `***${cost}*** (${translation.cost.full})`
-                  : cost,
-            },
-            {
-              label: translate("Range"),
-              value:
-                translation.range && range !== translation.range.full
-                  ? `***${range}*** (${translation.range.full})`
-                  : range,
-            },
-            {
-              label: translate("Duration"),
-              value:
-                translation.duration && duration !== translation.duration.full
-                  ? `***${duration}*** (${translation.duration.full})`
-                  : duration,
-            },
+            combineGeneratedTextWithStaticTranslation(
+              translate("Ceremonial Time"),
+              castingTime,
+              translation.casting_time,
+            ),
+            combineGeneratedTextWithStaticTranslation(translate("KP Cost"), cost, translation.cost),
+            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration"),
+              duration,
+              translation.duration,
+            ),
             renderTargetCategory(entry.target).run(env),
             getTextForTraditions(
               {

@@ -1,11 +1,14 @@
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
+import { diffWordsWithSpace } from "diff"
 import type {
   FastOneTimePerformanceParameters,
   FastSustainedPerformanceParameters,
   OneTimePerformanceParameters,
+  ResponsiveTextOptional,
   SlowOneTimePerformanceParameters,
   SlowSustainedPerformanceParameters,
 } from "optolith-database-schema/gen"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import type { StdReader } from "../../reader.js"
 import { renderFastCastingTime, renderSlowCastingTime } from "./castingTime.js"
 import { renderOneTimeCost, renderSustainedCost } from "./cost.js"
@@ -159,13 +162,45 @@ export const renderSlowPerformanceParameters = (
 > => {
   switch (value.kind) {
     case "OneTime":
-      return renderSlowOneTimePerformanceParameters(
-        renderSlowCastingTime,
-        value.OneTime,
-      )
+      return renderSlowOneTimePerformanceParameters(renderSlowCastingTime, value.OneTime)
     case "Sustained":
       return renderSlowSustainedPerformanceParameters(value.Sustained)
     default:
       return assertExhaustive(value)
+  }
+}
+
+/**
+ * Diff the generated text with the static translation and combine them into a single text, highlighting the differences.
+ */
+export const combineGeneratedTextWithStaticTranslation = (
+  label: string,
+  generatedText: string | undefined,
+  staticText: ResponsiveTextOptional | string | undefined,
+): RawDefinitionListEntityDescriptionSectionItem | undefined => {
+  if (generatedText === undefined) {
+    return undefined
+  }
+
+  const normalizedStaticText = typeof staticText === "string" ? staticText : staticText?.full
+  const diff =
+    normalizedStaticText === undefined
+      ? undefined
+      : diffWordsWithSpace(normalizedStaticText, generatedText)
+
+  return {
+    label,
+    value:
+      diff === undefined
+        ? generatedText
+        : diff
+            .map(part =>
+              part.added
+                ? `<ins>${part.value}</ins>`
+                : part.removed
+                  ? `<del>${part.value}</del>`
+                  : part.value,
+            )
+            .join(""),
   }
 }

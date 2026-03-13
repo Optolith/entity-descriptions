@@ -7,7 +7,6 @@ import { romanize } from "@elyukai/utils/roman"
 import { numAsc, type Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { diffWordsWithSpace } from "diff"
 import {
   type ActivatableSkillEffect,
   type AnimistPowerImprovementCost,
@@ -25,7 +24,6 @@ import {
   type OldParameterBySpeed,
   type Property_ID,
   type RatedIdentifier,
-  type ResponsiveTextOptional,
   type SpellworkTraditions,
   type Tribe_ID,
 } from "optolith-database-schema/gen"
@@ -59,6 +57,7 @@ import {
 } from "./partial/rated/activatable/duration.js"
 import { renderEffect } from "./partial/rated/activatable/effect.js"
 import {
+  combineGeneratedTextWithStaticTranslation,
   renderFastPerformanceParameters,
   renderSlowOneTimePerformanceParameters,
   renderSlowPerformanceParameters,
@@ -92,38 +91,6 @@ import {
 } from "./partial/responsiveText.js"
 import { formatTimeSpanR, type TimeSpanUnit } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
-
-const combineGeneratedTextWithStaticTranslation = (
-  label: string,
-  generatedText: string | undefined,
-  staticText: ResponsiveTextOptional | string | undefined,
-): RawDefinitionListEntityDescriptionSectionItem | undefined => {
-  if (generatedText === undefined) {
-    return undefined
-  }
-
-  const normalizedStaticText = typeof staticText === "string" ? staticText : staticText?.full
-  const diff =
-    normalizedStaticText === undefined
-      ? undefined
-      : diffWordsWithSpace(normalizedStaticText, generatedText)
-
-  return {
-    label,
-    value:
-      diff === undefined
-        ? generatedText
-        : diff
-            .map(part =>
-              part.added
-                ? `<ins>${part.value}</ins>`
-                : part.removed
-                  ? `<del>${part.value}</del>`
-                  : part.value,
-            )
-            .join(""),
-  }
-}
 
 const renderProperty = (
   id: Property_ID,
