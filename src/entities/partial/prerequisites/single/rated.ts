@@ -24,7 +24,7 @@ const printRatedName = (
   switch (id.kind) {
     case "Attribute":
       return (
-        translateMap(getInstanceById("Attribute", id.Attribute)?.translations)?.name ??
+        translateMap(getInstanceById("Attribute", id.Attribute)?.translations)?.abbreviation ??
         MISSING_VALUE
       )
     case "Skill":
