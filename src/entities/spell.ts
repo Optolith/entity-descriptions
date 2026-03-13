@@ -7,6 +7,7 @@ import { romanize } from "@elyukai/utils/roman"
 import { numAsc, type Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { diffWordsWithSpace } from "diff"
 import {
   type ActivatableSkillEffect,
   type AnimistPowerImprovementCost,
@@ -102,13 +103,25 @@ const combineGeneratedTextWithStaticTranslation = (
   }
 
   const normalizedStaticText = typeof staticText === "string" ? staticText : staticText?.full
+  const diff =
+    normalizedStaticText === undefined
+      ? undefined
+      : diffWordsWithSpace(normalizedStaticText, generatedText)
 
   return {
     label,
     value:
-      normalizedStaticText !== undefined && generatedText !== normalizedStaticText
-        ? `***${generatedText}*** (${normalizedStaticText})`
-        : generatedText,
+      diff === undefined
+        ? generatedText
+        : diff
+            .map(part =>
+              part.added
+                ? `<ins>${part.value}</ins>`
+                : part.removed
+                  ? `<del>${part.value}</del>`
+                  : part.value,
+            )
+            .join(""),
   }
 }
 
