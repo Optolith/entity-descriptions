@@ -1,9 +1,6 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type {
-  ResolvedNewSkillApplication,
-  ResolvedSkillUse,
-} from "optolith-database-schema/cache"
+import type { ResolvedNewSkillApplication, ResolvedSkillUse } from "optolith-database-schema/cache"
 import type { ActivatableIdentifier } from "optolith-database-schema/gen"
 import { fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -13,20 +10,15 @@ import type {
   GetInstanceById,
 } from "../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../helpers/locale.js"
-import type {
-  GetAllResolvedNewSkillApplications,
-  GetAllResolvedSkillUses,
-} from "../index.js"
-import { BaseActivatableTranslation } from "./activatable.js"
+import type { GetAllResolvedNewSkillApplications, GetAllResolvedSkillUses } from "../index.js"
+import type { BaseActivatableTranslation } from "./activatable.js"
 import { renderImprovementCost } from "./partial/rated/improvementCost.js"
 import { renderSkillCheck } from "./partial/rated/skillCheck.js"
 
-const getUsesOrNewApplications = <
-  T extends ResolvedNewSkillApplication | ResolvedSkillUse,
->(
+const getUsesOrNewApplications = (
   getInstanceById: GetInstanceById<"Aspect" | ActivatableIdentifier["kind"]>,
   locale: LocaleEnvironment,
-  items: T[],
+  items: (ResolvedNewSkillApplication | ResolvedSkillUse)[],
 ) =>
   items
     .map(x => {
@@ -72,11 +64,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       "Publication" | "Attribute" | ActivatableIdentifier["kind"] | "Aspect"
     >
     getAllInstances: GetAllInstances<
-      | "BlessedTradition"
-      | "Disease"
-      | "Region"
-      | "SkillUse"
-      | "NewSkillApplication"
+      "BlessedTradition" | "Disease" | "Region" | "SkillUse" | "NewSkillApplication"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"SkillApplication">
     getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
@@ -107,11 +95,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       getAllResolvedNewSkillApplications(id),
     )
 
-    const uses = getUsesOrNewApplications(
-      getInstanceById,
-      locale,
-      getAllResolvedSkillUses(id),
-    )
+    const uses = getUsesOrNewApplications(getInstanceById, locale, getAllResolvedSkillUses(id))
 
     const applications = [
       ...getChildInstancesForInstanceId("SkillApplication", id)
@@ -178,10 +162,9 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
                   ? translate("Yes")
                   : entry.encumbrance.kind === "No"
                     ? translate("No")
-                    : (translation.encumbrance_description ??
-                      translate("Maybe")),
+                    : (translation.encumbrance_description ?? translate("Maybe")),
             },
-            translation?.tools === undefined
+            translation.tools === undefined
               ? undefined
               : {
                   label: translate("Tools"),

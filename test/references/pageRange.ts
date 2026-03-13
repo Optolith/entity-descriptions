@@ -1,10 +1,10 @@
 import assert from "assert/strict"
 import { describe, it } from "node:test"
-import { Page } from "optolith-database-schema/gen"
+import type { Page } from "optolith-database-schema/gen"
 import {
   fromRawPageRange,
   normalizePageRanges,
-  PageRange,
+  type PageRange,
   printPageRange,
   printPageRanges,
 } from "../../src/references/pageRange.js"

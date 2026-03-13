@@ -20,18 +20,13 @@ import {
   type StdReader,
 } from "../../reader.js"
 import { replaceTextIfNeeded } from "../../responsiveText.js"
-import {
-  formatCombinedTimeSpanR,
-  formatTimeSpanR,
-} from "../../units/timeSpan.js"
+import { formatCombinedTimeSpanR, formatTimeSpanR } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { renderCheckResultBasedValue } from "./checkResultBased.js"
 import { wrapAsMaximum, wrapIfMaximum } from "./isMinimumMaximum.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
-const renderImmediateDuration = (
-  value?: Immediate,
-): StdReader<string, "t" | "tm" | "rts"> =>
+const renderImmediateDuration = (value?: Immediate): StdReader<string, "t" | "tm" | "rts"> =>
   translateR("Immediate")
     .thenW(
       base =>
@@ -43,16 +38,10 @@ const renderImmediateDuration = (
     )
     .thenW(text => replaceTextIfNeeded(value?.translations, text))
 
-const renderPermanentDuration = (
-  value: PermanentDuration,
-): StdReader<string, "t" | "tm" | "rts"> =>
-  translateR("Permanent").thenW(text =>
-    replaceTextIfNeeded(value.translations, text),
-  )
+const renderPermanentDuration = (value: PermanentDuration): StdReader<string, "t" | "tm" | "rts"> =>
+  translateR("Permanent").thenW(text => replaceTextIfNeeded(value.translations, text))
 
-const renderFixedDuration = (
-  value: FixedDuration,
-): StdReader<string, "t" | "tm" | "rts"> =>
+const renderFixedDuration = (value: FixedDuration): StdReader<string, "t" | "tm" | "rts"> =>
   formatCombinedTimeSpanR(value)
     .then(text => wrapIfMaximum(value.is_maximum, text))
     .thenW(text => replaceTextIfNeeded(value.translations, text))
@@ -84,17 +73,14 @@ const renderIndefiniteDuration = (value: {
     )
     .thenW(
       maximum === undefined
-        ? Reader.of
+        ? text => Reader.of(text)
         : text =>
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
             renderOneTimeDuration(maximum).then(maximumText =>
-              translateR(
-                "{$defaultDuration}, but no more than {$maximumDuration}",
-                {
-                  defaultDuration: text,
-                  maximumDuration: maximumText,
-                },
-              ),
+              translateR("{$defaultDuration}, but no more than {$maximumDuration}", {
+                defaultDuration: text,
+                maximumDuration: maximumText,
+              }),
             ),
     )
 }
@@ -167,16 +153,12 @@ export const renderSustainedDuration = (
 ): StdReader<string, "t" | "rts"> =>
   value === undefined
     ? responsiveTranslateR("Sustained", "(S)")
-    : formatCombinedTimeSpanR(value.maximum).then(maxText =>
-        wrapAsMaximum(maxText),
-      )
+    : formatCombinedTimeSpanR(value.maximum).then(maxText => wrapAsMaximum(maxText))
 
 /**
  *  Returns the text for the duration of a musical activatable skill.
  */
-export const renderMusicDuration = (
-  duration: MusicDuration,
-): StdReader<string, "t"> =>
+export const renderMusicDuration = (duration: MusicDuration): StdReader<string, "t"> =>
   Reader.asks(({ translate }) => {
     const length = (() => {
       switch (duration.length.kind) {

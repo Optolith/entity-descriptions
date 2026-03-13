@@ -1,6 +1,6 @@
 import { range } from "@optolith/helpers/array"
-import { Page, PageRange as RawPageRange } from "optolith-database-schema/gen"
-import { Translate } from "../helpers/translate.js"
+import type { Page, PageRange as RawPageRange } from "optolith-database-schema/gen"
+import type { Translate } from "../helpers/translate.js"
 import { comparePage, equalsPage, printPage, succ } from "./page.js"
 
 /**
@@ -62,16 +62,10 @@ export const normalizePageRanges = (ranges: PageRange[]): PageRange[] =>
 export const printPageRange = (translate: Translate, pageRange: PageRange) =>
   pageRange.lastPage === undefined
     ? printPage(translate, pageRange.firstPage)
-    : `${printPage(translate, pageRange.firstPage)}–${printPage(
-        translate,
-        pageRange.lastPage,
-      )}`
+    : `${printPage(translate, pageRange.firstPage)}–${printPage(translate, pageRange.lastPage)}`
 
 /**
  * Returns a string representation of a list of page ranges.
  */
-export const printPageRanges = (
-  translate: Translate,
-  pageRanges: PageRange[],
-) =>
+export const printPageRanges = (translate: Translate, pageRanges: PageRange[]) =>
   pageRanges.map(pageRange => printPageRange(translate, pageRange)).join(", ")

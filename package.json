@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
-    "@elyukai/utils": "^0.3.0",
+    "@elyukai/utils": "^0.3.1",
     "@optolith/adventure-points": "^0.1.1",
     "@optolith/helpers": "^0.2.2",
     "messageformat": "^4.0.0",
@@ -46,7 +46,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.8.0",
     "globals": "^17.4.0",
-    "optolith-database-schema": "^0.34.17",
+    "optolith-database-schema": "^0.35.0",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

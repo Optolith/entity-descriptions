@@ -1,16 +1,8 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import type {
-  AlternativeName,
-  LaboratoryLevel,
-  Resistance,
-} from "optolith-database-schema/gen"
+import type { AlternativeName, LaboratoryLevel, Resistance } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
-import type {
-  LocaleMap,
-  Translate,
-  TranslateMap,
-} from "../../helpers/translate.js"
+import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import type { IdMap } from "../../index.js"
 import { renderDice } from "./dice.js"
 import { parensIf } from "./rated/activatable/parensIf.js"
@@ -19,10 +11,7 @@ import { MISSING_VALUE } from "./unknown.js"
 /**
  * Renders a laboratory level into a localized string.
  */
-export const renderLaboratoryLevel = (
-  translate: Translate,
-  level: LaboratoryLevel,
-) => {
+export const renderLaboratoryLevel = (translate: Translate, level: LaboratoryLevel) => {
   switch (level.kind) {
     case "ArchaicLaboratory":
       return translate("Archaic laboratory")
@@ -49,45 +38,34 @@ export const renderResistance = (
     case "Spirit":
       return (
         translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Spirit,
-          )?.translations,
+          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Spirit)
+            ?.translations,
         )?.name ?? MISSING_VALUE
       )
 
     case "Toughness":
       return (
         translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Toughness,
-          )?.translations,
+          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Toughness)
+            ?.translations,
         )?.name ?? MISSING_VALUE
       )
 
     case "LowerOfSpiritAndToughness": {
       const spiritTranslation =
         translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Spirit,
-          )?.translations,
+          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Spirit)
+            ?.translations,
         )?.name ?? MISSING_VALUE
       const toughnessTranslation =
         translateMap(
-          getInstanceById(
-            "DerivedCharacteristic",
-            idMap.DerivedCharacteristic.Toughness,
-          )?.translations,
+          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Toughness)
+            ?.translations,
         )?.name ?? MISSING_VALUE
-      return translate(
-        "{$first} or {$second}, depending on which value is lower",
-        {
-          first: spiritTranslation,
-          second: toughnessTranslation,
-        },
-      )
+      return translate("{$first} or {$second}, depending on which value is lower", {
+        first: spiritTranslation,
+        second: toughnessTranslation,
+      })
     }
 
     default:
@@ -108,7 +86,7 @@ export const renderChance = (
   (item.chance === undefined
     ? undefined
     : translate("{$valueRange} on {$dice}", {
-        valueRange: item.chance === 5 ? 1 : `1–${item.chance / 5}`,
+        valueRange: item.chance === 5 ? 1 : `1–${(item.chance / 5).toFixed()}`,
         dice: renderDice(translate, { number: 1, sides: 20 }),
       }) +
       (includePercentage
@@ -125,11 +103,8 @@ export const renderAlternativeNames = (
   alternativeNames === undefined || !isNotEmpty(alternativeNames)
     ? undefined
     : {
-        label: translate(
-          ".input {$hiddenCount :number} {{Alternative Names}}",
-          { hiddenCount: alternativeNames.length },
-        ),
-        value: alternativeNames
-          .map(name => name.name + parensIf(name.region))
-          .join(", "),
+        label: translate(".input {$hiddenCount :number} {{Alternative Names}}", {
+          hiddenCount: alternativeNames.length,
+        }),
+        value: alternativeNames.map(name => name.name + parensIf(name.region)).join(", "),
       }

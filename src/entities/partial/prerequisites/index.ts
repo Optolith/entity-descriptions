@@ -1,15 +1,18 @@
+import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { mapNullable } from "@elyukai/utils/nullable"
 import { numAsc } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
+  ActivatableIdentifier,
   AdvantageDisadvantagePrerequisites,
   AnimistPowerPrerequisites,
   ArcaneTraditionPrerequisites,
   DerivedCharacteristicPrerequisites,
   EnhancementPrerequisites,
+  GeneralPrerequisiteGroup,
   GeneralPrerequisites,
   GeodeRitualPrerequisites,
   InfluencePrerequisites,
@@ -25,14 +28,12 @@ import {
   PrerequisitesForLevels,
   ProfessionPrerequisites,
   PublicationPrerequisites,
+  RatedIdentifier,
   SpecialAbilityIdentifier,
   SpellworkPrerequisites,
-  type ActivatableIdentifier,
-  type GeneralPrerequisiteGroup,
-  type RatedIdentifier,
 } from "optolith-database-schema/gen"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../helpers/locale.js"
+import type { LocaleEnvironment } from "../../../helpers/locale.js"
 import type { TranslateMap } from "../../../helpers/translate.js"
 import {
   renderActivatableNameComponents,
@@ -40,7 +41,7 @@ import {
 } from "../activatableNameChunks.js"
 import { MISSING_VALUE } from "../unknown.js"
 import { printDisplayOption } from "./displayOption.js"
-import { hasPartValueObject, joinPrerequisiteParts, PrerequisitePart } from "./part.js"
+import { hasPartValueObject, joinPrerequisiteParts, type PrerequisitePart } from "./part.js"
 import {
   printAdvantageDisadvantagePrerequisiteGroup,
   printAnimistPowerPrerequisiteGroup,
@@ -57,7 +58,7 @@ import {
   printPublicationPrerequisiteGroup,
   printSpellworkPrerequisiteGroup,
 } from "./prerequisiteGroups.js"
-import { GetResolvedSelectOptionById } from "./single/activatable.js"
+import type { GetResolvedSelectOptionById } from "./single/activatable.js"
 
 type Prerequisite = { kind: string }
 
@@ -79,15 +80,17 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
     return printDisplayOption(locale.translateMap, disjunction.display_option)
   }
 
-  const [first, ...other] = disjunction.list.map(getPrerequisiteTranslation).filter(isNotNullish)
+  const { list: disjunctionList } = disjunction
+  const [first, ...other] = disjunctionList.map(getPrerequisiteTranslation).filter(isNotNullish)
 
   if (first === undefined) {
     return undefined
   }
 
   if (
-    disjunction.list.length < 2 ||
-    disjunction.list.slice(1).every(part => part.kind === disjunction.list[0]!.kind)
+    disjunctionList.length < 2 ||
+    (isNotEmpty(disjunctionList) &&
+      disjunctionList.slice(1).every(part => part.kind === disjunctionList[0].kind))
   ) {
     return {
       label: first.label,
@@ -114,7 +117,13 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
 
   return {
     value: locale.join(
-      [first, ...other].map(part => (part.label ?? "") + part.value),
+      [first, ...other].map(
+        part =>
+          (part.label ?? "") +
+          (typeof part.value === "string"
+            ? part.value
+            : renderActivatableNameComponents(locale.translateMap, part.value, true)),
+      ),
       "disjunction",
     ),
     sentenceType: undefined,

@@ -129,12 +129,12 @@ const getAtomicEquipmentCost = (entry: TaggedEntity<EquipmentIdentifier["kind"]>
       }
     }
     case "Jewelry": {
-      const costs: Cost[] = [
+      const costs: AtomicCost[] = [
         entry.content.cost.bronze,
         entry.content.cost.silver,
         entry.content.cost.gold,
       ]
-      return costs.map(getAtomicCost).reduce(rangeAtomicEquipmentCost)
+      return costs.reduce(rangeAtomicEquipmentCost)
     }
     case "Ammunition":
     case "Animal":
@@ -212,7 +212,8 @@ const getAtomicEquipmentWeight = (
           return assertExhaustive(entry.content.type)
       }
     case "Jewelry": {
-      const values = Object.values(entry.content.weight)
+      const { bronze, silver, gold } = entry.content.weight
+      const values = [bronze, silver, gold]
       return [Math.min(...values), Math.max(...values)]
     }
     case "Armor":
@@ -313,7 +314,7 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
           item,
         ): item is EquipmentPackageItem & {
           content: TaggedEntity<EquipmentIdentifier["kind"]>
-        } => item.content !== undefined,
+        } => item.content.content !== undefined,
       ) ?? []
 
   return {

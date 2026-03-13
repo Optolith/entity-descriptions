@@ -1,5 +1,6 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
+  ActivatableIdentifier,
   AdvantageDisadvantagePrerequisiteGroup,
   AnimistPowerPrerequisiteGroup,
   ArcaneTraditionPrerequisiteGroup,
@@ -14,14 +15,16 @@ import {
   PreconditionGroup,
   ProfessionPrerequisiteGroup,
   PublicationPrerequisiteGroup,
+  RatedIdentifier,
   SpellworkPrerequisiteGroup,
-  type ActivatableIdentifier,
-  type RatedIdentifier,
 } from "optolith-database-schema/gen"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../helpers/locale.js"
-import { PrerequisitePart } from "./part.js"
-import { GetResolvedSelectOptionById, printActivatablePrerequisite } from "./single/activatable.js"
+import type { LocaleEnvironment } from "../../../helpers/locale.js"
+import type { PrerequisitePart } from "./part.js"
+import {
+  type GetResolvedSelectOptionById,
+  printActivatablePrerequisite,
+} from "./single/activatable.js"
 import { printAnimistPowerPrerequisite } from "./single/animistPower.js"
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
 import { printCommonSuggestedByRCPPrerequisite } from "./single/commonSuggestedByRCP.js"

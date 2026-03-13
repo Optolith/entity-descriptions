@@ -44,10 +44,10 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
           : {
               type: "definitionList",
               items: [
-                ...(translation.effects?.map(effect => ({
+                ...translation.effects.map(effect => ({
                   label: effect.label,
                   value: effect.text,
-                })) ?? []),
+                })),
                 entry.prerequisites === undefined
                   ? undefined
                   : {

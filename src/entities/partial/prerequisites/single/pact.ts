@@ -1,11 +1,11 @@
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
 import type { PactPrerequisite } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 /**
  * Get the translation of a culture prerequisite.

@@ -1,6 +1,6 @@
-import { Compare } from "@optolith/helpers/compare"
+import type { Compare } from "@optolith/helpers/compare"
 import type { LocaleMeasurementAdjustments } from "optolith-database-schema/gen"
-import { Translate, TranslateMap, type Format } from "./translate.js"
+import type { Format, Translate, TranslateMap } from "./translate.js"
 
 /**
  * The type of list to join in a locale-aware way.
@@ -14,6 +14,7 @@ export type LocaleEnvironment = {
   id: string
   format: Format
   formatDate: (date: Date) => string
+  formatNumber: FormatNumber
   translate: Translate
   translateMap: TranslateMap
   compare: LocaleCompare
@@ -30,3 +31,8 @@ export type LocaleCompare = Compare<string>
  * A function that joins a list of strings according to the locale's rules for the given type.
  */
 export type LocaleJoin = (list: string[], type: LocaleJoinType) => string
+
+/**
+ * A function that formats a number according to the locale’s rules.
+ */
+export type FormatNumber = (value: number) => string

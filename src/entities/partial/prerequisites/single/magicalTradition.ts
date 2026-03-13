@@ -3,9 +3,9 @@ import type {
   MagicalTraditionPrerequisite,
   MagicalTraditionPrerequisiteRestriction,
 } from "optolith-database-schema/gen"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 const printValue = (
   locale: LocaleEnvironment,

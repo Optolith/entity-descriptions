@@ -1,11 +1,11 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { RatedIdentifier, RatedPrerequisite } from "optolith-database-schema/gen"
 import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import type { TranslateMap } from "../../../../helpers/translate.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 const printRatedName = (
   getInstanceById: GetInstanceById<
@@ -80,7 +80,7 @@ export const printRatedPrerequisite = (
   }
 
   return {
-    value: `${printRatedName(getInstanceById, locale.translateMap, prerequisite.id)} ${prerequisite.value}`,
+    value: `${printRatedName(getInstanceById, locale.translateMap, prerequisite.id)} ${prerequisite.value.toFixed()}`,
     sentenceType: undefined,
     isMeta: false,
   }

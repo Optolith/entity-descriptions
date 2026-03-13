@@ -1,21 +1,13 @@
 import { Reader } from "@elyukai/utils/reader"
 import type { Translate, Translations } from "../../../helpers/translate.js"
 import type { StdReader } from "../reader.js"
-import { responsive, ResponsiveTextSize } from "../responsiveText.js"
+import { responsive, type ResponsiveTextSize } from "../responsiveText.js"
 
 type LengthUnit = "Steps" | "Miles"
 
 const lengthUnitTranslationKeys = {
-  Steps: [
-    ".input {$value :number} {{{$value} yards}}",
-    "{$value} yards",
-    "{$value} yd",
-  ],
-  Miles: [
-    ".input {$value :number} {{{$value} miles}}",
-    "{$value} miles",
-    "{$value} mi.",
-  ],
+  Steps: [".input {$value :number} {{{$value} yards}}", "{$value} yards", "{$value} yd"],
+  Miles: [".input {$value :number} {{{$value} miles}}", "{$value} miles", "{$value} mi."],
 } as const satisfies {
   [key in LengthUnit]: [
     fullNumber: keyof Translations,
@@ -53,9 +45,7 @@ export const formatLengthR = (
   unit: LengthUnit | { kind: LengthUnit },
   value: number | string,
 ): StdReader<string, "t" | "rts"> =>
-  Reader.asks(env =>
-    formatLength(env.translate, env.responsiveTextSize, unit, value),
-  )
+  Reader.asks(env => formatLength(env.translate, env.responsiveTextSize, unit, value))
 
 /**
  * Returns the text for a length unit.
@@ -64,11 +54,4 @@ export const formatCombinedLengthR = (object: {
   unit: LengthUnit | { kind: LengthUnit }
   value: number | string
 }): StdReader<string, "t" | "rts"> =>
-  Reader.asks(env =>
-    formatLength(
-      env.translate,
-      env.responsiveTextSize,
-      object.unit,
-      object.value,
-    ),
-  )
+  Reader.asks(env => formatLength(env.translate, env.responsiveTextSize, object.unit, object.value))

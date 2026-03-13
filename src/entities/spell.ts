@@ -4,7 +4,7 @@ import { Lazy } from "@elyukai/utils/lazy"
 import { compareNullish } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
-import { Compare, numAsc } from "@optolith/helpers/compare"
+import { numAsc, type Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
@@ -32,7 +32,7 @@ import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare } from "../helpers/locale.js"
-import { Translate, TranslateMap, type TranslationKeysWithoutParams } from "../helpers/translate.js"
+import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import { type IdMap, type RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { renderEnhancements } from "./partial/enhancements.js"
@@ -1449,7 +1449,7 @@ const renderMagicalRuneCost = (options: Lazy<MagicalRuneOption[]>, cost: Magical
         options,
         option => option.cost?.value,
         compareNullish(numAsc),
-        num => num?.toString() ?? MISSING_VALUE,
+        num => num?.toFixed() ?? MISSING_VALUE,
       ).thenW(formatEnergyR)
     default:
       return assertExhaustive(cost)

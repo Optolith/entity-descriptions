@@ -1,5 +1,6 @@
 import { MessageFormat } from "messageformat"
-import { Translate, TranslateMap, type Format } from "../../src/helpers/translate.js"
+import type { FormatNumber } from "../../src/helpers/locale.js"
+import type { Format, Translate, TranslateMap } from "../../src/helpers/translate.js"
 
 /**
  * A mocked format function.
@@ -10,6 +11,11 @@ export const formatMock: Format = (text, args) => new MessageFormat("en", text).
  * A mocked date format function that formats a date as YYYY-MM-DD.
  */
 export const formatDateMock = (date: Date): string => date.toISOString().split("T")[0] ?? ""
+
+/**
+ * A mocked number format function.
+ */
+export const formatNumberMock: FormatNumber = value => value.toFixed()
 
 /**
  * A mocked translate function.

@@ -1,7 +1,7 @@
-import { TextPrerequisite } from "optolith-database-schema/gen"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { TextPrerequisite } from "optolith-database-schema/gen"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 /**
  * Get the translation of a text prerequisite.

@@ -44,24 +44,19 @@ const renderElectiveSpellworks = (
     case "Specific":
       return electiveSpellworks.Specific.list
         .map(item =>
-          mapNullable(
-            translateMap(getInstanceById(item.id)?.translations)?.name,
-            name => {
-              if (item.restriction === undefined) {
-                return name
-              }
+          mapNullable(translateMap(getInstanceById(item.id)?.translations)?.name, name => {
+            if (item.restriction === undefined) {
+              return name
+            }
 
-              return (
-                name +
-                parensIf(
-                  translateMap(
-                    getInstanceById("Element", item.restriction.Element)
-                      ?.translations,
-                  )?.name ?? MISSING_VALUE,
-                )
+            return (
+              name +
+              parensIf(
+                translateMap(getInstanceById("Element", item.restriction.Element)?.translations)
+                  ?.name ?? MISSING_VALUE,
               )
-            },
-          ),
+            )
+          }),
         )
         .filter(isNotNullish)
         .toSorted(localeCompare)
@@ -76,36 +71,27 @@ const renderRestrictedSpellworks = (
   translateMap: TranslateMap,
   localeCompare: LocaleCompare,
   localeJoin: LocaleJoin,
-  getInstanceById: GetInstanceById<
-    SpellworkIdentifier["kind"] | "Element" | "Property"
-  >,
+  getInstanceById: GetInstanceById<SpellworkIdentifier["kind"] | "Element" | "Property">,
   restrictedSpellworks: RestrictedSpellworks,
 ): string => {
-  const restrictedGroups = Dictionary.groupBy(
-    restrictedSpellworks,
-    restriction =>
-      restriction.kind === "Spellwork"
-        ? "spellwork"
-        : restriction.kind === "Property" &&
-            restriction.Property.maximum !== undefined
-          ? "restrictedProperty"
-          : restriction.kind === "Property" ||
-              restriction.kind === "DemonSummoning"
-            ? "property"
-            : "other",
+  const restrictedGroups = Dictionary.groupBy(restrictedSpellworks, restriction =>
+    restriction.kind === "Spellwork"
+      ? "spellwork"
+      : restriction.kind === "Property" && restriction.Property.maximum !== undefined
+        ? "restrictedProperty"
+        : restriction.kind === "Property" || restriction.kind === "DemonSummoning"
+          ? "property"
+          : "other",
   )
 
-  const addExclusion = (
-    excludedSpellworks: SpellworkIdentifier[] | undefined,
-  ) => {
+  const addExclusion = (excludedSpellworks: SpellworkIdentifier[] | undefined) => {
     if (excludedSpellworks === undefined) {
       return ""
     }
 
     const translatedSpellworks = excludedSpellworks
       .map(
-        excludedSpellwork =>
-          translateMap(getInstanceById(excludedSpellwork)?.translations)?.name,
+        excludedSpellwork => translateMap(getInstanceById(excludedSpellwork)?.translations)?.name,
       )
       .filter(isNotNullish)
 
@@ -133,10 +119,8 @@ const renderRestrictedSpellworks = (
           {
             count: restriction.Property.maximum,
             property:
-              translateMap(
-                getInstanceById("Property", restriction.Property.id)
-                  ?.translations,
-              )?.name ?? MISSING_VALUE,
+              translateMap(getInstanceById("Property", restriction.Property.id)?.translations)
+                ?.name ?? MISSING_VALUE,
           },
         ) + addExclusion(restriction.Property.exclude),
     ) ?? []
@@ -158,10 +142,8 @@ const renderRestrictedSpellworks = (
       ?.map(restriction => {
         switch (restriction.kind) {
           case "Property":
-            return translateMap(
-              getInstanceById("Property", restriction.Property.id)
-                ?.translations,
-            )?.name
+            return translateMap(getInstanceById("Property", restriction.Property.id)?.translations)
+              ?.name
           case "DemonSummoning":
             return translate("Demon Summoning")
           default:
@@ -189,11 +171,7 @@ const renderRestrictedSpellworks = (
 
   const translatedSpellworks =
     spellworkGroup
-      ?.map(
-        restriction =>
-          translateMap(getInstanceById(restriction.Spellwork)?.translations)
-            ?.name,
-      )
+      ?.map(restriction => translateMap(getInstanceById(restriction.Spellwork)?.translations)?.name)
       .filter(isNotNullish)
       .toSorted(localeCompare) ?? []
 
@@ -229,39 +207,26 @@ const renderRestrictedSpellworks = (
         case "Borbaradian":
           return translate("no Borbaradian spellworks")
         case "DamageIntelligent":
-          return translate(
-            "no spellworks that inflict DP or sDP on intelligent creatures",
-          )
+          return translate("no spellworks that inflict DP or sDP on intelligent creatures")
         default:
           return assertExhaustive(restriction)
       }
     }) ?? []
 
-  return [
-    ...restrictedProperties,
-    ...properties,
-    ...others,
-    ...spellworks,
-  ].join("; ")
+  return [...restrictedProperties, ...properties, ...others, ...spellworks].join("; ")
 }
 
 const renderSpellworkAdjustment = (
   translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<
-    SpellworkIdentifier["kind"] | "MagicalTradition"
-  >,
+  getInstanceById: GetInstanceById<SpellworkIdentifier["kind"] | "MagicalTradition">,
   adjustment: SpellworkAdjustment,
 ): string =>
   `${
-    translateMap(getInstanceById(adjustment.id)?.translations)?.name ??
-    MISSING_VALUE
-  } ${adjustment.points}${parensIf(
+    translateMap(getInstanceById(adjustment.id)?.translations)?.name ?? MISSING_VALUE
+  } ${adjustment.points.toFixed()}${parensIf(
     adjustment.tradition === undefined
       ? undefined
-      : translateMap(
-          getInstanceById("MagicalTradition", adjustment.tradition)
-            ?.translations,
-        )?.name,
+      : translateMap(getInstanceById("MagicalTradition", adjustment.tradition)?.translations)?.name,
   )}`
 
 const renderAbilityAdjustmentName = (
@@ -279,29 +244,24 @@ const renderAbilityAdjustmentName = (
   switch (abilityAdjustment.kind) {
     case "Skill":
       return (
-        translateMap(
-          getInstanceById("Skill", abilityAdjustment.Skill.id)?.translations,
-        )?.name ?? MISSING_VALUE
+        translateMap(getInstanceById("Skill", abilityAdjustment.Skill.id)?.translations)?.name ??
+        MISSING_VALUE
       )
     case "CombatTechnique":
       return (
-        translateMap(
-          getInstanceById(abilityAdjustment.CombatTechnique.id)?.translations,
-        )?.name ?? MISSING_VALUE
+        translateMap(getInstanceById(abilityAdjustment.CombatTechnique.id)?.translations)?.name ??
+        MISSING_VALUE
       )
     case "Spellwork":
       return (
-        (translateMap(
-          getInstanceById(abilityAdjustment.Spellwork.id)?.translations,
-        )?.name ?? MISSING_VALUE) +
+        (translateMap(getInstanceById(abilityAdjustment.Spellwork.id)?.translations)?.name ??
+          MISSING_VALUE) +
         parensIf(
           abilityAdjustment.Spellwork.tradition === undefined
             ? undefined
             : translateMap(
-                getInstanceById(
-                  "MagicalTradition",
-                  abilityAdjustment.Spellwork.tradition,
-                )?.translations,
+                getInstanceById("MagicalTradition", abilityAdjustment.Spellwork.tradition)
+                  ?.translations,
               )?.name,
         )
       )
@@ -316,9 +276,8 @@ const renderAbilityAdjustmentBaseValue = (
 ) => {
   switch (abilityAdjustment.kind) {
     case "Skill":
-      return baseProfessionPackage.skills?.find(
-        skill => skill.id === abilityAdjustment.Skill.id,
-      )?.rating_modifier
+      return baseProfessionPackage.skills?.find(skill => skill.id === abilityAdjustment.Skill.id)
+        ?.rating_modifier
     case "CombatTechnique":
       return baseProfessionPackage.combat_techniques?.find(skill =>
         deepEqual(skill.id, abilityAdjustment.CombatTechnique.id),
@@ -336,9 +295,7 @@ const renderAbilityAdjustmentBaseValue = (
   }
 }
 
-const renderAbilityAdjustmentModifierValue = (
-  abilityAdjustment: AbilityAdjustment,
-) => {
+const renderAbilityAdjustmentModifierValue = (abilityAdjustment: AbilityAdjustment) => {
   switch (abilityAdjustment.kind) {
     case "Skill":
       return abilityAdjustment.Skill.points
@@ -351,9 +308,7 @@ const renderAbilityAdjustmentModifierValue = (
   }
 }
 
-const renderAbilityAdjustmentDefaultValue = (
-  abilityAdjustment: AbilityAdjustment,
-) => {
+const renderAbilityAdjustmentDefaultValue = (abilityAdjustment: AbilityAdjustment) => {
   switch (abilityAdjustment.kind) {
     case "Skill":
       return 0
@@ -388,17 +343,15 @@ const renderAbilityAdjustment = (
         )} ${sign(renderAbilityAdjustmentModifierValue(abilityAdjustment))}`
     : abilityAdjustment => {
         const basePoints =
-          (renderAbilityAdjustmentBaseValue(
-            baseProfessionPackage,
-            abilityAdjustment,
-          ) ?? 0) + renderAbilityAdjustmentDefaultValue(abilityAdjustment)
+          (renderAbilityAdjustmentBaseValue(baseProfessionPackage, abilityAdjustment) ?? 0) +
+          renderAbilityAdjustmentDefaultValue(abilityAdjustment)
         return translate("{$replacement} instead of {$base}", {
           base: basePoints,
           replacement: `${renderAbilityAdjustmentName(
             translateMap,
             getInstanceById,
             abilityAdjustment,
-          )} ${basePoints + renderAbilityAdjustmentModifierValue(abilityAdjustment)}`,
+          )} ${(basePoints + renderAbilityAdjustmentModifierValue(abilityAdjustment)).toFixed()}`,
         })
       }
 
@@ -418,16 +371,9 @@ const renderAbilityAdjustments = (
   list: AbilityAdjustment[],
 ) =>
   list
-    ?.map(
-      renderAbilityAdjustment(
-        translate,
-        translateMap,
-        getInstanceById,
-        baseProfessionPackage,
-      ),
-    )
+    .map(renderAbilityAdjustment(translate, translateMap, getInstanceById, baseProfessionPackage))
     .toSorted(localeCompare)
-    .join(", ") ?? translate("none")
+    .join(", ")
 
 /**
  * Get a JSON representation of the rules text for a curriculum.
@@ -482,9 +428,8 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
             {
               label: translate("Guideline"),
               value:
-                translateMap(
-                  getInstanceById("Guideline", entry.guideline)?.translations,
-                )?.name ?? MISSING_VALUE,
+                translateMap(getInstanceById("Guideline", entry.guideline)?.translations)?.name ??
+                MISSING_VALUE,
             },
             {
               label: translate("Elective Spellworks Package"),
@@ -522,21 +467,18 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
               (
                 lessonPackageTranslation,
               ): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
-                const [boni, mali] = partition(
-                  lessonPackage.content.skills ?? [],
-                  adjustment => {
-                    switch (adjustment.kind) {
-                      case "Skill":
-                        return adjustment.Skill.points > 0
-                      case "CombatTechnique":
-                        return adjustment.CombatTechnique.points > 0
-                      case "Spellwork":
-                        return adjustment.Spellwork.points > 0
-                      default:
-                        return assertExhaustive(adjustment)
-                    }
-                  },
-                )
+                const [boni, mali] = partition(lessonPackage.content.skills ?? [], adjustment => {
+                  switch (adjustment.kind) {
+                    case "Skill":
+                      return adjustment.Skill.points > 0
+                    case "CombatTechnique":
+                      return adjustment.CombatTechnique.points > 0
+                    case "Spellwork":
+                      return adjustment.Spellwork.points > 0
+                    default:
+                      return assertExhaustive(adjustment)
+                  }
+                })
 
                 return {
                   type: "labeled",
@@ -547,7 +489,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                       {
                         label: translate("Spellwork Changes"),
                         value:
-                          lessonPackageTranslation?.spellwork_changes ??
+                          lessonPackageTranslation.spellwork_changes ??
                           lessonPackage.content.spellwork_changes
                             ?.map(change =>
                               translate("{$replacement} instead of {$base}", {

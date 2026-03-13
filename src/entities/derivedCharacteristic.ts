@@ -72,14 +72,9 @@ const renderBaseCalculation = (
   renderMathOperation(calculation, value => {
     switch (value.kind) {
       case "Constant":
-        return value.Constant.toString(10)
+        return value.Constant.toFixed()
       case "Attribute":
-        return getAttribute(
-          getInstanceById,
-          translateMap,
-          value.Attribute,
-          style,
-        )
+        return getAttribute(getInstanceById, translateMap, value.Attribute, style)
       case "RaceBaseValue":
         return getRaceBaseValue(
           translate,
@@ -94,13 +89,9 @@ const renderBaseCalculation = (
           case "full":
             switch (value.PrimaryAttribute.kind) {
               case "Magical":
-                return translate(
-                  "Primary attribute for the magic user’s Tradition",
-                )
+                return translate("Primary attribute for the magic user’s Tradition")
               case "Blessed":
-                return translate(
-                  "Primary attribute for the Blessed One’s Tradition",
-                )
+                return translate("Primary attribute for the Blessed One’s Tradition")
               default:
                 return assertExhaustive(value.PrimaryAttribute)
             }
@@ -117,53 +108,44 @@ const renderBaseCalculation = (
 /**
  * Get a JSON representation of the rules text for a derived characteristic.
  */
-export const getDerivedCharacteristicEntityDescription =
-  createEntityDescriptionCreator<
-    "DerivedCharacteristic",
-    {
-      getInstanceById: GetInstanceById<
-        "Publication" | "Attribute" | "DerivedCharacteristic"
-      >
-      idMap: IdMap
-    }
-  >(
-    (
-      { getInstanceById, idMap },
-      { translate, translateMap },
-      { content: entry },
-    ) => {
-      const translation = translateMap(entry.translations)
+export const getDerivedCharacteristicEntityDescription = createEntityDescriptionCreator<
+  "DerivedCharacteristic",
+  {
+    getInstanceById: GetInstanceById<"Publication" | "Attribute" | "DerivedCharacteristic">
+    idMap: IdMap
+  }
+>(({ getInstanceById, idMap }, { translate, translateMap }, { content: entry }) => {
+  const translation = translateMap(entry.translations)
 
-      if (translation === undefined) {
-        return undefined
-      }
+  if (translation === undefined) {
+    return undefined
+  }
 
-      return {
-        title: `${translation.name} (${translation.abbreviation})`,
-        className: "derived-characteristic",
-        body: [
-          translation.description === undefined
-            ? undefined
-            : {
-                type: "plain",
-                text: translation.description,
-              },
+  return {
+    title: `${translation.name} (${translation.abbreviation})`,
+    className: "derived-characteristic",
+    body: [
+      translation.description === undefined
+        ? undefined
+        : {
+            type: "plain",
+            text: translation.description,
+          },
+      {
+        type: "definitionList",
+        items: [
           {
-            type: "definitionList",
-            items: [
-              {
-                label: translate("Base Value"),
-                value: renderBaseCalculation(
-                  getInstanceById,
-                  translate,
-                  translateMap,
-                  idMap,
-                  entry.calculation.base,
-                ),
-              },
-            ],
+            label: translate("Base Value"),
+            value: renderBaseCalculation(
+              getInstanceById,
+              translate,
+              translateMap,
+              idMap,
+              entry.calculation.base,
+            ),
           },
         ],
-      }
-    },
-  )
+      },
+    ],
+  }
+})

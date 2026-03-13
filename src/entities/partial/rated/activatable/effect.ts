@@ -51,13 +51,10 @@ export const renderEffect = (
         value: effect.Plain.text,
       }))
     case "ForEachQualityLevel":
-      return getContentPartsForQualityLevels(
-        index => index + 1,
-        effect.ForEachQualityLevel,
-      )
+      return getContentPartsForQualityLevels(index => index + 1, effect.ForEachQualityLevel)
     case "ForEachTwoQualityLevels":
       return getContentPartsForQualityLevels(
-        index => `${index * 2 + 1}–${index * 2 + 2}`,
+        index => `${(index * 2 + 1).toFixed()}–${(index * 2 + 2).toFixed()}`,
         effect.ForEachTwoQualityLevels,
       )
     default:

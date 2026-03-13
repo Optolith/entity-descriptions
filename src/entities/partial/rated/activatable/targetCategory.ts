@@ -7,12 +7,7 @@ import type {
   TargetCategory_ID,
 } from "optolith-database-schema/gen"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
-import {
-  getInstanceByIdFnR,
-  translateMapR,
-  translateR,
-  type StdReader,
-} from "../../reader.js"
+import { getInstanceByIdFnR, translateMapR, translateR, type StdReader } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
@@ -20,12 +15,8 @@ const renderPredefined = (targetCategoryId: TargetCategory_ID) =>
   getInstanceByIdFnR<"TargetCategory">()
     .thenW(
       getInstanceById =>
-        mapNullable(
-          getInstanceById("TargetCategory", targetCategoryId),
-          targetCategory =>
-            translateMapR(targetCategory.translations).map(
-              translation => translation?.name,
-            ),
+        mapNullable(getInstanceById("TargetCategory", targetCategoryId), targetCategory =>
+          translateMapR(targetCategory.translations).map(translation => translation?.name),
         ) ?? Reader.of(undefined),
     )
     .map(translation => translation ?? MISSING_VALUE)
@@ -56,21 +47,16 @@ const getTargetCategoryTranslationByType = (
  */
 export const renderTargetCategory = (
   values: AffectedTargetCategories,
-): StdReader<
-  RawDefinitionListEntityDescriptionSectionItem,
-  "t" | "tm" | "ibi",
-  "TargetCategory"
-> =>
+): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t" | "tm" | "ibi", "TargetCategory"> =>
   translateR("Target Category").thenW(label =>
     (values.length === 0
       ? translateR("all")
       : Reader.sequence(
           values.map(({ id, translations }) =>
-            getTargetCategoryTranslationByType(id).then(
-              text =>
-                translateMapR(translations)
-                  .map(translation => translation?.note)
-                  .map(note => appendInParensIfNotEmpty(note, text)) ?? text,
+            getTargetCategoryTranslationByType(id).then(text =>
+              translateMapR(translations)
+                .map(translation => translation?.note)
+                .map(note => appendInParensIfNotEmpty(note, text)),
             ),
           ),
         ).map(texts => texts.join(", "))

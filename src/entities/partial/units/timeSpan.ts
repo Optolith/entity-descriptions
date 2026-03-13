@@ -1,10 +1,7 @@
 import { Reader } from "@elyukai/utils/reader"
-import type {
-  Translate,
-  TranslationKeyMatchingParams,
-} from "../../../helpers/translate.js"
+import type { Translate, TranslationKeyMatchingParams } from "../../../helpers/translate.js"
 import type { StdEnv } from "../reader.js"
-import { ResponsiveTextSize, responsive } from "../responsiveText.js"
+import { type ResponsiveTextSize, responsive } from "../responsiveText.js"
 
 /**
  * Possible units to use for time spans.
@@ -83,5 +80,4 @@ export const formatTimeSpanR = (
 export const formatCombinedTimeSpanR = (object: {
   unit: { kind: TimeSpanUnit }
   value: number | string
-}): Reader<StdEnv<"t" | "rts">, string> =>
-  formatTimeSpanR(object.unit, object.value)
+}): Reader<StdEnv<"t" | "rts">, string> => formatTimeSpanR(object.unit, object.value)

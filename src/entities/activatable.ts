@@ -41,11 +41,7 @@ import type {
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"
-import type {
-  LocaleCompare,
-  LocaleEnvironment,
-  LocaleJoin,
-} from "../helpers/locale.js"
+import type { LocaleCompare, LocaleEnvironment, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   GetAllResolvedNewSkillApplications,
@@ -122,9 +118,8 @@ const renderPropertyValue = (
       return translate("As chosen")
     case "Fixed":
       return (
-        translateMap(
-          getInstanceById("Property", propertyDecl.Fixed)?.translations,
-        )?.name ?? MISSING_VALUE
+        translateMap(getInstanceById("Property", propertyDecl.Fixed)?.translations)?.name ??
+        MISSING_VALUE
       )
     default:
       return assertExhaustive(propertyDecl)
@@ -149,9 +144,7 @@ const renderPenaltyByAttackLabel = (
 }
 
 const renderPenaltyValue = (
-  getInstanceById: GetInstanceById<
-    CombatRelatedSpecialAbilityIdentifier["kind"]
-  >,
+  getInstanceById: GetInstanceById<CombatRelatedSpecialAbilityIdentifier["kind"]>,
   translate: Translate,
   translateMap: TranslateMap,
   name: string,
@@ -161,15 +154,11 @@ const renderPenaltyValue = (
     case "Single":
       return (
         sign(penalty.Single.value) +
-        (penalty.Single.applies_to_parry === true
-          ? ` (${translate("for parry")})`
-          : "")
+        (penalty.Single.applies_to_parry === true ? ` (${translate("for parry")})` : "")
       )
     case "ByHandedness": {
       const appendParry =
-        penalty.ByHandedness.applies_to_parry === true
-          ? `; ${translate("for parry")}`
-          : ""
+        penalty.ByHandedness.applies_to_parry === true ? `; ${translate("for parry")}` : ""
 
       return `${sign(penalty.ByHandedness.one_handed)} (${
         translate("one-handed weapon") + appendParry
@@ -179,13 +168,8 @@ const renderPenaltyValue = (
     }
     case "ByActivation": {
       return `${sign(penalty.ByActivation.active)}/${sign(penalty.ByActivation.inactive)} (${[
-        penalty.ByActivation.applies_to_parry === true
-          ? translate("for parry")
-          : undefined,
-        translate(
-          "for secondary fighters with/without special ability {$name}",
-          { name },
-        ),
+        penalty.ByActivation.applies_to_parry === true ? translate("for parry") : undefined,
+        translate("for secondary fighters with/without special ability {$name}", { name }),
       ]
         .filter(isNotNullish)
         .join("; ")})`
@@ -193,9 +177,7 @@ const renderPenaltyValue = (
     case "Selection":
       switch (penalty.Selection.options.kind) {
         case "Specific":
-          return penalty.Selection.options.Specific.list
-            .map(option => sign(option.value))
-            .join("/")
+          return penalty.Selection.options.Specific.list.map(option => sign(option.value)).join("/")
         case "Range":
           return translate("{$start} to {$end}", {
             start: sign(penalty.Selection.options.Range.minimum),
@@ -216,24 +198,19 @@ const renderPenaltyValue = (
       }
 
       const externalName =
-        translateMap(
-          getInstanceById(external.kind, fromUniformCase(external))
-            ?.translations,
-        )?.name ?? MISSING_VALUE
+        translateMap(getInstanceById(external.kind, fromUniformCase(external))?.translations)
+          ?.name ?? MISSING_VALUE
 
-      return `${main} (${translate(
-        "depending on the level of the special ability {$name}",
-        {
-          name: externalName,
-        },
-      )})`
+      return `${main} (${translate("depending on the level of the special ability {$name}", {
+        name: externalName,
+      })})`
     }
     case "ByAttack": {
       const offset = penalty.ByAttack.initial_order ?? 1
       return penalty.ByAttack.list
         .map(
           (penaltyByAttack, index) =>
-            `${penaltyByAttack.value} (${renderPenaltyByAttackLabel(
+            `${penaltyByAttack.value.toFixed()} (${renderPenaltyByAttackLabel(
               translate,
               penalty.ByAttack.attack_replacement,
               index + offset,
@@ -287,8 +264,7 @@ const wrapInParens = (args: (string | undefined)[], append = ""): string => {
   return ` (${filteredArgs.join(", ") + append})`
 }
 
-const addSpaceIfNoCommaAtStart = (str: string): string =>
-  str.startsWith(",") ? str : ` ${str}`
+const addSpaceIfNoCommaAtStart = (str: string): string => (str.startsWith(",") ? str : ` ${str}`)
 
 const renderApplicableCombatTechniquesRestriction = <
   T extends
@@ -297,9 +273,7 @@ const renderApplicableCombatTechniquesRestriction = <
     | ApplicableRangedCombatTechniquesRestriction
     | ApplicableSpecificCombatTechniquesRestriction,
 >(
-  getInstanceById: GetInstanceById<
-    "CloseCombatTechnique" | "RangedCombatTechnique" | "Race"
-  >,
+  getInstanceById: GetInstanceById<"CloseCombatTechnique" | "RangedCombatTechnique" | "Race">,
   locale: LocaleEnvironment,
   main: string,
   restriction: T,
@@ -313,18 +287,9 @@ const renderApplicableCombatTechniquesRestriction = <
 ): string => {
   switch (restriction.kind) {
     case "Improvised":
-      return (
-        main +
-        wrapInParens([locale.translate("only improvised weapons"), weapons])
-      )
+      return main + wrapInParens([locale.translate("only improvised weapons"), weapons])
     case "PointedBlade":
-      return (
-        main +
-        wrapInParens([
-          locale.translate("weapon must have a pointed blade"),
-          weapons,
-        ])
-      )
+      return main + wrapInParens([locale.translate("weapon must have a pointed blade"), weapons])
     case "Mount":
       if (weapons === undefined) {
         return `${main} ${locale.translate("while mounted")}`
@@ -333,8 +298,7 @@ const renderApplicableCombatTechniquesRestriction = <
       }
     case "Race": {
       const race = getInstanceById("Race", restriction.Race)
-      const raceName =
-        locale.translateMap(race?.translations)?.name ?? MISSING_VALUE
+      const raceName = locale.translateMap(race?.translations)?.name ?? MISSING_VALUE
 
       return (
         main +
@@ -357,9 +321,7 @@ const renderApplicableCombatTechniquesRestriction = <
                 .map(
                   id =>
                     locale.translateMap(
-                      getExcludedInstance?.(
-                        id as (CombatTechniqueIdentifier & string) & string,
-                      )?.translations,
+                      getExcludedInstance?.(id as CombatTechniqueIdentifier & string)?.translations,
                     )?.name ?? MISSING_VALUE,
                 )
                 .toSorted(locale.compare),
@@ -380,28 +342,18 @@ const renderApplicableCombatTechniquesRestriction = <
         wrapInParens([weapons])
       )
     case "TwoHanded":
-      return (
-        locale.translate("All Two-Handed Weapons") + wrapInParens([weapons])
-      )
+      return locale.translate("All Two-Handed Weapons") + wrapInParens([weapons])
     case "ParryingWeapon":
       return locale.translate("All Parrying Weapons") + wrapInParens([weapons])
     case "Level": {
-      const nameWithLevel = `${translation} ${romanize(restriction.Level.level)}`
+      const nameWithLevel = `${translation.name_in_library ?? translation.name} ${romanize(restriction.Level.level)}`
       return (
-        main +
-        wrapInParens([
-          locale.translate("only {$nameWithLevel}", { nameWithLevel }),
-          weapons,
-        ])
+        main + wrapInParens([locale.translate("only {$nameWithLevel}", { nameWithLevel }), weapons])
       )
     }
     case "OneBluntSide":
       return (
-        main +
-        wrapInParens([
-          locale.translate("only those with at least one blunt side"),
-          weapons,
-        ])
+        main + wrapInParens([locale.translate("only those with at least one blunt side"), weapons])
       )
     default:
       return assertExhaustive(restriction)
@@ -474,12 +426,8 @@ const renderApplicableCombatTechniquesValue = (
     case "Specific": {
       return applicableCombatTechniques.Specific.list
         .map(specific => {
-          const entry = getInstanceById(
-            specific.id.kind,
-            fromUniformCase(specific.id),
-          )
-          const main =
-            locale.translateMap(entry?.translations)?.name ?? MISSING_VALUE
+          const entry = getInstanceById(specific.id.kind, fromUniformCase(specific.id))
+          const main = locale.translateMap(entry?.translations)?.name ?? MISSING_VALUE
           const mainWithRestriction =
             specific.restriction === undefined
               ? main
@@ -496,10 +444,8 @@ const renderApplicableCombatTechniquesValue = (
                           specific.weapons
                             .map(
                               weapon =>
-                                locale.translateMap(
-                                  getInstanceById("Weapon", weapon)
-                                    ?.translations,
-                                )?.name ?? MISSING_VALUE,
+                                locale.translateMap(getInstanceById("Weapon", weapon)?.translations)
+                                  ?.name ?? MISSING_VALUE,
                             )
                             .toSorted(locale.compare),
                           "conjunction",
@@ -540,9 +486,7 @@ const renderVolumeValue = (
     case "ByLevel":
       return translate("{$points} points for levels {$levels}", {
         points: volume.ByLevel.list.map(item => item.points).join("/"),
-        levels: volume.ByLevel.list
-          .map((_, index) => romanize(index + 1))
-          .join("/"),
+        levels: volume.ByLevel.list.map((_, index) => romanize(index + 1)).join("/"),
       })
     case "Map":
       return renderResponsiveMap(
@@ -570,11 +514,7 @@ const renderVolumeValue = (
       })} ${translate("for")} ${groups
         .map(group =>
           group[1]
-            .map(
-              groupItem =>
-                translateMap(groupItem.content.translations)?.name ??
-                MISSING_VALUE,
-            )
+            .map(groupItem => translateMap(groupItem.content.translations)?.name ?? MISSING_VALUE)
             .join(", "),
         )
         .join(separator)}`
@@ -618,28 +558,26 @@ const renderArcaneEnergyCost = (
                 ),
               })
 
-      const wrapInPerLevel: (prev: (value: number) => string) => string =
-        (() => {
-          if (cost.Fixed.per_level === undefined) {
-            return prev => prev(cost.Fixed.value)
-          }
+      const wrapInPerLevel: (prev: (value: number) => string) => string = (() => {
+        if (cost.Fixed.per_level === undefined) {
+          return prev => prev(cost.Fixed.value)
+        }
 
-          switch (cost.Fixed.per_level?.kind) {
-            case "Compressed":
-              return prev =>
-                translate("{$cost} per level", { cost: prev(cost.Fixed.value) })
-            case "Verbose":
-              return prev =>
-                Array.from({ length: levels ?? 1 }, (_, index) =>
-                  translate("{$cost} for level {$level}", {
-                    cost: prev(cost.Fixed.value),
-                    level: romanize(index + 1),
-                  }),
-                ).join("; ")
-            default:
-              return assertExhaustive(cost.Fixed.per_level)
-          }
-        })()
+        switch (cost.Fixed.per_level.kind) {
+          case "Compressed":
+            return prev => translate("{$cost} per level", { cost: prev(cost.Fixed.value) })
+          case "Verbose":
+            return prev =>
+              Array.from({ length: levels ?? 1 }, (_, index) =>
+                translate("{$cost} for level {$level}", {
+                  cost: prev(cost.Fixed.value),
+                  level: romanize(index + 1),
+                }),
+              ).join("; ")
+          default:
+            return assertExhaustive(cost.Fixed.per_level)
+        }
+      })()
 
       const noteInParens = parensIf(
         mapNullable(translateMap(cost.Fixed.translations)?.note, note =>
@@ -647,10 +585,7 @@ const renderArcaneEnergyCost = (
         ),
       )
 
-      return (
-        wrapInPerLevel(value => wrapInInterval(translationWrapper(value))) +
-        noteInParens
-      )
+      return wrapInPerLevel(value => wrapInInterval(translationWrapper(value))) + noteInParens
     }
     case "Constant":
       return (
@@ -708,14 +643,12 @@ const renderArcaneEnergyCost = (
       )
     case "Indefinite":
       return (
-        mapNullable(
-          translateMap(cost.Indefinite.translations)?.description,
-          description => getResponsiveText(description, responsiveTextSize),
-        ) +
+        (mapNullable(translateMap(cost.Indefinite.translations)?.description, description =>
+          getResponsiveText(description, responsiveTextSize),
+        ) ?? MISSING_VALUE) +
         mapNullableDefault(
           cost.Indefinite.modifier,
-          modifier =>
-            ` + ${translate("{$value} AE", { value: modifier.value })}`,
+          modifier => ` + ${translate("{$value} AE", { value: modifier.value })}`,
           "",
         )
       )
@@ -724,11 +657,10 @@ const renderArcaneEnergyCost = (
         value: localeJoin(
           cost.Disjunction.options.map(
             option =>
-              option.value +
+              option.value.toFixed() +
               mapNullableDefault(
                 translateMap(option.translations)?.note,
-                note =>
-                  parensIf(getResponsiveTextOptional(note, responsiveTextSize)),
+                note => parensIf(getResponsiveTextOptional(note, responsiveTextSize)),
                 "",
               ),
           ),
@@ -746,6 +678,7 @@ const renderArcaneEnergyCost = (
                 translate(", {$value} of which are permanent", {
                   value: values,
                 }),
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
               getAdditionalValue: option => option.permanent_value!,
             }
           : undefined,
@@ -763,9 +696,8 @@ const renderArcaneEnergyCost = (
             cost: translate("{$value} AE", {
               value: cost.ByLevel.levels.map(level => level.value).join("/"),
             }),
-            level: Array.from(
-              { length: cost.ByLevel.levels.length },
-              (_, index) => romanize(index + 1),
+            level: Array.from({ length: cost.ByLevel.levels.length }, (_, index) =>
+              romanize(index + 1),
             ),
           })
         case "Verbose":
@@ -818,8 +750,7 @@ const renderBindingCost = (
     case "DerivedFromSelection": {
       const groups = Map.groupBy(
         getAllResolvedSelectOptions(),
-        option =>
-          option.content.binding_cost ?? cost.DerivedFromSelection.fallback,
+        option => option.content.binding_cost ?? cost.DerivedFromSelection.fallback,
       )
         .entries()
         .toArray()
@@ -832,11 +763,7 @@ const renderBindingCost = (
       })} ${translate("for")} ${groups
         .map(group =>
           group[1]
-            .map(
-              groupItem =>
-                translateMap(groupItem.content.translations)?.name ??
-                MISSING_VALUE,
-            )
+            .map(groupItem => translateMap(groupItem.content.translations)?.name ?? MISSING_VALUE)
             .toSorted(localeCompare)
             .join(", "),
         )
@@ -847,10 +774,7 @@ const renderBindingCost = (
   }
 }
 
-const renderLifePointsCost = (
-  translate: Translate,
-  cost: LifePointsCost | undefined,
-): string =>
+const renderLifePointsCost = (translate: Translate, cost: LifePointsCost | undefined): string =>
   cost === undefined
     ? ""
     : // eslint-disable-next-line no-irregular-whitespace
@@ -889,8 +813,7 @@ const renderCost = (
                   responsiveTextSize,
                   levels,
                   cost.ArcaneEnergyCost.ae_cost,
-                ) +
-                renderLifePointsCost(translate, cost.ArcaneEnergyCost.lp_cost)
+                ) + renderLifePointsCost(translate, cost.ArcaneEnergyCost.lp_cost)
               : renderArcaneEnergyCost(
                   translate,
                   translateMap,
@@ -956,19 +879,12 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
   }
 >(
   (
-    {
-      getInstanceById,
-      getAllInstances,
-      getResolvedSelectOptionById,
-      getAllResolvedSelectOptions,
-    },
+    { getInstanceById, getAllInstances, getResolvedSelectOptionById, getAllResolvedSelectOptions },
     locale,
     { entity: entityName, content: entry, id },
   ) => {
     const { translate, translateMap } = locale
-    const translation = translateMap<BaseActivatableTranslation>(
-      entry.translations,
-    )
+    const translation = translateMap<BaseActivatableTranslation>(entry.translations)
     const responsiveTextSize: ResponsiveTextSize = ResponsiveTextSize.Full
 
     if (translation === undefined) {
@@ -983,9 +899,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       title:
         translation.name_in_library ??
         translation.name +
-          (baseEntry.levels !== undefined
-            ? ` I–${romanize(baseEntry.levels)}`
-            : ""),
+          (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
       subtitle: mapNullable(baseEntry.usage_type, usageType => {
         switch (usageType.kind) {
           case "Passive":
@@ -1032,8 +946,8 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             mapNullable(baseEntry.aspect, aspect => ({
               label: translate("Aspect"),
               value:
-                translateMap(getInstanceById("Aspect", aspect)?.translations)
-                  ?.name ?? MISSING_VALUE,
+                translateMap(getInstanceById("Aspect", aspect)?.translations)?.name ??
+                MISSING_VALUE,
             })),
             mapNullable(translation.range, range => ({
               label: translate("Range"),
@@ -1052,8 +966,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             mapNullable(entry.prerequisites, prerequisites => ({
               label: translate("Prerequisites"),
               value:
-                wrappedId.kind === "Advantage" ||
-                wrappedId.kind === "Disadvantage"
+                wrappedId.kind === "Advantage" || wrappedId.kind === "Disadvantage"
                   ? printAdvantageDisadvantagePrerequisites(
                       getInstanceById,
                       getResolvedSelectOptionById,
@@ -1106,18 +1019,11 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             ),
             mapNullable(baseEntry.property, property => ({
               label: translate("Property"),
-              value: renderPropertyValue(
-                getInstanceById,
-                translate,
-                translateMap,
-                property,
-              ),
+              value: renderPropertyValue(getInstanceById, translate, translateMap, property),
             })),
             mapNullable(entry.ap_value, apValue => {
               const append =
-                translation.ap_value_append !== undefined
-                  ? ` ${translation.ap_value_append}`
-                  : ""
+                translation.ap_value_append !== undefined ? ` ${translation.ap_value_append}` : ""
               return {
                 label: translate("AP Value"),
                 value:
@@ -1125,31 +1031,21 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                     locale,
                     activatableId =>
                       locale.translateMap<BaseActivatableTranslation>(
-                        getInstanceById(
-                          activatableId.kind,
-                          fromUniformCase(activatableId),
-                        )?.translations,
+                        getInstanceById(activatableId.kind, fromUniformCase(activatableId))
+                          ?.translations,
                       )?.name,
                     selectOptionId => {
-                      const selectOption = getResolvedSelectOptionById(
-                        wrappedId,
-                        selectOptionId,
-                      )
+                      const selectOption = getResolvedSelectOptionById(wrappedId, selectOptionId)
                       if (selectOption === undefined) {
                         return undefined
                       }
-                      const name = locale.translateMap(
-                        selectOption.content.translations,
-                      )?.name
+                      const name = locale.translateMap(selectOption.content.translations)?.name
                       if (name !== undefined) {
                         return name
                       }
                       const { parent: parentId } = selectOption.content
                       return locale.translateMap<BaseActivatableTranslation>(
-                        getInstanceById(
-                          parentId.kind,
-                          fromUniformCase(parentId),
-                        )?.translations,
+                        getInstanceById(parentId.kind, fromUniformCase(parentId))?.translations,
                       )?.name
                     },
                     () => getAllResolvedSelectOptions(wrappedId),

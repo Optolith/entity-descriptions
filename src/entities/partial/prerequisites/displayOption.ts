@@ -1,8 +1,8 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { DisplayOption } from "optolith-database-schema/gen"
+import type { DisplayOption } from "optolith-database-schema/gen"
 import type { TranslateMap } from "../../../helpers/translate.js"
 import { MISSING_VALUE } from "../unknown.js"
-import { PrerequisitePart } from "./part.js"
+import type { PrerequisitePart } from "./part.js"
 
 /**
  * Get the translation of a display option.

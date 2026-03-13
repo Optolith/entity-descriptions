@@ -2,23 +2,23 @@ import { identity } from "@elyukai/utils/function"
 import { Reader } from "@elyukai/utils/reader"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
+  CheckResultBasedModifier,
+  DurationUnitValue,
+  ElvenMagicalSongPermanentCost,
+  FirstPersonMagicalMelodyCost,
   MultipleOneTimeCosts,
+  NonModifiableOneTimeCostPerCountable,
   NonModifiableSustainedCost,
   OneTimeCost,
+  OneTimeCostMap,
+  ResponsiveText,
+  ResponsiveTextOptional,
+  ResponsiveTextReplace,
   SingleOneTimeCost,
+  SkillModificationLevel_ID,
   SustainedCost,
-  type CheckResultBasedModifier,
-  type DurationUnitValue,
-  type ElvenMagicalSongPermanentCost,
-  type FirstPersonMagicalMelodyCost,
-  type NonModifiableOneTimeCostPerCountable,
-  type OneTimeCostMap,
-  type ResponsiveText,
-  type ResponsiveTextOptional,
-  type ResponsiveTextReplace,
-  type SkillModificationLevel_ID,
-  type SustainedCostMap,
+  SustainedCostMap,
 } from "optolith-database-schema/gen"
 import { type LocaleMap } from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
@@ -37,18 +37,12 @@ import {
   type StdEnv,
   type StdReader,
 } from "../../reader.js"
-import {
-  appendNoteIfNeeded,
-  replaceTextIfNeeded,
-} from "../../responsiveText.js"
+import { appendNoteIfNeeded, replaceTextIfNeeded } from "../../responsiveText.js"
 import { formatCombinedTimeSpanR } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendCheckResultModifier } from "./checkResultBased.js"
 import { wrapIfMinimum } from "./isMinimumMaximum.js"
-import {
-  appendNonModifiableSuffix,
-  ModifiableParameter,
-} from "./nonModifiableSuffix.js"
+import { appendNonModifiableSuffix, ModifiableParameter } from "./nonModifiableSuffix.js"
 
 const deriveModifiableCost = (
   modificationLevelId: SkillModificationLevel_ID,
@@ -85,11 +79,10 @@ const appendPerCountableToCostIfNeeded = (
 
     return responsiveTextR(translation.countable)
       .thenW(countable =>
-        responsiveTranslateR(
-          "{$cost} per {$countable}",
-          "{$cost}/{$countable}",
-          { cost: baseCost, countable },
-        ),
+        responsiveTranslateR("{$cost} per {$countable}", "{$cost}/{$countable}", {
+          cost: baseCost,
+          countable,
+        }),
       )
       .thenW(text =>
         minimum_total === undefined
@@ -121,11 +114,9 @@ const appendElvenPermanentCostIfNeeded = (
   baseCost: string,
 ): StdReader<string, "t" | "tm" | "rts"> =>
   mapNullable(permanent, value =>
-    responsiveTranslateR(
-      ".input {$value :number} {{{$value} permanent AE}}",
-      "{$value} pAE",
-      { value: value.value },
-    )
+    responsiveTranslateR(".input {$value :number} {{{$value} permanent AE}}", "{$value} pAE", {
+      value: value.value,
+    })
       .thenW(text => replaceTextIfNeeded(value.translations, text))
       .map(text => baseCost + text),
   ) ?? Reader.of(baseCost)
@@ -138,9 +129,7 @@ const appendFamiliarsTrickLPCostIfNeeded = (
     ? Reader.of(baseCost)
     : formatEnergyR(lpValue)
         .with((env: StdEnv<"t">) => ({ ...env, energyUnit: "LifePoints" }))
-        .thenW(formattedLpCost =>
-          responsiveLocaleJoinR([baseCost, formattedLpCost], "conjunction"),
-        )
+        .thenW(formattedLpCost => responsiveLocaleJoinR([baseCost, formattedLpCost], "conjunction"))
 
 /**
  * Returns the text for the modifiable one-time cost of an activatable skill.
@@ -152,11 +141,7 @@ export const renderModifiableOneTimeCost = (value: {
     replacement?: ResponsiveTextReplace
     additional?: ResponsiveText
   }>
-}): StdReader<
-  string,
-  "t" | "tm" | "rts" | "eu" | "s" | "ibi",
-  "SkillModificationLevel"
-> =>
+}): StdReader<string, "t" | "tm" | "rts" | "eu" | "s" | "ibi", "SkillModificationLevel"> =>
   deriveModifiableCost(value.initial_modification_level).thenW(cost =>
     cost === undefined
       ? Reader.of(MISSING_VALUE)
@@ -175,10 +160,7 @@ export const renderModifiableOneTimeCost = (value: {
           ),
   )
 
-const appendIntervalToCost = (
-  interval: DurationUnitValue | undefined,
-  baseCost: string,
-) =>
+const appendIntervalToCost = (interval: DurationUnitValue | undefined, baseCost: string) =>
   interval === undefined
     ? Reader.of(baseCost)
     : formatCombinedTimeSpanR(interval).then(formattedInterval =>
@@ -219,7 +201,7 @@ export const renderNonModifiableOneTimeCost = (
     .then(
       shouldAppendNonModifiableSuffix
         ? base => appendNonModifiableSuffix(ModifiableParameter.Cost, base)
-        : Reader.of,
+        : base => Reader.of(base),
     )
 
 type IndefiniteCost = {
@@ -243,15 +225,11 @@ export const renderIndefiniteCost = (
         ? Reader.of(MISSING_VALUE)
         : responsiveTextR(translation.description),
     )
-    .map(
-      modifier === undefined
-        ? identity
-        : base => appendCheckResultModifier(base, modifier),
-    )
+    .map(modifier === undefined ? identity : base => appendCheckResultModifier(base, modifier))
     .thenW(
       shouldAppendNonModifiableSuffix
         ? base => appendNonModifiableSuffix(ModifiableParameter.Cost, base)
-        : Reader.of,
+        : base => Reader.of(base),
     )
 }
 
@@ -282,12 +260,9 @@ const renderMultipleOneTimeCosts = (
   "t" | "tm" | "lj" | "rts" | "eu" | "s" | "nms" | "ibi",
   "SkillModificationLevel"
 > => {
-  const appendNonModifiableIfRequested = !value.every(
-    part => part.kind === "Modifiable",
-  )
-    ? (text: string) =>
-        appendNonModifiableSuffix(ModifiableParameter.Cost, text)
-    : Reader.of
+  const appendNonModifiableIfRequested = !value.every(part => part.kind === "Modifiable")
+    ? (text: string) => appendNonModifiableSuffix(ModifiableParameter.Cost, text)
+    : (text: string) => Reader.of(text)
 
   return Reader.sequence(value.map(renderSingleOneTimeCost))
     .thenW(list => responsiveLocaleJoinR(list, type))
@@ -313,6 +288,7 @@ export const renderOneTimeCostMap = (
                   translate(", {$value} of which are permanent", {
                     value: values,
                   }),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
                 getAdditionalValue: option => option.permanent_value!,
               }
             : undefined,
@@ -323,9 +299,7 @@ export const renderOneTimeCostMap = (
 
 const renderSustainedCostMap = (value: SustainedCostMap) =>
   formatEnergyFnR
-    .thenW(formatEnergy =>
-      renderResponsiveMap(value, option => option.value, formatEnergy),
-    )
+    .thenW(formatEnergy => renderResponsiveMap(value, option => option.value, formatEnergy))
     .then(text => appendNonModifiableSuffix(ModifiableParameter.Cost, text))
 
 /**
@@ -378,20 +352,14 @@ const renderModifiableSustainedCost = (value: {
           const activationCost = formatEnergy(cost)
           const intervalCost = formatEnergy(cost / 2)
 
-          return buildSustainedCost(
-            activationCost,
-            intervalCost,
-            value.interval,
-          )
+          return buildSustainedCost(activationCost, intervalCost, value.interval)
         }),
   )
 
 /**
  * Returns the text for the non-modifiable cost of a sustained activatable skill.
  */
-export const renderNonModifiableSustainedCost = (
-  value: NonModifiableSustainedCost,
-) =>
+export const renderNonModifiableSustainedCost = (value: NonModifiableSustainedCost) =>
   formatEnergyFnR
     .thenW(formatEnergy => {
       const activationCost = formatEnergy(value.value)
@@ -413,11 +381,7 @@ export const renderNonModifiableSustainedCost = (
  */
 export const renderSustainedCost = (
   value: SustainedCost,
-): StdReader<
-  string,
-  "t" | "tm" | "rts" | "eu" | "s" | "nms" | "ibi",
-  "SkillModificationLevel"
-> => {
+): StdReader<string, "t" | "tm" | "rts" | "eu" | "s" | "nms" | "ibi", "SkillModificationLevel"> => {
   switch (value.kind) {
     case "Modifiable":
       return renderModifiableSustainedCost(value.Modifiable)

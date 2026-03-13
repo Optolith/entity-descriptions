@@ -16,7 +16,12 @@ import type {
   GetAllInstances,
   GetInstanceById,
 } from "../../helpers/getTypes.js"
-import type { LocaleCompare, LocaleJoin, LocaleJoinType } from "../../helpers/locale.js"
+import type {
+  FormatNumber,
+  LocaleCompare,
+  LocaleJoin,
+  LocaleJoinType,
+} from "../../helpers/locale.js"
 import type {
   Format,
   LocaleMap,
@@ -43,6 +48,7 @@ export type EnvMap<
   CE extends keyof ChildEntityMap = never,
 > = {
   format: Format
+  formatNumber: FormatNumber
   translate: Translate
   translateMap: TranslateMap
   localeJoin: LocaleJoin
@@ -62,6 +68,7 @@ export type EnvMap<
  */
 export type EnvMapAbbr = {
   f: "format"
+  fn: "formatNumber"
   t: "translate"
   tm: "translateMap"
   lj: "localeJoin"
@@ -108,7 +115,7 @@ export type StdReader<
  */
 export const formatR = (
   text: string,
-  args?: Record<string, unknown> | undefined,
+  args?: Record<string, unknown>,
 ): Reader<{ format: Format }, string> => Reader.asks(env => env.format(text, args))
 
 /**

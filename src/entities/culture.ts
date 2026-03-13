@@ -7,6 +7,7 @@ import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
+import { getAdventurePointsForRatingRange } from "@optolith/adventure-points/improvement-cost"
 import type {
   BlessedTraditionConstraint,
   CommonNames,
@@ -21,10 +22,7 @@ import type {
   Weighted,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import type {
-  GetAllChildInstancesForParent,
-  GetInstanceById,
-} from "../helpers/getTypes.js"
+import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
@@ -38,14 +36,8 @@ import {
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import {
-  translateR,
-  type EnvMap,
-  type StdEnv,
-  type StdReader,
-} from "./partial/reader.js"
+import { translateR, type EnvMap, type StdEnv, type StdReader } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
-import { getAdventurePointsForRatingRange } from "@optolith/adventure-points/improvement-cost"
 
 const renderListOperation = (
   operation: CommonProfessionConstraintsOperation,
@@ -55,10 +47,9 @@ const renderListOperation = (
     case "Intersection":
       return Reader.of(list.join(", "))
     case "Difference":
-      return translateR(
-        "all but {$excludedProfessions :list type=conjunction}",
-        { excludedProfessions: list },
-      )
+      return translateR("all but {$excludedProfessions :list type=conjunction}", {
+        excludedProfessions: list,
+      })
     default:
       return assertExhaustive(operation)
   }
@@ -79,12 +70,11 @@ const renderCommonProfessionConstraints = <T>(
   "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"
 > =>
   Reader.asks(({ localeCompare }: StdEnv<"lc">) =>
-    Reader.sequence(constraints.constraints.map(renderConstraint)).thenW(
-      constraintValues =>
-        renderListOperation(
-          constraints.operation,
-          constraintValues.filter(isNotNullish).toSorted(localeCompare),
-        ),
+    Reader.sequence(constraints.constraints.map(renderConstraint)).thenW(constraintValues =>
+      renderListOperation(
+        constraints.operation,
+        constraintValues.filter(isNotNullish).toSorted(localeCompare),
+      ),
     ),
   ).thenW(identity)
 
@@ -109,9 +99,7 @@ const renderCommonProfessionGroup = <T>(
     })),
   )
 
-const renderRarity = (
-  rarity: Rarity | undefined,
-): StdReader<string | undefined, "t"> => {
+const renderRarity = (rarity: Rarity | undefined): StdReader<string | undefined, "t"> => {
   if (rarity === undefined) {
     return Reader.of(undefined)
   }
@@ -136,10 +124,7 @@ const renderWeighted = <ID extends string>(
 
   return Reader.asks(({ translate, localeCompare }) => {
     const variants = ensureNonEmpty(
-      weightedVariants.elements
-        .map(getName)
-        .filter(isNotNullish)
-        .toSorted(localeCompare),
+      weightedVariants.elements.map(getName).filter(isNotNullish).toSorted(localeCompare),
     )
 
     if (variants === undefined) {
@@ -166,43 +151,27 @@ const renderProfessionConstraint = (
   constraint: ProfessionConstraint,
 ) =>
   Reader.asks(({ translateMap }: StdEnv<"tm">) =>
-    getProfessionName(
-      translateMap,
-      getChildInstancesForInstanceId,
-      constraint.id,
-    ),
+    getProfessionName(translateMap, getChildInstancesForInstanceId, constraint.id),
   ).thenW(baseName =>
     baseName === undefined
       ? Reader.of(undefined)
-      : Reader.sequence<
-          StdEnv<"t" | "tm" | "lc" | "ibi", "ProfessionVariant">,
-          string | undefined
-        >([
-          renderRarity(constraint.rarity),
-          Reader.asks(
-            ({
-              translateMap,
-              getInstanceById,
-            }: StdEnv<"tm" | "ibi", "ProfessionVariant">) =>
-              renderWeighted(
-                constraint.weighted_variants,
-                variantId =>
-                  translateMap(
-                    getInstanceById("ProfessionVariant", variantId)
-                      ?.translations,
-                  )?.name.default,
-              ),
-          ).thenW(identity),
-        ]).map(
-          notes =>
-            baseName +
-            parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; ")),
-        ),
+      : Reader.sequence<StdEnv<"t" | "tm" | "lc" | "ibi", "ProfessionVariant">, string | undefined>(
+          [
+            renderRarity(constraint.rarity),
+            Reader.asks(
+              ({ translateMap, getInstanceById }: StdEnv<"tm" | "ibi", "ProfessionVariant">) =>
+                renderWeighted(
+                  constraint.weighted_variants,
+                  variantId =>
+                    translateMap(getInstanceById("ProfessionVariant", variantId)?.translations)
+                      ?.name.default,
+                ),
+            ).thenW(identity),
+          ],
+        ).map(notes => baseName + parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; "))),
   )
 
-const renderTraditionConstraint = <
-  E extends "MagicalTradition" | "BlessedTradition",
->(
+const renderTraditionConstraint = <E extends "MagicalTradition" | "BlessedTradition">(
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   entity: E,
   constraint: MagicalTraditionConstraint | BlessedTraditionConstraint,
@@ -221,17 +190,11 @@ const renderTraditionConstraint = <
           renderRarity(constraint.rarity),
           Reader.asks(({ translateMap }: StdEnv<"tm">) =>
             renderWeighted(constraint.weighted_professions, profId =>
-              getProfessionName(
-                translateMap,
-                getChildInstancesForInstanceId,
-                profId,
-              ),
+              getProfessionName(translateMap, getChildInstancesForInstanceId, profId),
             ),
           ).thenW(identity),
         ]).map(
-          notes =>
-            baseName +
-            parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; ")),
+          notes => baseName + parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; ")),
         ),
   )
 
@@ -239,25 +202,16 @@ const renderCommonProfessions = (
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   commonProfessions: CommonProfessions,
 ): StdReader<
-  | string
-  | [
-      RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>,
-    ],
+  string | [RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>],
   "t" | "tm" | "lc" | "ibi",
   "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"
 > => {
   switch (commonProfessions.kind) {
     case "Plain":
-      return renderCommonProfessionConstraints(
-        commonProfessions.Plain,
-        profId =>
-          Reader.asks(({ translateMap }) =>
-            getProfessionName(
-              translateMap,
-              getChildInstancesForInstanceId,
-              profId,
-            ),
-          ),
+      return renderCommonProfessionConstraints(commonProfessions.Plain, profId =>
+        Reader.asks(({ translateMap }) =>
+          getProfessionName(translateMap, getChildInstancesForInstanceId, profId),
+        ),
       )
     case "Grouped":
       return renderCommonProfessionGroup(
@@ -266,10 +220,7 @@ const renderCommonProfessions = (
         constraint =>
           // switch (constraint.kind) {
           //   case "Profession":
-          renderProfessionConstraint(
-            getChildInstancesForInstanceId,
-            constraint.Profession,
-          ),
+          renderProfessionConstraint(getChildInstancesForInstanceId, constraint.Profession),
         //   case "ProfessionSubgroup":
         //     switch (constraint.ProfessionSubgroup.kind) {
         //       case "Profane":
@@ -336,11 +287,7 @@ const renderCommonSkills = (
     items === undefined || !isNotEmpty(items)
       ? translate("none")
       : items
-          .map(
-            itemId =>
-              translateMap(getInstanceById("Skill", itemId)?.translations)
-                ?.name,
-          )
+          .map(itemId => translateMap(getInstanceById("Skill", itemId)?.translations)?.name)
           .filter(isNotNullish)
           .toSorted(localeCompare)
           .join(", "),
@@ -386,31 +333,25 @@ const renderCommonNames = (
 
 const renderCulturalPackage = (
   items: CulturalPackageItem[],
-): StdReader<
-  { text: string; apValue: number },
-  "t" | "tm" | "lc" | "ibi",
-  "Skill"
-> =>
+): StdReader<{ text: string; apValue: number }, "t" | "tm" | "lc" | "ibi", "Skill"> =>
   Reader.asks(({ translate, translateMap, getInstanceById, localeCompare }) => {
     if (!isNotEmpty(items)) {
       return { text: translate("none"), apValue: 0 }
     }
 
-    const processedItems = items.map(
-      (item): [text: string, apValue: number] => {
-        const instance = getInstanceById("Skill", item.id)
-        const instanceTranslation = translateMap(instance?.translations)
+    const processedItems = items.map((item): [text: string, apValue: number] => {
+      const instance = getInstanceById("Skill", item.id)
+      const instanceTranslation = translateMap(instance?.translations)
 
-        if (instance === undefined || instanceTranslation === undefined) {
-          return [MISSING_VALUE, 0]
-        }
+      if (instance === undefined || instanceTranslation === undefined) {
+        return [MISSING_VALUE, 0]
+      }
 
-        return [
-          `${instanceTranslation.name ?? MISSING_VALUE} ${sign(item.points)}`,
-          getAdventurePointsForRatingRange(instance.improvement_cost.kind, 0, item.points),
-        ]
-      },
-    )
+      return [
+        `${instanceTranslation.name} ${sign(item.points)}`,
+        getAdventurePointsForRatingRange(instance.improvement_cost.kind, 0, item.points),
+      ]
+    })
 
     return {
       text: processedItems
@@ -461,8 +402,9 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
       getInstanceById,
     } satisfies Partial<EnvMap>
 
-    const { text: culturePackageText, apValue: culturalPackageApValue } =
-      renderCulturalPackage(entry.cultural_package).run(env)
+    const { text: culturePackageText, apValue: culturalPackageApValue } = renderCulturalPackage(
+      entry.cultural_package,
+    ).run(env)
 
     return {
       title: translation.name,
@@ -477,14 +419,9 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                 entry.language
                   .map(lang => {
                     const language = getInstanceById("Language", lang.id)
-                    const languageTranslation = translateMap(
-                      language?.translations,
-                    )
+                    const languageTranslation = translateMap(language?.translations)
 
-                    if (
-                      language === undefined ||
-                      languageTranslation === undefined
-                    ) {
+                    if (language === undefined || languageTranslation === undefined) {
                       return MISSING_VALUE
                     }
 
@@ -492,16 +429,11 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                       languageTranslation.name +
                       parensIf(
                         [
-                          translateMap(
-                            language.customSpecializations?.translations,
-                          )?.description,
+                          translateMap(language.customSpecializations?.translations)?.description,
                           ...(lang.specializations?.map(
                             specId =>
                               translateMap(
-                                getInstanceById(
-                                  "LanguageSpecialization",
-                                  specId,
-                                )?.translations,
+                                getInstanceById("LanguageSpecialization", specId)?.translations,
                               )?.name,
                           ) ?? []),
                         ]
@@ -521,23 +453,16 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                 entry.script === undefined
                   ? translate("none")
                   : (() => {
-                      const processedScripts = entry.script.map(
-                        (scriptId): [string, number] => {
-                          const script = getInstanceById("Script", scriptId)
-                          const scriptTranslation = translateMap(
-                            script?.translations,
-                          )
+                      const processedScripts = entry.script.map((scriptId): [string, number] => {
+                        const script = getInstanceById("Script", scriptId)
+                        const scriptTranslation = translateMap(script?.translations)
 
-                          if (
-                            script === undefined ||
-                            scriptTranslation === undefined
-                          ) {
-                            return [MISSING_VALUE, 0]
-                          }
+                        if (script === undefined || scriptTranslation === undefined) {
+                          return [MISSING_VALUE, 0]
+                        }
 
-                          return [scriptTranslation.name, script.ap_value ?? 0]
-                        },
-                      )
+                        return [scriptTranslation.name, script.ap_value ?? 0]
+                      })
 
                       if (!isNotEmpty(processedScripts)) {
                         return translate("none")
@@ -551,9 +476,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                       ) {
                         return (
                           localeJoin(
-                            processedScripts
-                              .map(([name]) => name)
-                              .toSorted(localeCompare),
+                            processedScripts.map(([name]) => name).toSorted(localeCompare),
                             "disjunction",
                           ) +
                           parensIf(
@@ -599,9 +522,8 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
               value: entry.social_status
                 .map(
                   status =>
-                    translateMap(
-                      getInstanceById("SocialStatus", status)?.translations,
-                    )?.name ?? MISSING_VALUE,
+                    translateMap(getInstanceById("SocialStatus", status)?.translations)?.name ??
+                    MISSING_VALUE,
                 )
                 .toSorted(localeCompare)
                 .join(", "),
@@ -617,40 +539,28 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
               "Common Advantages",
               entry.common_advantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Advantage",
-                  values,
-                ).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", values).run(env),
               translation.common_advantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Common Disadvantages",
               entry.common_disadvantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Disadvantage",
-                  values,
-                ).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", values).run(env),
               translation.common_disadvantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Uncommon Advantages",
               entry.uncommon_advantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Advantage",
-                  values,
-                ).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", values).run(env),
               translation.uncommon_advantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Uncommon Disadvantages",
               entry.uncommon_disadvantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Disadvantage",
-                  values,
-                ).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", values).run(env),
               translation.uncommon_disadvantages,
             ).run(env),
             {
@@ -672,10 +582,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
           label:
             translate("Cultural Package {$cultureName}", {
               cultureName: translation.name,
-            }) +
-            parensIf(
-              translate("{$value} AP", { value: culturalPackageApValue }),
-            ),
+            }) + parensIf(translate("{$value} AP", { value: culturalPackageApValue })),
           value: {
             type: "plain",
             text: culturePackageText,

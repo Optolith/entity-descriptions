@@ -1,7 +1,7 @@
-import { Compare } from "@optolith/helpers/compare"
+import type { Compare } from "@optolith/helpers/compare"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { Page } from "optolith-database-schema/gen"
-import { Translate } from "../helpers/translate.js"
+import type { Page } from "optolith-database-schema/gen"
+import type { Translate } from "../helpers/translate.js"
 
 /**
  * A comparison function for two pages.
@@ -16,8 +16,8 @@ export const comparePage: Compare<Page> = (a, b) => {
       return b.kind === "Numbered"
         ? a.Numbered - b.Numbered
         : b.kind === "InsideCoverFront"
-        ? 1
-        : -1
+          ? 1
+          : -1
     default:
       return assertExhaustive(a)
   }
@@ -62,7 +62,7 @@ export const printPage = (translate: Translate, page: Page) => {
     case "InsideCoverBack":
       return translate("Back Cover Inside")
     case "Numbered":
-      return page.Numbered.toString()
+      return page.Numbered.toFixed()
     default:
       return assertExhaustive(page)
   }

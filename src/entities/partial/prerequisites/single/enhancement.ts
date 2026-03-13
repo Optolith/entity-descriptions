@@ -1,13 +1,13 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
-  type EnhancementPrerequisite,
-  type SkillWithEnhancementsIdentifier,
+import type {
+  EnhancementPrerequisite,
+  SkillWithEnhancementsIdentifier,
 } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import type { LocaleMap } from "../../../../helpers/translate.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 const printLabel = (
   locale: Pick<LocaleEnvironment, "translate">,

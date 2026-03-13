@@ -2,18 +2,18 @@ import { isNotNullish } from "@elyukai/utils/nullable"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { EntityMap } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "./helpers/getTypes.js"
-import { LocaleEnvironment } from "./helpers/locale.js"
-import {
+import type { LocaleEnvironment } from "./helpers/locale.js"
+import type {
+  DefinitionListEntityDescriptionSection,
   EntityDescription,
+  EntityDescriptionSection,
+  EntityDescriptionSectionContent,
+  NestedDefinitionListEntityDescriptionSection,
+  RawDefinitionListEntityDescriptionSection,
   RawEntityDescription,
-  type DefinitionListEntityDescriptionSection,
-  type EntityDescriptionSection,
-  type EntityDescriptionSectionContent,
-  type NestedDefinitionListEntityDescriptionSection,
-  type RawDefinitionListEntityDescriptionSection,
-  type RawEntityDescriptionSection,
-  type RawEntityDescriptionSectionContent,
-  type RawNestedDefinitionListEntityDescriptionSection,
+  RawEntityDescriptionSection,
+  RawEntityDescriptionSectionContent,
+  RawNestedDefinitionListEntityDescriptionSection,
 } from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
 

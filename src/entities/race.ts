@@ -35,7 +35,7 @@ const renderBaseValueItem = (
   Reader.asks(
     ({ translate }): RawDefinitionListEntityDescriptionSectionItem => ({
       label: translate(label),
-      value: value < 0 ? sign(value) : value.toString(),
+      value: value < 0 ? sign(value) : value.toFixed(),
     }),
   )
 
@@ -55,8 +55,7 @@ const renderAttributeAdjustmentsItem = (
       getInstanceById,
     }): RawDefinitionListEntityDescriptionSectionItem => {
       const getAttributeAbbreviation = (id: string) =>
-        translateMap(getInstanceById("Attribute", id)?.translations)
-          ?.abbreviation ?? MISSING_VALUE
+        translateMap(getInstanceById("Attribute", id)?.translations)?.abbreviation ?? MISSING_VALUE
       return {
         label: translate("Attribute Adjustments"),
         value: [
@@ -77,13 +76,8 @@ const renderVariantValues = <T>(
   variants: RaceVariant[],
   selector: (variant: RaceVariant) => T,
   renderValue: (value: T) => string,
-  translationSelector?: (
-    variantTranslation: RaceVariantTranslation,
-  ) => string | undefined,
-): StdReader<
-  RawDefinitionListEntityDescriptionSectionItem,
-  "t" | "tm" | "lc" | "lj"
-> =>
+  translationSelector?: (variantTranslation: RaceVariantTranslation) => string | undefined,
+): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t" | "tm" | "lc" | "lj"> =>
   Reader.asks(
     ({
       translate,
@@ -108,7 +102,11 @@ const renderVariantValues = <T>(
         on(value => [value.value, value.valueTranslation], deepEqual),
       )
 
-      if (sameValues.length === 1 && sameValues[0]!.length === values.length) {
+      if (
+        isNotEmpty(sameValues) &&
+        sameValues.length === 1 &&
+        sameValues[0].length === values.length
+      ) {
         return {
           label: translate(label),
           value:
@@ -124,12 +122,10 @@ const renderVariantValues = <T>(
               type: "definitionList",
               style: "nested",
               items: Map.groupBy(
-                values
-                  .toSorted(on(item => item.name, localeCompare))
-                  .map(value => ({
-                    label: value.name,
-                    value: value.valueTranslation ?? renderValue(value.value),
-                  })),
+                values.toSorted(on(item => item.name, localeCompare)).map(value => ({
+                  label: value.name,
+                  value: value.valueTranslation ?? renderValue(value.value),
+                })),
                 item => item.value,
               )
                 .entries()
@@ -160,13 +156,9 @@ const renderAutomaticAdvantagesOrDisadvantages = <
       ? translate("none")
       : items
           .map(item => {
-            const instanceTranslation = translateMap(
-              getInstanceById(entity, item.id)?.translations,
-            )
+            const instanceTranslation = translateMap(getInstanceById(entity, item.id)?.translations)
             return (
-              instanceTranslation?.name_in_library ??
-              instanceTranslation?.name ??
-              MISSING_VALUE
+              instanceTranslation?.name_in_library ?? instanceTranslation?.name ?? MISSING_VALUE
             )
           })
           .toSorted(localeCompare)
@@ -180,11 +172,7 @@ const renderCommonCultures = (
     items === undefined || !isNotEmpty(items)
       ? translate("none")
       : items
-          .map(
-            itemId =>
-              translateMap(getInstanceById("Culture", itemId)?.translations)
-                ?.name,
-          )
+          .map(itemId => translateMap(getInstanceById("Culture", itemId)?.translations)?.name)
           .filter(isNotNullish)
           .toSorted(localeCompare)
           .join(", "),
@@ -237,31 +225,17 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
           items: [
             {
               label: translate("AP Value"),
-              value: translate(
-                ".input {$value :number} {{{$value} Adventure Points}}",
-                { value: entry.ap_value },
-              ),
+              value: translate(".input {$value :number} {{{$value} Adventure Points}}", {
+                value: entry.ap_value,
+              }),
             },
-            renderBaseValueItem(
-              "Life Point Base Value",
-              entry.base_values.life_points,
-            ).run(env),
-            renderBaseValueItem(
-              "Spirit Base Value",
-              entry.base_values.spirit,
-            ).run(env),
-            renderBaseValueItem(
-              "Toughness Base Value",
-              entry.base_values.toughness,
-            ).run(env),
-            renderBaseValueItem(
-              "Movement Base Value",
-              entry.base_values.movement,
-            ).run(env),
-            renderAttributeAdjustmentsItem(
-              totalAttributesCount,
-              entry.attribute_adjustments,
-            ).run(env),
+            renderBaseValueItem("Life Point Base Value", entry.base_values.life_points).run(env),
+            renderBaseValueItem("Spirit Base Value", entry.base_values.spirit).run(env),
+            renderBaseValueItem("Toughness Base Value", entry.base_values.toughness).run(env),
+            renderBaseValueItem("Movement Base Value", entry.base_values.movement).run(env),
+            renderAttributeAdjustmentsItem(totalAttributesCount, entry.attribute_adjustments).run(
+              env,
+            ),
             renderVariantValues(
               "Common Cultures",
               raceVariants,
@@ -273,11 +247,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
               : renderValueWithPossibleTranslation(
                   "Automatic Advantages",
                   entry.automatic_advantages,
-                  v =>
-                    renderAutomaticAdvantagesOrDisadvantages(
-                      "Advantage",
-                      v,
-                    ).run(env),
+                  v => renderAutomaticAdvantagesOrDisadvantages("Advantage", v).run(env),
                   translation.automatic_advantages,
                 ).run(env),
             entry.automatic_disadvantages === undefined
@@ -285,20 +255,14 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
               : renderValueWithPossibleTranslation(
                   "Automatic Disadvantages",
                   entry.automatic_disadvantages,
-                  v =>
-                    renderAutomaticAdvantagesOrDisadvantages(
-                      "Disadvantage",
-                      v,
-                    ).run(env),
+                  v => renderAutomaticAdvantagesOrDisadvantages("Disadvantage", v).run(env),
                   translation.automatic_disadvantages,
                 ).run(env),
             entry.strongly_recommended_advantages === undefined &&
             entry.strongly_recommended_disadvantages === undefined
               ? undefined
               : {
-                  label: translate(
-                    "Strongly recommended Advantages and Disadvantages",
-                  ),
+                  label: translate("Strongly recommended Advantages and Disadvantages"),
                   value: `${translate("The following advantages and disadvantages distinguish Aventurian {$race}. You should choose these advantages and disadvantages. If you don’t want to take them, talk to your GM.", { race: translation.name })} ${renderCommonnessRatedAdvantagesAndDisadvantages(
                     entry.strongly_recommended_advantages,
                     entry.strongly_recommended_disadvantages,
@@ -308,44 +272,28 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
               "Common Advantages",
               raceVariants,
               v => v.common_advantages,
-              advs =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Advantage",
-                  advs,
-                ).run(env),
+              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", advs).run(env),
               vt => vt.common_advantages,
             ).run(env),
             renderVariantValues(
               "Common Disadvantages",
               raceVariants,
               v => v.common_disadvantages,
-              advs =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Disadvantage",
-                  advs,
-                ).run(env),
+              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", advs).run(env),
               vt => vt.common_disadvantages,
             ).run(env),
             renderVariantValues(
               "Uncommon Advantages",
               raceVariants,
               v => v.uncommon_advantages,
-              advs =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Advantage",
-                  advs,
-                ).run(env),
+              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", advs).run(env),
               vt => vt.uncommon_advantages,
             ).run(env),
             renderVariantValues(
               "Uncommon Disadvantages",
               raceVariants,
               v => v.uncommon_disadvantages,
-              advs =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Disadvantage",
-                  advs,
-                ).run(env),
+              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", advs).run(env),
               vt => vt.uncommon_disadvantages,
             ).run(env),
           ],

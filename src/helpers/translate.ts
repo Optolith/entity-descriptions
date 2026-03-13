@@ -1,5 +1,5 @@
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import { Locale } from "optolith-database-schema/gen"
+import type { Locale } from "optolith-database-schema/gen"
 import { ResponsiveTextSize } from "../entities/partial/responsiveText.js"
 
 /**
@@ -23,18 +23,17 @@ export type Translate = <K extends keyof Translations>(
 /**
  * Extracts the parameters for a given translation key, or never if the key does not have parameters.
  */
-export type TranslationParams<K extends keyof Translations> =
-  Translations[K] extends string & { __params: infer Params }
-    ? Params
-    : undefined
+export type TranslationParams<K extends keyof Translations> = Translations[K] extends string & {
+  __params: infer Params
+}
+  ? Params
+  : undefined
 
 /**
  * Extracts the parameters for a given translation key as an array, or an empty array if the key does not have parameters.
  */
 export type TranslationParamsInArray<K extends keyof Translations> =
-  Translations[K] extends string & { __params: infer Params }
-    ? [params: Params]
-    : []
+  Translations[K] extends string & { __params: infer Params } ? [params: Params] : []
 
 /**
  * A dictionary of locale identifiers to other values.

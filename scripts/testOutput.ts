@@ -68,12 +68,14 @@ const unitListFormat = new Intl.ListFormat(localeId, {
 
 const collator = new Intl.Collator(localeId, { usage: "sort" })
 const dateFormatter = new Intl.DateTimeFormat(localeId)
+const numberFormatter = new Intl.NumberFormat(localeId)
 
 const localeEnv: LocaleEnvironment = {
   id: localeId,
   format: (text, args) => new MessageFormat(localeId, text, { bidiIsolation: "none" }).format(args),
   compare: collator.compare.bind(collator),
-  formatDate: dateFormatter.format.bind(dateFormatter),
+  formatNumber: numberFormatter.format.bind(numberFormatter),
+  formatDate: date => dateFormatter.format(new Date(date)),
   translate: (key, ...rest) =>
     new MessageFormat(localeId, localeInstance.translations?.[key] ?? key, {
       bidiIsolation: "none",

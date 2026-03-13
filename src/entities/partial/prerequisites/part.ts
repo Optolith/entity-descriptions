@@ -3,7 +3,7 @@ import { deepEqual, equal } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { compareNumber, reduceCompare, type Compare } from "@elyukai/utils/ordering"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { SentenceType, type ActivatableIdentifier } from "optolith-database-schema/gen"
+import type { ActivatableIdentifier, SentenceType } from "optolith-database-schema/gen"
 import type { LocaleCompare } from "../../../helpers/locale.js"
 import type { Translate, TranslateMap } from "../../../helpers/translate.js"
 import {
@@ -192,7 +192,7 @@ export const joinPrerequisiteParts = (
     on(part => part.type, equal),
   )
     .map(group => ({
-      type: group[0]!.type,
+      type: group[0].type,
       parts: group.map(groupItem => groupItem.part),
     }))
     .reduce(

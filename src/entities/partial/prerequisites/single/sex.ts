@@ -1,7 +1,7 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { BinarySex, SexPrerequisite } from "optolith-database-schema/gen"
 import type { Translate } from "../../../../helpers/translate.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 const printId = (translate: Translate, id: BinarySex): string => {
   switch (id.kind) {

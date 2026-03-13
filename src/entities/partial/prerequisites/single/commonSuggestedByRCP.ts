@@ -1,11 +1,8 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { PrerequisitePart } from "../part.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { PrerequisitePart } from "../part.js"
 
-const printType = (
-  locale: LocaleEnvironment,
-  type: "Advantage" | "Disadvantage",
-): string => {
+const printType = (locale: LocaleEnvironment, type: "Advantage" | "Disadvantage"): string => {
   switch (type) {
     case "Advantage":
       return locale.translate("advantage")

@@ -17,38 +17,38 @@ import {
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import {
+import type {
+  ActivatableIdentifier,
+  ActivatableNameBuilderRules,
+  BlessedTradition_ID,
+  Blessing_ID,
+  Cantrip_ID,
+  CantripsOptions,
   CombatTechniqueIdentifier,
-  type ActivatableIdentifier,
-  type ActivatableNameBuilderRules,
-  type BlessedTradition_ID,
-  type Blessing_ID,
-  type Cantrip_ID,
-  type CantripsOptions,
-  type CombatTechniquesOptions,
-  type ConstantProfessionSpecialAbility,
-  type CursesOptions,
-  type ExperienceLevel,
-  type LanguagesScriptsOptions,
-  type LiturgiesOptions,
-  type LiturgyIdentifier,
-  type MagicalActionIdentifier,
-  type Profession_ID,
-  type ProfessionMagicalSkillIdentifier,
-  type ProfessionPackage,
-  type ProfessionPackageOptions,
-  type ProfessionPrerequisiteGroup,
-  type ProfessionPrerequisites,
-  type ProfessionSpecialAbility,
-  type ProfessionVariant,
-  type ProfessionVariantPackageOptions,
-  type ProfessionVariantTranslation,
-  type RatedIdentifier,
-  type RestrictedBlessings,
-  type SkillsOptions,
-  type SkillSpecializationOptions,
-  type SpecialAbilityIdentifier,
-  type VariantOptionAction,
+  CombatTechniquesOptions,
+  ConstantProfessionSpecialAbility,
+  CursesOptions,
+  ExperienceLevel,
+  LanguagesScriptsOptions,
+  LiturgiesOptions,
+  LiturgyIdentifier,
+  MagicalActionIdentifier,
+  Profession_ID,
+  ProfessionMagicalSkillIdentifier,
+  ProfessionPackage,
+  ProfessionPackageOptions,
+  ProfessionPrerequisiteGroup,
+  ProfessionPrerequisites,
+  ProfessionSpecialAbility,
+  ProfessionVariant,
+  ProfessionVariantPackageOptions,
+  ProfessionVariantTranslation,
+  RatedIdentifier,
+  RestrictedBlessings,
+  SkillsOptions,
+  SkillSpecializationOptions,
+  SpecialAbilityIdentifier,
+  VariantOptionAction,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
@@ -146,6 +146,7 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
             (filledAcc, [values, number]) => {
               const existing = filledAcc.findIndex(([value]) => equalityFn(value, values))
               if (existing >= 0) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- existing is checked to be >= 0
                 filledAcc[existing]![1][pkgIndex] = number + defaultValue
                 return filledAcc
               } else {
@@ -153,9 +154,9 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
                   ...filledAcc,
                   [
                     values,
-                    Array(pkgIndex)
-                      .fill(defaultValue)
-                      .concat(number + defaultValue),
+                    Array.from({ length: pkgIndex }, () => defaultValue).concat(
+                      number + defaultValue,
+                    ),
                   ],
                 ]
               }
@@ -338,7 +339,8 @@ const getTotalingAPValues = (
   }
 
   return allSame(options, deepEqual)
-    ? options[0]!.ap_value
+    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- not all are nullish and because all are the same, none is nullish
+      options[0]!.ap_value
     : options.map(option => option?.ap_value ?? 0).join("/")
 }
 
@@ -348,9 +350,7 @@ const renderSkillsOption = (
 ): StdReader<string | undefined, "t"> =>
   mapNullable(
     getTotalingAPValues(professionPackages, pkg =>
-      pkg.content.options?.skills?.group === skillGroup.id
-        ? pkg.content.options?.skills
-        : undefined,
+      pkg.content.options?.skills?.group === skillGroup.id ? pkg.content.options.skills : undefined,
     ),
     apValue =>
       translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
@@ -442,6 +442,7 @@ const renderCantripsOption = (
   }
 
   if (allSame(cantripsOptions, deepEqual)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- not all are nullish and because all are the same, none is nullish
     return renderSingleCantripsOption(cantripsOptions[0]!)
   } else {
     return Reader.traverse(cantripsOptions, option =>
@@ -586,7 +587,13 @@ const renderVariantSkillsOption = (
         }),
       ),
     update: (base, override) =>
-      plainOrInsteadOfR(base, override, b => b.ap_value, equal, Reader.of).thenW(apValue =>
+      plainOrInsteadOfR(
+        base,
+        override,
+        b => b.ap_value,
+        equal,
+        b => Reader.of(b),
+      ).thenW(apValue =>
         plainOrInsteadOfR(base, override, b => b.group, equal, nameOfSkillsOfGroupR).thenW(
           nameOfSkillsOfGroup =>
             translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
@@ -907,10 +914,11 @@ const renderBlessings = (professionPackages: NonEmptyArray<PreparedProfessionPac
   if (traditions.every(isEmpty)) {
     return Reader.of(undefined)
   } else if (allSame(traditions, deepEqual)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- not all are empty and because all are the same, none is empty
     return renderSingleBlessings(traditions[0]!)
   } else {
     return Reader.traverse(traditions, option =>
-      option === undefined ? Reader.of("—") : renderSingleBlessings(option),
+      option.length === 0 ? Reader.of("—") : renderSingleBlessings(option),
     ).map(list => list.join(" / "))
   }
 }
@@ -947,7 +955,7 @@ const renderRatedVariantChanges = <ID, Env>(
     const baseValue = baseList?.find(item => deepEqual(item.id, id))?.rating_modifier ?? 0
     return renderInstance(id).thenW(name =>
       translateR("{$replacement} instead of {$base}", {
-        replacement: `${name} ${baseValue + rating_modifier}`,
+        replacement: `${name} ${(baseValue + rating_modifier).toFixed()}`,
         base: baseValue,
       }),
     )
@@ -1240,7 +1248,7 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
                   Reader.of(
                     specialAbilityLists
                       .map(specialAbilities =>
-                        specialAbilities === undefined
+                        Object.values(specialAbilities).every(list => list === undefined)
                           ? translate("none")
                           : renderSpecialAbilities(specialAbilities).run(env),
                       )

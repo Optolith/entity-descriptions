@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import {
   joinPrerequisiteParts,
-  PrerequisitePart,
+  type PrerequisitePart,
 } from "../../../../src/entities/partial/prerequisites/part.js"
 import { Case } from "../../../../src/helpers/enums.js"
 import { defaultLocaleEnvironment } from "../../../helpers/locale.js"

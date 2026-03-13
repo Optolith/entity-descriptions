@@ -1,5 +1,5 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
   FastSkillModificationLevelConfig,
   SkillModificationLevel,
   SlowSkillModificationLevelConfig,
@@ -21,23 +21,16 @@ type SpeedMap = {
 /**
  * Returns a common value for a skill modification level depending on the speed.
  */
-export const getModifiableBySpeed = <
-  S extends Speed,
-  K extends keyof SpeedMap[S],
->(
+export const getModifiableBySpeed = <S extends Speed, K extends keyof SpeedMap[S]>(
   speed: S,
   key: K,
   level: SkillModificationLevel,
 ): SpeedMap[S][K] => {
   switch (speed) {
     case Speed.Fast:
-      return level.fast[
-        key as keyof FastSkillModificationLevelConfig
-      ] as SpeedMap[S][K]
+      return level.fast[key as keyof FastSkillModificationLevelConfig] as SpeedMap[S][K]
     case Speed.Slow:
-      return level.slow[
-        key as keyof SlowSkillModificationLevelConfig
-      ] as SpeedMap[S][K]
+      return level.slow[key as keyof SlowSkillModificationLevelConfig] as SpeedMap[S][K]
     default:
       return assertExhaustive(speed)
   }

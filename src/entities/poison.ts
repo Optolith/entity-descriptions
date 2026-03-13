@@ -80,7 +80,7 @@ const renderLevel = (
     case "BySubtype":
       return level.BySubtype.map(
         subtype =>
-          `${subtype.value} (${translateMap(subtype.translations)?.name ?? MISSING_VALUE})`,
+          `${subtype.value.toFixed()} (${translateMap(subtype.translations)?.name ?? MISSING_VALUE})`,
       ).join(", ")
     default:
       return assertExhaustive(level)
@@ -161,7 +161,7 @@ const renderIntoxicantValues = (
     legality: intoxicant.legality.is_legal ? translate("legal") : translate("illegal"),
     special: translation?.special,
     addiction:
-      intoxicant?.addiction === undefined
+      intoxicant.addiction === undefined
         ? undefined
         : renderAddiction(translate, translateMap, getInstanceById, intoxicant.addiction),
   }
@@ -319,7 +319,7 @@ const renderDuration = (
       return renderMathOperation(duration.ExpressionBased.value, value => {
         switch (value.kind) {
           case "Constant":
-            return value.Constant.toString()
+            return value.Constant.toFixed()
           case "Dice":
             return renderDice(translate, value.Dice)
           case "CircleOfDamnation":
@@ -447,7 +447,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
           renderAlternativeNames(translate, translation.alternative_names),
           {
             label: translate("Level"),
-            value: level.toString(),
+            value: typeof level === "number" ? level.toFixed() : level,
           },
           {
             label: translate("Type"),

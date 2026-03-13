@@ -1,6 +1,12 @@
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import { LocaleEnvironment } from "../../src/helpers/locale.js"
-import { formatDateMock, formatMock, translateMapMock, translateMock } from "./translate.js"
+import type { LocaleEnvironment } from "../../src/helpers/locale.js"
+import {
+  formatDateMock,
+  formatMock,
+  formatNumberMock,
+  translateMapMock,
+  translateMock,
+} from "./translate.js"
 
 const localeId = "en-US"
 
@@ -23,6 +29,7 @@ export const defaultLocaleEnvironment: LocaleEnvironment = {
   id: "en-US",
   format: formatMock,
   formatDate: formatDateMock,
+  formatNumber: formatNumberMock,
   translate: translateMock,
   translateMap: translateMapMock,
   compare: (x, y) => collator.compare(x, y),

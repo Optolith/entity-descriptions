@@ -1,5 +1,5 @@
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { PrerequisitePart } from "../part.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { PrerequisitePart } from "../part.js"
 
 /**
  * Get the translation of a culture prerequisite.

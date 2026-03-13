@@ -71,7 +71,7 @@ import type {
 } from "./helpers/getTypes.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
 
-export { LocaleEnvironment }
+export type { LocaleEnvironment }
 
 /**
  * A JSON representation of the rules text for a library entry.
@@ -434,6 +434,7 @@ export type GetAllResolvedSkillUses = (id: Skill_ID) => ResolvedSkillUse[]
 /**
  * Get a JSON representation of the rules text for an entry in the database.
  */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- false positive
 export const getEntityDescription = <E extends AvailableCreatorEntity>(
   database: TSONDB<TSONDBTypes>,
   localeEnv: LocaleEnvironment,

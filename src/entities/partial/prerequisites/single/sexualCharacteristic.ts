@@ -1,15 +1,12 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import {
+import type {
   SexualCharacteristic,
   SexualCharacteristicPrerequisite,
 } from "optolith-database-schema/gen"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { PrerequisitePart } from "../part.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { PrerequisitePart } from "../part.js"
 
-const printId = (
-  locale: LocaleEnvironment,
-  id: SexualCharacteristic,
-): string => {
+const printId = (locale: LocaleEnvironment, id: SexualCharacteristic): string => {
   switch (id.kind) {
     case "Penis":
       return locale.translate("Penis")

@@ -2,11 +2,12 @@
 import js from "@eslint/js"
 import eslintConfigPrettier from "eslint-config-prettier"
 import jsdoc from "eslint-plugin-jsdoc"
+import { defineConfig, globalIgnores } from "eslint/config"
 import globals from "globals"
 import ts from "typescript-eslint"
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
+export default defineConfig([
+  globalIgnores(["lib/*", "scripts/*", "*.config.js"]),
   js.configs.recommended,
   ...ts.configs.recommended,
   jsdoc.configs["flat/recommended-typescript-error"],
@@ -101,7 +102,54 @@ export default [
       "symbol-description": "error",
       yoda: "error",
 
-      // TypeScript
+      // JSDoc
+      "jsdoc/check-tag-names": [
+        "error",
+        {
+          definedTags: ["main", "integer", "minItems"],
+        },
+      ],
+      "jsdoc/require-jsdoc": [
+        "error",
+        {
+          contexts: [
+            "TSInterfaceDeclaration",
+            "TSMethodSignature",
+            "TSEnumDeclaration",
+            "TSTypeAliasDeclaration",
+            "ExportNamedDeclaration > VariableDeclaration",
+          ],
+          publicOnly: true,
+          require: {
+            ArrowFunctionExpression: true,
+            ClassDeclaration: true,
+            ClassExpression: true,
+            FunctionDeclaration: true,
+            FunctionExpression: true,
+            MethodDefinition: true,
+          },
+        },
+      ],
+      "jsdoc/require-param": "off",
+      "jsdoc/require-returns": "off",
+      "jsdoc/require-description": [
+        "error",
+        {
+          contexts: ["any"],
+        },
+      ],
+    },
+  },
+  {
+    ignores: ["eslint.config.js"],
+    extends: ts.configs.strictTypeChecked,
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
       "@typescript-eslint/adjacent-overload-signatures": "error",
       "@typescript-eslint/array-type": "error",
       "@typescript-eslint/consistent-type-assertions": "error",
@@ -146,47 +194,15 @@ export default [
       "@typescript-eslint/require-array-sort-compare": "error",
       "@typescript-eslint/strict-boolean-expressions": "error",
       "@typescript-eslint/switch-exhaustiveness-check": "error",
-
-      // JSDoc
-      "jsdoc/check-tag-names": [
-        "error",
-        {
-          definedTags: ["main", "integer", "minItems"],
-        },
-      ],
-      "jsdoc/require-jsdoc": [
-        "error",
-        {
-          contexts: [
-            "TSInterfaceDeclaration",
-            "TSMethodSignature",
-            "TSEnumDeclaration",
-            "TSTypeAliasDeclaration",
-            "ExportNamedDeclaration > VariableDeclaration",
-          ],
-          publicOnly: true,
-          require: {
-            ArrowFunctionExpression: true,
-            ClassDeclaration: true,
-            ClassExpression: true,
-            FunctionDeclaration: true,
-            FunctionExpression: true,
-            MethodDefinition: true,
-          },
-        },
-      ],
-      "jsdoc/require-param": "off",
-      "jsdoc/require-returns": "off",
-      "jsdoc/require-description": [
-        "error",
-        {
-          contexts: ["any"],
-        },
-      ],
+      "@typescript-eslint/consistent-type-exports": "error",
+      "@typescript-eslint/consistent-type-imports": "error",
     },
   },
   eslintConfigPrettier,
   {
-    ignores: ["lib/*", "scripts/*", "*.config.js"],
+    files: ["test/**/*.{js,mjs,cjs,ts,mts,cts}"],
+    rules: {
+      "@typescript-eslint/no-floating-promises": "off",
+    },
   },
-]
+])

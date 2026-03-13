@@ -4,11 +4,11 @@ import type {
   RatedMinimumNumberPrerequisite,
   RatedMinimumNumberPrerequisiteCombatTechniquesTargetGroup,
 } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 const printNumberOfTheFollowingSkills = (locale: LocaleEnvironment, number: number): string =>
   locale.translate(".input {$count :number} {{{$count} of the following skills}}", {
@@ -91,7 +91,7 @@ export const printRatedMinimumNumberPrerequisite = (
           locale,
           prerequisite.targets.CombatTechniques.group,
           prerequisite.number,
-        )} ${prerequisite.value}`,
+        )} ${prerequisite.value.toFixed()}`,
         sentenceType: undefined,
         isMeta: false,
       }

@@ -21,31 +21,31 @@ export const getExperienceLevelEntityDescription =
             items: [
               {
                 label: translate("Adventure Points"),
-                value: entry.adventure_points.toString(),
+                value: entry.adventure_points.toFixed(),
               },
               {
                 label: translate("Maximum Attribute Value"),
-                value: entry.max_attribute_value.toString(),
+                value: entry.max_attribute_value.toFixed(),
               },
               {
                 label: translate("Maximum Skill Value"),
-                value: entry.max_skill_rating.toString(),
+                value: entry.max_skill_rating.toFixed(),
               },
               {
                 label: translate("Maximum Combat Technique"),
-                value: entry.max_combat_technique_rating.toString(),
+                value: entry.max_combat_technique_rating.toFixed(),
               },
               {
                 label: translate("Maximum Attribute Total"),
-                value: entry.max_attribute_total.toString(),
+                value: entry.max_attribute_total.toFixed(),
               },
               {
                 label: translate("Number of Spells/Liturgical Chants"),
-                value: entry.max_number_of_spells_liturgical_chants.toString(),
+                value: entry.max_number_of_spells_liturgical_chants.toFixed(),
               },
               {
                 label: translate("Number from other Traditions"),
-                value: entry.max_number_of_unfamiliar_spells.toString(),
+                value: entry.max_number_of_unfamiliar_spells.toFixed(),
               },
             ],
           },

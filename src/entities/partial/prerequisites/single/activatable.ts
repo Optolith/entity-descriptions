@@ -8,12 +8,12 @@ import type {
   ActivatablePrerequisite,
   RequirableSelectOptionIdentifier,
 } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import type { LocaleMap, Translate } from "../../../../helpers/translate.js"
 import { getNameComponents } from "../../activatableNameChunks.js"
 import { printDisplayOption } from "../displayOption.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 /**
  * Gets a resolved select option by its identifier.

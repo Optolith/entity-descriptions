@@ -1,8 +1,8 @@
-import { CulturePrerequisite } from "optolith-database-schema/gen"
-import { type GetInstanceById } from "../../../../helpers/getTypes.js"
-import { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { CulturePrerequisite } from "optolith-database-schema/gen"
+import type { GetInstanceById } from "../../../../helpers/getTypes.js"
+import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
-import { PrerequisitePart } from "../part.js"
+import type { PrerequisitePart } from "../part.js"
 
 /**
  * Get the translation of a culture prerequisite.

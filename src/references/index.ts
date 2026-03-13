@@ -2,12 +2,8 @@ import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { PublicationRefs } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import { LocaleEnvironment } from "../helpers/locale.js"
-import {
-  fromRawPageRange,
-  normalizePageRanges,
-  printPageRanges,
-} from "./pageRange.js"
+import type { LocaleEnvironment } from "../helpers/locale.js"
+import { fromRawPageRange, normalizePageRanges, printPageRanges } from "./pageRange.js"
 
 /**
  * Returns the translation of the references.
@@ -20,9 +16,7 @@ export const getReferencesTranslation = (
   references
     .map(ref => {
       const publication = getInstanceById("Publication", ref.id)
-      const publicationTranslations = locale.translateMap(
-        publication?.translations,
-      )
+      const publicationTranslations = locale.translateMap(publication?.translations)
       const occurrences = locale.translateMap(ref.occurrences)
 
       if (
@@ -33,17 +27,12 @@ export const getReferencesTranslation = (
         return undefined
       }
 
-      const initialPageRanges = normalizePageRanges(
-        occurrences.initial.pages.map(fromRawPageRange),
-      )
+      const initialPageRanges = normalizePageRanges(occurrences.initial.pages.map(fromRawPageRange))
 
       const initial =
         occurrences.initial.printing === undefined
           ? printPageRanges(locale.translate, initialPageRanges)
-          : `${printPageRanges(
-              locale.translate,
-              initialPageRanges,
-            )} (${locale.translate(
+          : `${printPageRanges(locale.translate, initialPageRanges)} (${locale.translate(
               ".input {$printing :number} {{since the {$printing}. printing}}",
               { printing: occurrences.initial.printing },
             )})`
@@ -52,13 +41,8 @@ export const getReferencesTranslation = (
         occurrences.revisions?.map(rev => {
           switch (rev.kind) {
             case "Since": {
-              const pageRanges = normalizePageRanges(
-                rev.Since.pages.map(fromRawPageRange),
-              )
-              return `${printPageRanges(
-                locale.translate,
-                pageRanges,
-              )} (${locale.translate(
+              const pageRanges = normalizePageRanges(rev.Since.pages.map(fromRawPageRange))
+              return `${printPageRanges(locale.translate, pageRanges)} (${locale.translate(
                 ".input {$printing :number} {{since the {$printing}. printing}}",
                 { printing: rev.Since.printing },
               )})`

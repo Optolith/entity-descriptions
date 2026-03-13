@@ -3,10 +3,10 @@ import { isNotNullish } from "@elyukai/utils/nullable"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { getAdventurePointsForActivation } from "@optolith/adventure-points/improvement-cost"
-import {
+import type {
+  ImprovementCost,
   RatedIdentifier,
-  type ImprovementCost,
-  type SkillWithEnhancementsIdentifier,
+  SkillWithEnhancementsIdentifier,
 } from "optolith-database-schema/gen"
 import type { RawEntityDescriptionSection } from "../../index.js"
 import { printEnhancementPrerequisites } from "./prerequisites/index.js"
@@ -40,7 +40,7 @@ export const renderEnhancements = (
           >().map(env =>
             translation === undefined
               ? undefined
-              : `- ^[${translation.name}](entity: "Enhancement") (${env.translate("SR {$value}", { value: enhancement.content.skill_rating })}, ${env.translate("{$value} AP", { value: enhancement.content.adventure_points_modifier * getAdventurePointsForActivation(parentImprovementCost.kind) })}): ${translation.effect ?? ""}${enhancement.content.prerequisites === undefined ? "" : ` ${env.translate(".input {$hiddenCount :number} {{Prerequisites}}", { hiddenCount: enhancement.content.prerequisites.length })}: ${printEnhancementPrerequisites(env.getInstanceById, { translate: env.translate, translateMap: env.translateMap, compare: env.localeCompare, join: env.localeJoin }, enhancement.content.prerequisites)}`}`,
+              : `- ^[${translation.name}](entity: "Enhancement") (${env.translate("SR {$value}", { value: enhancement.content.skill_rating })}, ${env.translate("{$value} AP", { value: enhancement.content.adventure_points_modifier * getAdventurePointsForActivation(parentImprovementCost.kind) })}): ${translation.effect}${enhancement.content.prerequisites === undefined ? "" : ` ${env.translate(".input {$hiddenCount :number} {{Prerequisites}}", { hiddenCount: enhancement.content.prerequisites.length })}: ${printEnhancementPrerequisites(env.getInstanceById, { translate: env.translate, translateMap: env.translateMap, compare: env.localeCompare, join: env.localeJoin }, enhancement.content.prerequisites)}`}`,
           ),
         ),
     ).thenW(enhancementDescriptions => {

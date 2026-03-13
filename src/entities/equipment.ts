@@ -50,7 +50,7 @@ import type {
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
+import type { FormatNumber, LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   IdMap,
@@ -140,14 +140,16 @@ const renderPrimaryAttributeAndDamageThreshold = (
     case "Default":
       return `${
         closeCombatTechnique?.primary_attribute.map(getAttrAbbrv).join("/") ?? MISSING_VALUE
-      } ${damageThreshold.Default.threshold}`
+      } ${damageThreshold.Default.threshold.toFixed()}`
     case "List":
       if (isNotEmpty(damageThreshold.List.list)) {
         const { list } = damageThreshold.List
         if (list.some(item => item.threshold !== list[0].threshold)) {
-          return list.map(item => `${getAttrAbbrv(item.attribute)} ${item.threshold}`).join("/")
+          return list
+            .map(item => `${getAttrAbbrv(item.attribute)} ${item.threshold.toFixed()}`)
+            .join("/")
         } else {
-          return `${list.map(item => getAttrAbbrv(item.attribute)).join("/")} ${list[0].threshold}`
+          return `${list.map(item => getAttrAbbrv(item.attribute)).join("/")} ${list[0].threshold.toFixed()}`
         }
       } else {
         return MISSING_VALUE
@@ -263,7 +265,7 @@ const renderReloadTime = (translate: Translate, reloadTime: ReloadTime[]) =>
     : MISSING_VALUE
 
 const renderRangeBrackets = (rangeBrackets: RangeBrackets) =>
-  `${rangeBrackets.close}/${rangeBrackets.medium}/${rangeBrackets.far}`
+  `${rangeBrackets.close.toFixed()}/${rangeBrackets.medium.toFixed()}/${rangeBrackets.far.toFixed()}`
 
 const renderAmmunition = (
   translateMap: TranslateMap,
@@ -596,6 +598,7 @@ const renderNote = (
 
 const renderWeight = (
   translate: Translate,
+  formatNumber: FormatNumber,
   measurements: Required<LocaleMeasurementAdjustments>,
   weight: Weight | JewelryMaterialDifference<Weight>,
 ): RawDefinitionListEntityDescriptionSectionItem => {
@@ -611,7 +614,7 @@ const renderWeight = (
       label: translate("Weight (Bronze/Silver/Gold)"),
       value: translate("{$value} pounds", {
         value: [weight.bronze, weight.silver, weight.gold]
-          .map(value => value * measurements.stonesMultiplier)
+          .map(value => formatNumber(value * measurements.stonesMultiplier))
           .join("/"),
       }),
     }
@@ -621,14 +624,15 @@ const renderWeight = (
 const renderCost = (
   translate: Translate,
   translateMap: TranslateMap,
-  cost: Cost | BookCost | JewelryMaterialDifference<Cost>,
-): RawDefinitionListEntityDescriptionSectionItem => {
+  formatNumber: FormatNumber,
+  cost: Cost | BookCost | JewelryMaterialDifference<number>,
+): { label: string; value: string } => {
   const renderBookCostVariant = (bookCostVariant: BookCostVariant) => {
     switch (bookCostVariant.kind) {
       case "Definite": {
         const translation = translateMap(bookCostVariant.Definite.translations)
         return (
-          renderCost(translate, translateMap, bookCostVariant.Definite.cost) +
+          renderCost(translate, translateMap, formatNumber, bookCostVariant.Definite.cost).value +
           parensIf(translation?.label)
         )
       }
@@ -645,7 +649,7 @@ const renderCost = (
     return {
       label: translate("Cost (Bronze/Silver/Gold)"),
       value: translate("{$value} silverthalers", {
-        value: [cost.bronze, cost.silver, cost.gold].join("/"),
+        value: [cost.bronze, cost.silver, cost.gold].map(formatNumber).join("/"),
       }),
     }
   } else {
@@ -704,8 +708,8 @@ const renderArmorValues = (
   idMap: IdMap,
   values: NormalizedArmorValues,
 ): RawDefinitionListEntityDescriptionSectionItem[] => [
-  { label: translate("Protection"), value: values.protection.toString() },
-  { label: translate("Encumbrance"), value: values.encumbrance.toString() },
+  { label: translate("Protection"), value: values.protection.toFixed() },
+  { label: translate("Encumbrance"), value: values.encumbrance.toFixed() },
   {
     label: translate("Additional Penalties"),
     value: values.has_additional_penalties
@@ -724,7 +728,7 @@ const renderArmorValues = (
 ]
 
 type BaseItem = {
-  cost?: Cost | BookCost | JewelryMaterialDifference<Cost>
+  cost?: Cost | BookCost | JewelryMaterialDifference<number>
   weight?: Weight | JewelryMaterialDifference<Weight>
   complexity?: ArmorComplexity | Complexity
   structure_points?: StructurePoints
@@ -960,7 +964,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
           baseItemTranslation?.language !== undefined || baseItemTranslation?.script !== undefined
             ? {
                 label: translate("Language/Script"),
-                value: [baseItemTranslation?.language, baseItemTranslation?.script]
+                value: [baseItemTranslation.language, baseItemTranslation.script]
                   .map(value => value ?? "—")
                   .join(" / "),
               }
@@ -979,9 +983,11 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
               }
             : undefined,
           mapNullable(baseItem.weight, weight =>
-            renderWeight(translate, locale.measurementAdjustments, weight),
+            renderWeight(translate, locale.formatNumber, locale.measurementAdjustments, weight),
           ),
-          mapNullable(baseItem.cost, cost => renderCost(translate, translateMap, cost)),
+          mapNullable(baseItem.cost, cost =>
+            renderCost(translate, translateMap, locale.formatNumber, cost),
+          ),
           mapNullable(
             renderNote(
               translate,
