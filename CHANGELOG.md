@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.1](https://github.com/Optolith/entity-descriptions/compare/v0.4.0...v0.4.1) (2026-03-13)
+
+
+### Features
+
+* apply map style ([414685f](https://github.com/Optolith/entity-descriptions/commit/414685f574e9669943f700564d36a27bd3711ddb))
+* focus rule badge ([c76c4cd](https://github.com/Optolith/entity-descriptions/commit/c76c4cd0c33e0187b080f7a8afb04a99cad6785c))
+* interval style time span as unit ([0c772d1](https://github.com/Optolith/entity-descriptions/commit/0c772d1cc2d65bd97804fe5a96137f4f1a601a02))
+* use more compact diff for activatable skill parameters ([70d7082](https://github.com/Optolith/entity-descriptions/commit/70d70823c24f81a47dbb8f7ced23819464926067))
+
+
+### Bug Fixes
+
+* do not use typographic formatter for multi-word cost ([fecbae5](https://github.com/Optolith/entity-descriptions/commit/fecbae5bbbccebc45660dbbb6121c8169fce1747))
+* do not wrap maximum duration if replaced ([bac8a49](https://github.com/Optolith/entity-descriptions/commit/bac8a493b2a6d5cf08ab9d461e7f84f8c83c1788))
+* min/max wrapping ([9a435e2](https://github.com/Optolith/entity-descriptions/commit/9a435e25979dea9810332c51a763e093ea403dfb))
+* missing profession specification in title ([2a97e7e](https://github.com/Optolith/entity-descriptions/commit/2a97e7e1f5b8d91a8ed27ac3545c1691d0217aa1))
+* use abbreviated attribute name in prerequisites ([1b2d21b](https://github.com/Optolith/entity-descriptions/commit/1b2d21ba68964ad7dfb542d249842cbc9bea5fa7))
+* use duration level translation if present ([a7790d6](https://github.com/Optolith/entity-descriptions/commit/a7790d68f68fc5762a954c1703a7f6b4fb3dfe07))
+
 ## [0.4.0](https://github.com/Optolith/entity-descriptions/compare/v0.3.2...v0.4.0) (2026-03-12)
 
 
