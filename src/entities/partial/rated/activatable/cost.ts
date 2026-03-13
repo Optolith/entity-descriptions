@@ -22,7 +22,6 @@ import type {
 } from "optolith-database-schema/gen"
 import { type LocaleMap } from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
-import { additionFormatter } from "../../mathOperation.js"
 import {
   formatEnergyFnR,
   formatEnergyR,
@@ -153,8 +152,8 @@ export const renderModifiableOneTimeCost = (value: {
                 return Reader.of(text)
               }
 
-              return responsiveTextR(translation.additional).map(additional =>
-                additionFormatter(text, additional),
+              return responsiveTextR(translation.additional).map(
+                additional => `${text} + ${additional}`,
               )
             }),
           ),
@@ -338,7 +337,10 @@ const buildSustainedCost = (
 
   const intervalCostWithLabel = appendIntervalToCost(interval, intervalCost)
 
-  return activationCostWithLabel.map2(intervalCostWithLabel, additionFormatter)
+  return activationCostWithLabel.map2(
+    intervalCostWithLabel,
+    (activationStr, intervalStr) => `${activationStr} + ${intervalStr}`,
+  )
 }
 
 const renderModifiableSustainedCost = (value: {
