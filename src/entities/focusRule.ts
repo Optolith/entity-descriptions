@@ -10,17 +10,15 @@ export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
   { getInstanceById: GetInstanceById<"Publication" | "Subject"> }
 >(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
   const translation = translateMap(entry.translations)
-  const topicTranslation = translateMap(
-    getInstanceById("Subject", entry.subject)?.translations,
-  )
+  const topicTranslation = translateMap(getInstanceById("Subject", entry.subject)?.translations)
 
   if (translation === undefined || topicTranslation === undefined) {
     return undefined
   }
 
   return {
-    title: `${translation.name} (${romanize(entry.level)})`,
-    subtitle: topicTranslation.name,
+    title: translation.name,
+    badge: entry.level,
     className: "focus-rule",
     body: [
       {

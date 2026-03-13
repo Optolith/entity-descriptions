@@ -79,6 +79,7 @@ export { LocaleEnvironment }
 export type EntityDescription = {
   title: string
   subtitle?: string
+  badge?: number
   className: string
   body: EntityDescriptionSection[]
   errata?: { date: string; description: string }[]
@@ -118,6 +119,7 @@ export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescription
 export type RawEntityDescription = {
   title: string
   subtitle?: string
+  badge?: number
   className: string
   body: (RawEntityDescriptionSection | undefined)[]
   errata?: Errata
