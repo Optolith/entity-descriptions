@@ -58,8 +58,8 @@ const renderModifiableRange = (value: ModifiableRange) =>
     .thenW(range =>
       range === undefined
         ? Reader.of(MISSING_VALUE)
-        : typeof range === "string"
-          ? Reader.of(range)
+        : range.translation !== undefined
+          ? Reader.of(range.translation)
           : formatLengthR("Steps", range.value),
     )
     .then(text => wrapIfRadius(value.is_radius, text))
