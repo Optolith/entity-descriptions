@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.5](https://github.com/Optolith/entity-descriptions/compare/v0.4.4...v0.4.5) (2026-03-14)
+
+
+### Bug Fixes
+
+* do not display the twelve blessings for shamanistic professions ([e95cc0d](https://github.com/Optolith/entity-descriptions/commit/e95cc0df5312dfcd6fd8ae571e728eccf08601e2))
+* join prerequisites of the same entry more reliably ([c317c62](https://github.com/Optolith/entity-descriptions/commit/c317c629a5f091cc23485717fad795538aabf0c2))
+* rendering of blessings in packages and variants ([d04e247](https://github.com/Optolith/entity-descriptions/commit/d04e24761204303211157e1154446bc8f1828c43))
+
 ## [0.4.4](https://github.com/Optolith/entity-descriptions/compare/v0.4.3...v0.4.4) (2026-03-14)
 
 
