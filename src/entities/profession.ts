@@ -917,10 +917,7 @@ const renderSingleBlessings = (traditions: BlessedTradition_ID[]) =>
             : translateR("The Twelve Blessings"),
   )
 
-const renderBlessings = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) => {
-  const traditions = professionPackages.map(pkg =>
-    retrieveBlessedTraditionIdentifierFromPrerequisites(pkg.content.prerequisites),
-  )
+const renderBlessings = (traditions: string[][]) => {
   if (traditions.every(isEmpty)) {
     return Reader.of(undefined)
   } else if (allSame(traditions, deepEqual)) {
@@ -933,6 +930,18 @@ const renderBlessings = (professionPackages: NonEmptyArray<PreparedProfessionPac
   }
 }
 
+const renderBlessingsForPackages = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
+  renderBlessings(
+    professionPackages.map(pkg =>
+      retrieveBlessedTraditionIdentifierFromPrerequisites(pkg.content.prerequisites),
+    ),
+  )
+
+const renderBlessingsForVariant = (professionVariant: ProfessionVariant) =>
+  renderBlessings([
+    retrieveBlessedTraditionIdentifierFromPrerequisites(professionVariant.prerequisites),
+  ]).map(blessingsText => (blessingsText !== undefined ? [blessingsText] : []))
+
 const renderLiturgicalChantName = (liturgyIds: LiturgyIdentifier[]) =>
   Reader.traverse(liturgyIds, strictNameR).thenW(list => localeJoinR(list, "disjunction"))
 
@@ -944,7 +953,7 @@ const renderLiturgicalChants = (professionPackages: NonEmptyArray<PreparedProfes
     >,
     string | undefined
   >([
-    renderBlessings(professionPackages),
+    renderBlessingsForPackages(professionPackages),
     renderNumericListAcrossPackages(
       professionPackages,
       (pkg: PreparedProfessionPackage) =>
@@ -956,12 +965,19 @@ const renderLiturgicalChants = (professionPackages: NonEmptyArray<PreparedProfes
     renderLiturgiesOption(professionPackages),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join(", "))
 
+const baseHasNoTradition = (base: ProfessionPackage): boolean =>
+  isEmpty(retrieveBlessedTraditionIdentifierFromPrerequisites(base.prerequisites))
+
 const renderRatedVariantChanges = <ID, Env>(
-  baseList: { id: ID; rating_modifier: number }[] | undefined,
+  baseList: "ignore" | { id: ID; rating_modifier: number }[] | undefined,
   variantList: { id: ID; rating_modifier: number }[] | undefined,
   renderInstance: (id: ID) => Reader<Env, string>,
 ) =>
   Reader.traverse(variantList ?? [], ({ id, rating_modifier }) => {
+    if (baseList === "ignore") {
+      return renderInstance(id).map(name => `${name} ${rating_modifier.toFixed()}`)
+    }
+
     const baseValue = baseList?.find(item => deepEqual(item.id, id))?.rating_modifier ?? 0
     return renderInstance(id).thenW(name =>
       translateR("{$replacement} instead of {$base}", {
@@ -1012,6 +1028,7 @@ const renderProfessionVariantText = (
           | "Culture"
           | "Cantrip"
           | "SkillGroup"
+          | "Blessing"
         >,
         string[]
       >([
@@ -1019,7 +1036,7 @@ const renderProfessionVariantText = (
           variant.prerequisites === undefined
             ? []
             : [
-                printProfessionPrerequisites(
+                `${env.translate("Prerequisites")}: ${printProfessionPrerequisites(
                   env.getInstanceById,
                   env.getResolvedSelectOptionById,
                   {
@@ -1028,7 +1045,7 @@ const renderProfessionVariantText = (
                     compare: env.localeCompare,
                   },
                   variant.prerequisites,
-                ),
+                )}`,
               ],
         ),
         renderVariantOption(
@@ -1072,8 +1089,9 @@ const renderProfessionVariantText = (
         ),
         renderRatedVariantChanges(base.skills, variant.skills, id => strictNameR("Skill", id)),
         renderRatedVariantChanges(base.spells, variant.spells, renderSpellworkName),
+        renderBlessingsForVariant(variant),
         renderRatedVariantChanges(
-          base.liturgical_chants,
+          baseHasNoTradition(base) ? "ignore" : base.liturgical_chants,
           variant.liturgical_chants,
           renderLiturgicalChantName,
         ),
