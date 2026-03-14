@@ -322,7 +322,7 @@ const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
 
         const listR = Reader.traverse(option.options, strictNameR)
           .thenW(list => localeSortR(list))
-          .thenW(list => localeJoinR(list, "disjunction"))
+          .map(list => list.join(", "))
 
         return completeTextR.thenW(completeText => listR.map(list => `${completeText}: ${list}`))
       })()
@@ -364,7 +364,7 @@ const renderCantripList = (
 ): StdReader<string, "tm" | "lc" | "lj" | "ibi", "Cantrip"> =>
   Reader.traverse(cantripIds, id => strictNameR("Cantrip", id))
     .thenW(localeSortR)
-    .thenW(list => localeJoinR(list, "disjunction"))
+    .map(list => list.join(", "))
 
 const renderVariantCantripsOption = (
   baseOptions: CantripsOptions | undefined,
