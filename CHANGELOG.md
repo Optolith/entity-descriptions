@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.3](https://github.com/Optolith/entity-descriptions/compare/v0.4.2...v0.4.3) (2026-03-14)
+
+
+### Bug Fixes
+
+* no disjunction lists for combat techniques and cantrips ([fd40397](https://github.com/Optolith/entity-descriptions/commit/fd403970da93339759d28dd94ddd8432f05871fd))
+
 ## [0.4.2](https://github.com/Optolith/entity-descriptions/compare/v0.4.1...v0.4.2) (2026-03-13)
 
 
