@@ -1038,13 +1038,13 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
                 value: baseItemTranslation.appearance,
               }
             : undefined,
-          baseItemTranslation?.appearance !== undefined
+          baseItemTranslation?.components !== undefined
             ? {
                 label: translate("Components"),
                 value: baseItemTranslation.components,
               }
             : undefined,
-          baseItemTranslation?.appearance !== undefined
+          baseItemTranslation?.use !== undefined
             ? {
                 label: translate("Use"),
                 value: baseItemTranslation.use,
