@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.6](https://github.com/Optolith/entity-descriptions/compare/v0.4.5...v0.4.6) (2026-03-14)
+
+
+### Bug Fixes
+
+* render newspaper values ([1f814bc](https://github.com/Optolith/entity-descriptions/commit/1f814bc88cf92cb25f37f1c1d538314f8b58cf66))
+* use different translation for variant prerequisites ([c732f6a](https://github.com/Optolith/entity-descriptions/commit/c732f6abadf7999413a387e1c173fa5f49e98373))
+
 ## [0.4.5](https://github.com/Optolith/entity-descriptions/compare/v0.4.4...v0.4.5) (2026-03-14)
 
 
