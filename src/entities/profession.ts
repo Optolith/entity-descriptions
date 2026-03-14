@@ -1036,7 +1036,7 @@ const renderProfessionVariantText = (
           variant.prerequisites === undefined
             ? []
             : [
-                `${env.translate("Prerequisites")}: ${printProfessionPrerequisites(
+                `${env.translate("Additional Prerequisites")}: ${printProfessionPrerequisites(
                   env.getInstanceById,
                   env.getResolvedSelectOptionById,
                   {
