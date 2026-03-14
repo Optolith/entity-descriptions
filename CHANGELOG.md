@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.4](https://github.com/Optolith/entity-descriptions/compare/v0.4.3...v0.4.4) (2026-03-14)
+
+
+### Bug Fixes
+
+* book display ([dfc07ee](https://github.com/Optolith/entity-descriptions/commit/dfc07eed999c02890a3516aaacd64313c226c9cb))
+* working creature optional value guards ([11a283a](https://github.com/Optolith/entity-descriptions/commit/11a283af9082b64eb48823cb90107394fa8baa5b))
+
 ## [0.4.3](https://github.com/Optolith/entity-descriptions/compare/v0.4.2...v0.4.3) (2026-03-14)
 
 
