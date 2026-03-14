@@ -4,6 +4,7 @@ import { on } from "@elyukai/utils/function"
 import { compareNumber, reduceCompare, type Compare } from "@elyukai/utils/ordering"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { ActivatableIdentifier, SentenceType } from "optolith-database-schema/gen"
+import { fromUniformCase } from "tsondb/schema/gen"
 import type { LocaleCompare } from "../../../helpers/locale.js"
 import type { Translate, TranslateMap } from "../../../helpers/translate.js"
 import {
@@ -127,6 +128,7 @@ const appendPrerequisitePartGroup = (
     return appendBySentenceType(
       previous,
       parts
+        .toSorted(on(part => fromUniformCase(part.value.id), localeCompare))
         .reduce(
           (
             acc: [[ActivatableGroup, string][], number],
