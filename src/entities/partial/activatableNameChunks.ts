@@ -11,11 +11,7 @@ import type {
   ActivatableNameBuilderRules,
   RequirableSelectOptionIdentifier,
 } from "optolith-database-schema/gen"
-import type {
-  LocaleMap,
-  Translate,
-  TranslateMap,
-} from "../../helpers/translate.js"
+import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"
 
@@ -25,10 +21,7 @@ import { MISSING_VALUE } from "./unknown.js"
 export type ActivatableNameComponents = {
   id: ActivatableIdentifier
   base: ActivatableNameChunk
-  options:
-    | ActivatableNameChunk
-    | [ActivatableNameChunk, ActivatableNameChunk]
-    | undefined
+  options: ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined
   level: number | undefined
   nameBuilderRules: Required<ActivatableNameBuilderRules>
 }
@@ -39,10 +32,7 @@ export type ActivatableNameComponents = {
 export type CombinedActivatableNameComponents = {
   id: ActivatableIdentifier
   base: ActivatableNameChunk
-  options: (
-    | ActivatableNameChunk
-    | [ActivatableNameChunk, ActivatableNameChunk]
-  )[]
+  options: (ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk])[]
   level: number | undefined
   nameBuilderRules: Required<ActivatableNameBuilderRules>
 }
@@ -76,16 +66,14 @@ const combineChunks = (
     } else if (typeof b === "function") {
       return fs => join(a(fs), b(fs))
     } else if (typeof b === "object") {
-      return translateMap =>
-        join(a(translateMap), translateMap(b) ?? MISSING_VALUE)
+      return translateMap => join(a(translateMap), translateMap(b) ?? MISSING_VALUE)
     }
     return b
   } else if (typeof a === "object") {
     if (typeof b === "string") {
       return mapObject(a, aValue => join(aValue, b))
     } else if (typeof b === "function") {
-      return translateMap =>
-        join(translateMap(a) ?? MISSING_VALUE, b(translateMap))
+      return translateMap => join(translateMap(a) ?? MISSING_VALUE, b(translateMap))
     } else if (typeof b === "object") {
       const ret: LocaleMap<string> = {}
       for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
@@ -109,16 +97,12 @@ const normalizeChunks = (
  * Zips multiple name chunks together, separating them with commas. Pairs of chunks are combined with a colon.
  */
 const zipChunks = (
-  chunks: (
-    | ActivatableNameChunk
-    | [ActivatableNameChunk, ActivatableNameChunk]
-  )[],
+  chunks: (ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk])[],
 ): ActivatableNameChunk =>
   chunks
     .map(normalizeChunks)
     .reduce(
-      (acc, chunk) =>
-        acc === "" ? chunk : combineChunks(acc, chunk, (a, b) => `${a}, ${b}`),
+      (acc, chunk) => (acc === "" ? chunk : combineChunks(acc, chunk, (a, b) => `${a}, ${b}`)),
       "",
     )
 
@@ -129,10 +113,7 @@ const renderLevel = (
 ) =>
   level === undefined
     ? undefined
-    : formatAsPrerequisite ||
-        id.kind === "Advantage" ||
-        id.kind === "Disadvantage" ||
-        level === 1
+    : formatAsPrerequisite || id.kind === "Advantage" || id.kind === "Disadvantage" || level === 1
       ? romanize(level)
       : `I–${romanize(level)}`
 
@@ -162,20 +143,13 @@ export const renderActivatableNameComponentsWithoutLevel = (
 ): [beforeLevel: string, afterLevel?: string] => {
   const { levelPlacement, useParenthesis } = components.nameBuilderRules
 
-  const wrapParens: (text: string) => string = useParenthesis
-    ? str => `(${str})`
-    : identity
+  const wrapParens: (text: string) => string = useParenthesis ? str => `(${str})` : identity
 
   const base = renderActivatableNameChunk(translateMap, components.base)
   const options =
     components.options === undefined
       ? undefined
-      : wrapParens(
-          renderActivatableNameChunk(
-            translateMap,
-            normalizeChunks(components.options),
-          ),
-        )
+      : wrapParens(renderActivatableNameChunk(translateMap, normalizeChunks(components.options)))
 
   switch (levelPlacement.kind) {
     case "BeforeOptions":
@@ -195,11 +169,7 @@ export const renderActivatableNameComponents = (
   components: ActivatableNameComponents,
   formatAsPrerequisite: boolean,
 ): string => {
-  const levelText = renderLevel(
-    formatAsPrerequisite,
-    components.id,
-    components.level,
-  )
+  const levelText = renderLevel(formatAsPrerequisite, components.id, components.level)
 
   const [beforeLevel, afterLevel] = renderActivatableNameComponentsWithoutLevel(
     translateMap,
@@ -226,8 +196,7 @@ export const combineNameComponents = (
   ) {
     return {
       ...elements[0],
-      options:
-        ensureNonEmpty(elements.map(e => e.options).filter(isNotNullish)) ?? [],
+      options: ensureNonEmpty(elements.map(e => e.options).filter(isNotNullish)) ?? [],
     }
   }
 
@@ -479,20 +448,14 @@ const renderOptions = (
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
   options: RequirableSelectOptionIdentifier[] | undefined,
-):
-  | ActivatableNameChunk
-  | [ActivatableNameChunk, ActivatableNameChunk]
-  | undefined => {
+): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
     options?.map(optionId => {
-      const optTranslations = getResolvedSelectOptionById(id, optionId)?.content
-        .translations
+      const optTranslations = getResolvedSelectOptionById(id, optionId)?.content.translations
       return optTranslations === undefined
         ? MISSING_VALUE
         : mapObject(optTranslations, t10n =>
-            displayedInProfession
-              ? (t10n.name_in_profession ?? t10n.name)
-              : t10n.name,
+            displayedInProfession ? (t10n.name_in_profession ?? t10n.name) : t10n.name,
           )
     }) ?? []
 
@@ -533,8 +496,7 @@ export const getNameComponents = <T>(
     options,
   )
 
-  const isTradition =
-    id.kind === "MagicalTradition" || id.kind === "BlessedTradition"
+  const isTradition = id.kind === "MagicalTradition" || id.kind === "BlessedTradition"
 
   const actualBase = isTradition ? translate("Tradition") : renderedBase
   const actualOptions:
