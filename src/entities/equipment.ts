@@ -756,6 +756,8 @@ type BaseItemTranslation = {
   advantage?: string
   disadvantage?: string
   color?: string
+  topics?: string[]
+  placeOfPublication?: string
   appearance?: string
   components?: string
   use?: string
@@ -1293,6 +1295,18 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             ? {
                 label: translate("Armor Disadvantage"),
                 value: combatTranslation.disadvantage,
+              }
+            : undefined,
+          baseItemTranslation?.placeOfPublication !== undefined
+            ? {
+                label: translate("Place of Publication"),
+                value: baseItemTranslation.placeOfPublication,
+              }
+            : undefined,
+          baseItemTranslation?.topics !== undefined
+            ? {
+                label: translate("Topics"),
+                value: baseItemTranslation.topics.toSorted(locale.compare).join(", "),
               }
             : undefined,
           baseItemTranslation?.appearance !== undefined
