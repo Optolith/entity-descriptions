@@ -970,18 +970,50 @@ const renderBookRules = (
           type: "definitionList",
           style: "nested",
           items: [
-            ...rules.ByEdition.editions.map(edition => ({
-              label: edition.label,
-              value: edition.text,
-            })),
-            mapNullable(rules.ByEdition.reconstruction, reconstruction => ({
-              label: translate("Reconstruction"),
-              value: reconstruction,
-            })),
-            mapNullable(rules.ByEdition.references, references => ({
-              label: translate("References"),
-              value: references,
-            })),
+            ...rules.ByEdition.editions.map(
+              (
+                edition,
+              ): {
+                label: string
+                value:
+                  | string
+                  | (
+                      | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
+                      | undefined
+                    )[]
+              } => {
+                if (edition.reconstruction === undefined && edition.references === undefined) {
+                  return {
+                    label: edition.label,
+                    value: edition.text,
+                  }
+                }
+
+                return {
+                  label: edition.label,
+                  value: [
+                    {
+                      type: "plain",
+                      text: edition.text,
+                    },
+                    {
+                      type: "definitionList",
+                      style: "nested",
+                      items: [
+                        mapNullable(edition.reconstruction, reconstruction => ({
+                          label: translate("Reconstruction"),
+                          value: reconstruction,
+                        })),
+                        mapNullable(edition.references, references => ({
+                          label: translate("References"),
+                          value: references,
+                        })),
+                      ],
+                    },
+                  ],
+                }
+              },
+            ),
           ],
         },
         mapNullable(rules.ByEdition.textAfter, textAfter => ({
