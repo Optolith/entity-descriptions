@@ -14,6 +14,7 @@ import {
   nullableToArray,
   type AnyNonNullish,
 } from "@elyukai/utils/nullable"
+import { omitKeys } from "@elyukai/utils/object"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
@@ -56,7 +57,7 @@ import type {
   GetAllInstances,
   GetInstanceById,
 } from "../helpers/getTypes.js"
-import type { LocaleMap, Translate } from "../helpers/translate.js"
+import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
@@ -84,6 +85,7 @@ import {
   localeSortR,
   nameR,
   strictNameR,
+  translateMapFnR,
   translateR,
   translationR,
   type EnvMap,
@@ -1004,11 +1006,20 @@ const renderVariantOption = <Env, K extends keyof ProfessionVariantPackageOption
 const renderProfessionVariantLabel = (
   base: ProfessionPackage,
   variant: ProfessionVariant,
-  translation: ProfessionVariantTranslation,
+  translations: NonEmptyArray<{ id: string; content: ProfessionVariantTranslation }>,
 ) =>
   translateR("{$value} AP", {
     value: base.ap_value + (variant.ap_value ?? 0),
-  }).map(apValueText => translation.name.default + parensIf(apValueText))
+  }).thenW(apValueText =>
+    localeSortR(
+      translations.map(
+        ({ id, content }) =>
+          `^[${content.name.default}](entity: "ProfessionVariant", instance: "${id}")`,
+      ),
+    )
+      .thenW(list => localeJoinR(list, "conjunction"))
+      .map(names => names + parensIf(apValueText)),
+  )
 
 const renderProfessionVariantText = (
   base: ProfessionPackage,
@@ -1103,18 +1114,66 @@ const renderProfessionVariantText = (
             .join("; ") + (translation.concluding_text ?? ""),
       )
 
-const renderProfessionVariant = (base: ProfessionPackage, variant: ProfessionVariant) =>
-  translationR(variant).thenW(translation =>
-    translation === undefined
+const renderProfessionVariant = (
+  base: ProfessionPackage,
+  variants: NonEmptyArray<{ id: string; content: ProfessionVariant }>,
+) =>
+  translateMapFnR.thenW(translateMap => {
+    const translations = variants
+      .map(variant =>
+        mapNullable(translateMap(variant.content.translations), t => ({
+          id: variant.id,
+          content: t,
+        })),
+      )
+      .filter(isNotNullish)
+
+    return !isNotEmpty(translations)
       ? Reader.of(undefined)
-      : renderProfessionVariantLabel(base, variant, translation).thenW(label =>
-          renderProfessionVariantText(base, variant, translation).map(
+      : renderProfessionVariantLabel(base, variants[0].content, translations).thenW(label =>
+          renderProfessionVariantText(base, variants[0].content, translations[0].content).map(
             (value): RawDefinitionListEntityDescriptionSectionItem => ({
               label,
               value,
             }),
           ),
-        ),
+        )
+  })
+
+const equalProfessionVariantValues = (translateMap: TranslateMap): Equality<ProfessionVariant> =>
+  on(variant => {
+    const translation = translateMap(variant.translations)
+    return {
+      ...variant,
+      translations: translation === undefined ? undefined : omitKeys(translation, "name"),
+    }
+  }, deepEqual)
+
+const groupProfessionVariantsThatContainTheSameChanges = (
+  variants: {
+    id: string
+    content: ProfessionVariant
+  }[],
+): StdReader<NonEmptyArray<{ id: string; content: ProfessionVariant }>[], "tm"> =>
+  Reader.asks(({ translateMap }) =>
+    variants.reduce<
+      NonEmptyArray<{
+        id: string
+        content: ProfessionVariant
+      }>[]
+    >((acc, variant) => {
+      const indexWithSameValuesGranted = acc.findIndex(group =>
+        equalProfessionVariantValues(translateMap)(group[0].content, variant.content),
+      )
+
+      if (indexWithSameValuesGranted > -1) {
+        acc[indexWithSameValuesGranted]?.push(variant)
+      } else {
+        acc.push([variant])
+      }
+
+      return acc
+    }, []),
   )
 
 const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
@@ -1122,23 +1181,25 @@ const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProf
     ? Reader.of(UNHANDLED_VALUE)
     : getChildInstancesForInstanceIdR("ProfessionVariant", professionPackages[0].id).thenW(
         variants =>
-          Reader.traverse(variants, variant =>
-            renderProfessionVariant(professionPackages[0].content, variant.content),
-          )
-            .map(list => list.filter(isNotNullish))
-            .thenW(list =>
-              list.length === 0
-                ? Reader.of(undefined)
-                : localeCompareR.map(
-                    (localeCompare): RawNestedDefinitionListEntityDescriptionSection[] => [
-                      {
-                        type: "definitionList",
-                        style: "nested",
-                        items: list.toSorted(on(item => item.label, localeCompare)),
-                      },
-                    ],
-                  ),
-            ),
+          groupProfessionVariantsThatContainTheSameChanges(variants).thenW(groupedVariants =>
+            Reader.traverse(groupedVariants, variant =>
+              renderProfessionVariant(professionPackages[0].content, variant),
+            )
+              .map(list => list.filter(isNotNullish))
+              .thenW(list =>
+                list.length === 0
+                  ? Reader.of(undefined)
+                  : localeCompareR.map(
+                      (localeCompare): RawNestedDefinitionListEntityDescriptionSection[] => [
+                        {
+                          type: "definitionList",
+                          style: "nested",
+                          items: list.toSorted(on(item => item.label, localeCompare)),
+                        },
+                      ],
+                    ),
+              ),
+          ),
       )
 
 /**
