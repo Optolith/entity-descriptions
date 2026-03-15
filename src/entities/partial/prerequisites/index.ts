@@ -191,7 +191,7 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
   value: PrerequisitesForLevels<T>,
   printPreviousLevelPrerequisites?: {
     levels: number
-    createPreerequisite: (level: number) => T
+    createPrerequisite: (level: number) => T
   },
   trailingText?: string,
 ): string => {
@@ -202,7 +202,7 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
           level: i + 2,
           prerequisite: {
             kind: "Single",
-            Single: printPreviousLevelPrerequisites.createPreerequisite(i + 2),
+            Single: printPreviousLevelPrerequisites.createPrerequisite(i + 1),
           },
         }))
 
@@ -371,7 +371,7 @@ export const printGeneralPrerequisites = (
       ? undefined
       : {
           levels: printPreviousLevelPrerequisites.levels,
-          createPreerequisite: (level): GeneralPrerequisiteGroup => ({
+          createPrerequisite: (level): GeneralPrerequisiteGroup => ({
             kind: "Activatable",
             Activatable: {
               id: printPreviousLevelPrerequisites.id,
