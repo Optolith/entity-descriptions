@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.8](https://github.com/Optolith/entity-descriptions/compare/v0.4.7...v0.4.8) (2026-03-15)
+
+
+### Bug Fixes
+
+* render style and advanced special ability values ([d7a2a99](https://github.com/Optolith/entity-descriptions/commit/d7a2a99188976ea626e917da0085726cb02f7e26))
+
 ## [0.4.7](https://github.com/Optolith/entity-descriptions/compare/v0.4.6...v0.4.7) (2026-03-15)
 
 
