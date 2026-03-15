@@ -1,3 +1,6 @@
+import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { count } from "@elyukai/utils/array/reductions"
+import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { numAsc } from "@optolith/helpers/compare"
@@ -8,6 +11,8 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { ResolvedSelectOption } from "optolith-database-schema/cache"
 import type {
   ActivatableIdentifier,
+  AdvancedSpecialAbility,
+  AdvancedSpecialAbilityRestrictedOptionIdentifier,
   AdvantageDisadvantagePrerequisites,
   AdventurePointsValue,
   ApplicableAllCombatTechniquesRestriction,
@@ -48,7 +53,9 @@ import type {
   GetAllResolvedSelectOptions,
   GetAllResolvedSkillUses,
   RawDefinitionListEntityDescriptionSectionItem,
+  TableEntityDescriptionSection,
 } from "../index.js"
+import { renderActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
 import { renderResponsiveMap } from "./partial/map.js"
 import { additionFormatter } from "./partial/mathOperation.js"
@@ -56,7 +63,10 @@ import {
   printAdvantageDisadvantagePrerequisites,
   printGeneralPrerequisites,
 } from "./partial/prerequisites/index.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import {
+  printActivatableName,
+  type GetResolvedSelectOptionById,
+} from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
   getResponsiveText,
@@ -66,7 +76,33 @@ import {
 import { formatTimeSpan } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
-// type SpecialAbility = TSONDBTypes["entityMap"][SpecialAbilityIdentifier["kind"]]
+type StyleSpecialAbilityKind =
+  | "SkillStyleSpecialAbility"
+  | "CombatStyleSpecialAbility"
+  | "MagicStyleSpecialAbility"
+  | "LiturgicalStyleSpecialAbility"
+
+const isStyleSpecialAbilityKind = (
+  value: ActivatableIdentifier["kind"],
+): value is StyleSpecialAbilityKind =>
+  value === "SkillStyleSpecialAbility" ||
+  value === "CombatStyleSpecialAbility" ||
+  value === "MagicStyleSpecialAbility" ||
+  value === "LiturgicalStyleSpecialAbility"
+
+type AdvancedSpecialAbilityKind =
+  | "AdvancedSkillSpecialAbility"
+  | "AdvancedCombatSpecialAbility"
+  | "AdvancedMagicalSpecialAbility"
+  | "AdvancedKarmaSpecialAbility"
+
+const isAdvancedSpecialAbilityKind = (value: string): value is AdvancedSpecialAbilityKind =>
+  value === "AdvancedSkillSpecialAbility" ||
+  value === "AdvancedCombatSpecialAbility" ||
+  value === "AdvancedMagicalSpecialAbility" ||
+  value === "AdvancedKarmaSpecialAbility"
+
+type AdvancedIdentifierSpecialAbility = string | Case<AdvancedSpecialAbilityKind, string>
 
 /**
  * The base fields for a special ability entity in the database.
@@ -76,6 +112,7 @@ export type BaseActivatable = {
   maximum?: number
   select_options?: SelectOptions
   usage_type?: CombatSpecialAbilityUsageType
+  advanced?: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[]
   penalty?: Penalty
   combat_techniques?: ApplicableCombatTechniques
   volume?: Volume
@@ -848,6 +885,315 @@ const renderCost = (
   }
 }
 
+const renderAdvancedLabel = (
+  translate: Translate,
+  entityName:
+    | "SkillStyleSpecialAbility"
+    | "CombatStyleSpecialAbility"
+    | "MagicStyleSpecialAbility"
+    | "LiturgicalStyleSpecialAbility",
+): string => {
+  switch (entityName) {
+    case "SkillStyleSpecialAbility":
+      return translate("Advanced Skill Special Abilities")
+    case "CombatStyleSpecialAbility":
+      return translate("Advanced Combat Special Abilities")
+    case "MagicStyleSpecialAbility":
+      return translate("Advanced Magical Special Abilities")
+    case "LiturgicalStyleSpecialAbility":
+      return translate("Advanced Karma Special Abilities")
+    default:
+      return assertExhaustive(entityName)
+  }
+}
+
+const normalizeId = (
+  entityName: StyleSpecialAbilityKind,
+  id: AdvancedIdentifierSpecialAbility,
+): Case<AdvancedSpecialAbilityKind, string> => {
+  if (typeof id === "string") {
+    switch (entityName) {
+      case "SkillStyleSpecialAbility":
+        return Case("AdvancedSkillSpecialAbility", id)
+      case "CombatStyleSpecialAbility":
+        return Case("AdvancedCombatSpecialAbility", id)
+      case "MagicStyleSpecialAbility":
+        return Case("AdvancedMagicalSpecialAbility", id)
+      case "LiturgicalStyleSpecialAbility":
+        return Case("AdvancedKarmaSpecialAbility", id)
+      default:
+        return assertExhaustive(entityName)
+    }
+  } else {
+    return id
+  }
+}
+
+const renderAdvancedSpecialAbilityName = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  entityName: StyleSpecialAbilityKind,
+  id: AdvancedIdentifierSpecialAbility,
+  option?: AdvancedSpecialAbilityRestrictedOptionIdentifier[],
+) => {
+  const normalizedId = normalizeId(entityName, id)
+
+  return `^[${
+    mapNullable(
+      printActivatableName(
+        getInstanceById,
+        translate,
+        normalizedId,
+        option,
+        undefined,
+        getResolvedSelectOptionById,
+        false,
+      ),
+      name => renderActivatableNameComponents(translateMap, name, false),
+    ) ?? MISSING_VALUE
+  }](entity: "${normalizedId.kind}", instance: "${fromUniformCase(normalizedId)}", style: "normal")`
+}
+
+const renderAdvancedValue = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  localeJoin: LocaleJoin,
+  getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  entityName: StyleSpecialAbilityKind,
+  advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
+) => {
+  if (
+    advanced.every(entry => entry.kind === "OneOf") &&
+    isNotEmpty(advanced) &&
+    advanced.every(entry => entry.OneOf.options.length === 3)
+  ) {
+    const optionsInAllEntries = advanced[0].OneOf.options.filter(option =>
+      advanced.every(otherEntry =>
+        otherEntry.OneOf.options.some(otherOption => deepEqual(option, otherOption)),
+      ),
+    )
+
+    if (optionsInAllEntries.length === 2) {
+      const uniqueOptions = advanced
+        .map(entry =>
+          entry.OneOf.options.find(option =>
+            optionsInAllEntries.every(commonOption => !deepEqual(option, commonOption)),
+          ),
+        )
+        .filter(isNotNullish) // should not do anything, just for type narrowing
+
+      if (uniqueOptions.length === advanced.length) {
+        const [first, second] = optionsInAllEntries.map(option =>
+          renderAdvancedSpecialAbilityName(
+            translate,
+            translateMap,
+            getInstanceById,
+            getResolvedSelectOptionById,
+            entityName,
+            option,
+          ),
+        ) as [string, string]
+
+        return [
+          ...uniqueOptions.map(option =>
+            renderAdvancedSpecialAbilityName(
+              translate,
+              translateMap,
+              getInstanceById,
+              getResolvedSelectOptionById,
+              entityName,
+              option,
+            ),
+          ),
+          translate(
+            "one or two of these special abilities can alternatively be replaced by advanced special abilities {$first} and/or {$second}",
+            { first, second },
+          ),
+        ].join(", ")
+      }
+    }
+  }
+
+  const derivedFromExternalOptionEntriesToGenerate = count(
+    advanced,
+    entry =>
+      entry.kind === "DeriveFromExternalOption" &&
+      entry.DeriveFromExternalOption.display_option === undefined,
+  )
+
+  return [
+    ...advanced.map((entry): string | undefined => {
+      switch (entry.kind) {
+        case "General":
+          return renderAdvancedSpecialAbilityName(
+            translate,
+            translateMap,
+            getInstanceById,
+            getResolvedSelectOptionById,
+            entityName,
+            entry.General,
+          )
+        case "RestrictOptions":
+          return renderAdvancedSpecialAbilityName(
+            translate,
+            translateMap,
+            getInstanceById,
+            getResolvedSelectOptionById,
+            entityName,
+            entry.RestrictOptions.id,
+            entry.RestrictOptions.option,
+          )
+        case "OneOf": {
+          if (entry.OneOf.display_option !== undefined) {
+            switch (entry.OneOf.display_option.kind) {
+              case "Hide":
+                return undefined
+              case "ReplaceWith":
+                return (
+                  translateMap(entry.OneOf.display_option.ReplaceWith.translations)?.replacement ??
+                  MISSING_VALUE
+                )
+              default:
+                return assertExhaustive(entry.OneOf.display_option)
+            }
+          }
+
+          return localeJoin(
+            entry.OneOf.options.map(option =>
+              renderAdvancedSpecialAbilityName(
+                translate,
+                translateMap,
+                getInstanceById,
+                getResolvedSelectOptionById,
+                entityName,
+                option,
+              ),
+            ),
+            "disjunction",
+          )
+        }
+        case "DeriveFromExternalOption":
+          if (entry.DeriveFromExternalOption.display_option !== undefined) {
+            switch (entry.DeriveFromExternalOption.display_option.kind) {
+              case "Hide":
+                return undefined
+              case "ReplaceWith":
+                return (
+                  translateMap(
+                    entry.DeriveFromExternalOption.display_option.ReplaceWith.translations,
+                  )?.replacement ?? MISSING_VALUE
+                )
+              default:
+                return assertExhaustive(entry.DeriveFromExternalOption.display_option)
+            }
+          }
+
+          return undefined
+        default:
+          return assertExhaustive(entry)
+      }
+    }),
+    derivedFromExternalOptionEntriesToGenerate === 0
+      ? undefined
+      : translate(".input {$count :number} {{{$count} more by primary patron}}", {
+          count: derivedFromExternalOptionEntriesToGenerate,
+        }),
+  ]
+    .filter(isNotNullish)
+    .join(", ")
+}
+
+const renderDeriveFromExternalOptionTable = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  localeCompare: LocaleCompare,
+  getInstanceById: GetInstanceById<"Patron" | ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  entityName: ActivatableIdentifier["kind"],
+  advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
+): TableEntityDescriptionSection | undefined => {
+  if (!isStyleSpecialAbilityKind(entityName)) {
+    return undefined
+  }
+
+  const derivedFromExternalOptionEntriesToGenerate = advanced.filter(
+    (
+      entry,
+    ): entry is Extract<
+      AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>,
+      { kind: "DeriveFromExternalOption" }
+    > =>
+      entry.kind === "DeriveFromExternalOption" &&
+      entry.DeriveFromExternalOption.display_option === undefined,
+  )
+
+  if (derivedFromExternalOptionEntriesToGenerate.length === 0) {
+    return undefined
+  }
+
+  const rows = Map.groupBy(
+    derivedFromExternalOptionEntriesToGenerate.flatMap(entry =>
+      entry.DeriveFromExternalOption.map.map(
+        (option): [string, AdvancedIdentifierSpecialAbility] => [
+          option.from_option,
+          option.to_advanced,
+        ],
+      ),
+    ),
+    row => row[0],
+  )
+    .entries()
+    .map(([option, list]): [string, string] => [
+      translateMap(getInstanceById("Patron", option)?.translations)?.name ?? MISSING_VALUE,
+      list
+        .map(([, toAdvanced]) =>
+          renderAdvancedSpecialAbilityName(
+            translate,
+            translateMap,
+            getInstanceById,
+            getResolvedSelectOptionById,
+            entityName,
+            toAdvanced,
+          ),
+        )
+        .toSorted(localeCompare)
+        .join(", "),
+    ])
+    .toArray()
+    .toSorted(on(row => row[0], localeCompare))
+
+  return {
+    type: "table",
+    header: [translate("Patron"), renderAdvancedLabel(translate, entityName)],
+    rows,
+  }
+}
+
+const renderTrailingAdvancedPrerequisitesNote = (
+  translate: Translate,
+  entityName: string,
+): string | undefined => {
+  if (isAdvancedSpecialAbilityKind(entityName)) {
+    switch (entityName) {
+      case "AdvancedCombatSpecialAbility":
+        return translate("corresponding combat style special ability")
+      case "AdvancedKarmaSpecialAbility":
+        return translate("corresponding liturgical style special ability")
+      case "AdvancedMagicalSpecialAbility":
+        return translate("corresponding magic style special ability")
+      case "AdvancedSkillSpecialAbility":
+        return translate("corresponding skill style special ability")
+      default:
+        return assertExhaustive(entityName)
+    }
+  }
+
+  return undefined
+}
+
 /**
  * Get a JSON representation of the rules text for a special ability.
  */
@@ -870,6 +1216,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "PactDomain"
       | "SocialStatus"
       | "Weapon"
+      | "Patron"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
@@ -953,6 +1300,22 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
               label: translate("Range"),
               value: range,
             })),
+            mapNullable(baseEntry.advanced, advanced =>
+              isStyleSpecialAbilityKind(entityName)
+                ? {
+                    label: renderAdvancedLabel(translate, entityName),
+                    value: renderAdvancedValue(
+                      translate,
+                      translateMap,
+                      locale.join,
+                      getInstanceById,
+                      getResolvedSelectOptionById,
+                      entityName,
+                      advanced,
+                    ),
+                  }
+                : undefined,
+            ),
             mapNullable(baseEntry.penalty, penalty => ({
               label: translate("Penalty"),
               value: renderPenaltyValue(
@@ -963,29 +1326,33 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                 penalty,
               ),
             })),
-            mapNullable(entry.prerequisites, prerequisites => ({
-              label: translate("Prerequisites"),
-              value:
-                wrappedId.kind === "Advantage" || wrappedId.kind === "Disadvantage"
-                  ? printAdvantageDisadvantagePrerequisites(
-                      getInstanceById,
-                      getResolvedSelectOptionById,
-                      locale,
-                      prerequisites as AdvantageDisadvantagePrerequisites,
-                      translation.name,
-                      wrappedId.kind,
-                    )
-                  : printGeneralPrerequisites(
-                      getInstanceById,
-                      getResolvedSelectOptionById,
-                      locale,
-                      prerequisites as GeneralPrerequisites,
-                      mapNullable(baseEntry.levels, levels => ({
-                        id: wrappedId,
-                        levels,
-                      })),
-                    ),
-            })),
+            mapNullable(
+              entry.prerequisites ?? (isAdvancedSpecialAbilityKind(entityName) ? [] : undefined),
+              prerequisites => ({
+                label: translate("Prerequisites"),
+                value:
+                  wrappedId.kind === "Advantage" || wrappedId.kind === "Disadvantage"
+                    ? printAdvantageDisadvantagePrerequisites(
+                        getInstanceById,
+                        getResolvedSelectOptionById,
+                        locale,
+                        prerequisites,
+                        translation.name,
+                        wrappedId.kind,
+                      )
+                    : printGeneralPrerequisites(
+                        getInstanceById,
+                        getResolvedSelectOptionById,
+                        locale,
+                        prerequisites as GeneralPrerequisites,
+                        mapNullable(baseEntry.levels, levels => ({
+                          id: wrappedId,
+                          levels,
+                        })),
+                        renderTrailingAdvancedPrerequisitesNote(translate, entityName),
+                      ),
+              }),
+            ),
             mapNullable(baseEntry.combat_techniques, combatTechniques => ({
               label: translate("Combat Techniques"),
               value: renderApplicableCombatTechniquesValue(
@@ -1058,6 +1425,15 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             }),
           ],
         },
+        renderDeriveFromExternalOptionTable(
+          translate,
+          translateMap,
+          locale.compare,
+          getInstanceById,
+          getResolvedSelectOptionById,
+          entityName,
+          baseEntry.advanced ?? [],
+        ),
       ],
       errata: translation.errata,
       references: entry.src,

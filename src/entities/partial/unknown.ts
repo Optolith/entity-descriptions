@@ -6,4 +6,4 @@ export const MISSING_VALUE = "###MISSING###"
 /**
  * String to display when a translation that should be present produces an error.
  */
-export const UNHANDLED_VALUE = "###UNHANDLED_ERROR###"
+export const UNHANDLED_VALUE = "###UNHANDLEDERROR###"

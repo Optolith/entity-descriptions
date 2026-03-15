@@ -193,6 +193,7 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
     levels: number
     createPreerequisite: (level: number) => T
   },
+  trailingText?: string,
 ): string => {
   const previousLevelPrerequisites: PrerequisitesForLevels<T> =
     printPreviousLevelPrerequisites === undefined
@@ -209,6 +210,10 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
     [...value, ...previousLevelPrerequisites],
     prerequisite => prerequisite.level,
   )
+
+  if (trailingText !== undefined && !groupedByLevel.has(1)) {
+    groupedByLevel.set(1, [])
+  }
 
   const hasBasePrerequisites = groupedByLevel.has(1)
 
@@ -232,17 +237,27 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
         locale.translate,
         locale.translateMap,
         locale.compare,
-        prerequisites
-          .map(element =>
-            mapNullable(printPrerequisiteForLevel(printPrerequisite, locale, element), part => ({
-              type:
-                element.prerequisite.kind === "Single"
-                  ? element.prerequisite.Single.kind
-                  : element.prerequisite.kind,
-              part,
-            })),
-          )
-          .filter(isNotNullish),
+        [
+          ...prerequisites
+            .map(element =>
+              mapNullable(printPrerequisiteForLevel(printPrerequisite, locale, element), part => ({
+                type:
+                  element.prerequisite.kind === "Single"
+                    ? element.prerequisite.Single.kind
+                    : element.prerequisite.kind,
+                part,
+              })),
+            )
+            .filter(isNotNullish),
+          ...(levelNumber === 1 && trailingText !== undefined
+            ? [
+                {
+                  type: "trailing",
+                  part: { value: trailingText, sentenceType: undefined, isMeta: false },
+                },
+              ]
+            : []),
+        ],
       )
 
       return hasOnlyBasePrerequisites
@@ -340,6 +355,7 @@ export const printGeneralPrerequisites = (
     id: SpecialAbilityIdentifier
     levels: number
   },
+  trailingText?: string,
 ): string =>
   printPrerequisitesForLevels(
     prerequisite =>
@@ -364,6 +380,7 @@ export const printGeneralPrerequisites = (
             },
           }),
         },
+    trailingText,
   )
 
 /**
