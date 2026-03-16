@@ -1244,9 +1244,8 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
 
     return {
       title:
-        translation.name_in_library ??
-        translation.name +
-          (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
+        (translation.name_in_library ?? translation.name) +
+        (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
       subtitle: mapNullable(baseEntry.usage_type, usageType => {
         switch (usageType.kind) {
           case "Passive":
