@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.9](https://github.com/Optolith/entity-descriptions/compare/v0.4.8...v0.4.9) (2026-03-17)
+
+
+### Features
+
+* mark generated instances with attributed strings ([85cce91](https://github.com/Optolith/entity-descriptions/commit/85cce917d16ac10833d4dccf7031c2dca4e75d26))
+
+
+### Bug Fixes
+
+* always append level to activatable name ([10ca82a](https://github.com/Optolith/entity-descriptions/commit/10ca82a1e57afd2d11ba7c32b55a49172e676398))
+* require previous level and fix function typo ([2b12a01](https://github.com/Optolith/entity-descriptions/commit/2b12a01beaaf786843edbbcf42def3d1b1ecb673))
+
 ## [0.4.8](https://github.com/Optolith/entity-descriptions/compare/v0.4.7...v0.4.8) (2026-03-15)
 
 
