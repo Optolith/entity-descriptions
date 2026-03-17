@@ -1,6 +1,7 @@
 import type { CulturePrerequisite } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { attributedNameFromSafeTranslation } from "../../markdown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -25,7 +26,12 @@ export const printCulturePrerequisite = (
 
   return {
     label: `${locale.translate("Culture")} `,
-    value: cultureTranslation.name,
+    value: attributedNameFromSafeTranslation(
+      cultureTranslation,
+      "prerequisite",
+      "Culture",
+      prerequisite.id,
+    ),
     sentenceType: undefined,
     isMeta: false,
   }

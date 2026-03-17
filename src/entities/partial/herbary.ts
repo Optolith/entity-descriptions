@@ -5,6 +5,7 @@ import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import type { IdMap } from "../../index.js"
 import { renderDice } from "./dice.js"
+import { attributedName } from "./markdown.js"
 import { parensIf } from "./rated/activatable/parensIf.js"
 import { MISSING_VALUE } from "./unknown.js"
 
@@ -37,31 +38,43 @@ export const renderResistance = (
   switch (resistance.kind) {
     case "Spirit":
       return (
-        translateMap(
-          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Spirit)
-            ?.translations,
-        )?.name ?? MISSING_VALUE
+        attributedName(
+          translateMap,
+          getInstanceById,
+          "resistance",
+          "DerivedCharacteristic",
+          idMap.DerivedCharacteristic.Spirit,
+        ) ?? MISSING_VALUE
       )
 
     case "Toughness":
       return (
-        translateMap(
-          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Toughness)
-            ?.translations,
-        )?.name ?? MISSING_VALUE
+        attributedName(
+          translateMap,
+          getInstanceById,
+          "resistance",
+          "DerivedCharacteristic",
+          idMap.DerivedCharacteristic.Toughness,
+        ) ?? MISSING_VALUE
       )
 
     case "LowerOfSpiritAndToughness": {
       const spiritTranslation =
-        translateMap(
-          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Spirit)
-            ?.translations,
-        )?.name ?? MISSING_VALUE
+        attributedName(
+          translateMap,
+          getInstanceById,
+          "resistance",
+          "DerivedCharacteristic",
+          idMap.DerivedCharacteristic.Spirit,
+        ) ?? MISSING_VALUE
       const toughnessTranslation =
-        translateMap(
-          getInstanceById("DerivedCharacteristic", idMap.DerivedCharacteristic.Toughness)
-            ?.translations,
-        )?.name ?? MISSING_VALUE
+        attributedName(
+          translateMap,
+          getInstanceById,
+          "resistance",
+          "DerivedCharacteristic",
+          idMap.DerivedCharacteristic.Toughness,
+        ) ?? MISSING_VALUE
       return translate("{$first} or {$second}, depending on which value is lower", {
         first: spiritTranslation,
         second: toughnessTranslation,

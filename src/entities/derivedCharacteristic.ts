@@ -1,5 +1,6 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
+  AttributeTranslation,
   DerivedCharacteristicBase,
   DerivedCharacteristicRaceBaseValue,
 } from "optolith-database-schema/gen"
@@ -7,30 +8,38 @@ import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type { IdMap } from "../index.js"
+import { attributedCustomName } from "./partial/markdown.js"
 import { renderMathOperation } from "./partial/mathOperation.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
+
+const renderAttributeNameForStyle = (
+  style: "full" | "compact",
+  translation: AttributeTranslation,
+): string => {
+  switch (style) {
+    case "full":
+      return translation.name
+    case "compact":
+      return translation.abbreviation
+    default:
+      return assertExhaustive(style)
+  }
+}
 
 const getAttribute = (
   getInstanceById: GetInstanceById<"Attribute">,
   translateMap: TranslateMap,
   attributeId: string,
   style: "full" | "compact" = "full",
-): string => {
-  const attribute = getInstanceById("Attribute", attributeId)
-
-  if (attribute === undefined) {
-    return MISSING_VALUE
-  }
-
-  switch (style) {
-    case "full":
-      return translateMap(attribute.translations)?.name ?? MISSING_VALUE
-    case "compact":
-      return translateMap(attribute.translations)?.abbreviation ?? MISSING_VALUE
-    default:
-      return assertExhaustive(style)
-  }
-}
+): string =>
+  attributedCustomName(
+    translateMap,
+    getInstanceById,
+    "derived-characteristic-calculation",
+    translation => renderAttributeNameForStyle(style, translation),
+    "Attribute",
+    attributeId,
+  ) ?? MISSING_VALUE
 
 const getRaceBaseValue = (
   translate: Translate,

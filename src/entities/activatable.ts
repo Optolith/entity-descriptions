@@ -23,7 +23,6 @@ import type {
   ArcaneEnergyCost,
   Aspect_ID,
   BindingCost,
-  CloseCombatTechnique,
   CombatRelatedSpecialAbilityIdentifier,
   CombatSpecialAbilityUsageType,
   CombatTechniqueIdentifier,
@@ -37,7 +36,6 @@ import type {
   PenaltyByAttackReplacement,
   PropertyDeclaration,
   PublicationRefs,
-  RangedCombatTechnique,
   RatedIdentifier,
   SelectOptions,
   SpecialRule,
@@ -58,6 +56,7 @@ import type {
 import { renderActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
 import { renderResponsiveMap } from "./partial/map.js"
+import { attributedName } from "./partial/markdown.js"
 import { additionFormatter } from "./partial/mathOperation.js"
 import {
   printAdvantageDisadvantagePrerequisites,
@@ -316,10 +315,8 @@ const renderApplicableCombatTechniquesRestriction = <
   restriction: T,
   translation: BaseActivatableTranslation,
   weapons: string | undefined,
-  getExcludedInstance: T extends { kind: "ExcludeCombatTechniques" }
-    ? (
-        id: T["ExcludeCombatTechniques"]["list"][number],
-      ) => CloseCombatTechnique | RangedCombatTechnique | undefined
+  normalizeExcludedId: T extends { kind: "ExcludeCombatTechniques" }
+    ? (id: T["ExcludeCombatTechniques"]["list"][number]) => CombatTechniqueIdentifier
     : undefined,
 ): string => {
   switch (restriction.kind) {
@@ -334,15 +331,20 @@ const renderApplicableCombatTechniquesRestriction = <
         return main + wrapInParens([weapons], locale.translate("while mounted"))
       }
     case "Race": {
-      const race = getInstanceById("Race", restriction.Race)
-      const raceName = locale.translateMap(race?.translations)?.name ?? MISSING_VALUE
+      const raceName = attributedName(
+        locale.translateMap,
+        getInstanceById,
+        "applicable-combat-technique",
+        "Race",
+        restriction.Race,
+      )
 
       return (
         main +
         wrapInParens([
           // originally "while {$racial} weapon", but different to parameterize without inflection support
           locale.translate("while weapon of race {$race}", {
-            race: raceName,
+            race: raceName ?? MISSING_VALUE,
           }),
           weapons,
         ])
@@ -355,12 +357,19 @@ const renderApplicableCombatTechniquesRestriction = <
           locale.translate("except {$list}", {
             list: locale.join(
               restriction.ExcludeCombatTechniques.list
-                .map(
-                  id =>
-                    locale.translateMap(
-                      getExcludedInstance?.(id as CombatTechniqueIdentifier & string)?.translations,
-                    )?.name ?? MISSING_VALUE,
-                )
+                .map(id => {
+                  const normalizedId = normalizeExcludedId?.(
+                    id as CombatTechniqueIdentifier & string,
+                  )
+                  return normalizedId !== undefined
+                    ? (attributedName(
+                        locale.translateMap,
+                        getInstanceById,
+                        "applicable-combat-technique",
+                        normalizedId,
+                      ) ?? MISSING_VALUE)
+                    : MISSING_VALUE
+                })
                 .toSorted(locale.compare),
               "conjunction",
             ),
@@ -424,7 +433,7 @@ const renderApplicableCombatTechniquesValue = (
               applicableCombatTechniques.All.restriction,
               translation,
               undefined,
-              id => getInstanceById(id.kind, fromUniformCase(id)),
+              id => id,
             )
       return mainWithRestriction
     }
@@ -440,7 +449,7 @@ const renderApplicableCombatTechniquesValue = (
               applicableCombatTechniques.AllClose.restriction,
               translation,
               undefined,
-              id => getInstanceById("CloseCombatTechnique", id),
+              id => Case("CloseCombatTechnique", id),
             )
       return mainWithRestriction
     }
@@ -456,15 +465,20 @@ const renderApplicableCombatTechniquesValue = (
               applicableCombatTechniques.AllRanged.restriction,
               translation,
               undefined,
-              id => getInstanceById("RangedCombatTechnique", id),
+              id => Case("RangedCombatTechnique", id),
             )
       return mainWithRestriction
     }
     case "Specific": {
       return applicableCombatTechniques.Specific.list
         .map(specific => {
-          const entry = getInstanceById(specific.id.kind, fromUniformCase(specific.id))
-          const main = locale.translateMap(entry?.translations)?.name ?? MISSING_VALUE
+          const main =
+            attributedName(
+              locale.translateMap,
+              getInstanceById,
+              "applicable-combat-technique",
+              specific.id,
+            ) ?? MISSING_VALUE
           const mainWithRestriction =
             specific.restriction === undefined
               ? main

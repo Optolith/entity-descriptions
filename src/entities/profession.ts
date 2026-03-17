@@ -51,6 +51,7 @@ import type {
   SpecialAbilityIdentifier,
   VariantOptionAction,
 } from "optolith-database-schema/gen"
+import { fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   GetAllChildInstancesForParent,
@@ -73,17 +74,20 @@ import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
+import { attributedCustomName, attributedInstance, attributedName } from "./partial/markdown.js"
 import { printProfessionPrerequisites } from "./partial/prerequisites/index.js"
 import { type GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
+  attributedCustomNameR,
+  attributedNameR,
+  customNameR,
   formatR,
   getChildInstancesForInstanceIdR,
   getInstanceByIdR,
   localeCompareR,
   localeJoinR,
   localeSortR,
-  nameR,
   strictNameR,
   translateMapFnR,
   translateR,
@@ -273,7 +277,9 @@ const renderSkillSpecializationOption = (
         return translate("Skill Specialization {$possibleSkills}", {
           possibleSkills: localeJoin(
             option.Specific.options.map(
-              id => translateMap(getInstanceById("Skill", id)?.translations)?.name ?? MISSING_VALUE,
+              id =>
+                attributedName(translateMap, getInstanceById, "profession", "Skill", id) ??
+                MISSING_VALUE,
             ),
             "disjunction",
           ),
@@ -281,8 +287,14 @@ const renderSkillSpecializationOption = (
       case "Group":
         return translate("Skill Specialization for a {$skillOfGroup}", {
           skillOfGroup: format(
-            translateMap(getInstanceById("SkillGroup", option.Group)?.translations)?.longName ??
-              MISSING_VALUE,
+            attributedCustomName(
+              translateMap,
+              getInstanceById,
+              "profession",
+              t => t.longName,
+              "SkillGroup",
+              option.Group,
+            ) ?? MISSING_VALUE,
             { hiddenCount: 1 },
           ),
         })
@@ -322,7 +334,9 @@ const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
               }),
         )
 
-        const listR = Reader.traverse(option.options, strictNameR)
+        const listR = Reader.traverse(option.options, id =>
+          attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
+        )
           .thenW(list => localeSortR(list))
           .map(list => list.join(", "))
 
@@ -364,7 +378,9 @@ const renderSkillsOption = (
 const renderCantripList = (
   cantripIds: Cantrip_ID[],
 ): StdReader<string, "tm" | "lc" | "lj" | "ibi", "Cantrip"> =>
-  Reader.traverse(cantripIds, id => strictNameR("Cantrip", id))
+  Reader.traverse(cantripIds, id =>
+    attributedNameR("profession", "Cantrip", id).map(name => name ?? MISSING_VALUE),
+  )
     .thenW(localeSortR)
     .map(list => list.join(", "))
 
@@ -474,7 +490,9 @@ const renderVariantSkillSpecializationOption = (
     ): StdReader<string, "f" | "t" | "tm" | "lc" | "lj" | "ibi", "Skill" | "SkillGroup"> => {
       switch (base.kind) {
         case "Specific":
-          return Reader.traverse(base.Specific.options, id => strictNameR("Skill", id))
+          return Reader.traverse(base.Specific.options, id =>
+            attributedNameR("profession", "Skill", id).map(name => name ?? MISSING_VALUE),
+          )
             .thenW(localeSortR)
             .thenW(list => localeJoinR(list, "disjunction"))
             .thenW(skillsText =>
@@ -483,9 +501,8 @@ const renderVariantSkillSpecializationOption = (
               }),
             )
         case "Group":
-          return getInstanceByIdR("SkillGroup", base.Group)
-            .thenW(translationR)
-            .map(t => t?.longName ?? MISSING_VALUE)
+          return attributedCustomNameR("profession", t => t.longName, "SkillGroup", base.Group)
+            .map(name => name ?? MISSING_VALUE)
             .thenW(longName => formatR(longName, { hiddenCount: 1 }))
             .thenW(skillOfGroup =>
               translateR("no Skill Specialization for a {$skillOfGroup}", {
@@ -500,11 +517,11 @@ const renderVariantSkillSpecializationOption = (
     update: (base, override) => {
       if (base.kind === "Specific" && override.kind === "Specific") {
         const overrideSkills = Reader.traverse(override.Specific.options, id =>
-          strictNameR("Skill", id),
+          attributedNameR("profession", "Skill", id).map(name => name ?? MISSING_VALUE),
         ).thenW(list => localeJoinR(list, "disjunction"))
 
         const baseSkills = Reader.traverse(base.Specific.options, id =>
-          strictNameR("Skill", id),
+          attributedNameR("profession", "Skill", id).map(name => name ?? MISSING_VALUE),
         ).thenW(list => localeJoinR(list, "disjunction"))
 
         return overrideSkills
@@ -566,9 +583,7 @@ const renderCursesOption = (option: CursesOptions) =>
   renderVariantCursesOption(undefined, { kind: "Override", Override: option })
 
 const nameOfSkillsOfGroupR = (skillGroupId: string) =>
-  getInstanceByIdR("SkillGroup", skillGroupId)
-    .thenW(translationR)
-    .map(t => t?.longName ?? MISSING_VALUE)
+  customNameR(t => t.longName, "SkillGroup", skillGroupId).map(name => name ?? MISSING_VALUE)
 
 const renderVariantSkillsOption = (
   baseOptions: SkillsOptions | undefined,
@@ -651,6 +666,9 @@ const getSpecialAbilityNameComponents = (
   )
 }
 
+const wrapActivatableInAttributedString = (text: string, id: ActivatableIdentifier) =>
+  attributedInstance(text, id.kind, fromUniformCase(id), { context: '"prerequisite"' })
+
 const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
   Reader.asks(
     ({
@@ -671,7 +689,10 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
 
           return chunk === undefined
             ? MISSING_VALUE
-            : renderActivatableNameComponents(translateMap, chunk, false)
+            : wrapActivatableInAttributedString(
+                renderActivatableNameComponents(translateMap, chunk, false),
+                chunk.id,
+              )
         }
         case "Selection": {
           const chunks = specialAbility.Selection.options.map(option =>
@@ -693,16 +714,19 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
               chunks.map(chunk =>
                 chunk === undefined
                   ? MISSING_VALUE
-                  : renderActivatableNameComponents(translateMap, chunk, false),
+                  : wrapActivatableInAttributedString(
+                      renderActivatableNameComponents(translateMap, chunk, false),
+                      chunk.id,
+                    ),
               ),
               "disjunction",
             )
           } else {
-            return renderCombinedActivatableNameComponents(
-              translateMap,
-              possiblyCombined,
-              false,
-              list => localeJoin(list, "disjunction"),
+            return wrapActivatableInAttributedString(
+              renderCombinedActivatableNameComponents(translateMap, possiblyCombined, false, list =>
+                localeJoin(list, "disjunction"),
+              ),
+              possiblyCombined.id,
             )
           }
         }
@@ -751,7 +775,8 @@ const renderCombatTechniques = (professionPackages: NonEmptyArray<PreparedProfes
       professionPackages,
       pkg => Reader.of(pkg.content.combat_techniques?.map(ct => [ct.id, ct.rating_modifier]) ?? []),
       deepEqual,
-      (ctId: CombatTechniqueIdentifier) => strictNameR(ctId),
+      (ctId: CombatTechniqueIdentifier) =>
+        attributedNameR("profession", ctId).map(name => name ?? MISSING_VALUE),
       6,
     ),
     professionPackages.some(pkg => pkg.content.options?.combat_techniques !== undefined)
@@ -793,7 +818,8 @@ const renderSkills = (
                       .map(skill => [skill.id, skill.rating_modifier]) ?? [],
                 ),
               equal,
-              skillId => strictNameR("Skill", skillId),
+              skillId =>
+                attributedNameR("profession", "Skill", skillId).map(name => name ?? MISSING_VALUE),
               0,
             ),
             renderSkillsOption(professionPackages, {
@@ -812,14 +838,16 @@ const renderSpellworkName = (spellworkIds: ProfessionMagicalSkillIdentifier[]) =
   Reader.traverse(spellworkIds, spellworkId => {
     switch (spellworkId.kind) {
       case "Spellwork":
-        return strictNameR(spellworkId.Spellwork.id).thenW(baseName =>
+        return attributedNameR("profession", spellworkId.Spellwork.id).thenW(baseName =>
           (spellworkId.Spellwork.tradition === undefined
             ? Reader.of(undefined)
-            : nameR("MagicalTradition", spellworkId.Spellwork.tradition)
-          ).map(traditionName => baseName + parensIf(traditionName)),
+            : attributedNameR("profession", "MagicalTradition", spellworkId.Spellwork.tradition)
+          ).map(traditionName => (baseName ?? MISSING_VALUE) + parensIf(traditionName)),
         )
       case "MagicalAction":
-        return strictNameR(spellworkId.MagicalAction.id)
+        return attributedNameR("profession", spellworkId.MagicalAction.id).map(
+          name => name ?? MISSING_VALUE,
+        )
       default:
         return spellworkId
     }
@@ -867,7 +895,9 @@ const retrieveBlessedTraditionIdentifierFromPrerequisites = (
   }) ?? []
 
 const renderBlessingList = (blessings: Blessing_ID[]) =>
-  Reader.traverse(blessings, id => strictNameR("Blessing", id)).thenW(localeSortR)
+  Reader.traverse(blessings, id =>
+    attributedNameR("profession", "Blessing", id).map(name => name ?? MISSING_VALUE),
+  ).thenW(localeSortR)
 
 const renderRestrictedBlessings = (restrictedBlessings: RestrictedBlessings) => {
   switch (restrictedBlessings.kind) {
@@ -945,7 +975,9 @@ const renderBlessingsForVariant = (professionVariant: ProfessionVariant) =>
   ]).map(blessingsText => (blessingsText !== undefined ? [blessingsText] : []))
 
 const renderLiturgicalChantName = (liturgyIds: LiturgyIdentifier[]) =>
-  Reader.traverse(liturgyIds, strictNameR).thenW(list => localeJoinR(list, "disjunction"))
+  Reader.traverse(liturgyIds, id =>
+    attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
+  ).thenW(list => localeJoinR(list, "disjunction"))
 
 const renderLiturgicalChants = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
   Reader.sequence<

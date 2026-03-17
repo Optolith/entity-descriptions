@@ -1,9 +1,11 @@
 import { on } from "@elyukai/utils/function"
+import { mapNullable } from "@elyukai/utils/nullable"
 import { compareNullish } from "@elyukai/utils/ordering"
 import { romanize } from "@elyukai/utils/roman"
 import { numAsc } from "@optolith/helpers/compare"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
+import { attributedNameFromInstance } from "./partial/markdown.js"
 import { printPersonalityTraitPrerequisites } from "./partial/prerequisites/index.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
@@ -42,9 +44,12 @@ export const getPersonalityTraitEntityDescription = createEntityDescriptionCreat
                 label: translate("Can be combined with"),
                 value: Map.groupBy(
                   entry.combination_options.map(optionId =>
-                    getInstanceById("PersonalityTrait", optionId),
+                    mapNullable(getInstanceById("PersonalityTrait", optionId), pt => ({
+                      id: optionId,
+                      content: pt,
+                    })),
                   ),
-                  option => option?.level ?? null,
+                  option => option?.content.level ?? null,
                 )
                   .entries()
                   .toArray()
@@ -54,7 +59,16 @@ export const getPersonalityTraitEntityDescription = createEntityDescriptionCreat
                       ? MISSING_VALUE
                       : `${translate("Level {$level}", { level: romanize(level) })} ${localeJoin(
                           options.map(
-                            option => translateMap(option?.translations)?.name ?? MISSING_VALUE,
+                            option =>
+                              (option &&
+                                attributedNameFromInstance(
+                                  translateMap,
+                                  option.content,
+                                  "prerequisite",
+                                  "PersonalityTrait",
+                                  option.id,
+                                )) ??
+                              MISSING_VALUE,
                           ),
                           "disjunction",
                         )}`,

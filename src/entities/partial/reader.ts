@@ -32,6 +32,7 @@ import type {
   TranslationParamsInArray,
   Translations,
 } from "../../helpers/translate.js"
+import { attributedCustomName, attributedName, customName } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./rated/activatable/nonModifiableSuffix.js"
 import { Speed } from "./rated/activatable/speed.js"
@@ -218,6 +219,61 @@ export const strictNameR = <
   ...args: IdArgsVariant<EntityMap, E>
 ): Reader<{ translateMap: TranslateMap; getInstanceById: GetInstanceById<E> }, string> =>
   nameR(...args).map(name => name ?? MISSING_VALUE)
+
+/**
+ * Retrieves the `name` property of the specified entry in an attributed string.
+ */
+export const attributedNameR = <
+  E extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
+      ? K
+      : never
+  }[keyof EntityMap],
+>(
+  context: string,
+  ...args: IdArgsVariant<EntityMap, E>
+): Reader<
+  { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
+  string | undefined
+> => Reader.asks(env => attributedName(env.translateMap, env.getInstanceById, context, ...args))
+
+/**
+ * Applies a function to the translation of the specified entry and renders it in an attributed string.
+ */
+export const attributedCustomNameR = <
+  E extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
+      ? K
+      : never
+  }[keyof EntityMap],
+>(
+  context: string,
+  fn: (translation: EntityMap[E]["translations"][string]) => string,
+  ...args: IdArgsVariant<EntityMap, E>
+): Reader<
+  { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
+  string | undefined
+> =>
+  Reader.asks(env =>
+    attributedCustomName(env.translateMap, env.getInstanceById, context, fn, ...args),
+  )
+
+/**
+ * Applies a function to the translation of the specified entry.
+ */
+export const customNameR = <
+  E extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
+      ? K
+      : never
+  }[keyof EntityMap],
+>(
+  fn: (translation: EntityMap[E]["translations"][string]) => string,
+  ...args: IdArgsVariant<EntityMap, E>
+): Reader<
+  { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
+  string | undefined
+> => Reader.asks(env => customName(env.translateMap, env.getInstanceById, fn, ...args))
 
 /**
  * Joins a list of strings according to the locale’s rules for the given type.

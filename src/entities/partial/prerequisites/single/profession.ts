@@ -1,6 +1,7 @@
 import type { ProfessionPrerequisite } from "optolith-database-schema/gen"
 import type { GetAllChildInstancesForParent } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { attributedInstance } from "../../markdown.js"
 import { getProfessionName } from "../../professions.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
@@ -28,7 +29,9 @@ export const printProfessionPrerequisite = (
   }
 
   return {
-    value: professionName,
+    value: attributedInstance(professionName, "Profession", prerequisite.id, {
+      context: '"prerequisite"',
+    }),
     sentenceType: undefined,
     isMeta: false,
   }

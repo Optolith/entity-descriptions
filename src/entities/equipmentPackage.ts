@@ -10,6 +10,7 @@ import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate } from "../helpers/translate.js"
 import { getEquipmentName } from "./equipment.js"
+import { attributedInstance } from "./partial/markdown.js"
 
 type AtomicCost = number | "Various" | "Invaluable" | [from: number, to: number]
 
@@ -326,7 +327,12 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
         header: [translation.name, translate("Weight"), translate("Cost")],
         rows: actualItems
           .map((item): [string, string, string] => [
-            getEquipmentName(translate, translateMap, getInstanceById, item.content),
+            attributedInstance(
+              getEquipmentName(translate, translateMap, getInstanceById, item.content),
+              item.content.entity,
+              item.content.id,
+              { context: '"equipment-package"' },
+            ),
             renderAtomicWeight(
               translate,
               locale.measurementAdjustments,

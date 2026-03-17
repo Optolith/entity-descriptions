@@ -35,6 +35,7 @@ import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../h
 import { type IdMap, type RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { renderEnhancements } from "./partial/enhancements.js"
+import { attributedCustomName, attributedName } from "./partial/markdown.js"
 import {
   printAnimistPowerPrerequisites,
   printGeodeRitualPrerequisites,
@@ -95,23 +96,10 @@ import { MISSING_VALUE } from "./partial/unknown.js"
 const renderProperty = (
   id: Property_ID,
 ): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t" | "tm" | "ibi", "Property"> =>
-  Reader.asks(({ translate, translateMap, getInstanceById }) => {
-    const text = (() => {
-      const staticEntry = getInstanceById("Property", id)
-      const staticEntryTranslation = translateMap(staticEntry?.translations)
-
-      if (staticEntryTranslation === undefined) {
-        return ""
-      }
-
-      return staticEntryTranslation.name
-    })()
-
-    return {
-      label: translate("Property"),
-      value: text,
-    }
-  })
+  Reader.asks(({ translate, translateMap, getInstanceById }) => ({
+    label: translate("Property"),
+    value: attributedName(translateMap, getInstanceById, "property", "Property", id) ?? "",
+  }))
 
 const getTextForTraditions = (
   deps: {
@@ -128,10 +116,16 @@ const getTextForTraditions = (
         return deps.translate("General")
       case "Specific":
         return value.Specific.map(trad =>
-          deps.translateMap(deps.getInstanceById("MagicalTradition", trad)?.translations),
+          attributedCustomName(
+            deps.translateMap,
+            deps.getInstanceById,
+            "traditions",
+            t => t.name_for_arcane_spellworks ?? t.name,
+            "MagicalTradition",
+            trad,
+          ),
         )
           .filter(isNotNullish)
-          .map(trad => trad.name_for_arcane_spellworks ?? trad.name)
           .sort(deps.localeCompare)
           .join(", ")
       default:
@@ -149,10 +143,15 @@ const getTraditionNameForArcaneSpellworksById = (
   id: MagicalTradition_ID,
   getInstanceById: GetInstanceById<"MagicalTradition">,
   translateMap: TranslateMap,
-) => {
-  const translation = translateMap(getInstanceById("MagicalTradition", id)?.translations)
-  return translation?.name_for_arcane_spellworks ?? translation?.name
-}
+) =>
+  attributedCustomName(
+    translateMap,
+    getInstanceById,
+    "cantrip-note",
+    t => t.name_for_arcane_spellworks ?? t.name,
+    "MagicalTradition",
+    id,
+  )
 
 /**
  * Get a JSON representation of the rules text for a cantrip.
@@ -210,9 +209,13 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
                     .map(academyOrTradition => {
                       switch (academyOrTradition.kind) {
                         case "Academy":
-                          return translateMap(
-                            getInstanceById("Curriculum", academyOrTradition.Academy)?.translations,
-                          )?.name
+                          return attributedName(
+                            translateMap,
+                            getInstanceById,
+                            "cantrip-note",
+                            "Curriculum",
+                            academyOrTradition.Academy,
+                          )
                         case "Tradition": {
                           return mapNullable(
                             getTraditionNameForArcaneSpellworksById(
@@ -527,7 +530,11 @@ const renderMagicalActionSkill = (
     label: translate("Skill"),
     value: localeJoin(
       skill
-        .map(id => translateMap(getInstanceById("Skill", id)?.translations)?.name ?? MISSING_VALUE)
+        .map(
+          id =>
+            attributedName(translateMap, getInstanceById, "magical-action-skill", "Skill", id) ??
+            MISSING_VALUE,
+        )
         .toSorted(localeCompare),
       "disjunction",
     ),
@@ -656,7 +663,9 @@ const renderMusicTradition = (
   value:
     ensureNonEmpty(
       musicTraditions
-        .map(trad => translateMap(getInstanceById(entity, trad.id)?.translations)?.name)
+        .map(trad =>
+          attributedName(translateMap, getInstanceById, "music-tradition", entity, trad.id),
+        )
         .filter(isNotNullish)
         .toSorted(localeCompare),
     )?.join(", ") ?? MISSING_VALUE,
@@ -810,7 +819,7 @@ const renderFamiliarsTrickProperty = (
   switch (property.kind) {
     case "Fixed":
       return (
-        translateMap(getInstanceById("Property", property.Fixed)?.translations)?.name ??
+        attributedName(translateMap, getInstanceById, "property", "Property", property.Fixed) ??
         MISSING_VALUE
       )
     case "Indefinite":
@@ -981,7 +990,7 @@ const renderAnimistPowerTribeTradition = (
   return (
     ensureNonEmpty(
       tribeTradition
-        .map(id => translateMap(getInstanceById("Tribe", id)?.translations)?.name)
+        .map(id => attributedName(translateMap, getInstanceById, "tribe", "Tribe", id))
         .filter(isNotNullish)
         .toSorted(localeCompare),
     )?.join(", ") ?? MISSING_VALUE

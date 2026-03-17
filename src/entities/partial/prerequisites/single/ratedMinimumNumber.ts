@@ -6,6 +6,7 @@ import type {
 } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { attributedName } from "../../markdown.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
@@ -62,7 +63,9 @@ export const printRatedMinimumNumberPrerequisite = (
   switch (prerequisite.targets.kind) {
     case "Skills": {
       const skills = prerequisite.targets.Skills.targets
-        .map(id => locale.translateMap(getInstanceById("Skill", id)?.translations)?.name)
+        .map(id =>
+          attributedName(locale.translateMap, getInstanceById, "prerequisite", "Skill", id),
+        )
         .filter(isNotNullish)
 
       return {

@@ -1,6 +1,7 @@
 import type { PersonalityTraitPrerequisite } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { attributedNameFromSafeTranslation } from "../../markdown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -23,7 +24,12 @@ export const printPersonalityTraitPrerequisite = (
     return undefined
   }
 
-  const name = `${personalityTraitTranslation.name} (${locale.translate("Level {$level}", {
+  const name = `${attributedNameFromSafeTranslation(
+    personalityTraitTranslation,
+    "prerequisite",
+    "PersonalityTrait",
+    prerequisite.id,
+  )} (${locale.translate("Level {$level}", {
     level: personalityTrait.level,
   })})`
 

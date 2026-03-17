@@ -2,6 +2,7 @@ import { isNotNullish } from "@optolith/helpers/nullable"
 import type { RatedSumPrerequisite } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { attributedName } from "../../markdown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -18,7 +19,9 @@ export const printRatedSumPrerequisite = (
   }
 
   const skills = prerequisite.targets
-    .map(skillId => locale.translateMap(getInstanceById("Skill", skillId)?.translations)?.name)
+    .map(skillId =>
+      attributedName(locale.translateMap, getInstanceById, "prerequisite", "Skill", skillId),
+    )
     .filter(isNotNullish)
 
   return {

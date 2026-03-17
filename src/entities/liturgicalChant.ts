@@ -8,6 +8,7 @@ import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderEnhancements } from "./partial/enhancements.js"
+import { attributedInstance, attributedName } from "./partial/markdown.js"
 import { renderOneTimeDuration } from "./partial/rated/activatable/duration.js"
 import { renderEffect } from "./partial/rated/activatable/effect.js"
 import {
@@ -33,7 +34,7 @@ const getTextForTraditions = (
   values: LiturgyTradition[],
 ): RawDefinitionListEntityDescriptionSectionItem => {
   const getAspectName = (aspectId: string) =>
-    deps.translateMap(deps.getInstanceById("Aspect", aspectId)?.translations)?.name
+    attributedName(deps.translateMap, deps.getInstanceById, "traditions", "Aspect", aspectId)
 
   const text = values
     .map(trad => {
@@ -50,6 +51,15 @@ const getTextForTraditions = (
             return undefined
           }
 
+          const attributedStringName = attributedInstance(
+            name,
+            "BlessedTradition",
+            trad.Tradition.tradition,
+            {
+              context: '"traditions"',
+            },
+          )
+
           const aspects =
             trad.Tradition.aspects
               ?.map(getAspectName)
@@ -57,10 +67,10 @@ const getTextForTraditions = (
               .sort(deps.localeCompare) ?? []
 
           if (aspects.length === 0) {
-            return name
+            return attributedStringName
           }
 
-          return `${name} (${aspects.join(" and ")})`
+          return `${attributedStringName} (${aspects.join(" and ")})`
         }
         default:
           return assertExhaustive(trad)

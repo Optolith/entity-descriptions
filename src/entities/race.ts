@@ -25,6 +25,7 @@ import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
+import { attributedCustomName, attributedName } from "./partial/markdown.js"
 import type { EnvMap, StdReader } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
@@ -55,7 +56,14 @@ const renderAttributeAdjustmentsItem = (
       getInstanceById,
     }): RawDefinitionListEntityDescriptionSectionItem => {
       const getAttributeAbbreviation = (id: string) =>
-        translateMap(getInstanceById("Attribute", id)?.translations)?.abbreviation ?? MISSING_VALUE
+        attributedCustomName(
+          translateMap,
+          getInstanceById,
+          "race",
+          t => t.abbreviation,
+          "Attribute",
+          id,
+        ) ?? MISSING_VALUE
       return {
         label: translate("Attribute Adjustments"),
         value: [
@@ -155,12 +163,17 @@ const renderAutomaticAdvantagesOrDisadvantages = <
     items === undefined || !isNotEmpty(items)
       ? translate("none")
       : items
-          .map(item => {
-            const instanceTranslation = translateMap(getInstanceById(entity, item.id)?.translations)
-            return (
-              instanceTranslation?.name_in_library ?? instanceTranslation?.name ?? MISSING_VALUE
-            )
-          })
+          .map(
+            item =>
+              attributedCustomName(
+                translateMap,
+                getInstanceById,
+                "race",
+                t => t.name_in_library ?? t.name,
+                entity,
+                item.id,
+              ) ?? MISSING_VALUE,
+          )
           .toSorted(localeCompare)
           .join(", "),
   )
@@ -172,7 +185,7 @@ const renderCommonCultures = (
     items === undefined || !isNotEmpty(items)
       ? translate("none")
       : items
-          .map(itemId => translateMap(getInstanceById("Culture", itemId)?.translations)?.name)
+          .map(itemId => attributedName(translateMap, getInstanceById, "race", "Culture", itemId))
           .filter(isNotNullish)
           .toSorted(localeCompare)
           .join(", "),

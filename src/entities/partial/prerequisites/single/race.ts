@@ -1,6 +1,7 @@
 import type { RacePrerequisite } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import { attributedNameFromSafeTranslation } from "../../markdown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -25,7 +26,12 @@ export const printRacePrerequisite = (
 
   return {
     label: `${locale.translate("Race")} `,
-    value: raceTranslation.name,
+    value: attributedNameFromSafeTranslation(
+      raceTranslation,
+      "prerequisite",
+      "Race",
+      prerequisite.id,
+    ),
     sentenceType: undefined,
     isMeta: false,
   }

@@ -12,6 +12,7 @@ import {
   renderActivatableNameComponentsCombinedIfPossible,
   type ActivatableNameComponents,
 } from "../activatableNameChunks.js"
+import { attributedInstance } from "../markdown.js"
 
 /**
  * A part of the total list of prerequisites.
@@ -49,6 +50,9 @@ const countFurtherToCombined = (
     : indexHasDifferentBaseValues
 }
 
+const wrapActivatableInAttributedString = (text: string, id: ActivatableIdentifier) =>
+  attributedInstance(text, id.kind, fromUniformCase(id), { context: '"prerequisite"' })
+
 const joinAdjacentParts = (
   translateMap: TranslateMap,
   localeCompare: LocaleCompare,
@@ -59,17 +63,26 @@ const joinAdjacentParts = (
 
   if (valuesWithSameBase.length > 0) {
     return [
-      renderActivatableNameComponentsCombinedIfPossible(
-        translateMap,
-        [part.value, ...valuesWithSameBase.map(p => p.value)],
-        true,
-        list => list.toSorted(localeCompare).join(", "),
+      wrapActivatableInAttributedString(
+        renderActivatableNameComponentsCombinedIfPossible(
+          translateMap,
+          [part.value, ...valuesWithSameBase.map(p => p.value)],
+          true,
+          list => list.toSorted(localeCompare).join(", "),
+        ),
+        part.value.id,
       ),
       valuesWithSameBase.length,
     ]
   }
 
-  return [renderActivatableNameComponents(translateMap, part.value, true), 0]
+  return [
+    wrapActivatableInAttributedString(
+      renderActivatableNameComponents(translateMap, part.value, true),
+      part.value.id,
+    ),
+    0,
+  ]
 }
 
 const appendBySentenceType = (
@@ -171,7 +184,10 @@ const appendPrerequisitePartGroup = (
           (current.label ?? "") +
             (typeof current.value === "string"
               ? current.value
-              : renderActivatableNameComponents(translateMap, current.value, true)),
+              : wrapActivatableInAttributedString(
+                  renderActivatableNameComponents(translateMap, current.value, true),
+                  current.value.id,
+                )),
           current.sentenceType,
           isLast && i === arr.length - 1,
         ),

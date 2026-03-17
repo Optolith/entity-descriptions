@@ -1,62 +1,10 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { RatedIdentifier, RatedPrerequisite } from "optolith-database-schema/gen"
+import type { RatedPrerequisite } from "optolith-database-schema/gen"
 import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import type { TranslateMap } from "../../../../helpers/translate.js"
+import { attributedName } from "../../markdown.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
-
-const printRatedName = (
-  getInstanceById: GetInstanceById<
-    | "Attribute"
-    | "Skill"
-    | "CloseCombatTechnique"
-    | "RangedCombatTechnique"
-    | "Spell"
-    | "Ritual"
-    | "LiturgicalChant"
-    | "Ceremony"
-  >,
-  translateMap: TranslateMap,
-  id: RatedIdentifier,
-) => {
-  switch (id.kind) {
-    case "Attribute":
-      return (
-        translateMap(getInstanceById("Attribute", id.Attribute)?.translations)?.abbreviation ??
-        MISSING_VALUE
-      )
-    case "Skill":
-      return translateMap(getInstanceById("Skill", id.Skill)?.translations)?.name ?? MISSING_VALUE
-    case "CloseCombatTechnique":
-      return (
-        translateMap(getInstanceById("CloseCombatTechnique", id.CloseCombatTechnique)?.translations)
-          ?.name ?? MISSING_VALUE
-      )
-    case "RangedCombatTechnique":
-      return (
-        translateMap(
-          getInstanceById("RangedCombatTechnique", id.RangedCombatTechnique)?.translations,
-        )?.name ?? MISSING_VALUE
-      )
-    case "Spell":
-      return translateMap(getInstanceById("Spell", id.Spell)?.translations)?.name ?? MISSING_VALUE
-    case "Ritual":
-      return translateMap(getInstanceById("Ritual", id.Ritual)?.translations)?.name ?? MISSING_VALUE
-    case "LiturgicalChant":
-      return (
-        translateMap(getInstanceById("LiturgicalChant", id.LiturgicalChant)?.translations)?.name ??
-        MISSING_VALUE
-      )
-    case "Ceremony":
-      return (
-        translateMap(getInstanceById("Ceremony", id.Ceremony)?.translations)?.name ?? MISSING_VALUE
-      )
-    default:
-      return assertExhaustive(id)
-  }
-}
 
 /**
  * Get the translation of a blessed tradition prerequisite.
@@ -80,7 +28,7 @@ export const printRatedPrerequisite = (
   }
 
   return {
-    value: `${printRatedName(getInstanceById, locale.translateMap, prerequisite.id)} ${prerequisite.value.toFixed()}`,
+    value: `${attributedName(locale.translateMap, getInstanceById, "prerequisite", prerequisite.id) ?? MISSING_VALUE} ${prerequisite.value.toFixed()}`,
     sentenceType: undefined,
     isMeta: false,
   }
