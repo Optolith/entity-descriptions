@@ -27,7 +27,7 @@ describe("getStatePrerequisiteTranslation", () => {
       }),
       {
         label: "State ",
-        value: "*A*",
+        value: `^[A](context: "prerequisite", entity: "State", instance: "${ExampleUUID}")`,
         sentenceType: undefined,
         isMeta: false,
       },
