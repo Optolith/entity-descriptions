@@ -749,7 +749,7 @@ const renderArcaneEnergyCost = (
             }),
             level: Array.from({ length: cost.ByLevel.levels.length }, (_, index) =>
               romanize(index + 1),
-            ),
+            ).join("/"),
           })
         case "Verbose":
           return cost.ByLevel.levels
