@@ -2,12 +2,11 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   AttributeTranslation,
   DerivedCharacteristicBase,
-  DerivedCharacteristicRaceBaseValue,
+  DerivedCharacteristicTranslation,
 } from "optolith-database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
-import type { IdMap } from "../index.js"
 import { attributedCustomName } from "./partial/markdown.js"
 import { renderMathOperation } from "./partial/mathOperation.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
@@ -43,23 +42,9 @@ const getAttribute = (
 
 const getRaceBaseValue = (
   translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"DerivedCharacteristic">,
-  idMap: IdMap,
-  raceBaseValue: DerivedCharacteristicRaceBaseValue,
+  translation: DerivedCharacteristicTranslation,
   style: "full" | "compact" = "full",
 ): string => {
-  const instance = getInstanceById(
-    "DerivedCharacteristic",
-    idMap.DerivedCharacteristic[raceBaseValue.kind],
-  )
-
-  const translation = translateMap(instance?.translations)
-
-  if (translation === undefined) {
-    return MISSING_VALUE
-  }
-
   switch (style) {
     case "full":
       return translate("Base {$name} from Race", translation)
@@ -71,10 +56,10 @@ const getRaceBaseValue = (
 }
 
 const renderBaseCalculation = (
-  getInstanceById: GetInstanceById<"Attribute" | "DerivedCharacteristic">,
+  getInstanceById: GetInstanceById<"Attribute">,
   translate: Translate,
   translateMap: TranslateMap,
-  idMap: IdMap,
+  translation: DerivedCharacteristicTranslation,
   calculation: DerivedCharacteristicBase,
   style: "full" | "compact" = "full",
 ): string =>
@@ -85,14 +70,7 @@ const renderBaseCalculation = (
       case "Attribute":
         return getAttribute(getInstanceById, translateMap, value.Attribute, style)
       case "RaceBaseValue":
-        return getRaceBaseValue(
-          translate,
-          translateMap,
-          getInstanceById,
-          idMap,
-          value.RaceBaseValue,
-          style,
-        )
+        return getRaceBaseValue(translate, translation, style)
       case "PrimaryAttribute":
         switch (style) {
           case "full":
@@ -121,9 +99,8 @@ export const getDerivedCharacteristicEntityDescription = createEntityDescription
   "DerivedCharacteristic",
   {
     getInstanceById: GetInstanceById<"Publication" | "Attribute" | "DerivedCharacteristic">
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, { translate, translateMap }, { content: entry }) => {
+>(({ getInstanceById }, { translate, translateMap }, { content: entry }) => {
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -149,7 +126,7 @@ export const getDerivedCharacteristicEntityDescription = createEntityDescription
               getInstanceById,
               translate,
               translateMap,
-              idMap,
+              translation,
               entry.calculation.base,
             ),
           },

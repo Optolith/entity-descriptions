@@ -401,16 +401,26 @@ export const printAnimistPowerPrerequisiteGroup = (
  * Print the translation of a geode ritual prerequisite group.
  */
 export const printGeodeRitualPrerequisiteGroup = (
-  getInstanceById: GetInstanceById<"Influence">,
+  getInstanceById: GetInstanceById<"Influence" | ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   prerequisite: GeodeRitualPrerequisiteGroup,
-): PrerequisitePart | undefined =>
-  // switch (prerequisite.tag) {
-  //   case "Influence":
-  //   default:
-  //     return assertExhaustive(prerequisite)
-  // }
-  printInfluencePrerequisite(getInstanceById, locale, prerequisite.Influence)
+): PrerequisitePart | undefined => {
+  switch (prerequisite.kind) {
+    case "Activatable":
+      return printActivatablePrerequisite(
+        getInstanceById,
+        getResolvedSelectOptionById,
+        locale,
+        prerequisite.Activatable,
+        false,
+      )
+    case "Influence":
+      return printInfluencePrerequisite(getInstanceById, locale, prerequisite.Influence)
+    default:
+      return assertExhaustive(prerequisite)
+  }
+}
 
 /**
  * Print the translation of an enhancement prerequisite group.

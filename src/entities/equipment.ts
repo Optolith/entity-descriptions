@@ -1,11 +1,13 @@
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { compareNumber } from "@elyukai/utils/ordering"
 import { romanize } from "@elyukai/utils/roman"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { mapNullable } from "@optolith/helpers/nullable"
 import type {
-  Ammunition_ID,
+  AmmunitionishIdentifier,
   ArmorComplexity,
   ArmorType_ID,
   AttackModifier,
@@ -64,6 +66,7 @@ import type {
   RawNestedDefinitionListEntityDescriptionSection,
 } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
+import { attributedName, attributedNameFromInstance } from "./partial/markdown.js"
 import { additionFormatter, subtractionFormatter } from "./partial/mathOperation.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
@@ -174,12 +177,26 @@ const renderAttackParryModifier = (
 
 const renderReach = (
   translateMap: TranslateMap,
+  localeJoin: LocaleJoin,
   getInstanceById: GetInstanceById<"Reach">,
-  reach: Reach_ID | undefined,
+  reaches: Reach_ID[] | undefined,
 ): string =>
-  reach === undefined
+  reaches === undefined
     ? "—"
-    : (translateMap(getInstanceById("Reach", reach)?.translations)?.name ?? MISSING_VALUE)
+    : localeJoin(
+        reaches
+          .map((reach): [number, string] => {
+            const instance = getInstanceById("Reach", reach)
+            return [
+              instance?.position ?? 0,
+              attributedNameFromInstance(translateMap, instance, "equipment", "Reach", reach) ??
+                MISSING_VALUE,
+            ]
+          })
+          .toSorted(on(e => e[0], compareNumber))
+          .map(e => e[1]),
+        "conjunction",
+      )
 
 const renderLength = (
   translate: Translate,
@@ -198,6 +215,7 @@ const renderLength = (
 export const renderMeleeWeapon = <Damage>(
   translate: Translate,
   translateMap: TranslateMap,
+  localeJoin: LocaleJoin,
   getInstanceById: GetInstanceById<"Attribute" | "CloseCombatTechnique" | "Reach">,
   measurements: Required<LocaleMeasurementAdjustments>,
   renderDamage: (damage: Damage) => string,
@@ -245,7 +263,7 @@ export const renderMeleeWeapon = <Damage>(
           ? undefined
           : {
               label: translate("Reach"),
-              value: renderReach(translateMap, getInstanceById, use.reach),
+              value: renderReach(translateMap, localeJoin, getInstanceById, use.reach),
             },
         fields.has_length.kind === "Prohibited"
           ? undefined
@@ -272,12 +290,12 @@ const renderRangeBrackets = (rangeBrackets: RangeBrackets) =>
 
 const renderAmmunition = (
   translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"Ammunition">,
-  ammunition: Ammunition_ID | undefined,
+  getInstanceById: GetInstanceById<AmmunitionishIdentifier["kind"]>,
+  ammunition: AmmunitionishIdentifier | undefined,
 ) =>
   ammunition === undefined
     ? "—"
-    : (translateMap(getInstanceById("Ammunition", ammunition)?.translations)?.name ?? MISSING_VALUE)
+    : (attributedName(translateMap, getInstanceById, "equipment", ammunition) ?? MISSING_VALUE)
 
 const renderMeleeDamage = (translate: Translate) => (damage: MeleeDamage) =>
   renderDiceAndFlat(translate, damage.dice, damage.flat)
@@ -288,7 +306,7 @@ const renderMeleeDamage = (translate: Translate) => (damage: MeleeDamage) =>
 export const renderRangedWeapon = <Damage>(
   translate: Translate,
   translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"RangedCombatTechnique" | "Ammunition">,
+  getInstanceById: GetInstanceById<"RangedCombatTechnique" | AmmunitionishIdentifier["kind"]>,
   measurements: Required<LocaleMeasurementAdjustments>,
   renderDamage: (damage: Damage) => string,
   rangedCombatTechniqueId: string,
@@ -1044,7 +1062,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
       | "MagicalTradition"
       | "BlessedTradition"
       | "DerivedCharacteristic"
-      | "Ammunition"
+      | AmmunitionishIdentifier["kind"]
       | "Race"
       | "Culture"
       | "Profession"
@@ -1181,6 +1199,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             renderMeleeWeapon(
               translate,
               translateMap,
+              locale.join,
               getInstanceById,
               locale.measurementAdjustments,
               renderMeleeDamage(translate),

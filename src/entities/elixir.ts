@@ -96,16 +96,21 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
               },
           {
             label: translate("Quality Levels"),
-            value: [
-              {
-                type: "definitionList",
-                style: "nested",
-                items: translation.quality_levels.map((effectForLevel, index) => ({
-                  label: (index + 1).toFixed(),
-                  value: effectForLevel,
-                })),
-              },
-            ],
+            value:
+              translation.quality_levels.kind === "Plain"
+                ? translation.quality_levels.Plain.text
+                : [
+                    {
+                      type: "definitionList",
+                      style: "nested",
+                      items: translation.quality_levels.ForEachQualityLevel.qualityLevels.map(
+                        (effectForLevel, index) => ({
+                          label: (index + 1).toFixed(),
+                          value: effectForLevel,
+                        }),
+                      ),
+                    },
+                  ],
           },
         ],
       },

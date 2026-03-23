@@ -29,7 +29,6 @@ import type {
   ProfessionPrerequisites,
   PublicationPrerequisites,
   RatedIdentifier,
-  SpecialAbilityIdentifier,
   SpellworkPrerequisites,
 } from "optolith-database-schema/gen"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
@@ -352,7 +351,7 @@ export const printGeneralPrerequisites = (
   locale: LocaleEnvironment,
   value: GeneralPrerequisites,
   printPreviousLevelPrerequisites?: {
-    id: SpecialAbilityIdentifier
+    id: ActivatableIdentifier
     levels: number
   },
   trailingText?: string,
@@ -560,12 +559,19 @@ export const printAnimistPowerPrerequisites = (
  * Print geode ritual prerequisites as a string.
  */
 export const printGeodeRitualPrerequisites = (
-  getInstanceById: GetInstanceById<"Influence">,
+  getInstanceById: GetInstanceById<"Influence" | ActivatableIdentifier["kind"] | "Aspect">,
+  getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
   value: GeodeRitualPrerequisites,
 ): string =>
   printPlainPrerequisites(
-    prerequisite => printGeodeRitualPrerequisiteGroup(getInstanceById, locale, prerequisite),
+    prerequisite =>
+      printGeodeRitualPrerequisiteGroup(
+        getInstanceById,
+        getResolvedSelectOptionById,
+        locale,
+        prerequisite,
+      ),
     locale,
     value,
   )

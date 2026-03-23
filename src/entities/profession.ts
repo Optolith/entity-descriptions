@@ -29,6 +29,8 @@ import type {
   CombatTechniquesOptions,
   ConstantProfessionSpecialAbility,
   CursesOptions,
+  Enhancement,
+  Enhancement_ID,
   ExperienceLevel,
   LanguagesScriptsOptions,
   LiturgiesOptions,
@@ -41,6 +43,7 @@ import type {
   ProfessionPrerequisiteGroup,
   ProfessionPrerequisites,
   ProfessionSpecialAbility,
+  ProfessionSpecialAbilityIdentifier,
   ProfessionVariant,
   ProfessionVariantPackageOptions,
   ProfessionVariantTranslation,
@@ -48,10 +51,10 @@ import type {
   RestrictedBlessings,
   SkillsOptions,
   SkillSpecializationOptions,
-  SpecialAbilityIdentifier,
+  SkillWithEnhancementsIdentifier,
   VariantOptionAction,
 } from "optolith-database-schema/gen"
-import { fromUniformCase } from "tsondb/schema/gen"
+import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   GetAllChildInstancesForParent,
@@ -69,6 +72,8 @@ import {
   getNameComponents,
   renderActivatableNameComponents,
   renderCombinedActivatableNameComponents,
+  type ActivatableNameComponents,
+  type CombinedActivatableNameComponents,
 } from "./partial/activatableNameChunks.js"
 import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
@@ -328,7 +333,7 @@ const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
         const completeTextR = fixedTextR.then(fixedText =>
           option.rest_rating_modifier === undefined
             ? Reader.of(fixedText)
-            : translateR("{$previous}, all others {$rating}", {
+            : translateR("{$previous}, the others {$rating}", {
                 previous: fixedText,
                 rating: option.rest_rating_modifier + 6,
               }),
@@ -363,17 +368,54 @@ const getTotalingAPValues = (
 const renderSkillsOption = (
   professionPackages: NonEmptyArray<PreparedProfessionPackage>,
   skillGroup: { id: string; nameOfSkillsOfGroup: string },
-): StdReader<string | undefined, "t"> =>
-  mapNullable(
-    getTotalingAPValues(professionPackages, pkg =>
-      pkg.content.options?.skills?.group === skillGroup.id ? pkg.content.options.skills : undefined,
-    ),
-    apValue =>
-      translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
-        apValue,
-        skillsOfGroup: skillGroup.nameOfSkillsOfGroup,
-      }),
-  ) ?? Reader.of(undefined)
+): StdReader<string | undefined, "t" | "tm" | "lc" | "ibi", "Skill"> =>
+  allSame(
+    professionPackages.filter(pkg => pkg.content.options?.skills?.group === skillGroup.id),
+    on(pkg => pkg.content.options?.skills?.specific, deepEqual),
+  )
+    ? (mapNullable(
+        getTotalingAPValues(professionPackages, pkg =>
+          pkg.content.options?.skills?.group === skillGroup.id
+            ? pkg.content.options.skills
+            : undefined,
+        ),
+        apValue =>
+          professionPackages[0].content.options?.skills?.specific === undefined
+            ? translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
+                apValue,
+                skillsOfGroup: skillGroup.nameOfSkillsOfGroup,
+              })
+            : Reader.traverse(professionPackages[0].content.options.skills.specific, id =>
+                attributedNameR("profession", "Skill", id).map(name => name ?? MISSING_VALUE),
+              )
+                .thenW(localeSortR)
+                .thenW(list =>
+                  translateR("{$apValue} AP to distribute among the following skills: {$list}", {
+                    apValue,
+                    list: list.join(", "),
+                  }),
+                ),
+      ) ?? Reader.of(undefined))
+    : Reader.traverse(professionPackages, pkg => {
+        const skillsOption = pkg.content.options?.skills
+        return skillsOption === undefined
+          ? Reader.of("—")
+          : skillsOption.specific === undefined
+            ? translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
+                apValue: skillsOption.ap_value,
+                skillsOfGroup: skillGroup.nameOfSkillsOfGroup,
+              })
+            : Reader.traverse(skillsOption.specific, id =>
+                attributedNameR("profession", "Skill", id).map(name => name ?? MISSING_VALUE),
+              )
+                .thenW(localeSortR)
+                .thenW(list =>
+                  translateR("{$apValue} AP to distribute among the following skills: {$list}", {
+                    apValue: skillsOption.ap_value,
+                    list: list.join(", "),
+                  }),
+                )
+      }).map(list => list.join(" / "))
 
 const renderCantripList = (
   cantripIds: Cantrip_ID[],
@@ -636,12 +678,132 @@ const renderVariantLiturgiesOption = (
       ),
   })
 
+const getEnhancementBaseName = (
+  translate: Translate,
+  enhancement: Enhancement,
+  parentName: string,
+) => {
+  switch (enhancement.parent.kind) {
+    case "Spell":
+      return translate("Spell Enhancement {$spell}", { spell: parentName })
+    case "Ritual":
+      return translate("Ritual Enhancement {$ritual}", { ritual: parentName })
+    case "LiturgicalChant":
+    case "Ceremony":
+      return translate("Liturgical Enhancement {$liturgicalChantOrCeremony}", {
+        liturgicalChantOrCeremony: parentName,
+      })
+    default:
+      return assertExhaustive(enhancement.parent)
+  }
+}
+
+type EnhancementNameComponents = {
+  id: Case<"Enhancement", Enhancement_ID>
+  parent: SkillWithEnhancementsIdentifier
+  base: string
+  options: string
+}
+
+const isEnhancementNameComponents = (
+  components: ActivatableNameComponents | EnhancementNameComponents,
+): components is EnhancementNameComponents => components.id.kind === "Enhancement"
+
+const isActivatableNameComponents = (
+  components: ActivatableNameComponents | EnhancementNameComponents,
+): components is ActivatableNameComponents => !isEnhancementNameComponents(components)
+
+const getEnhancementNameComponents = (
+  getInstanceById: GetInstanceById<"Enhancement" | SkillWithEnhancementsIdentifier["kind"]>,
+  translate: Translate,
+  translateMap: TranslateMap,
+  id: Enhancement_ID,
+): EnhancementNameComponents | undefined => {
+  const instance = getInstanceById("Enhancement", id)
+
+  if (instance === undefined) {
+    return undefined
+  }
+
+  return {
+    id: Case("Enhancement", id),
+    parent: instance.parent,
+    base: getEnhancementBaseName(
+      translate,
+      instance,
+      attributedName(translateMap, getInstanceById, "profession", instance.parent) ?? MISSING_VALUE,
+    ),
+    options: translateMap(instance.translations)?.name ?? MISSING_VALUE,
+  }
+}
+
+const renderEnhancementNameComponents = (chunk: EnhancementNameComponents) =>
+  [chunk.base, chunk.options].join(" ")
+
+type CombinedEnhancementNameComponents = {
+  id: Case<"Enhancement", Enhancement_ID>[]
+  parent: SkillWithEnhancementsIdentifier
+  base: string
+  options: [id: Case<"Enhancement", Enhancement_ID>, name: string][]
+}
+
+const isCombinedEnhancementNameComponents = (
+  components: CombinedActivatableNameComponents | CombinedEnhancementNameComponents,
+): components is CombinedEnhancementNameComponents => Array.isArray(components.id)
+
+const combineEnhancementNameComponents = (
+  chunks: EnhancementNameComponents[],
+): CombinedEnhancementNameComponents | undefined => {
+  if (allSame(chunks, (a, b) => deepEqual(a.parent, b.parent)) && isNotEmpty(chunks)) {
+    const [first, ...rest] = chunks
+
+    return {
+      id: [first.id, ...rest.map(chunk => chunk.id)],
+      parent: first.parent,
+      base: first.base,
+      options: [
+        [first.id, first.options],
+        ...rest.map((chunk): [id: Case<"Enhancement", Enhancement_ID>, name: string] => [
+          chunk.id,
+          chunk.options,
+        ]),
+      ],
+    }
+  } else {
+    return undefined
+  }
+}
+
+const renderCombinedEnhancementNameComponents = (chunk: CombinedEnhancementNameComponents) =>
+  [
+    chunk.base,
+    chunk.options
+      .map(([optionId, optionName]) =>
+        attributedInstance(optionName, optionId.kind, optionId.Enhancement, {
+          context: `"profession"`,
+        }),
+      )
+      .join(" + "),
+  ].join(" ")
+
 const getSpecialAbilityNameComponents = (
-  getInstanceById: GetInstanceById<SpecialAbilityIdentifier["kind"]>,
+  getInstanceById: GetInstanceById<
+    ProfessionSpecialAbilityIdentifier["kind"] | SkillWithEnhancementsIdentifier["kind"]
+  >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   translate: Translate,
+  translateMap: TranslateMap,
   option: ConstantProfessionSpecialAbility,
-) => {
+): ActivatableNameComponents | EnhancementNameComponents | undefined => {
+  if (option.id.kind === "Enhancement") {
+    return getEnhancementNameComponents(
+      getInstanceById,
+      translate,
+      translateMap,
+      option.id.Enhancement,
+    )
+  }
+
   const instance:
     | {
         nameBuilderRules?: ActivatableNameBuilderRules
@@ -666,8 +828,23 @@ const getSpecialAbilityNameComponents = (
   )
 }
 
-const wrapActivatableInAttributedString = (text: string, id: ActivatableIdentifier) =>
-  attributedInstance(text, id.kind, fromUniformCase(id), { context: '"prerequisite"' })
+const wrapActivatableInAttributedString = (
+  text: string,
+  id: ActivatableIdentifier | ProfessionSpecialAbilityIdentifier,
+) => attributedInstance(text, id.kind, fromUniformCase(id), { context: '"prerequisite"' })
+
+const renderSingleActivatableNameChunk = (
+  translateMap: TranslateMap,
+  chunk: ActivatableNameComponents | EnhancementNameComponents | undefined,
+) =>
+  chunk === undefined
+    ? MISSING_VALUE
+    : wrapActivatableInAttributedString(
+        isEnhancementNameComponents(chunk)
+          ? renderEnhancementNameComponents(chunk)
+          : renderActivatableNameComponents(translateMap, chunk, false),
+        chunk.id,
+      )
 
 const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
   Reader.asks(
@@ -677,22 +854,21 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
       localeJoin,
       getInstanceById,
       getResolvedSelectOptionById,
-    }: StdEnv<"t" | "tm" | "lc" | "lj" | "ibi" | "rso", SpecialAbilityIdentifier["kind"]>) => {
+    }: StdEnv<
+      "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
+      ProfessionSpecialAbilityIdentifier["kind"] | SkillWithEnhancementsIdentifier["kind"]
+    >) => {
       switch (specialAbility.kind) {
         case "Constant": {
           const chunk = getSpecialAbilityNameComponents(
             getInstanceById,
             getResolvedSelectOptionById,
             translate,
+            translateMap,
             specialAbility.Constant,
           )
 
-          return chunk === undefined
-            ? MISSING_VALUE
-            : wrapActivatableInAttributedString(
-                renderActivatableNameComponents(translateMap, chunk, false),
-                chunk.id,
-              )
+          return renderSingleActivatableNameChunk(translateMap, chunk)
         }
         case "Selection": {
           const chunks = specialAbility.Selection.options.map(option =>
@@ -700,34 +876,37 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
               getInstanceById,
               getResolvedSelectOptionById,
               translate,
+              translateMap,
               option,
             ),
           )
 
           const possiblyCombined =
             isNotEmpty(specialAbility.Selection.options) && chunks.every(isNotNullish)
-              ? combineNameComponents(chunks)
+              ? chunks.every(isEnhancementNameComponents)
+                ? combineEnhancementNameComponents(chunks)
+                : chunks.every(isActivatableNameComponents)
+                  ? combineNameComponents(chunks)
+                  : undefined
               : undefined
 
           if (possiblyCombined === undefined) {
             return localeJoin(
-              chunks.map(chunk =>
-                chunk === undefined
-                  ? MISSING_VALUE
-                  : wrapActivatableInAttributedString(
-                      renderActivatableNameComponents(translateMap, chunk, false),
-                      chunk.id,
-                    ),
-              ),
+              chunks.map(chunk => renderSingleActivatableNameChunk(translateMap, chunk)),
               "disjunction",
             )
           } else {
-            return wrapActivatableInAttributedString(
-              renderCombinedActivatableNameComponents(translateMap, possiblyCombined, false, list =>
-                localeJoin(list, "disjunction"),
-              ),
-              possiblyCombined.id,
-            )
+            return isCombinedEnhancementNameComponents(possiblyCombined)
+              ? renderCombinedEnhancementNameComponents(possiblyCombined)
+              : wrapActivatableInAttributedString(
+                  renderCombinedActivatableNameComponents(
+                    translateMap,
+                    possiblyCombined,
+                    false,
+                    list => localeJoin(list, "disjunction"),
+                  ),
+                  possiblyCombined.id,
+                )
           }
         }
         default:
@@ -740,7 +919,10 @@ const renderSpecialAbilities = (specialAbilities: SpecialAbilities) =>
   Reader.sequence<
     StdEnv<
       "f" | "t" | "tm" | "lj" | "lc" | "ibi" | "rso",
-      "Skill" | "SkillGroup" | SpecialAbilityIdentifier["kind"]
+      | "Skill"
+      | "SkillGroup"
+      | ProfessionSpecialAbilityIdentifier["kind"]
+      | SkillWithEnhancementsIdentifier["kind"]
     >,
     string | NonEmptyArray<string> | undefined
   >([
@@ -1072,6 +1254,7 @@ const renderProfessionVariantText = (
           | "Cantrip"
           | "SkillGroup"
           | "Blessing"
+          | "Enhancement"
         >,
         string[]
       >([
@@ -1245,7 +1428,7 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
       | "ExperienceLevel"
       | "Advantage"
       | "Disadvantage"
-      | SpecialAbilityIdentifier["kind"]
+      | ProfessionSpecialAbilityIdentifier["kind"]
       | "Aspect"
       | RatedIdentifier["kind"]
       | "Race"

@@ -21,6 +21,8 @@ type BaseDisease = {
   level: number
   resistance: Resistance
   cause: Cause[]
+  isChildhoodDisease?: boolean
+  isMagicalDisease?: boolean
   src: PublicationRefs
   translations: LocaleMap<BaseDiseaseTranslation>
 }
@@ -83,7 +85,16 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
     }
 
     return {
-      title: translation.name,
+      title:
+        translation.name +
+        parensIf(
+          ensureNonEmpty(
+            [
+              baseEntry.isChildhoodDisease === true ? translate("childhood disease") : undefined,
+              baseEntry.isMagicalDisease === true ? translate("magical disease") : undefined,
+            ].filter(isNotNullish),
+          )?.join(", "),
+        ),
       className: "disease",
       body: [
         {

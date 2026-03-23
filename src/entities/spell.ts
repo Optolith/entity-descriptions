@@ -8,6 +8,7 @@ import { numAsc, type Compare } from "@optolith/helpers/compare"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
+  type ActivatableIdentifier,
   type ActivatableSkillEffect,
   type AnimistPowerImprovementCost,
   type AnimistPowerPerformanceParameters,
@@ -40,6 +41,7 @@ import {
   printAnimistPowerPrerequisites,
   printGeodeRitualPrerequisites,
 } from "./partial/prerequisites/index.js"
+import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import {
   renderCastingTime,
   renderFastSkillNonModifiableCastingTime,
@@ -1156,9 +1158,12 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       | "MagicalTradition"
       | "DerivedCharacteristic"
       | "Influence"
+      | ActivatableIdentifier["kind"]
+      | "Aspect"
     >
+    getResolvedSelectOptionById: GetResolvedSelectOptionById
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
@@ -1219,7 +1224,12 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
             ? undefined
             : {
                 label: translate("Prerequisites"),
-                value: printGeodeRitualPrerequisites(getInstanceById, locale, entry.prerequisites),
+                value: printGeodeRitualPrerequisites(
+                  getInstanceById,
+                  getResolvedSelectOptionById,
+                  locale,
+                  entry.prerequisites,
+                ),
               },
           renderProperty(entry.property).run(env),
           {
@@ -1459,7 +1469,7 @@ const renderSplitMagicalRuneParameterTranslation = (
     (fast, slow) => `${slow} / ${fast}`,
   )
 
-const renderMagicalRunCraftingTimePart = (
+const renderMagicalRuneCraftingTimePart = (
   craftingTime: MagicalRuneCraftingTime,
   unit: TimeSpanUnit,
 ) =>
@@ -1485,8 +1495,8 @@ const renderMagicalRunCraftingTimePart = (
   })
 
 const renderMagicalRuneCraftingTime = (craftingTime: MagicalRuneCraftingTime) =>
-  renderMagicalRunCraftingTimePart(craftingTime, "Actions").map2(
-    renderMagicalRunCraftingTimePart(craftingTime, "Days"),
+  renderMagicalRuneCraftingTimePart(craftingTime, "Actions").map2(
+    renderMagicalRuneCraftingTimePart(craftingTime, "Days"),
     (fast, slow) => `${slow} / ${fast}`,
   )
 

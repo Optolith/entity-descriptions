@@ -21,7 +21,7 @@ import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
-import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
+import { renderDice } from "./partial/dice.js"
 import {
   renderAlternativeNames,
   renderChance,
@@ -197,6 +197,14 @@ const renderSourceTypeBasedValues = (
       return {
         level: renderLevel(translate, translateMap, sourceType.AnimalVenom.level),
         sourceType: translate("animal venom"),
+        tradeSecret: mapNullable(sourceType.AnimalVenom.complexity, complexity =>
+          complexity.kind === "Complex"
+            ? {
+                apValue: complexity.Complex.ap_value,
+                prerequisites: complexity.Complex.prerequisites,
+              }
+            : undefined,
+        ),
       }
     case "AlchemicalPoison": {
       const translation = translateMap(sourceType.AlchemicalPoison.translations)
@@ -272,20 +280,19 @@ const renderStart = (translate: Translate, translateMap: TranslateMap, start: Po
   switch (start.kind) {
     case "Immediate":
       return translate("immediate")
-    case "Constant":
-      return formatTimeSpan(
-        translate,
-        ResponsiveTextSize.Full,
-        start.Constant.unit,
-        start.Constant.value,
-      )
-    case "DiceBased":
-      return formatTimeSpan(
-        translate,
-        ResponsiveTextSize.Full,
-        start.DiceBased.unit,
-        renderDiceAndFlat(translate, start.DiceBased.dice, start.DiceBased.flat),
-      )
+    case "ExpressionBased":
+      return renderMathOperation(start.ExpressionBased.value, value => {
+        switch (value.kind) {
+          case "Constant":
+            return value.Constant.toFixed()
+          case "Dice":
+            return renderDice(translate, value.Dice)
+          case "CircleOfDamnation":
+            return translate("CoD")
+          default:
+            return assertExhaustive(value)
+        }
+      })
     case "Indefinite":
       return translateMap(start.Indefinite.translations)?.description ?? MISSING_VALUE
     default:
@@ -301,20 +308,6 @@ const renderDuration = (
   switch (duration.kind) {
     case "Instant":
       return translate("instant")
-    case "Constant":
-      return formatTimeSpan(
-        translate,
-        ResponsiveTextSize.Full,
-        duration.Constant.unit,
-        duration.Constant.value,
-      )
-    case "DiceBased":
-      return formatTimeSpan(
-        translate,
-        ResponsiveTextSize.Full,
-        duration.DiceBased.unit,
-        renderDiceAndFlat(translate, duration.DiceBased.dice, duration.DiceBased.flat),
-      )
     case "ExpressionBased":
       return renderMathOperation(duration.ExpressionBased.value, value => {
         switch (value.kind) {

@@ -3,11 +3,13 @@ import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
 import type {
   AttributeAdjustments,
   AutomaticAdvantageDisadvantage,
+  BaseValues,
   Culture_ID,
   RaceVariant,
   RaceVariantTranslation,
@@ -26,58 +28,67 @@ import {
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import { attributedCustomName, attributedName } from "./partial/markdown.js"
-import type { EnvMap, StdReader } from "./partial/reader.js"
+import {
+  getInstanceByIdR,
+  translateMapR,
+  type EnvMap,
+  type StdEnv,
+  type StdReader,
+} from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
-const renderBaseValueItem = (
-  label: TranslationKeysWithoutParams,
-  value: number,
-): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
-  Reader.asks(
-    ({ translate }): RawDefinitionListEntityDescriptionSectionItem => ({
-      label: translate(label),
-      value: value < 0 ? sign(value) : value.toFixed(),
-    }),
-  )
+const renderBaseValues = (
+  values: BaseValues,
+): StdReader<
+  RawDefinitionListEntityDescriptionSectionItem[],
+  "t" | "tm" | "ibi",
+  "DerivedCharacteristic"
+> =>
+  Reader.traverse(
+    Object.entries(values),
+    ([id, { value }]): StdReader<
+      [index: number, RawDefinitionListEntityDescriptionSectionItem],
+      "t" | "tm" | "ibi",
+      "DerivedCharacteristic"
+    > =>
+      getInstanceByIdR("DerivedCharacteristic", id).thenW(derivedCharacteristic =>
+        translateMapR(derivedCharacteristic?.translations).thenW(translation =>
+          Reader.asks(({ translate }: StdEnv<"t">) => [
+            derivedCharacteristic?.position ?? 0,
+            {
+              label: translate("{$derivedCharacteristic} Base Value", {
+                derivedCharacteristic: translation?.name ?? MISSING_VALUE,
+              }),
+              value: value < 0 ? sign(value) : value.toFixed(),
+            },
+          ]),
+        ),
+      ),
+  ).map(items => items.sort(on(item => item[0], compareNumber)).map(item => item[1]))
 
 const renderAttributeAdjustmentsItem = (
   totalAttributesCount: number,
   adjustments: AttributeAdjustments,
-): StdReader<
-  RawDefinitionListEntityDescriptionSectionItem,
-  "t" | "tm" | "lj" | "ibi",
-  "Attribute"
-> =>
-  Reader.asks(
-    ({
-      translate,
-      translateMap,
-      localeJoin,
-      getInstanceById,
-    }): RawDefinitionListEntityDescriptionSectionItem => {
-      const getAttributeAbbreviation = (id: string) =>
-        attributedCustomName(
-          translateMap,
-          getInstanceById,
-          "race",
-          t => t.abbreviation,
-          "Attribute",
-          id,
-        ) ?? MISSING_VALUE
-      return {
-        label: translate("Attribute Adjustments"),
-        value: [
-          ...(adjustments.fixed?.map(
-            adj => `${getAttributeAbbreviation(adj.id)} ${sign(adj.value)}`,
-          ) ?? []),
-          ...(adjustments.selectable?.map(
-            adj =>
-              `${adj.list.length === totalAttributesCount ? translate("one attribute of your choice") : localeJoin(adj.list.map(getAttributeAbbreviation), "disjunction")} ${sign(adj.value)}`,
-          ) ?? []),
-        ].join("; "),
-      }
-    },
-  )
+): StdReader<string, "t" | "tm" | "lj" | "ibi", "Attribute"> =>
+  Reader.asks(({ translate, translateMap, localeJoin, getInstanceById }): string => {
+    const getAttributeAbbreviation = (id: string) =>
+      attributedCustomName(
+        translateMap,
+        getInstanceById,
+        "race",
+        t => t.abbreviation,
+        "Attribute",
+        id,
+      ) ?? MISSING_VALUE
+    return [
+      ...(adjustments.fixed?.map(adj => `${getAttributeAbbreviation(adj.id)} ${sign(adj.value)}`) ??
+        []),
+      ...(adjustments.selectable?.map(
+        adj =>
+          `${adj.list.length === totalAttributesCount ? translate("one attribute of your choice") : localeJoin(adj.list.map(getAttributeAbbreviation), "disjunction")} ${sign(adj.value)}`,
+      ) ?? []),
+    ].join("; ")
+  })
 
 const renderVariantValues = <T>(
   label: TranslationKeysWithoutParams,
@@ -198,7 +209,12 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
   "Race",
   {
     getInstanceById: GetInstanceById<
-      "Publication" | "Attribute" | "Advantage" | "Disadvantage" | "Culture"
+      | "Publication"
+      | "Attribute"
+      | "Advantage"
+      | "Disadvantage"
+      | "Culture"
+      | "DerivedCharacteristic"
     >
     countInstances: CountInstances<"Attribute">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"RaceVariant">
@@ -242,13 +258,13 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
                 value: entry.ap_value,
               }),
             },
-            renderBaseValueItem("Life Point Base Value", entry.base_values.life_points).run(env),
-            renderBaseValueItem("Spirit Base Value", entry.base_values.spirit).run(env),
-            renderBaseValueItem("Toughness Base Value", entry.base_values.toughness).run(env),
-            renderBaseValueItem("Movement Base Value", entry.base_values.movement).run(env),
-            renderAttributeAdjustmentsItem(totalAttributesCount, entry.attribute_adjustments).run(
-              env,
-            ),
+            ...renderBaseValues(entry.base_values).run(env),
+            renderVariantValues(
+              "Attribute Adjustments",
+              raceVariants,
+              v => v.attribute_adjustments,
+              attrs => renderAttributeAdjustmentsItem(totalAttributesCount, attrs).run(env),
+            ).run(env),
             renderVariantValues(
               "Common Cultures",
               raceVariants,
