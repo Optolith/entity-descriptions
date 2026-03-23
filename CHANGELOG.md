@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.11](https://github.com/Optolith/entity-descriptions/compare/v0.4.10...v0.4.11) (2026-03-23)
+
+
+### Features
+
+* support schema version 0.42.0 ([80b2eaa](https://github.com/Optolith/entity-descriptions/commit/80b2eaacbcf445cf3222c11b86c1be77b7d973d6))
+
+
+### Bug Fixes
+
+* activatable cost by level separator ([a0119ff](https://github.com/Optolith/entity-descriptions/commit/a0119ffdafcc6027801c0ff7b502c9c65af107dd))
+* render attribute prerequisite as abbreviation ([6f258b1](https://github.com/Optolith/entity-descriptions/commit/6f258b1f6f4fb1c88b09fe9fb2013b180d91fc4b))
+
 ## [0.4.10](https://github.com/Optolith/entity-descriptions/compare/v0.4.9...v0.4.10) (2026-03-17)
 
 ## [0.4.9](https://github.com/Optolith/entity-descriptions/compare/v0.4.8...v0.4.9) (2026-03-17)
