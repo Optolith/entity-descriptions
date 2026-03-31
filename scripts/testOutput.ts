@@ -6,7 +6,7 @@ import type { MessageValue } from "messageformat/functions"
 import { findPackageJSON } from "node:module"
 import { dirname, join } from "node:path"
 import { argv } from "node:process"
-import { styleText, type InspectColor } from "node:util"
+import { parseArgs, styleText, type InspectColor, type ParseArgsOptionsConfig } from "node:util"
 import { schema } from "optolith-database-schema"
 import { createCache, type IdMap as CacheIdMap } from "optolith-database-schema/cache"
 import { TSONDB } from "tsondb"
@@ -20,27 +20,26 @@ import {
   type TableEntityDescriptionSection,
 } from "../lib/index.js"
 
-const dataRootPath = join(
-  dirname(findPackageJSON(import.meta.url) ?? import.meta.filename),
-  "..",
-  "client",
-  "src",
-  "database",
-  "contents",
-  "data",
-)
+const options = {
+  data: {
+    type: "string",
+    short: "d",
+    default: join(
+      dirname(findPackageJSON(import.meta.url) ?? import.meta.filename),
+      "..",
+      "client",
+      "src",
+      "database",
+      "contents",
+      "data",
+    ),
+  },
+} satisfies ParseArgsOptionsConfig
 
-const db = await TSONDB.create({
-  schema,
-  dataRootPath,
-  locales: ["de-DE"],
-})
-
-const [localeId, entity, id] = argv.slice(2)
-
-if (!entity || !db.schema.isEntityName(entity) || !isSupportedEntity(entity)) {
-  throw new Error("Invalid entity name")
-}
+const {
+  values: { data: dataRootPath },
+  positionals: [localeId, entity, id],
+} = parseArgs({ args: argv.slice(2), options, allowPositionals: true })
 
 if (localeId === undefined) {
   throw new Error("No locale provided")
@@ -48,6 +47,16 @@ if (localeId === undefined) {
 
 if (!id) {
   throw new Error("No ID provided")
+}
+
+const db = await TSONDB.create({
+  schema,
+  dataRootPath,
+  locales: [localeId],
+})
+
+if (!entity || !db.schema.isEntityName(entity) || !isSupportedEntity(entity)) {
+  throw new Error("Invalid entity name")
 }
 
 const localeInstance = db.getInstanceOfEntityById("Locale", localeId)
