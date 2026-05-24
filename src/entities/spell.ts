@@ -16,7 +16,13 @@ import {
   type ArcaneDancerTraditionReference,
   type FamiliarsTrickPerformanceParameters,
   type FamiliarsTrickProperty,
+  type BannzeichenCost,
+  type BannzeichenCraftingTime,
+  type BannzeichenDuration,
+  type BannzeichenImprovementCost,
+  type BannzeichenOption,
   type MagicalRuneCost,
+  type SingleBannzeichenCost,
   type MagicalRuneCraftingTime,
   type MagicalRuneDuration,
   type MagicalRuneImprovementCost,
@@ -51,6 +57,7 @@ import {
   renderMagicalActionCost,
   renderModifiableOneTimeCost,
   renderNonModifiableOneTimeCost,
+  renderNonModifiableSustainedCost,
 } from "./partial/rated/activatable/cost.js"
 import {
   renderCheckResultBasedDuration,
@@ -67,7 +74,7 @@ import {
 } from "./partial/rated/activatable/index.js"
 import { ModifiableParameter } from "./partial/rated/activatable/nonModifiableSuffix.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { renderNonModifiableRange } from "./partial/rated/activatable/range.js"
+import { renderNonModifiableRange, renderRange } from "./partial/rated/activatable/range.js"
 import { Speed } from "./partial/rated/activatable/speed.js"
 import { renderTargetCategory } from "./partial/rated/activatable/targetCategory.js"
 import {
@@ -1331,6 +1338,112 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
 })
 
 /**
+ * Get a JSON representation of the rules text for a goblin ritual.
+ */
+export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
+  "GoblinRitual",
+  {
+    getInstanceById: GetInstanceById<
+      | "Publication"
+      | "Attribute"
+      | "SkillModificationLevel"
+      | "TargetCategory"
+      | "Property"
+      | "MagicalTradition"
+      | "DerivedCharacteristic"
+    >
+    idMap: IdMap
+  }
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+    localeJoin: locale.join,
+    speed: Speed.Slow,
+    energyUnit: "ArcaneEnergy",
+    responsiveTextSize: ResponsiveTextSize.Full,
+  } satisfies Partial<EnvMap>
+
+  const { castingTime, cost, range, duration } = (() => {
+    switch (entry.parameters.kind) {
+      case "OneTime": {
+        const parameters = entry.parameters.OneTime
+        const { value, unit } = parameters.casting_time
+        const renderedCastingTime =
+          unit.kind === "Actions"
+            ? renderFastSkillNonModifiableCastingTime({ actions: value }).run(env)
+            : renderSlowSkillNonModifiableCastingTime({ value, unit }).run(env)
+
+        return {
+          castingTime: renderedCastingTime,
+          cost: renderNonModifiableOneTimeCost(parameters.cost, false).run(env),
+          range: renderRange(parameters.range).run(env),
+          duration: renderOneTimeDuration(parameters.duration).run(env),
+        }
+      }
+      case "Sustained": {
+        const parameters = entry.parameters.Sustained
+        const { value, unit } = parameters.casting_time
+        const renderedCastingTime =
+          unit.kind === "Actions"
+            ? renderFastSkillNonModifiableCastingTime({ actions: value }).run(env)
+            : renderSlowSkillNonModifiableCastingTime({ value, unit }).run(env)
+
+        return {
+          castingTime: renderedCastingTime,
+          cost: renderNonModifiableSustainedCost(parameters.cost).run(env),
+          range: renderRange(parameters.range).run(env),
+          duration: undefined,
+        }
+      }
+      default:
+        return assertExhaustive(entry.parameters)
+    }
+  })()
+
+  return {
+    title: translation.name,
+    className: "goblin-ritual",
+    body: [
+      {
+        type: "definitionList",
+        items: [
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderEffect(translation.effect).run(env),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Ritual Time"),
+            castingTime,
+            translation.casting_time,
+          ),
+          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          duration === undefined
+            ? undefined
+            : combineGeneratedTextWithStaticTranslation(
+                translate("Duration"),
+                duration,
+                translation.duration,
+              ),
+          renderTargetCategory(entry.target).run(env),
+          renderProperty(entry.property).run(env),
+          renderImprovementCost(entry.improvement_cost).run(env),
+        ],
+      },
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})
+
+/**
  * Get a JSON representation of the rules text for a Zibilja ritual.
  */
 export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
@@ -1405,9 +1518,9 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
   }
 })
 
-const deriveValueGroupsFromMagicalRuneOptions = <T>(
-  options: Lazy<MagicalRuneOption[]>,
-  grouper: (option: MagicalRuneOption) => T,
+const deriveValueGroupsFromNamedOptions = <T, O extends { translations?: Record<string, { name: string } | undefined> }>(
+  options: Lazy<O[]>,
+  grouper: (option: O) => T,
   comparator: Compare<T>,
   printValue: (value: T) => string,
 ): StdReader<string, "t" | "tm" | "lc" | "lj"> =>
@@ -1429,31 +1542,194 @@ const deriveValueGroupsFromMagicalRuneOptions = <T>(
       ),
   ).then(formattedOptions => localeJoinR(formattedOptions, "disjunction"))
 
+const deriveValueGroupsFromMagicalRuneOptions = <T>(
+  options: Lazy<MagicalRuneOption[]>,
+  grouper: (option: MagicalRuneOption) => T,
+  comparator: Compare<T>,
+  printValue: (value: T) => string,
+): StdReader<string, "t" | "tm" | "lc" | "lj"> =>
+  deriveValueGroupsFromNamedOptions(options, grouper, comparator, printValue)
+
+const renderSingleEnergyCost = (cost: Pick<SingleBannzeichenCost, "value" | "translations">) =>
+  formatEnergyR(cost.value).thenW(text => appendNoteIfNeeded(cost.translations, text))
+
+const renderOptionDerivedEnergyCost = <O extends { translations?: Record<string, { name: string } | undefined>; cost?: { value: number } }>(
+  options: Lazy<O[]>,
+  grouper: (option: O) => number | undefined,
+): StdReader<string, "t" | "tm" | "lc" | "lj" | "eu"> =>
+  deriveValueGroupsFromNamedOptions(
+    options,
+    grouper,
+    compareNullish(numAsc),
+    num => num?.toFixed() ?? MISSING_VALUE,
+  ).thenW(formatEnergyR)
+
 const renderMagicalRuneCost = (options: Lazy<MagicalRuneOption[]>, cost: MagicalRuneCost) => {
   switch (cost.kind) {
     case "Single":
-      return formatEnergyR(cost.Single.value).thenW(text =>
-        appendNoteIfNeeded(cost.Single.translations, text),
-      )
+      return renderSingleEnergyCost(cost.Single)
     case "Disjunction":
-      return Reader.sequence(
-        cost.Disjunction.list.map(costItem =>
-          formatEnergyR(costItem.value).thenW(text =>
-            appendNoteIfNeeded(costItem.translations, text),
-          ),
-        ),
-      ).thenW(text => localeJoinR(text, "disjunction"))
+      return Reader.sequence(cost.Disjunction.list.map(renderSingleEnergyCost)).thenW(text =>
+        localeJoinR(text, "disjunction"),
+      )
     case "DerivedFromOption":
-      return deriveValueGroupsFromMagicalRuneOptions(
-        options,
-        option => option.cost?.value,
-        compareNullish(numAsc),
-        num => num?.toFixed() ?? MISSING_VALUE,
-      ).thenW(formatEnergyR)
+      return renderOptionDerivedEnergyCost(options, option => option.cost?.value)
     default:
       return assertExhaustive(cost)
   }
 }
+
+const renderBannzeichenCost = (options: Lazy<BannzeichenOption[]>, cost: BannzeichenCost) => {
+  switch (cost.kind) {
+    case "Single":
+      return renderSingleEnergyCost(cost.Single)
+    case "Disjunction":
+      return Reader.sequence(cost.Disjunction.list.map(renderSingleEnergyCost)).thenW(text =>
+        localeJoinR(text, "disjunction"),
+      )
+    case "DerivedFromOption":
+      return renderOptionDerivedEnergyCost(options, option => option.cost?.value)
+    default:
+      return assertExhaustive(cost)
+  }
+}
+
+
+const renderBannzeichenCraftingTimePart = (
+  craftingTime: BannzeichenCraftingTime,
+  unit: TimeSpanUnit,
+) =>
+  formatTimeSpanR(unit, craftingTime.value).thenW(text => {
+    if (craftingTime.per === undefined) {
+      return Reader.of(text)
+    }
+
+    const { translations } = craftingTime.per
+
+    return translateMapR(translations).thenW(translation => {
+      if (translation === undefined) {
+        return Reader.of(text)
+      }
+
+      return responsiveTextR(translation.countable).thenW(countable =>
+        responsiveTranslateR("{$cost} per {$countable}", "{$cost}/{$countable}", {
+          cost: text,
+          countable,
+        }),
+      )
+    })
+  })
+
+const renderBannzeichenCraftingTime = (craftingTime: BannzeichenCraftingTime): StdReader<string, "t" | "tm" | "rts"> =>
+  renderBannzeichenCraftingTimePart(craftingTime, "Actions").map2(
+    renderBannzeichenCraftingTimePart(craftingTime, "Days"),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
+const renderSlowFastCheckResultBasedDuration = (duration: BannzeichenDuration | MagicalRuneDuration) =>
+  renderCheckResultBasedDuration(duration.fast).map2(
+    renderCheckResultBasedDuration(duration.slow),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
+const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
+  renderSlowFastCheckResultBasedDuration(duration)
+
+
+
+const renderBannzeichenImprovementCost = (
+  options: Lazy<BannzeichenOption[]>,
+  improvementCost: BannzeichenImprovementCost,
+): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t" | "tm" | "lc" | "lj" | "eu"> => {
+  switch (improvementCost.kind) {
+    case "Constant":
+      return renderImprovementCost(improvementCost.Constant)
+    case "DerivedFromOption":
+      return deriveValueGroupsFromNamedOptions(
+        options,
+        option =>
+          option.improvement_cost === undefined
+            ? undefined
+            : renderImprovementCostValue(option.improvement_cost),
+        compareNullish((a, b) => a.localeCompare(b)),
+        selectedImprovementCost => selectedImprovementCost ?? MISSING_VALUE,
+      )
+        .then(value => translateR("Improvement Cost").map(label => ({ label, value })))
+    default:
+      return assertExhaustive(improvementCost)
+  }
+}
+
+/**
+ * Get a JSON representation of the rules text for a Bannzeichen.
+ */
+export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
+  "Bannzeichen",
+  {
+    getInstanceById: GetInstanceById<
+      "Publication" | "Attribute" | "Property" | "DerivedCharacteristic"
+    >
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"BannzeichenOption">
+  }
+>(({ getInstanceById, getChildInstancesForInstanceId }, locale, { id, content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+    localeCompare: locale.compare,
+    localeJoin: locale.join,
+    energyUnit: "ArcaneEnergy",
+    responsiveTextSize: ResponsiveTextSize.Full,
+  } satisfies Partial<EnvMap>
+
+  const options = Lazy.of(() =>
+    getChildInstancesForInstanceId("BannzeichenOption", id).map(item => item.content),
+  )
+
+  const cost = renderBannzeichenCost(options, entry.parameters.cost).run(env)
+  const craftingTime = renderBannzeichenCraftingTime(entry.parameters.crafting_time).run(env)
+  const duration = renderSlowFastCheckResultBasedDuration(entry.parameters.duration).run(env)
+
+  return {
+    title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
+    className: "bannzeichen",
+    body: [
+      {
+        type: "definitionList",
+        items: [
+          renderSkillCheck(entry.check).run(env),
+          renderEffect(translation.effect).run(env),
+          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Crafting Time (slow / fast)"),
+            craftingTime,
+            translation.crafting_time === undefined
+              ? undefined
+              : typeof (translation.crafting_time as any) === "string"
+              ? (translation.crafting_time as any)
+              : renderSplitMagicalRuneParameterTranslation(translation.crafting_time as any).run(env),
+          ),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Duration (slow / fast)"),
+            duration,
+            translation.duration,
+          ),
+          renderProperty(entry.property).run(env),
+          renderBannzeichenImprovementCost(options, entry.improvement_cost).run(env),
+        ],
+      },
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+})
 
 const renderSplitMagicalRuneParameterTranslation = (
   parameter: OldParameterBySpeed,
@@ -1500,12 +1776,6 @@ const renderMagicalRuneCraftingTime = (craftingTime: MagicalRuneCraftingTime) =>
     (fast, slow) => `${slow} / ${fast}`,
   )
 
-const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
-  renderCheckResultBasedDuration(duration.fast).map2(
-    renderCheckResultBasedDuration(duration.slow),
-    (fast, slow) => `${slow} / ${fast}`,
-  )
-
 const renderMagicalRuneImprovementCost = (
   options: Lazy<MagicalRuneOption[]>,
   improvementCost: MagicalRuneImprovementCost,
@@ -1523,7 +1793,6 @@ const renderMagicalRuneImprovementCost = (
         compareNullish((a, b) => a.localeCompare(b)),
         selectedImprovementCost => selectedImprovementCost ?? MISSING_VALUE,
       )
-        .thenW(formatEnergyR)
         .then(value => translateR("Improvement Cost").map(label => ({ label, value })))
     default:
       return assertExhaustive(improvementCost)
