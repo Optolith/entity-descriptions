@@ -1,6 +1,6 @@
 import { mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
-import type { ActivatableIdentifier, RatedIdentifier } from "optolith-database-schema/gen"
+import type { ActivatableIdentifier, RatedIdentifier } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { renderAlternativeNames, renderLaboratoryLevel } from "./partial/herbary.js"

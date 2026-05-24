@@ -1,6 +1,6 @@
+import type { Page } from "@optolith/database-schema/gen"
 import assert from "assert/strict"
 import { describe, it } from "node:test"
-import type { Page } from "optolith-database-schema/gen"
 import {
   fromRawPageRange,
   normalizePageRanges,

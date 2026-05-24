@@ -3,7 +3,6 @@ import { Dictionary } from "@elyukai/utils/dictionary"
 import { deepEqual } from "@elyukai/utils/equality"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import type {
   AbilityAdjustment,
   ElectiveSpellworks,
@@ -13,7 +12,8 @@ import type {
   RestrictedSpellworks,
   SpellworkAdjustment,
   SpellworkIdentifier,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   GetAllChildInstancesForParent,

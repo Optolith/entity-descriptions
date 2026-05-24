@@ -5,7 +5,7 @@ import type {
   EquipmentIdentifier,
   EquipmentPackageItem,
   LocaleMeasurementAdjustments,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate } from "../helpers/translate.js"

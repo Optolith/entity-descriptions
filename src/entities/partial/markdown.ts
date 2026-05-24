@@ -3,7 +3,7 @@
  */
 
 import { mapNullable } from "@elyukai/utils/nullable"
-import type { EntityMap } from "optolith-database-schema/gen"
+import type { EntityMap } from "@optolith/database-schema/gen"
 import { normalizedIdArgs, type IdArgsVariant } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, TranslateMap } from "../../helpers/translate.js"

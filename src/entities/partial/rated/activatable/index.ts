@@ -1,5 +1,4 @@
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import { diffWordsWithSpace } from "diff"
 import type {
   FastOneTimePerformanceParameters,
   FastSustainedPerformanceParameters,
@@ -7,7 +6,8 @@ import type {
   ResponsiveTextOptional,
   SlowOneTimePerformanceParameters,
   SlowSustainedPerformanceParameters,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { diffWordsWithSpace } from "diff"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import type { StdReader } from "../../reader.js"
 import { renderFastCastingTime, renderSlowCastingTime } from "./castingTime.js"

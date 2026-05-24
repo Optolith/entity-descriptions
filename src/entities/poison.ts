@@ -15,7 +15,7 @@ import type {
   PoisonSourceType,
   PoisonStart,
   RatedIdentifier,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"

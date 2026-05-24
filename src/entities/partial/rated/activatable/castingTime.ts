@@ -1,6 +1,4 @@
 import { Reader } from "@elyukai/utils/reader"
-import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CastingTime,
   CastingTimeDuringLovemaking,
@@ -12,7 +10,9 @@ import type {
   SkillModificationLevel_ID,
   SlowCastingTime,
   SlowSkillNonModifiableCastingTime,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "../../../../helpers/enums.js"
 import { getInstanceByIdFnR, modifiableBySpeedR, type StdReader } from "../../reader.js"
 import { formatCombinedTimeSpanR, formatTimeSpanR } from "../../units/timeSpan.js"

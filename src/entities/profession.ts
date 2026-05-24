@@ -53,7 +53,7 @@ import type {
   SkillSpecializationOptions,
   SkillWithEnhancementsIdentifier,
   VariantOptionAction,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {

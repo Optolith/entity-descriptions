@@ -5,7 +5,6 @@ import { compareNumber } from "@elyukai/utils/ordering"
 import { romanize } from "@elyukai/utils/roman"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import { mapNullable } from "@optolith/helpers/nullable"
 import type {
   AmmunitionishIdentifier,
   ArmorComplexity,
@@ -52,7 +51,8 @@ import type {
   SecondaryArmorTranslation,
   StructurePoints,
   Weight,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapNullable } from "@optolith/helpers/nullable"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { FormatNumber, LocaleCompare, LocaleJoin } from "../helpers/locale.js"

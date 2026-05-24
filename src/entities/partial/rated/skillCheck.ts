@@ -1,10 +1,10 @@
 import { Reader } from "@elyukai/utils/reader"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   SkillCheckPenalty as GeneralSkillCheckPenalty,
   MagicalRuneCombatTechniqueCheckPenalty,
   SkillCheck,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { type IdMap } from "../../../index.js"
 import {
   getInstanceByIdFnR,
@@ -22,18 +22,14 @@ import { MISSING_VALUE } from "../unknown.js"
  */
 export const renderSkillCheck = (
   check: SkillCheck,
-): StdReader<
-  { label: string; value: string },
-  "t" | "tm" | "ibi",
-  "Attribute"
-> =>
+): StdReader<{ label: string; value: string }, "t" | "tm" | "ibi", "Attribute"> =>
   Reader.asks(({ translate, translateMap, getInstanceById }) => ({
     label: translate("Check"),
     value: check
       .map(
         id =>
-          translateMap(getInstanceById("Attribute", id)?.translations)
-            ?.abbreviation ?? MISSING_VALUE,
+          translateMap(getInstanceById("Attribute", id)?.translations)?.abbreviation ??
+          MISSING_VALUE,
       )
       .join("/"),
   }))
@@ -84,13 +80,10 @@ const renderSkillCheckPenalty = (
         getToughnessTranslation().thenW(toughness =>
           responsiveThenR(
             () =>
-              translateR(
-                "{$first} or {$second}, depending on which value is higher",
-                {
-                  first: spirit,
-                  second: toughness,
-                },
-              ),
+              translateR("{$first} or {$second}, depending on which value is higher", {
+                first: spirit,
+                second: toughness,
+              }),
             () => Reader.of(`${spirit}/${toughness}`),
           ),
         ),
@@ -125,11 +118,9 @@ export const renderSkillCheckWithPenalty = (
     : renderSkillCheck(check).thenW(checkText =>
         renderSkillCheckPenalty(idMap, checkPenalty)
           .then(penaltyText =>
-            responsiveTranslateR(
-              " (modified by {$modifier})",
-              " (−{$modifier})",
-              { modifier: penaltyText },
-            ),
+            responsiveTranslateR(" (modified by {$modifier})", " (−{$modifier})", {
+              modifier: penaltyText,
+            }),
           )
           .map(penaltyText => ({
             ...checkText,

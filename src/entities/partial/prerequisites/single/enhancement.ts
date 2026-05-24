@@ -1,8 +1,8 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   EnhancementPrerequisite,
   SkillWithEnhancementsIdentifier,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import type { LocaleMap } from "../../../../helpers/translate.js"

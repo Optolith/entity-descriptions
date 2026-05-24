@@ -1,6 +1,4 @@
 import { Reader } from "@elyukai/utils/reader"
-import { mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CheckResultBasedRange,
   FixedRange,
@@ -8,7 +6,9 @@ import type {
   Range,
   RangeValue,
   SkillModificationLevel_ID,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapNullable } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
   getInstanceByIdFnR,
   modifiableBySpeedOptionalR,

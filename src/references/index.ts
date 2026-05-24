@@ -1,6 +1,6 @@
+import type { PublicationRefs } from "@optolith/database-schema/gen"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { PublicationRefs } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../helpers/locale.js"
 import { fromRawPageRange, normalizePageRanges, printPageRanges } from "./pageRange.js"

@@ -1,5 +1,5 @@
+import type { RatedSumPrerequisite } from "@optolith/database-schema/gen"
 import { isNotNullish } from "@optolith/helpers/nullable"
-import type { RatedSumPrerequisite } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { attributedName } from "../../markdown.js"

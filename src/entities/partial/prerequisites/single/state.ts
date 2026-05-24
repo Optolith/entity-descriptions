@@ -1,4 +1,4 @@
-import type { StatePrerequisite } from "optolith-database-schema/gen"
+import type { StatePrerequisite } from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { attributedNameFromSafeTranslation } from "../../markdown.js"

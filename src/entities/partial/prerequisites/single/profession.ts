@@ -1,4 +1,4 @@
-import type { ProfessionPrerequisite } from "optolith-database-schema/gen"
+import type { ProfessionPrerequisite } from "@optolith/database-schema/gen"
 import type { GetAllChildInstancesForParent } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { attributedInstance } from "../../markdown.js"

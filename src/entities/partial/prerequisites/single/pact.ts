@@ -1,6 +1,6 @@
+import type { PactPrerequisite } from "@optolith/database-schema/gen"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
-import type { PactPrerequisite } from "optolith-database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { MISSING_VALUE } from "../../unknown.js"

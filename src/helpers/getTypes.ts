@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import type * as Database from "optolith-database-schema/gen"
+import type * as Database from "@optolith/database-schema/gen"
 import type { IdArgsVariant } from "tsondb/schema/gen"
 
 export type GetInstanceById<in T extends Extract<keyof Database.EntityMap, string>> = <U extends T>(

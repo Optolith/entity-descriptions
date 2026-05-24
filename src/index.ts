@@ -1,15 +1,15 @@
-import type { TSONDBTypes } from "optolith-database-schema"
+import type { TSONDBTypes } from "@optolith/database-schema"
 import type {
   ResolvedNewSkillApplication,
   ResolvedSelectOption,
   ResolvedSkillUse,
-} from "optolith-database-schema/cache"
+} from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   Errata,
   PublicationRefs,
   Skill_ID,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import type { TSONDB } from "tsondb"
 import type { EntityDescriptionCreator } from "./creator.js"
 import { getActivatableEntityDescription } from "./entities/activatable.js"

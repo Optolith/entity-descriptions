@@ -1,6 +1,6 @@
+import type { AnimistPowerPrerequisite } from "@optolith/database-schema/gen"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
-import type { AnimistPowerPrerequisite } from "optolith-database-schema/gen"
 import { type GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"

@@ -1,6 +1,6 @@
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import type { EntityMap } from "optolith-database-schema/gen"
+import type { EntityMap } from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "./helpers/getTypes.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
 import type {

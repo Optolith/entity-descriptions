@@ -1,6 +1,4 @@
 import { Reader } from "@elyukai/utils/reader"
-import { mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CastingTimeDuringLovemaking,
   CheckResultBasedDuration,
@@ -10,7 +8,9 @@ import type {
   MusicDuration,
   PermanentDuration,
   ResponsiveText,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapNullable } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { LocaleMap } from "../../../../helpers/translate.js"
 import {
   responsiveTextR,

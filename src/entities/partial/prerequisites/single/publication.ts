@@ -1,4 +1,4 @@
-import type { PublicationPrerequisite } from "optolith-database-schema/gen"
+import type { PublicationPrerequisite } from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"

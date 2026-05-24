@@ -9,7 +9,7 @@ import type {
   ResponsiveTextOptional,
   SkillModificationLevel,
   SlowSkillModificationLevelConfig,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import type { IdArgsVariant } from "tsondb/schema/gen"
 import type {
   GetAllChildInstancesForParent,

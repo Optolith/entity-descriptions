@@ -1,6 +1,6 @@
+import type { MathOperation } from "@optolith/database-schema/gen"
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
-import type { MathOperation } from "optolith-database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import { renderMathOperation } from "../../../src/entities/partial/mathOperation.js"
 
@@ -25,10 +25,10 @@ describe("renderMathOperation", () => {
       "Multiplication",
       [MathOperation<number>, MathOperation<number>]
     >("Multiplication", [
-      Case<"Addition", [MathOperation<number>, MathOperation<number>]>(
-        "Addition",
-        [Case("Value", 1), Case("Value", 2)],
-      ),
+      Case<"Addition", [MathOperation<number>, MathOperation<number>]>("Addition", [
+        Case("Value", 1),
+        Case("Value", 2),
+      ]),
       Case("Value", 3),
     ])
     const result = renderMathOperation(operation, String)

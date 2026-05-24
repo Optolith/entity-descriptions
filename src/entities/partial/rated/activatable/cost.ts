@@ -1,7 +1,5 @@
 import { identity } from "@elyukai/utils/function"
 import { Reader } from "@elyukai/utils/reader"
-import { mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CheckResultBasedModifier,
   DurationUnitValue,
@@ -19,7 +17,9 @@ import type {
   SkillModificationLevel_ID,
   SustainedCost,
   SustainedCostMap,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapNullable } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { type LocaleMap } from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
 import {

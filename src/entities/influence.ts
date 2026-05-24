@@ -1,4 +1,4 @@
-import type { ActivatableIdentifier } from "optolith-database-schema/gen"
+import type { ActivatableIdentifier } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import { printInfluencePrerequisites } from "./partial/prerequisites/index.js"

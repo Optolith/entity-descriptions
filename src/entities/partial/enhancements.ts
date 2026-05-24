@@ -7,7 +7,7 @@ import type {
   ImprovementCost,
   RatedIdentifier,
   SkillWithEnhancementsIdentifier,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import type { RawEntityDescriptionSection } from "../../index.js"
 import { printEnhancementPrerequisites } from "./prerequisites/index.js"
 import {

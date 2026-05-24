@@ -1,10 +1,6 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { mapNullable } from "@elyukai/utils/nullable"
-import { numAsc } from "@optolith/helpers/compare"
-import { isNotNullish } from "@optolith/helpers/nullable"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   ActivatableIdentifier,
   AdvantageDisadvantagePrerequisites,
@@ -30,7 +26,11 @@ import type {
   PublicationPrerequisites,
   RatedIdentifier,
   SpellworkPrerequisites,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { numAsc } from "@optolith/helpers/compare"
+import { isNotNullish } from "@optolith/helpers/nullable"
+import { romanize } from "@optolith/helpers/roman"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../helpers/locale.js"
 import type { TranslateMap } from "../../../helpers/translate.js"

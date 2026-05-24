@@ -4,9 +4,6 @@ import { Lazy } from "@elyukai/utils/lazy"
 import { compareNullish } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
-import { numAsc, type Compare } from "@optolith/helpers/compare"
-import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import {
   type ActivatableIdentifier,
   type ActivatableSkillEffect,
@@ -27,7 +24,10 @@ import {
   type RatedIdentifier,
   type SpellworkTraditions,
   type Tribe_ID,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { numAsc, type Compare } from "@optolith/helpers/compare"
+import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"

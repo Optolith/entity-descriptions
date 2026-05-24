@@ -20,7 +20,7 @@ import type {
   Rarity,
   Skill_ID,
   Weighted,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
