@@ -1,10 +1,10 @@
-import { mapNullableDefault } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   CheckResultArithmetic,
   CheckResultBasedModifier,
   CheckResultValue,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapNullableDefault } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { divisionFormatter, multiplicationFormatter } from "../../mathOperation.js"
 import { translateR, type StdReader } from "../../reader.js"
 

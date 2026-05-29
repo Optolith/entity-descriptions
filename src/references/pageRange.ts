@@ -1,5 +1,5 @@
+import type { Page, PageRange as RawPageRange } from "@optolith/database-schema/gen"
 import { range } from "@optolith/helpers/array"
-import type { Page, PageRange as RawPageRange } from "optolith-database-schema/gen"
 import type { Translate } from "../helpers/translate.js"
 import { comparePage, equalsPage, printPage, succ } from "./page.js"
 

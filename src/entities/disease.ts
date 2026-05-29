@@ -7,7 +7,7 @@ import type {
   PublicationRefs,
   Reduceable,
   Resistance,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"

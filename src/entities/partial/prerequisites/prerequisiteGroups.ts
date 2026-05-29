@@ -1,4 +1,3 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   ActivatableIdentifier,
   AdvantageDisadvantagePrerequisiteGroup,
@@ -17,7 +16,8 @@ import type {
   PublicationPrerequisiteGroup,
   RatedIdentifier,
   SpellworkPrerequisiteGroup,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../helpers/locale.js"
 import type { PrerequisitePart } from "./part.js"

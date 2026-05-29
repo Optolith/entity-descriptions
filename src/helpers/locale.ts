@@ -1,5 +1,5 @@
+import type { LocaleMeasurementAdjustments } from "@optolith/database-schema/gen"
 import type { Compare } from "@optolith/helpers/compare"
-import type { LocaleMeasurementAdjustments } from "optolith-database-schema/gen"
 import type { Format, Translate, TranslateMap } from "./translate.js"
 
 /**

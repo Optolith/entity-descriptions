@@ -1,9 +1,9 @@
-import { isNotNullish } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   RatedMinimumNumberPrerequisite,
   RatedMinimumNumberPrerequisiteCombatTechniquesTargetGroup,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { isNotNullish } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { attributedName } from "../../markdown.js"

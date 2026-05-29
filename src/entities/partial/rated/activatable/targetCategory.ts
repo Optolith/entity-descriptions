@@ -1,11 +1,11 @@
 import { Reader } from "@elyukai/utils/reader"
-import { mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   AffectedTargetCategories,
   SpecificAffectedTargetCategoryIdentifier,
   TargetCategory_ID,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapNullable } from "@optolith/helpers/nullable"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import { getInstanceByIdFnR, translateMapR, translateR, type StdReader } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"

@@ -1,4 +1,4 @@
-import type { AnimalType_ID } from "optolith-database-schema/gen"
+import type { AnimalType_ID } from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleCompare } from "../../helpers/locale.js"
 import type { Translate, TranslateMap } from "../../helpers/translate.js"
@@ -21,9 +21,8 @@ export const renderAnimalTypesSection = (
       : animalTypes
           .map(
             animalTypeId =>
-              translateMap(
-                getInstanceById("AnimalType", animalTypeId)?.translations,
-              )?.name ?? MISSING_VALUE,
+              translateMap(getInstanceById("AnimalType", animalTypeId)?.translations)?.name ??
+              MISSING_VALUE,
           )
           .toSorted(localeCompare)
           .join(", "),

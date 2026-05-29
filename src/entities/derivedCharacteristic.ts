@@ -1,9 +1,9 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   AttributeTranslation,
   DerivedCharacteristicBase,
   DerivedCharacteristicTranslation,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"

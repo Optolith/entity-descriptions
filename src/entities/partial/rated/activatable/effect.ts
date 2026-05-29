@@ -1,6 +1,6 @@
+import type { ActivatableSkillEffect } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { ActivatableSkillEffect } from "optolith-database-schema/gen"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
 import { translateFnR, type StdReader } from "../../reader.js"
 

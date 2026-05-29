@@ -3,14 +3,14 @@ import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual } from "@elyukai/utils/equality"
 import { identity, on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
-import { mapObject } from "@optolith/helpers/object"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
   RequirableSelectOptionIdentifier,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { mapObject } from "@optolith/helpers/object"
+import { romanize } from "@optolith/helpers/roman"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"

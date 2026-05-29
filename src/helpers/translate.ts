@@ -1,5 +1,5 @@
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import type { Locale } from "optolith-database-schema/gen"
+import type { Locale } from "@optolith/database-schema/gen"
 import { ResponsiveTextSize } from "../entities/partial/responsiveText.js"
 
 /**

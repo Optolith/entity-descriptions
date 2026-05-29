@@ -1,5 +1,5 @@
+import type { BinarySex, SexPrerequisite } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { BinarySex, SexPrerequisite } from "optolith-database-schema/gen"
 import type { Translate } from "../../../../helpers/translate.js"
 import type { PrerequisitePart } from "../part.js"
 

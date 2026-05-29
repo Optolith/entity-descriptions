@@ -1,13 +1,13 @@
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
-} from "optolith-database-schema/cache"
+} from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
   ActivatablePrerequisite,
   RequirableSelectOptionIdentifier,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import type { LocaleMap, Translate } from "../../../../helpers/translate.js"

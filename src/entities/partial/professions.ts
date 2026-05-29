@@ -1,13 +1,7 @@
 import { reduceWhile } from "@elyukai/utils/array/reductions"
 import { isNotNullish } from "@elyukai/utils/nullable"
-import type {
-  Profession_ID,
-  ProfessionPackage,
-} from "optolith-database-schema/gen"
-import type {
-  GetAllChildInstancesForParent,
-  GetAllInstances,
-} from "../../helpers/getTypes.js"
+import type { Profession_ID, ProfessionPackage } from "@optolith/database-schema/gen"
+import type { GetAllChildInstancesForParent, GetAllInstances } from "../../helpers/getTypes.js"
 import type { TranslateMap } from "../../helpers/translate.js"
 import type { IdMap } from "../../index.js"
 
@@ -37,8 +31,7 @@ export const getBaseProfessionPackageForCurriculum = (
     (_acc: { id: string; content: ProfessionPackage } | undefined, version) =>
       getChildInstancesForInstanceId("ProfessionPackage", version.id).find(
         professionPackage =>
-          professionPackage.content.experience_level ===
-          idMap.ExperienceLevel.Experienced,
+          professionPackage.content.experience_level === idMap.ExperienceLevel.Experienced,
       ),
     isNotNullish,
     undefined,
@@ -54,6 +47,5 @@ export const getProfessionName = (
   professionId: Profession_ID,
 ): string | undefined =>
   translateMap(
-    getChildInstancesForInstanceId("ProfessionVersion", professionId)[0]
-      ?.content.translations,
+    getChildInstancesForInstanceId("ProfessionVersion", professionId)[0]?.content.translations,
   )?.name.default

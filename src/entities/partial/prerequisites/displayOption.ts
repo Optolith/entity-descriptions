@@ -1,5 +1,5 @@
+import type { DisplayOption } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { DisplayOption } from "optolith-database-schema/gen"
 import type { TranslateMap } from "../../../helpers/translate.js"
 import { MISSING_VALUE } from "../unknown.js"
 import type { PrerequisitePart } from "./part.js"

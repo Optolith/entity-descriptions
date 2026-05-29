@@ -3,12 +3,7 @@ import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
-import { numAsc } from "@optolith/helpers/compare"
-import { sign } from "@optolith/helpers/math"
-import { mapNullable, mapNullableDefault } from "@optolith/helpers/nullable"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { ResolvedSelectOption } from "optolith-database-schema/cache"
+import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   AdvancedSpecialAbility,
@@ -40,7 +35,12 @@ import type {
   SelectOptions,
   SpecialRule,
   Volume,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { numAsc } from "@optolith/helpers/compare"
+import { sign } from "@optolith/helpers/math"
+import { mapNullable, mapNullableDefault } from "@optolith/helpers/nullable"
+import { romanize } from "@optolith/helpers/roman"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"

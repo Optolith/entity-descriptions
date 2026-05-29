@@ -13,7 +13,7 @@ import type {
   Culture_ID,
   RaceVariant,
   RaceVariantTranslation,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   CountInstances,

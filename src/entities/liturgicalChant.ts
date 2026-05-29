@@ -1,7 +1,7 @@
+import { type LiturgyTradition, type RatedIdentifier } from "@optolith/database-schema/gen"
 import type { Compare } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { type LiturgyTradition, type RatedIdentifier } from "optolith-database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"

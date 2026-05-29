@@ -1,9 +1,9 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   FastSkillModificationLevelConfig,
   SkillModificationLevel,
   SlowSkillModificationLevelConfig,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 
 /**
  * The speed of an activatable skill.

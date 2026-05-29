@@ -1,7 +1,7 @@
 import { mapNullableDefault } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
+import type { MapStyle, ResponsiveTextOptional } from "@optolith/database-schema/gen"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
-import type { MapStyle, ResponsiveTextOptional } from "optolith-database-schema/gen"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import { type StdReader } from "./reader.js"
 import { getResponsiveTextOptional } from "./responsiveText.js"

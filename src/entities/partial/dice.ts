@@ -1,4 +1,4 @@
-import type { Dice } from "optolith-database-schema/gen"
+import type { Dice } from "@optolith/database-schema/gen"
 import type { Translate } from "../../helpers/translate.js"
 import { additionFormatter, subtractionFormatter } from "./mathOperation.js"
 
@@ -11,11 +11,7 @@ export const renderDice = (translate: Translate, dice: Dice) =>
 /**
  * Renders a dice expression with an additional flat modifier, like "2D6+3" or "2D6-1".
  */
-export const renderDiceAndFlat = (
-  translate: Translate,
-  dice: Dice,
-  flat: number | undefined,
-) =>
+export const renderDiceAndFlat = (translate: Translate, dice: Dice, flat: number | undefined) =>
   flat === undefined || flat === 0
     ? renderDice(translate, dice)
     : flat > 0

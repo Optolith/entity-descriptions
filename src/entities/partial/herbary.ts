@@ -1,6 +1,6 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import type { AlternativeName, LaboratoryLevel, Resistance } from "optolith-database-schema/gen"
+import type { AlternativeName, LaboratoryLevel, Resistance } from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import type { IdMap } from "../../index.js"

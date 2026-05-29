@@ -1,8 +1,8 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   BlessedTraditionPrerequisite,
   BlessedTraditionPrerequisiteRestriction,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"

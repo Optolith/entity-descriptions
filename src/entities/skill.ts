@@ -1,7 +1,7 @@
+import type { ResolvedNewSkillApplication, ResolvedSkillUse } from "@optolith/database-schema/cache"
+import type { ActivatableIdentifier } from "@optolith/database-schema/gen"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { ResolvedNewSkillApplication, ResolvedSkillUse } from "optolith-database-schema/cache"
-import type { ActivatableIdentifier } from "optolith-database-schema/gen"
 import { fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {

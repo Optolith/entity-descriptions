@@ -1,6 +1,6 @@
+import type { Page } from "@optolith/database-schema/gen"
 import type { Compare } from "@optolith/helpers/compare"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { Page } from "optolith-database-schema/gen"
 import type { Translate } from "../helpers/translate.js"
 
 /**

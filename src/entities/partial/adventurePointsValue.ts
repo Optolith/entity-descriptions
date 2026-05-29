@@ -1,17 +1,17 @@
 import { on } from "@elyukai/utils/function"
-import { unique } from "@optolith/helpers/array"
-import { deepEqual, numAsc } from "@optolith/helpers/compare"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
-} from "optolith-database-schema/cache"
+} from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   AdventurePointsValue,
   SelectOptionsAdventurePointsValue,
-} from "optolith-database-schema/gen"
+} from "@optolith/database-schema/gen"
+import { unique } from "@optolith/helpers/array"
+import { deepEqual, numAsc } from "@optolith/helpers/compare"
+import { romanize } from "@optolith/helpers/roman"
+import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetAllInstances } from "../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../helpers/locale.js"
 import type { BaseActivatable, BaseActivatableTranslation } from "../activatable.js"
