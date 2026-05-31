@@ -410,10 +410,12 @@ const renderSkillsOption = (
               )
                 .thenW(localeSortR)
                 .thenW(list =>
-                  translateR("{$apValue} AP to distribute among the following skills: {$list}", {
-                    apValue: skillsOption.ap_value,
-                    list: list.join(", "),
-                  }),
+                  translateR("maximum SR per skill: {$maxSR}", { maxSR: 8 }).then(maxSRText =>
+                    translateR("{$apValue} AP to distribute among the following skills: {$list}", {
+                      apValue: skillsOption.ap_value,
+                      list: list.join(", ") + parensIf(maxSRText),
+                    }),
+                  ),
                 )
       }).map(list => list.join(" / "))
 
