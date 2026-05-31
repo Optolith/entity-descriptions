@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.12](https://github.com/Optolith/entity-descriptions/compare/v0.4.11...v0.4.12) (2026-05-31)
+
+
+### Features
+
+* add ap and fix minor issues to/with lesson packages ([cf4d0ec](https://github.com/Optolith/entity-descriptions/commit/cf4d0ec0cc615cbd5390919dff79cfe3c409d190))
+* adjust race for schema change and improve commonness rating display ([480f004](https://github.com/Optolith/entity-descriptions/commit/480f004e6e82995c2d651702521a289584360c76))
+* generate favored skills and primary attribute tradition rules ([9bee3c1](https://github.com/Optolith/entity-descriptions/commit/9bee3c1728d11f196f09bfd93afb03033564aa34))
+
+
+### Bug Fixes
+
+* add maximum skill rating appendix ([7be6362](https://github.com/Optolith/entity-descriptions/commit/7be63623b6bbf7fe3f307f17a41efd72b119fd1d))
+* equipment translation type mismatch ([a594c7c](https://github.com/Optolith/entity-descriptions/commit/a594c7cc5f44c7b52c3886dbce10ba37ed8d5f76))
+
 ## [0.4.11](https://github.com/Optolith/entity-descriptions/compare/v0.4.10...v0.4.11) (2026-03-23)
 
 
