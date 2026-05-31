@@ -1,8 +1,8 @@
 import { anySameIndices } from "@elyukai/utils/array/filters"
-import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
-import { isNotNullish } from "@elyukai/utils/nullable"
+import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
@@ -25,9 +25,13 @@ import type { RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import {
   renderCommonnessRatedAdvantagesAndDisadvantages,
   renderCommonnessRatedAdvantagesOrDisadvantages,
-  renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
-import { attributedCustomName, attributedName } from "./partial/markdown.js"
+import {
+  attributedCustomName,
+  attributedName,
+  attributedNameFromTranslation,
+} from "./partial/markdown.js"
+import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import {
   getInstanceByIdR,
   translateMapR,
@@ -57,7 +61,13 @@ const renderBaseValues = (
             derivedCharacteristic?.position ?? 0,
             {
               label: translate("{$derivedCharacteristic} Base Value", {
-                derivedCharacteristic: translation?.name ?? MISSING_VALUE,
+                derivedCharacteristic:
+                  attributedNameFromTranslation(
+                    translation,
+                    "base-values",
+                    "DerivedCharacteristic",
+                    id,
+                  ) ?? MISSING_VALUE,
               }),
               value: value < 0 ? sign(value) : value.toFixed(),
             },
@@ -94,16 +104,18 @@ const renderVariantValues = <T>(
   label: TranslationKeysWithoutParams,
   variants: RaceVariant[],
   selector: (variant: RaceVariant) => T,
-  renderValue: (value: T) => string,
+  renderValue: (value: T, isSplit: boolean) => string | undefined,
   translationSelector?: (variantTranslation: RaceVariantTranslation) => string | undefined,
-): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t" | "tm" | "lc" | "lj"> =>
+  allowEmpty = false,
+  textPrefix?: string,
+): StdReader<RawDefinitionListEntityDescriptionSectionItem | undefined, "t" | "tm" | "lc" | "lj"> =>
   Reader.asks(
     ({
       translate,
       translateMap,
       localeCompare,
       localeJoin,
-    }): RawDefinitionListEntityDescriptionSectionItem => {
+    }): RawDefinitionListEntityDescriptionSectionItem | undefined => {
       const values = variants.map(variant => {
         const translation = translateMap(variant.translations)
         return {
@@ -116,49 +128,68 @@ const renderVariantValues = <T>(
         }
       })
 
-      const sameValues = anySameIndices(
-        values,
-        on(value => [value.value, value.valueTranslation], deepEqual),
-      )
+      if (isNotEmpty(values)) {
+        const sameValues = anySameIndices(
+          values,
+          on(value => [value.value, value.valueTranslation], deepEqual),
+        )
 
-      if (
-        isNotEmpty(sameValues) &&
-        sameValues.length === 1 &&
-        sameValues[0].length === values.length
-      ) {
-        return {
-          label: translate(label),
-          value:
-            values[0] === undefined
-              ? MISSING_VALUE
-              : (values[0].valueTranslation ?? renderValue(values[0].value)),
+        if (
+          values.length === 1 ||
+          (isNotEmpty(sameValues) &&
+            sameValues.length === 1 &&
+            sameValues[0].length === values.length)
+        ) {
+          return values[0].value === undefined &&
+            values[0].valueTranslation === undefined &&
+            allowEmpty
+            ? undefined
+            : mapNullable(
+                /* values[0].valueTranslation ?? */ renderValue(values[0].value, false),
+                renderedValue => ({
+                  label: translate(label),
+                  value: (textPrefix ?? "") + renderedValue,
+                }),
+              )
+        } else {
+          return {
+            label: translate(label),
+            value: [
+              ...(textPrefix !== undefined ? [{ type: "plain" as const, text: textPrefix }] : []),
+              {
+                type: "definitionList",
+                style: "nested",
+                items: Map.groupBy(
+                  values
+                    .toSorted(on(item => item.name, localeCompare))
+                    .map(value =>
+                      mapNullable(
+                        /* value.valueTranslation ?? */ renderValue(value.value, true),
+                        renderedValue => ({
+                          label: value.name,
+                          value: renderedValue,
+                        }),
+                      ),
+                    )
+                    .filter(isNotNullish),
+                  item => item.value,
+                )
+                  .entries()
+                  .map(([value, items]) => ({
+                    label: localeJoin(
+                      items.map(item => item.label),
+                      "conjunction",
+                    ),
+                    value,
+                  }))
+                  .toArray(),
+              },
+            ],
+          }
         }
       } else {
-        return {
-          label: translate(label),
-          value: [
-            {
-              type: "definitionList",
-              style: "nested",
-              items: Map.groupBy(
-                values.toSorted(on(item => item.name, localeCompare)).map(value => ({
-                  label: value.name,
-                  value: value.valueTranslation ?? renderValue(value.value),
-                })),
-                item => item.value,
-              )
-                .entries()
-                .map(([value, items]) => ({
-                  label: localeJoin(
-                    items.map(item => item.label),
-                    "conjunction",
-                  ),
-                  value,
-                }))
-                .toArray(),
-            },
-          ],
-        }
+        // at least one value and thus one variant is required
+        return undefined
       }
     },
   )
@@ -218,10 +249,16 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
     >
     countInstances: CountInstances<"Attribute">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"RaceVariant">
+    getResolvedSelectOptionById: GetResolvedSelectOptionById
   }
 >(
   (
-    { getInstanceById, countInstances, getChildInstancesForInstanceId },
+    {
+      getInstanceById,
+      countInstances,
+      getChildInstancesForInstanceId,
+      getResolvedSelectOptionById,
+    },
     { translate, translateMap, join: localeJoin, compare: localeCompare },
     { id, content: entry },
   ) => {
@@ -242,6 +279,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
       translateMap,
       localeJoin,
       localeCompare,
+      getResolvedSelectOptionById,
       getInstanceById,
     } satisfies Partial<EnvMap>
 
@@ -271,58 +309,101 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
               v => v.common_cultures,
               cultures => renderCommonCultures(cultures).run(env),
             ).run(env),
-            entry.automatic_advantages === undefined
-              ? undefined
-              : renderValueWithPossibleTranslation(
-                  "Automatic Advantages",
-                  entry.automatic_advantages,
-                  v => renderAutomaticAdvantagesOrDisadvantages("Advantage", v).run(env),
-                  translation.automatic_advantages,
-                ).run(env),
-            entry.automatic_disadvantages === undefined
-              ? undefined
-              : renderValueWithPossibleTranslation(
-                  "Automatic Disadvantages",
-                  entry.automatic_disadvantages,
-                  v => renderAutomaticAdvantagesOrDisadvantages("Disadvantage", v).run(env),
-                  translation.automatic_disadvantages,
-                ).run(env),
-            entry.strongly_recommended_advantages === undefined &&
-            entry.strongly_recommended_disadvantages === undefined
-              ? undefined
-              : {
-                  label: translate("Strongly recommended Advantages and Disadvantages"),
-                  value: `${translate("The following advantages and disadvantages distinguish Aventurian {$race}. You should choose these advantages and disadvantages. If you don’t want to take them, talk to your GM.", { race: translation.name })} ${renderCommonnessRatedAdvantagesAndDisadvantages(
-                    entry.strongly_recommended_advantages,
-                    entry.strongly_recommended_disadvantages,
-                  ).run(env)}`,
-                },
+            renderVariantValues(
+              "Automatic Advantages",
+              raceVariants,
+              v => v.automatic_advantages,
+              advs => renderAutomaticAdvantagesOrDisadvantages("Advantage", advs).run(env),
+              vt => vt.automatic_advantages,
+              true,
+            ).run(env),
+            renderVariantValues(
+              "Automatic Disadvantages",
+              raceVariants,
+              v => v.automatic_disadvantages,
+              advs => renderAutomaticAdvantagesOrDisadvantages("Disadvantage", advs).run(env),
+              vt => vt.automatic_disadvantages,
+              true,
+            ).run(env),
+            renderVariantValues(
+              "Strongly recommended Advantages and Disadvantages",
+              raceVariants,
+              v =>
+                v.strongly_recommended_advantages === undefined &&
+                v.strongly_recommended_disadvantages === undefined
+                  ? undefined
+                  : ([
+                      v.strongly_recommended_advantages,
+                      v.strongly_recommended_disadvantages,
+                    ] as const),
+              (advsDisadvs, isSplit) =>
+                advsDisadvs === undefined
+                  ? isSplit
+                    ? undefined
+                    : translate("none")
+                  : renderCommonnessRatedAdvantagesAndDisadvantages(
+                      ...advsDisadvs,
+                      isSplit ? undefined : translate("none"),
+                    ).run(env),
+              vt =>
+                ensureNonEmpty(
+                  [
+                    vt.strongly_recommended_advantages,
+                    vt.strongly_recommended_disadvantages,
+                  ].filter(isNotNullish),
+                )?.join("; "),
+              true,
+              `${translate(
+                "The following advantages and disadvantages distinguish Aventurian {$race}. You should choose these advantages and disadvantages. If you don’t want to take them, talk to your GM.",
+                { race: translation.name },
+              )} `,
+            ).run(env),
             renderVariantValues(
               "Common Advantages",
               raceVariants,
               v => v.common_advantages,
-              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", advs).run(env),
+              (advs, isSplit) =>
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Advantage",
+                  advs,
+                  isSplit ? undefined : translate("none"),
+                ).run(env),
               vt => vt.common_advantages,
             ).run(env),
             renderVariantValues(
               "Common Disadvantages",
               raceVariants,
               v => v.common_disadvantages,
-              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", advs).run(env),
+              (advs, isSplit) =>
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  advs,
+                  isSplit ? undefined : translate("none"),
+                ).run(env),
               vt => vt.common_disadvantages,
             ).run(env),
             renderVariantValues(
               "Uncommon Advantages",
               raceVariants,
               v => v.uncommon_advantages,
-              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", advs).run(env),
+              (advs, isSplit) =>
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Advantage",
+                  advs,
+                  isSplit ? undefined : translate("none"),
+                ).run(env),
               vt => vt.uncommon_advantages,
             ).run(env),
             renderVariantValues(
               "Uncommon Disadvantages",
               raceVariants,
               v => v.uncommon_disadvantages,
-              advs => renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", advs).run(env),
+              (advs, isSplit) =>
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  advs,
+                  isSplit ? undefined : translate("none"),
+                ).run(env),
               vt => vt.uncommon_disadvantages,
             ).run(env),
           ],

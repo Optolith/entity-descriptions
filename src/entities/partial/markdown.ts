@@ -83,13 +83,15 @@ export const attributedCustomName = <
   translateMap: TranslateMap,
   getInstanceById: GetInstanceById<E>,
   context: string,
-  fn: (translation: EntityMap[E]["translations"][string]) => string,
+  fn: (translation: EntityMap[E]["translations"][string], instance: EntityMap[E]) => string,
   ...args: IdArgsVariant<EntityMap, E>
 ) => {
   const id = normalizedIdArgs(args)
-  return mapNullable(translateMap<object>(getInstanceById(...args)?.translations), translation =>
+  const instance = getInstanceById(...args)
+  return mapNullable(translateMap<object>(instance?.translations), translation =>
     attributedInstance(
-      fn(translation as EntityMap[E]["translations"][string]),
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- instance must be non-nullish if translation is non-nullish
+      fn(translation as EntityMap[E]["translations"][string], instance!),
       id.entityName,
       id.id,
       { context: `"${context}"` },

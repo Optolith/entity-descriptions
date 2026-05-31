@@ -1598,28 +1598,44 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
               "Suggested Advantages",
               entry.suggested_advantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Advantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.suggested_advantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Suggested Disadvantages",
               entry.suggested_disadvantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.suggested_disadvantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Unsuitable Advantages",
               entry.unsuitable_advantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Advantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.unsuitable_advantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Unsuitable Disadvantages",
               entry.unsuitable_disadvantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.unsuitable_disadvantages,
             ).run(env),
             renderProfessionVariants(professionPackages)

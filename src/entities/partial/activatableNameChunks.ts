@@ -22,7 +22,7 @@ export type ActivatableNameComponents = {
   id: ActivatableIdentifier
   base: ActivatableNameChunk
   options: ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined
-  level: number | undefined
+  level: number | [start: number, end: number] | undefined
   nameBuilderRules: Required<ActivatableNameBuilderRules>
 }
 
@@ -33,7 +33,7 @@ export type CombinedActivatableNameComponents = {
   id: ActivatableIdentifier
   base: ActivatableNameChunk
   options: (ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk])[]
-  level: number | undefined
+  level: number | [start: number, end: number] | undefined
   nameBuilderRules: Required<ActivatableNameBuilderRules>
 }
 
@@ -109,13 +109,15 @@ const zipChunks = (
 const renderLevel = (
   formatAsPrerequisite: boolean,
   id: ActivatableIdentifier,
-  level: number | undefined,
+  level: number | [start: number, end: number] | undefined,
 ) =>
   level === undefined
     ? undefined
-    : formatAsPrerequisite || id.kind === "Advantage" || id.kind === "Disadvantage" || level === 1
-      ? romanize(level)
-      : `I–${romanize(level)}`
+    : Array.isArray(level)
+      ? `${romanize(level[0])}–${romanize(level[1])}`
+      : formatAsPrerequisite || id.kind === "Advantage" || id.kind === "Disadvantage" || level === 1
+        ? romanize(level)
+        : `I–${romanize(level)}`
 
 /**
  * Converts a name chunk to a displayable string.
@@ -143,7 +145,9 @@ export const renderActivatableNameComponentsWithoutLevel = (
 ): [beforeLevel: string, afterLevel?: string] => {
   const { levelPlacement, useParenthesis } = components.nameBuilderRules
 
-  const wrapParens: (text: string) => string = useParenthesis ? str => `(${str})` : identity
+  const wrapParens: (text: string) => string | undefined = useParenthesis
+    ? str => (str.length > 0 ? `(${str})` : undefined)
+    : identity
 
   const base = renderActivatableNameChunk(translateMap, components.base)
   const options =
@@ -216,6 +220,10 @@ export const renderCombinedActivatableNameComponents = (
     translateMap,
     {
       ...components,
+      nameBuilderRules: {
+        ...components.nameBuilderRules,
+        useParenthesis: true,
+      },
       options: join(
         components.options.map(chunk =>
           renderActivatableNameChunk(translateMap, normalizeChunks(chunk)),
@@ -443,7 +451,10 @@ export const renderActivatableNameComponentsCombinedIfPossible = (
 //   )(staticData)
 // }
 
-const renderOptions = (
+/**
+ * Renders the options of an activatable entry, combining them if necessary.
+ */
+export const renderNameComponentsOptions = (
   displayedInProfession: boolean,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
@@ -468,6 +479,18 @@ const renderOptions = (
 }
 
 /**
+ * Provides default values for name builder rules and ensures that all properties are present.
+ */
+export const makeNameBuilderRulesWithDefaults = (
+  input: ActivatableNameBuilderRules | undefined,
+): Required<ActivatableNameBuilderRules> => ({
+  levelPlacement: input?.levelPlacement ?? {
+    kind: "AfterOptions",
+  },
+  useParenthesis: input?.useParenthesis ?? true,
+})
+
+/**
  * Gets the name components for an activatable entry.
  */
 export const getNameComponents = <T>(
@@ -481,15 +504,11 @@ export const getNameComponents = <T>(
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   displayedInProfession: boolean,
 ): ActivatableNameComponents => {
-  const nameBuilderRulesWithDefaults: Required<ActivatableNameBuilderRules> = {
-    levelPlacement: nameBuilderRules?.levelPlacement ?? {
-      kind: "AfterOptions",
-    },
-    useParenthesis: nameBuilderRules?.useParenthesis ?? true,
-  }
+  const nameBuilderRulesWithDefaults: Required<ActivatableNameBuilderRules> =
+    makeNameBuilderRulesWithDefaults(nameBuilderRules)
 
   const renderedBase = mapObject(translations, getBaseName)
-  const renderedOptions = renderOptions(
+  const renderedOptions = renderNameComponentsOptions(
     displayedInProfession,
     getResolvedSelectOptionById,
     id,

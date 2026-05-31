@@ -16,6 +16,7 @@ import type {
   CommonProfessions,
   CulturalPackageItem,
   MagicalTraditionConstraint,
+  Profession_ID,
   ProfessionConstraint,
   Rarity,
   Skill_ID,
@@ -23,7 +24,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
-import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
+import type { TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
@@ -34,10 +35,29 @@ import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
+import {
+  attributedCustomName,
+  attributedName,
+  attributedNameFromSafeTranslation,
+} from "./partial/markdown.js"
+import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { translateR, type EnvMap, type StdEnv, type StdReader } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
+
+const getAttributedProfessionName = (
+  translateMap: TranslateMap,
+  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
+  professionId: Profession_ID,
+  context: string,
+): string | undefined => {
+  const baseName = getProfessionName(translateMap, getChildInstancesForInstanceId, professionId)
+  if (baseName === undefined) {
+    return undefined
+  }
+  return attributedNameFromSafeTranslation({ name: baseName }, context, "Profession", professionId)
+}
 
 const renderListOperation = (
   operation: CommonProfessionConstraintsOperation,
@@ -151,7 +171,12 @@ const renderProfessionConstraint = (
   constraint: ProfessionConstraint,
 ) =>
   Reader.asks(({ translateMap }: StdEnv<"tm">) =>
-    getProfessionName(translateMap, getChildInstancesForInstanceId, constraint.id),
+    getAttributedProfessionName(
+      translateMap,
+      getChildInstancesForInstanceId,
+      constraint.id,
+      "common-professions",
+    ),
   ).thenW(baseName =>
     baseName === undefined
       ? Reader.of(undefined)
@@ -176,21 +201,29 @@ const renderTraditionConstraint = <E extends "MagicalTradition" | "BlessedTradit
   entity: E,
   constraint: MagicalTraditionConstraint | BlessedTraditionConstraint,
 ): StdReader<string | undefined, "t" | "tm" | "lc" | "ibi", E> =>
-  Reader.asks(({ translateMap, getInstanceById }: StdEnv<"tm" | "ibi", E>) => {
-    const translation = translateMap<{
-      name: string
-      nameOfBlessedOnes?: string
-    }>(getInstanceById(entity, constraint.id)?.translations)
-
-    return translation?.nameOfBlessedOnes ?? translation?.name
-  }).thenW(baseName =>
+  Reader.asks(({ translateMap, getInstanceById }: StdEnv<"tm" | "ibi", E>) =>
+    attributedCustomName(
+      translateMap,
+      getInstanceById,
+      "common-professions",
+      (translation: { name: string; nameOfBlessedOnes?: string }) =>
+        translation.nameOfBlessedOnes ?? translation.name,
+      entity,
+      constraint.id,
+    ),
+  ).thenW(baseName =>
     baseName === undefined
       ? Reader.of(undefined)
       : Reader.sequence([
           renderRarity(constraint.rarity),
           Reader.asks(({ translateMap }: StdEnv<"tm">) =>
             renderWeighted(constraint.weighted_professions, profId =>
-              getProfessionName(translateMap, getChildInstancesForInstanceId, profId),
+              getAttributedProfessionName(
+                translateMap,
+                getChildInstancesForInstanceId,
+                profId,
+                "common-professions",
+              ),
             ),
           ).thenW(identity),
         ]).map(
@@ -210,7 +243,12 @@ const renderCommonProfessions = (
     case "Plain":
       return renderCommonProfessionConstraints(commonProfessions.Plain, profId =>
         Reader.asks(({ translateMap }) =>
-          getProfessionName(translateMap, getChildInstancesForInstanceId, profId),
+          getAttributedProfessionName(
+            translateMap,
+            getChildInstancesForInstanceId,
+            profId,
+            "common-professions",
+          ),
         ),
       )
     case "Grouped":
@@ -287,7 +325,9 @@ const renderCommonSkills = (
     items === undefined || !isNotEmpty(items)
       ? translate("none")
       : items
-          .map(itemId => translateMap(getInstanceById("Skill", itemId)?.translations)?.name)
+          .map(itemId =>
+            attributedName(translateMap, getInstanceById, "common-skills", "Skill", itemId),
+          )
           .filter(isNotNullish)
           .toSorted(localeCompare)
           .join(", "),
@@ -348,7 +388,7 @@ const renderCulturalPackage = (
       }
 
       return [
-        `${instanceTranslation.name} ${sign(item.points)}`,
+        `${attributedNameFromSafeTranslation(instanceTranslation, "cultural-package", "Skill", item.id)} ${sign(item.points)}`,
         getAdventurePointsForRatingRange(instance.improvement_cost.kind, 0, item.points),
       ]
     })
@@ -382,10 +422,11 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
       | "BlessedTradition"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">
+    getResolvedSelectOptionById: GetResolvedSelectOptionById
   }
 >(
   (
-    { getInstanceById, getChildInstancesForInstanceId },
+    { getInstanceById, getChildInstancesForInstanceId, getResolvedSelectOptionById },
     { translate, translateMap, compare: localeCompare, join: localeJoin },
     { content: entry },
   ): RawEntityDescription | undefined => {
@@ -400,6 +441,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
       translateMap,
       localeCompare,
       getInstanceById,
+      getResolvedSelectOptionById,
     } satisfies Partial<EnvMap>
 
     const { text: culturePackageText, apValue: culturalPackageApValue } = renderCulturalPackage(
@@ -539,28 +581,44 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
               "Common Advantages",
               entry.common_advantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Advantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.common_advantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Common Disadvantages",
               entry.common_disadvantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.common_disadvantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Uncommon Advantages",
               entry.uncommon_advantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Advantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Advantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.uncommon_advantages,
             ).run(env),
             renderValueWithPossibleTranslation(
               "Uncommon Disadvantages",
               entry.uncommon_disadvantages,
               values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages("Disadvantage", values).run(env),
+                renderCommonnessRatedAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  values,
+                  translate("none"),
+                ).run(env),
               translation.uncommon_disadvantages,
             ).run(env),
             {
