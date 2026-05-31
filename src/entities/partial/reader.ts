@@ -472,9 +472,9 @@ export const modifiableBySpeedR = <
   Reader.asks(({ speed }) => {
     switch (speed) {
       case Speed.Fast:
-        return level.fast[key] as (Fast | Slow)[K]
+        return level.fast[key]
       case Speed.Slow:
-        return level.slow[key] as (Fast | Slow)[K]
+        return level.slow[key]
       default:
         return assertExhaustive(speed)
     }
@@ -494,9 +494,9 @@ export const modifiableBySpeedOptionalR = <
   Reader.asks(({ speed }) => {
     switch (speed) {
       case Speed.Fast:
-        return level.fast?.[key] as (Fast | Slow)[K] | undefined
+        return level.fast?.[key]
       case Speed.Slow:
-        return level.slow?.[key] as (Fast | Slow)[K] | undefined
+        return level.slow?.[key]
       default:
         return assertExhaustive(speed)
     }
