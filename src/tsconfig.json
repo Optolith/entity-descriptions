@@ -20,6 +20,7 @@
     "outDir": "../lib",
     "strict": true,
     "target": "ESNext",
+    "types": ["node"],
     "useUnknownInCatchVariables": true,
   }
 }
