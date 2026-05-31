@@ -41,8 +41,8 @@ export const renderMap = <
 
   const replacement = mapNullable(translation, t => getReplacement(t))
 
-  if (replacement !== undefined) {
-    return replacement as NonNullable<typeof replacement>
+  if (isNotNullish(replacement)) {
+    return replacement
   }
 
   if (map.style?.kind === "Verbose") {

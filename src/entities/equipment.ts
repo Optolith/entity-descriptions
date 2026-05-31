@@ -125,7 +125,7 @@ export const getEquipmentName = (
     case "Weapon":
     case "WeaponAccessory":
     case "WorkingSupernaturalCreature":
-      return translateMap(entry.content.translations)?.name ?? MISSING_VALUE
+      return translateMap<{ name: string }>(entry.content.translations)?.name ?? MISSING_VALUE
     default:
       return assertExhaustive(entry)
   }
