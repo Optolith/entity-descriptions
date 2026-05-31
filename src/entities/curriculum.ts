@@ -1,8 +1,15 @@
 import { partition } from "@elyukai/utils/array/groups"
+import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
+import { sumWith } from "@elyukai/utils/array/reductions"
 import { Dictionary } from "@elyukai/utils/dictionary"
 import { deepEqual } from "@elyukai/utils/equality"
+import { on } from "@elyukai/utils/function"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
+import {
+  getAdventurePointsForActivation,
+  getAdventurePointsForRatingRange,
+} from "@optolith/adventure-points/improvement-cost"
 import type {
   AbilityAdjustment,
   ElectiveSpellworks,
@@ -11,6 +18,7 @@ import type {
   RestrictedSpellwork,
   RestrictedSpellworks,
   SpellworkAdjustment,
+  SpellworkChange,
   SpellworkIdentifier,
 } from "@optolith/database-schema/gen"
 import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
@@ -103,6 +111,7 @@ const renderRestrictedSpellworks = (
         attributedName(translateMap, getInstanceById, "curriculum", excludedSpellwork),
       )
       .filter(isNotNullish)
+      .toSorted(localeCompare)
 
     if (translatedSpellworks.length === 0) {
       return ""
@@ -156,12 +165,14 @@ const renderRestrictedSpellworks = (
       ?.map(restriction => {
         switch (restriction.kind) {
           case "Property":
-            return attributedName(
-              translateMap,
-              getInstanceById,
-              "curriculum",
-              "Property",
-              restriction.Property.id,
+            return (
+              (attributedName(
+                translateMap,
+                getInstanceById,
+                "curriculum",
+                "Property",
+                restriction.Property.id,
+              ) ?? MISSING_VALUE) + addExclusion(restriction.Property.exclude)
             )
           case "DemonSummoning":
             return translate("Demon Summoning")
@@ -240,9 +251,9 @@ const renderRestrictedSpellworks = (
 const renderSpellworkAdjustment = (
   translateMap: TranslateMap,
   getInstanceById: GetInstanceById<SpellworkIdentifier["kind"] | "MagicalTradition">,
-  adjustment: SpellworkAdjustment,
+  adjustment: Omit<SpellworkAdjustment, "points"> & { points: string | number },
 ): string =>
-  `${attributedName(translateMap, getInstanceById, "curriculum", adjustment.id) ?? MISSING_VALUE} ${adjustment.points.toFixed()}${parensIf(
+  `${attributedName(translateMap, getInstanceById, "curriculum", adjustment.id) ?? MISSING_VALUE}${parensIf(
     adjustment.tradition === undefined
       ? undefined
       : attributedName(
@@ -252,7 +263,7 @@ const renderSpellworkAdjustment = (
           "MagicalTradition",
           adjustment.tradition,
         ),
-  )}`
+  )} ${typeof adjustment.points === "number" ? adjustment.points.toFixed() : adjustment.points}`
 
 const renderAbilityAdjustmentName = (
   translateMap: TranslateMap,
@@ -336,6 +347,19 @@ const renderAbilityAdjustmentBaseValue = (
   }
 }
 
+const renderPrintedAbilityAdjustmentBaseValue = (abilityAdjustment: AbilityAdjustment) => {
+  switch (abilityAdjustment.kind) {
+    case "Skill":
+      return abilityAdjustment.Skill.basePoints
+    case "CombatTechnique":
+      return abilityAdjustment.CombatTechnique.basePoints
+    case "Spellwork":
+      return abilityAdjustment.Spellwork.basePoints
+    default:
+      return assertExhaustive(abilityAdjustment)
+  }
+}
+
 const renderAbilityAdjustmentModifierValue = (abilityAdjustment: AbilityAdjustment) => {
   switch (abilityAdjustment.kind) {
     case "Skill":
@@ -383,11 +407,22 @@ const renderAbilityAdjustment = (
           abilityAdjustment,
         )} ${sign(renderAbilityAdjustmentModifierValue(abilityAdjustment))}`
     : abilityAdjustment => {
+        const defaultValue = renderAbilityAdjustmentDefaultValue(abilityAdjustment)
+
         const basePoints =
           (renderAbilityAdjustmentBaseValue(baseProfessionPackage, abilityAdjustment) ?? 0) +
-          renderAbilityAdjustmentDefaultValue(abilityAdjustment)
+          defaultValue
+
+        const printedBaseValue = mapNullable(
+          renderPrintedAbilityAdjustmentBaseValue(abilityAdjustment),
+          value => value + defaultValue,
+        )
+
         return translate("{$replacement} instead of {$base}", {
-          base: basePoints,
+          base:
+            printedBaseValue === basePoints
+              ? basePoints
+              : `<ins>${basePoints.toFixed()}</ins><del>${printedBaseValue?.toFixed() ?? "n/a"}</del>`,
           replacement: `${renderAbilityAdjustmentName(
             translateMap,
             getInstanceById,
@@ -411,10 +446,97 @@ const renderAbilityAdjustments = (
   baseProfessionPackage: ProfessionPackage | undefined,
   list: AbilityAdjustment[],
 ) =>
-  list
-    .map(renderAbilityAdjustment(translate, translateMap, getInstanceById, baseProfessionPackage))
-    .toSorted(localeCompare)
-    .join(", ")
+  ensureNonEmpty(
+    list
+      .map(renderAbilityAdjustment(translate, translateMap, getInstanceById, baseProfessionPackage))
+      .toSorted(localeCompare),
+  )?.join(", ") ?? "—"
+
+const calculateApForSpellworkAdjustment = (
+  getInstanceById: GetInstanceById<SpellworkIdentifier["kind"]>,
+  adjustment: SpellworkAdjustment,
+  includeActivation = false,
+): number => {
+  const instance = getInstanceById(adjustment.id)
+  if (instance === undefined) {
+    return 0
+  }
+  return (
+    (getAdventurePointsForRatingRange(
+      instance.improvement_cost.kind,
+      0,
+      Math.abs(adjustment.points),
+    ) +
+      (includeActivation ? getAdventurePointsForActivation(instance.improvement_cost.kind) : 0)) *
+    (adjustment.points > 0 ? 1 : -1)
+  )
+}
+
+const calculateApForSpellworkChanges = (
+  getInstanceById: GetInstanceById<SpellworkIdentifier["kind"]>,
+  spellworkChanges: SpellworkChange[] | undefined,
+): number =>
+  sumWith(
+    spellworkChanges ?? [],
+    change =>
+      calculateApForSpellworkAdjustment(getInstanceById, change.replacement, true) -
+      calculateApForSpellworkAdjustment(getInstanceById, change.base, true),
+  )
+
+const calculateApForAbilityAdjustments = (
+  getInstanceById: GetInstanceById<
+    "Skill" | "CloseCombatTechnique" | "RangedCombatTechnique" | "Spell" | "Ritual"
+  >,
+  baseProfessionPackage: ProfessionPackage | undefined,
+  abilityAdjustments: AbilityAdjustment[],
+): number =>
+  sumWith(abilityAdjustments, adjustment => {
+    switch (adjustment.kind) {
+      case "CombatTechnique": {
+        const instance = getInstanceById(adjustment.CombatTechnique.id)
+        if (instance === undefined) {
+          return 0
+        }
+        return (
+          getAdventurePointsForRatingRange(
+            instance.improvement_cost.kind,
+            0,
+            Math.abs(adjustment.CombatTechnique.points),
+          ) * (adjustment.CombatTechnique.points > 0 ? 1 : -1)
+        )
+      }
+      case "Skill": {
+        const instance = getInstanceById("Skill", adjustment.Skill.id)
+        if (instance === undefined) {
+          return 0
+        }
+        return (
+          getAdventurePointsForRatingRange(
+            instance.improvement_cost.kind,
+            0,
+            Math.abs(adjustment.Skill.points),
+          ) * (adjustment.Skill.points > 0 ? 1 : -1)
+        )
+      }
+      case "Spellwork": {
+        const baseValue =
+          baseProfessionPackage &&
+          renderAbilityAdjustmentBaseValue(baseProfessionPackage, adjustment)
+
+        const includeActivation =
+          baseValue === undefined ||
+          baseValue + renderAbilityAdjustmentDefaultValue(adjustment) === 0
+
+        return calculateApForSpellworkAdjustment(
+          getInstanceById,
+          adjustment.Spellwork,
+          includeActivation,
+        )
+      }
+      default:
+        return assertExhaustive(adjustment)
+    }
+  })
 
 /**
  * Get a JSON representation of the rules text for a curriculum.
@@ -526,9 +648,41 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                   }
                 })
 
+                const apValueBase = baseProfessionPackage?.ap_value
+                const apValueForSpellworkChanges = calculateApForSpellworkChanges(
+                  getInstanceById,
+                  lessonPackage.content.spellwork_changes,
+                )
+                const apValueForBoni = calculateApForAbilityAdjustments(
+                  getInstanceById,
+                  baseProfessionPackage,
+                  boni,
+                )
+                const apValueForMali = calculateApForAbilityAdjustments(
+                  getInstanceById,
+                  baseProfessionPackage,
+                  mali,
+                )
+                const totalApValue =
+                  (apValueBase ?? 0) + apValueForSpellworkChanges + apValueForBoni + apValueForMali
+
+                const derivedApValueText = `^[${totalApValue.toFixed()}](base: ${baseProfessionPackage?.ap_value.toFixed() ?? '"n/a"'}, changes: ${calculateApForSpellworkChanges(
+                  getInstanceById,
+                  lessonPackage.content.spellwork_changes,
+                ).toFixed()}, boni: ${calculateApForAbilityAdjustments(getInstanceById, baseProfessionPackage, boni).toFixed()}, mali: ${calculateApForAbilityAdjustments(getInstanceById, baseProfessionPackage, mali).toFixed()})`
+
                 return {
                   type: "labeled",
-                  label: lessonPackageTranslation.name,
+                  label:
+                    lessonPackageTranslation.name +
+                    parensIf(
+                      translate("{$value} AP", {
+                        value:
+                          lessonPackage.content.apValue === totalApValue
+                            ? derivedApValueText
+                            : `<ins>${derivedApValueText}</ins><del>${lessonPackage.content.apValue?.toFixed() ?? "n/a"}</del>`,
+                      }),
+                    ),
                   value: {
                     type: "definitionList",
                     items: [
@@ -536,22 +690,47 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                         label: translate("Spellwork Changes"),
                         value:
                           lessonPackageTranslation.spellwork_changes ??
-                          lessonPackage.content.spellwork_changes
-                            ?.map(change =>
-                              translate("{$replacement} instead of {$base}", {
-                                base: renderSpellworkAdjustment(
-                                  translateMap,
-                                  getInstanceById,
-                                  change.base,
-                                ),
-                                replacement: renderSpellworkAdjustment(
-                                  translateMap,
-                                  getInstanceById,
-                                  change.replacement,
-                                ),
-                              }),
-                            )
-                            .join(", ") ??
+                          ensureNonEmpty(
+                            (
+                              lessonPackage.content.spellwork_changes?.map(change => {
+                                const baseValueFromProfession = baseProfessionPackage
+                                  ? renderAbilityAdjustmentBaseValue(baseProfessionPackage, {
+                                      kind: "Spellwork",
+                                      Spellwork: change.base,
+                                    })
+                                  : undefined
+
+                                return translate("{$replacement} instead of {$base}", {
+                                  base: renderSpellworkAdjustment(translateMap, getInstanceById, {
+                                    ...change.base,
+                                    points:
+                                      baseValueFromProfession === change.base.points
+                                        ? change.base.points
+                                        : `<ins>${baseValueFromProfession?.toFixed() ?? "n/a"}</ins><del>${change.base.points.toFixed()}</del>`,
+                                  }),
+                                  replacement: renderSpellworkAdjustment(
+                                    translateMap,
+                                    getInstanceById,
+                                    change.replacement,
+                                  ),
+                                })
+                              }) ?? []
+                            ).concat(
+                              lessonPackage.content.skills
+                                ?.filter(
+                                  abilityAdjustment => abilityAdjustment.kind === "Spellwork",
+                                )
+                                .map(
+                                  renderAbilityAdjustment(
+                                    translate,
+                                    translateMap,
+                                    getInstanceById,
+                                    baseProfessionPackage,
+                                  ),
+                                )
+                                .toSorted(localeCompare) ?? [],
+                            ),
+                          )?.join(", ") ??
                           translate("none"),
                       },
                       {
@@ -562,7 +741,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                           localeCompare,
                           getInstanceById,
                           baseProfessionPackage,
-                          boni,
+                          boni.filter(abilityAdjustment => abilityAdjustment.kind !== "Spellwork"),
                         ),
                       },
                       {
@@ -573,7 +752,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                           localeCompare,
                           getInstanceById,
                           baseProfessionPackage,
-                          mali,
+                          mali.filter(abilityAdjustment => abilityAdjustment.kind !== "Spellwork"),
                         ),
                       },
                     ],
@@ -582,7 +761,8 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
               },
             ),
           )
-          .filter(isNotNullish),
+          .filter(isNotNullish)
+          .toSorted(on(packageDescription => packageDescription.label, localeCompare)),
       ],
       errata: translation.errata,
       references: entry.src,
