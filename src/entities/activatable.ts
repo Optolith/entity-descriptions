@@ -3,6 +3,7 @@ import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { Reader } from "@elyukai/utils/reader"
 import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
@@ -18,21 +19,27 @@ import type {
   ArcaneEnergyCost,
   Aspect_ID,
   BindingCost,
+  BlessedTraditionTranslation,
   CombatRelatedSpecialAbilityIdentifier,
   CombatSpecialAbilityUsageType,
   CombatTechniqueIdentifier,
   DaggerRitualCost,
   EnchantmentCost,
   Errata,
+  FavoredCombatTechniques,
+  FavoredSkillsSelection,
   GeneralPrerequisites,
   LifePointsCost,
   MagicalSignCost,
+  MagicalTraditionTranslation,
   Penalty,
   PenaltyByAttackReplacement,
+  PrimaryAttribute,
   PropertyDeclaration,
   PublicationRefs,
   RatedIdentifier,
   SelectOptions,
+  Skill_ID,
   SpecialRule,
   Volume,
 } from "@optolith/database-schema/gen"
@@ -67,6 +74,14 @@ import {
   type GetResolvedSelectOptionById,
 } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
+import {
+  attributedNameR,
+  localeSortR,
+  translateR,
+  type EnvMap,
+  type StdEnv,
+  type StdReader,
+} from "./partial/reader.js"
 import {
   getResponsiveText,
   getResponsiveTextOptional,
@@ -1208,6 +1223,142 @@ const renderTrailingAdvancedPrerequisitesNote = (
   return undefined
 }
 
+const renderFavoredCombatTechniques = (
+  favoredCombatTechniques: FavoredCombatTechniques | undefined,
+): StdReader<
+  string[],
+  "t" | "tm" | "ibi" | "lc",
+  "CloseCombatTechnique" | "RangedCombatTechnique"
+> => {
+  if (favoredCombatTechniques === undefined) {
+    return Reader.of([])
+  }
+
+  switch (favoredCombatTechniques.kind) {
+    case "All":
+      return translateR("All Combat Techniques").map(text => [text])
+    case "AllClose":
+      return translateR("All Close Combat Techniques").map(text => [text])
+    case "AllUsedInHunting":
+      return translateR("All Combat Techniques used in hunting").map(text => [text])
+    case "Specific":
+      return Reader.traverse(favoredCombatTechniques.Specific.list, id =>
+        attributedNameR("favored-skills", id)
+          .map(name => name ?? MISSING_VALUE)
+          .thenW(name => translateR("Combat Technique {$name}", { name })),
+      ).thenW(localeSortR)
+    default:
+      return assertExhaustive(favoredCombatTechniques)
+  }
+}
+
+const renderFavoredSkillsBaseList = (combatTechniques: string[], favoredSkills: Skill_ID[]) =>
+  Reader.traverse(favoredSkills, id =>
+    attributedNameR("favored-skills", "Skill", id).map(name => name ?? MISSING_VALUE),
+  )
+    .thenW(localeSortR)
+    .map(favoredSkillNames => combatTechniques.concat(favoredSkillNames).join(", "))
+
+const renderFavoredSkillsSelection = (
+  baseList: string,
+  favoredSkillsSelection: FavoredSkillsSelection | undefined,
+) =>
+  favoredSkillsSelection === undefined
+    ? Reader.of(baseList)
+    : Reader.traverse(favoredSkillsSelection.options, id =>
+        attributedNameR("favored-skills", "Skill", id),
+      ).thenW(names =>
+        translateR(
+          ".input {$count :number} {{{$baseList}, and {$count} of your choice from the following list: {$selection}}}",
+          {
+            count: favoredSkillsSelection.number,
+            baseList,
+            selection: names.join(", "),
+          },
+        ),
+      )
+
+const renderFavoredSkillsSpecialRule = (
+  favoredCombatTechniques: FavoredCombatTechniques | undefined,
+  favoredSkills: Skill_ID[],
+  favoredSkillsSelection: FavoredSkillsSelection | undefined,
+): StdReader<
+  SpecialRule,
+  "t" | "tm" | "ibi" | "lc",
+  "Skill" | "CloseCombatTechnique" | "RangedCombatTechnique"
+> =>
+  translateR("Favored Skills").thenW(label =>
+    renderFavoredCombatTechniques(favoredCombatTechniques)
+      .thenW(favoredCombatTechniquesText =>
+        renderFavoredSkillsBaseList(favoredCombatTechniquesText, favoredSkills),
+      )
+      .thenW(list => renderFavoredSkillsSelection(list, favoredSkillsSelection))
+      .map(text => ({
+        label,
+        text,
+      })),
+  )
+
+const renderPrimaryAttributeSpecialRule = (
+  traditionName: string,
+  nameOfPeopleWithThisTradition: string,
+  primaryAttribute: PrimaryAttribute | string | undefined,
+): StdReader<SpecialRule, "t" | "tm" | "ibi", "Attribute"> =>
+  (primaryAttribute === undefined
+    ? translateR(
+        "Tradition ({$name}) has no associated primary attribute, meaning {$casters} receive no bonus to the AE pool and cannot purchase additional AE.",
+        { name: traditionName, casters: nameOfPeopleWithThisTradition },
+      )
+    : attributedNameR(
+        "rules",
+        "Attribute",
+        typeof primaryAttribute === "string" ? primaryAttribute : primaryAttribute.id,
+      ).thenW(attr =>
+        typeof primaryAttribute !== "string" && primaryAttribute.use_half_for_arcane_energy
+          ? translateR(
+              "This primary attribute of this Tradition is {$attr}; however, {$casters} use only half of this stat (rounded up) to calculate their base AE pool or purchase AE.",
+              {
+                casters: nameOfPeopleWithThisTradition,
+                attr: attr ?? MISSING_VALUE,
+              },
+            )
+          : translateR("The primary attribute of this Tradition is {$attr}.", {
+              attr: attr ?? MISSING_VALUE,
+            }),
+      )
+  ).map(description => ({
+    text: description,
+  }))
+
+const renderAdditionalSpecialRules = (
+  traditionName: string,
+  nameOfPeopleWithThisTradition: string,
+  favoredCombatTechniques: FavoredCombatTechniques | undefined,
+  favoredSkills: Skill_ID[] | undefined,
+  favoredSkillsSelection: FavoredSkillsSelection | undefined,
+  primaryAttribute: PrimaryAttribute | string | undefined,
+) =>
+  Reader.sequence<
+    StdEnv<
+      "t" | "tm" | "ibi" | "lc",
+      "Attribute" | "Skill" | "CloseCombatTechnique" | "RangedCombatTechnique"
+    >,
+    SpecialRule | undefined
+  >([
+    favoredSkills === undefined
+      ? Reader.of(undefined)
+      : renderFavoredSkillsSpecialRule(
+          favoredCombatTechniques,
+          favoredSkills,
+          favoredSkillsSelection,
+        ),
+    renderPrimaryAttributeSpecialRule(
+      traditionName,
+      nameOfPeopleWithThisTradition,
+      primaryAttribute,
+    ),
+  ]).map(specialRules => specialRules.filter(isNotNullish))
+
 /**
  * Get a JSON representation of the rules text for a special ability.
  */
@@ -1252,9 +1403,37 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       return undefined
     }
 
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      localeCompare: locale.compare,
+    } satisfies Partial<EnvMap>
+
     const baseEntry: BaseActivatable = entry
 
     const wrappedId = Case(entityName, id)
+
+    const additionalSpecialRules =
+      entityName === "BlessedTradition"
+        ? renderAdditionalSpecialRules(
+            translation.name,
+            (translation as BlessedTraditionTranslation).nameOfBlessedOnes,
+            entry.favored_combat_techniques,
+            entry.favored_skills,
+            entry.favored_skills_selection,
+            entry.primary,
+          ).run(env)
+        : entityName === "MagicalTradition"
+          ? renderAdditionalSpecialRules(
+              translation.name,
+              (translation as MagicalTraditionTranslation).nameOfSpellcasters,
+              undefined,
+              undefined,
+              undefined,
+              entry.primary,
+            ).run(env)
+          : []
 
     return {
       title:
@@ -1277,6 +1456,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
         mapNullable(translation.special_rules, specialRules => ({
           type: "plain",
           text: specialRules
+            .concat(additionalSpecialRules)
             .map(specialRule =>
               specialRule.label === undefined
                 ? `- ${specialRule.text}`
