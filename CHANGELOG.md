@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.13](https://github.com/Optolith/entity-descriptions/compare/v0.4.12...v0.4.13) (2026-06-01)
+
+
+### Bug Fixes
+
+* always display max SR for skill distributions ([248e706](https://github.com/Optolith/entity-descriptions/commit/248e7068b880eb820b60c2c36c0d8157abba1c7e))
+* hide variants term for multi-EL professions without variants ([25331f9](https://github.com/Optolith/entity-descriptions/commit/25331f9e9232081a4d4110e273b7096c4dfacdfd))
+* invalid markdown syntax for enhancement in profession ([0be5077](https://github.com/Optolith/entity-descriptions/commit/0be5077332a126061ca2618d5474d88e096594e4))
+
 ## [0.4.12](https://github.com/Optolith/entity-descriptions/compare/v0.4.11...v0.4.12) (2026-05-31)
 
 
