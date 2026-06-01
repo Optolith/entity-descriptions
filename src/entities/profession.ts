@@ -79,7 +79,12 @@ import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
-import { attributedCustomName, attributedInstance, attributedName } from "./partial/markdown.js"
+import {
+  attributedCustomName,
+  attributedInstance,
+  attributedName,
+  attributedNameFromInstance,
+} from "./partial/markdown.js"
 import { printProfessionPrerequisites } from "./partial/prerequisites/index.js"
 import { type GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -737,7 +742,9 @@ const getEnhancementNameComponents = (
       instance,
       attributedName(translateMap, getInstanceById, "profession", instance.parent) ?? MISSING_VALUE,
     ),
-    options: translateMap(instance.translations)?.name ?? MISSING_VALUE,
+    options:
+      attributedNameFromInstance(translateMap, instance, "prerequisite", "Enhancement", id) ??
+      MISSING_VALUE,
   }
 }
 
@@ -843,12 +850,12 @@ const renderSingleActivatableNameChunk = (
 ) =>
   chunk === undefined
     ? MISSING_VALUE
-    : wrapActivatableInAttributedString(
-        isEnhancementNameComponents(chunk)
-          ? renderEnhancementNameComponents(chunk)
-          : renderActivatableNameComponents(translateMap, chunk, false),
-        chunk.id,
-      )
+    : isEnhancementNameComponents(chunk)
+      ? renderEnhancementNameComponents(chunk)
+      : wrapActivatableInAttributedString(
+          renderActivatableNameComponents(translateMap, chunk, false),
+          chunk.id,
+        )
 
 const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
   Reader.asks(
