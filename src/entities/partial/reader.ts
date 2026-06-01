@@ -319,6 +319,14 @@ export const getChildInstancesForInstanceIdR = <CE extends keyof ChildEntityMap>
 > => Reader.asks(env => env.getChildInstancesForInstanceId(entityName, parentId))
 
 /**
+ * Gets a function to retrieve all child instances of an entity from the database by their child entity name and their parent’s identifier.
+ */
+export const getChildInstancesForInstanceIdFnR = <CE extends keyof ChildEntityMap>(): Reader<
+  { getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE> },
+  GetAllChildInstancesForParent<CE>
+> => Reader.asks(env => env.getChildInstancesForInstanceId)
+
+/**
  * Joins a list of strings according to the locale’s rules for the given type.
  */
 export const responsiveLocaleJoinR = (

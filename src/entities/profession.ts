@@ -93,6 +93,7 @@ import {
   attributedNameR,
   customNameR,
   formatR,
+  getChildInstancesForInstanceIdFnR,
   getChildInstancesForInstanceIdR,
   getInstanceByIdR,
   localeCompareR,
@@ -1404,7 +1405,15 @@ const groupProfessionVariantsThatContainTheSameChanges = (
 
 const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
   professionPackages.length > 1
-    ? Reader.of(UNHANDLED_VALUE)
+    ? getChildInstancesForInstanceIdFnR<"ProfessionVariant">().map(
+        getChildInstancesForInstanceId =>
+          professionPackages.some(
+            professionPackage =>
+              getChildInstancesForInstanceId("ProfessionVariant", professionPackage.id).length > 0,
+          )
+            ? UNHANDLED_VALUE
+            : undefined,
+      )
     : getChildInstancesForInstanceIdR("ProfessionVariant", professionPackages[0].id).thenW(
         variants =>
           groupProfessionVariantsThatContainTheSameChanges(variants).thenW(groupedVariants =>
