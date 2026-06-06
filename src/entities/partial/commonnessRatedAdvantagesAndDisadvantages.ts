@@ -98,15 +98,7 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
             base: name,
             level,
             nameBuilderRules: makeNameBuilderRulesWithDefaults(instance.nameBuilderRules),
-            options:
-              customTranslation?.options === undefined
-                ? (item.options?.map(
-                    option =>
-                      renderNameComponentsOptions(false, getResolvedSelectOptionById, id, [
-                        option,
-                      ]) ?? MISSING_VALUE,
-                  ) ?? [])
-                : [customTranslation.options],
+            options,
           },
           false,
         )
