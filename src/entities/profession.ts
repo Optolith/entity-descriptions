@@ -279,6 +279,8 @@ const renderLanguagesScriptsOption = (
 ): Reader<StdEnv<"t">, string> =>
   renderVariantLanguagesScriptsOption(undefined, { kind: "Override", Override: option })
 
+const wrapInParensIf = (text: string, condition: boolean) => (condition ? parensIf(text) : text)
+
 const renderSkillSpecializationOption = (
   option: SkillSpecializationOptions,
 ): Reader<StdEnv<"f" | "t" | "tm" | "lj" | "ibi", "Skill" | "SkillGroup">, string> =>
@@ -286,13 +288,16 @@ const renderSkillSpecializationOption = (
     switch (option.kind) {
       case "Specific":
         return translate("Skill Specialization {$possibleSkills}", {
-          possibleSkills: localeJoin(
-            option.Specific.options.map(
-              id =>
-                attributedName(translateMap, getInstanceById, "profession", "Skill", id) ??
-                MISSING_VALUE,
+          possibleSkills: wrapInParensIf(
+            localeJoin(
+              option.Specific.options.map(
+                id =>
+                  attributedName(translateMap, getInstanceById, "profession", "Skill", id) ??
+                  MISSING_VALUE,
+              ),
+              "disjunction",
             ),
-            "disjunction",
+            option.Specific.options.length > 2,
           ),
         })
       case "Group":
