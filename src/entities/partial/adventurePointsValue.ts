@@ -1,4 +1,5 @@
 import { on } from "@elyukai/utils/function"
+import { isNotNullish } from "@elyukai/utils/nullable"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
@@ -24,6 +25,7 @@ const renderSelectOptionsAdventurePointsValue = <T extends ResolvedSelectOptionI
   getAllSelectOptions: () => ResolvedSelectOption[],
   getNameForSelectOptionId: (id: ResolvedSelectOptionIdentifier) => string | undefined,
   config: SelectOptionsAdventurePointsValue<T> | undefined,
+  applyNegative: (numValue: number) => number,
 ) => {
   if (config === undefined) {
     return MISSING_VALUE
@@ -64,7 +66,7 @@ const renderSelectOptionsAdventurePointsValue = <T extends ResolvedSelectOptionI
         .toSorted(on(item => item[1], locale.compare))
         .map(
           ([apValue, itemNames]) =>
-            `${itemNames}: ${locale.translate("{$value} Adventure Points", { value: apValue })}`,
+            `${itemNames}: ${locale.translate("{$value} Adventure Points", { value: applyNegative(apValue) })}`,
         )
         .join("; ")
     default:
@@ -84,11 +86,17 @@ export const renderAdventurePointsValue = (
   value: AdventurePointsValue | number,
   entry: BaseActivatable,
   translation: BaseActivatableTranslation,
+  negative: boolean,
 ): string => {
   const { translate, translateMap } = locale
+
+  const applyNegative: (numValue: number) => number = negative
+    ? numValue => -numValue
+    : numValue => numValue
+
   if (typeof value === "number") {
     return translate(".input {$value :number} {{{$value} Adventure Points}}", {
-      value,
+      value: applyNegative(value),
     })
   }
 
@@ -96,11 +104,11 @@ export const renderAdventurePointsValue = (
     case "Fixed": {
       if (entry.levels === undefined) {
         return translate(".input {$value :number} {{{$value} Adventure Points}}", {
-          value: value.Fixed,
+          value: applyNegative(value.Fixed),
         })
       } else {
         return translate(".input {$value :number} {{{$value} Adventure Points per level}}", {
-          value: value.Fixed,
+          value: applyNegative(value.Fixed),
         })
       }
     }
@@ -111,7 +119,7 @@ export const renderAdventurePointsValue = (
 
       const mainValue = `${translate("Level {$level}", {
         level: Array.from({ length: entry.levels }, (_, index) => romanize(index + 1)).join("/"),
-      })}: ${value.ByLevel.list.join("/")}`
+      })}: ${value.ByLevel.list.map(applyNegative).join("/")}`
 
       const { additionalBySizeCategory } = value.ByLevel
       if (additionalBySizeCategory === undefined) {
@@ -119,7 +127,7 @@ export const renderAdventurePointsValue = (
       } else {
         const sizeCategories = ["tiny", "small", "medium", "large", "huge"] as const
         const values = sizeCategories
-          .map(sizeCategory => additionalBySizeCategory[sizeCategory])
+          .map(sizeCategory => applyNegative(additionalBySizeCategory[sizeCategory]))
           .join("/")
         const labels = sizeCategories.map(sizeCategory => translate(sizeCategory)).join("/")
 
@@ -143,9 +151,10 @@ export const renderAdventurePointsValue = (
             value: unique(
               getAllInstances("Script")
                 .map(script => script.content.ap_value)
-                .filter(apValue => apValue !== undefined),
+                .filter(isNotNullish),
             )
               .toSorted(numAsc)
+              .map(applyNegative)
               .join("/"),
           })
         case "AnimalShapes": {
@@ -153,7 +162,7 @@ export const renderAdventurePointsValue = (
             on(x => x.content.ap_value, numAsc),
           )
           return translate("{$values} adventure points for a {$sized} animal shape", {
-            values: sizes.map(size => size.content.ap_value).join("/"),
+            values: sizes.map(size => applyNegative(size.content.ap_value)).join("/"),
             sized: sizes
               .map(size => translateMap(size.content.translations)?.name ?? MISSING_VALUE)
               .join("/"),
@@ -237,6 +246,7 @@ export const renderAdventurePointsValue = (
             getAllSelectOptions,
             getNameForSelectOptionId,
             derivedSelectOptions.Skills.ap_value,
+            applyNegative,
           )
         case "CombatTechniques":
           return renderSelectOptionsAdventurePointsValue(
@@ -245,6 +255,7 @@ export const renderAdventurePointsValue = (
             getAllSelectOptions,
             getNameForSelectOptionId,
             derivedSelectOptions.CombatTechniques.ap_value,
+            applyNegative,
           )
         case "TargetCategories":
           return MISSING_VALUE

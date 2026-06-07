@@ -1613,6 +1613,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                     apValue,
                     entry,
                     translation,
+                    entityName === "Disadvantage",
                   ) + append,
               }
             }),
