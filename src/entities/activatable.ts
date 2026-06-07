@@ -1382,6 +1382,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "SocialStatus"
       | "Weapon"
       | "Patron"
+      | "PersonalityTrait"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

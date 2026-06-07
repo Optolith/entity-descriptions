@@ -313,6 +313,7 @@ export const printPlainGeneralPrerequisites = (
     | "Property"
     | "Aspect"
     | "Enhancement"
+    | "PersonalityTrait"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -346,6 +347,7 @@ export const printGeneralPrerequisites = (
     | "Property"
     | "Aspect"
     | "Enhancement"
+    | "PersonalityTrait"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -421,6 +423,7 @@ export const printAdvantageDisadvantagePrerequisites = (
     | "Property"
     | "Aspect"
     | "Enhancement"
+    | "PersonalityTrait"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
