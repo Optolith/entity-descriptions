@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@optolith/database-schema": "^0.45.0",
+    "@optolith/database-schema": "^0.46.0",
     "@types/node": "^25.9.1",
     "commit-and-tag-version": "^12.7.3",
     "eslint-config-prettier": "^10.1.8",

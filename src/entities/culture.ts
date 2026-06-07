@@ -298,12 +298,23 @@ const renderCommonProfessions = (
           renderCommonProfessionGroup(
             "Blessed Professions",
             commonProfessions.Grouped.blessed,
-            constraint =>
-              renderTraditionConstraint(
-                getChildInstancesForInstanceId,
-                "BlessedTradition",
-                constraint.Tradition,
-              ),
+            constraint => {
+              switch (constraint.kind) {
+                case "Profession":
+                  return renderProfessionConstraint(
+                    getChildInstancesForInstanceId,
+                    constraint.Profession,
+                  )
+                case "Tradition":
+                  return renderTraditionConstraint(
+                    getChildInstancesForInstanceId,
+                    "BlessedTradition",
+                    constraint.Tradition,
+                  )
+                default:
+                  return assertExhaustive(constraint)
+              }
+            },
           ).map(blessed => [
             {
               type: "definitionList",
