@@ -74,6 +74,19 @@ export const formatTimeSpan = (
 /**
  * Returns the text for a time span unit.
  */
+export const formatCombinedTimeSpan = (
+  translate: Translate,
+  responsiveTextSize: ResponsiveTextSize,
+  object: {
+    unit: { kind: TimeSpanUnit }
+    value: number | string
+  },
+  interval = false,
+): string => formatTimeSpan(translate, responsiveTextSize, object.unit, object.value, interval)
+
+/**
+ * Returns the text for a time span unit.
+ */
 export const formatTimeSpanR = (
   unit: { kind: TimeSpanUnit } | TimeSpanUnit,
   value: number | string,
