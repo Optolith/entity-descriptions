@@ -81,7 +81,7 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
           customTranslation?.options === undefined
             ? (item.options?.map(
                 option =>
-                  renderNameComponentsOptions(false, getResolvedSelectOptionById, id, [option]) ??
+                  renderNameComponentsOptions(true, getResolvedSelectOptionById, id, [option]) ??
                   MISSING_VALUE,
               ) ?? [])
             : [customTranslation.options]
