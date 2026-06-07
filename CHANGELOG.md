@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.14](https://github.com/Optolith/entity-descriptions/compare/v0.4.13...v0.4.14) (2026-06-07)
+
+
+### Bug Fixes
+
+* display negative disadvantage AP values ([8dd72a0](https://github.com/Optolith/entity-descriptions/commit/8dd72a04ef10aeb300b54ed8fa25ddfb60318a3e))
+* render shorter variant of commonness-rated options ([9f9eae0](https://github.com/Optolith/entity-descriptions/commit/9f9eae0af0800b17247aa2db8c300e0f693eb336))
+* separate variant values and concluding text with a period ([d58ebeb](https://github.com/Optolith/entity-descriptions/commit/d58ebeb35839ced633ba7a47bf6c69283522803d))
+* sort commonness-rated options alphabetically ([25c50dd](https://github.com/Optolith/entity-descriptions/commit/25c50dde77a34a207eb129fbe9ef63bb41e589cc))
+* sort skill spec skill options ([5b63ea8](https://github.com/Optolith/entity-descriptions/commit/5b63ea8244bc499027069e2edd1f48064bf98df4))
+* wrap skill spec options in parens if needed ([dd0562b](https://github.com/Optolith/entity-descriptions/commit/dd0562bfd09b7cf11d8e9c277b3fdcfba11204bc))
+
 ## [0.4.13](https://github.com/Optolith/entity-descriptions/compare/v0.4.12...v0.4.13) (2026-06-01)
 
 
