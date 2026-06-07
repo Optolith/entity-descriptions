@@ -1340,13 +1340,15 @@ const renderProfessionVariantText = (
           variant.liturgical_chants,
           renderLiturgicalChantName,
         ),
-      ]).map(
-        lists =>
-          lists
-            .filter(isNotEmpty)
-            .map(list => list.join(", "))
-            .join("; ") + (translation.concluding_text ?? ""),
-      )
+      ]).map(lists => {
+        const nonEmptyLists = lists.filter(isNotEmpty)
+        return (
+          nonEmptyLists.map(list => list.join(", ")).join("; ") +
+          (translation.concluding_text !== undefined
+            ? `${nonEmptyLists.length > 0 ? ". " : ""}${translation.concluding_text}`
+            : "")
+        )
+      })
 
 const renderProfessionVariant = (
   base: ProfessionPackage,
