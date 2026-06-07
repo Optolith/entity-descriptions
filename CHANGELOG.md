@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.15](https://github.com/Optolith/entity-descriptions/compare/v0.4.14...v0.4.15) (2026-06-07)
+
+
+### Bug Fixes
+
+* add sustained cost map interval ([f7c1b31](https://github.com/Optolith/entity-descriptions/commit/f7c1b31452befa0c898a6f21e4624c8084ea5df5))
+* display full tradition name ([2d07eff](https://github.com/Optolith/entity-descriptions/commit/2d07eff1d4b6a5b72ce705e24969e4a384a1d486))
+* ignore rating in prerequisite when zero ([b375702](https://github.com/Optolith/entity-descriptions/commit/b375702ea644fc21b92bb64b811e204aeda7370c))
+* render ap value from explicit select options ([df2178f](https://github.com/Optolith/entity-descriptions/commit/df2178fe131ed9e9d3427ee092a46b2448b09650))
+
 ## [0.4.14](https://github.com/Optolith/entity-descriptions/compare/v0.4.13...v0.4.14) (2026-06-07)
 
 
