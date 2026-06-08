@@ -35,10 +35,10 @@ export const printPersonalityTraitPrerequisite = (
 
   return {
     value: prerequisite.active
-      ? locale.translate("cannot be chosen at the same time as {$trait}", {
+      ? locale.translate("must have {$trait}", {
           trait: name,
         })
-      : locale.translate("must have {$trait}", {
+      : locale.translate("cannot be chosen at the same time as {$trait}", {
           trait: name,
         }),
     sentenceType: undefined,
