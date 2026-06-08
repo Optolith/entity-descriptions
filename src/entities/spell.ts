@@ -1032,8 +1032,9 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       | "AnimistPower"
       | "Tribe"
     >
+    idMap: IdMap
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
@@ -1110,7 +1111,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheck(entry.check).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
           renderEffect(mergedEffect).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(
