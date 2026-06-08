@@ -1119,6 +1119,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
             duration,
             translation.duration,
           ),
+          entry.target ? renderTargetCategory(entry.target).run(env) : undefined,
           renderProperty(entry.property).run(env),
           {
             label: translate("Tribe Tradition"),
