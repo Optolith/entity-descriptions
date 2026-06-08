@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.16](https://github.com/Optolith/entity-descriptions/compare/v0.4.15...v0.4.16) (2026-06-08)
+
+
+### Features
+
+* render animist power skill check penalty ([ef7751a](https://github.com/Optolith/entity-descriptions/commit/ef7751ad9f9b995f979d973522c7f27e65ba545c))
+
+
+### Bug Fixes
+
+* swap personality trait prerequisite texts ([abf4ff6](https://github.com/Optolith/entity-descriptions/commit/abf4ff6cbc8b8b09a0436741947ebf9b15cc9974))
+
 ## [0.4.15](https://github.com/Optolith/entity-descriptions/compare/v0.4.14...v0.4.15) (2026-06-07)
 
 
