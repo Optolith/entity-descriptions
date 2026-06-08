@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.17](https://github.com/Optolith/entity-descriptions/compare/v0.4.16...v0.4.17) (2026-06-08)
+
+
+### Features
+
+* render animist power optional target category ([29fcb50](https://github.com/Optolith/entity-descriptions/commit/29fcb5004e2bbf4081a375b84bc41daac17f861d))
+
 ## [0.4.16](https://github.com/Optolith/entity-descriptions/compare/v0.4.15...v0.4.16) (2026-06-08)
 
 
