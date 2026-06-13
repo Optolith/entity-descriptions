@@ -153,18 +153,18 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
   selector: (pkg: PreparedProfessionPackage) => Reader<SelectorEnv, [T, number][]>,
   equalityFn: Equality<T>,
   renderText: (value: T) => Reader<RenderEnv, string>,
-  defaultValue: number,
+  defaultValue: number | undefined,
 ): Reader<StdEnv<"lc"> & SelectorEnv & RenderEnv, string | undefined> =>
   packages
-    .reduce<Reader<SelectorEnv, [T, number[]][]>>(
-      (accR, pkg, pkgIndex): Reader<SelectorEnv, [T, number[]][]> =>
+    .reduce<Reader<SelectorEnv, [T, (number | undefined)[]][]>>(
+      (accR, pkg, pkgIndex): Reader<SelectorEnv, [T, (number | undefined)[]][]> =>
         accR.map2(selector(pkg), (acc, selected) =>
-          selected.reduce<[T, number[]][]>(
+          selected.reduce<[T, (number | undefined)[]][]>(
             (filledAcc, [values, number]) => {
               const existing = filledAcc.findIndex(([value]) => equalityFn(value, values))
               if (existing >= 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- existing is checked to be >= 0
-                filledAcc[existing]![1][pkgIndex] = number + defaultValue
+                filledAcc[existing]![1][pkgIndex] = number + (defaultValue ?? 0)
                 return filledAcc
               } else {
                 return [
@@ -172,20 +172,26 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
                   [
                     values,
                     Array.from({ length: pkgIndex }, () => defaultValue).concat(
-                      number + defaultValue,
+                      number + (defaultValue ?? 0),
                     ),
                   ],
                 ]
               }
             },
-            acc.map(([value, numbers]): [T, number[]] => [value, [...numbers, defaultValue]]),
+            acc.map(([value, numbers]): [T, (number | undefined)[]] => [
+              value,
+              [...numbers, defaultValue],
+            ]),
           ),
         ),
       Reader.of([]),
     )
     .thenW(list =>
       Reader.traverse(list, ([value, numbers]) =>
-        renderText(value).map(text => `${text} ${numbers.join("/")}`),
+        renderText(value).map(
+          text =>
+            `${text} ${numbers.map(number => (number === undefined ? "—" : number)).join("/")}`,
+        ),
       ),
     )
     .thenW(list => localeSortR(list))
@@ -1066,7 +1072,7 @@ const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPa
         Reader.of(pkg.content.spells?.map(ct => [ct.id, ct.rating_modifier]) ?? []),
       deepEqual,
       renderSpellworkName,
-      0,
+      undefined,
     ),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join("; "))
 
@@ -1195,7 +1201,7 @@ const renderLiturgicalChants = (professionPackages: NonEmptyArray<PreparedProfes
         Reader.of(pkg.content.liturgical_chants?.map(ct => [ct.id, ct.rating_modifier]) ?? []),
       deepEqual,
       renderLiturgicalChantName,
-      0,
+      undefined,
     ),
     renderLiturgiesOption(professionPackages),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join(", "))
