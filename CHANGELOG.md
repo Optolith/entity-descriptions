@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.19](https://github.com/Optolith/entity-descriptions/compare/v0.4.18...v0.4.19) (2026-06-13)
+
+
+### Features
+
+* culture language translations ([6d52cc9](https://github.com/Optolith/entity-descriptions/commit/6d52cc9dc1ffe1a953aed87ecda3caabe11054c2))
+
+
+### Bug Fixes
+
+* display activatable spell without rating as dash ([6090056](https://github.com/Optolith/entity-descriptions/commit/609005626e3a272a6a9f5aff949492db74e93f7d))
+
 ## [0.4.18](https://github.com/Optolith/entity-descriptions/compare/v0.4.17...v0.4.18) (2026-06-13)
 
 ## [0.4.17](https://github.com/Optolith/entity-descriptions/compare/v0.4.16...v0.4.17) (2026-06-08)
