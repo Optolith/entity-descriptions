@@ -7,6 +7,7 @@ import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
 import type {
+  ActivatableIdentifier,
   AttributeAdjustments,
   AutomaticAdvantageDisadvantage,
   BaseValues,
@@ -15,6 +16,7 @@ import type {
   RaceVariantTranslation,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import { Case } from "../helpers/enums.js"
 import type {
   CountInstances,
   GetAllChildInstancesForParent,
@@ -22,16 +24,17 @@ import type {
 } from "../helpers/getTypes.js"
 import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
-import {
-  renderCommonnessRatedAdvantagesAndDisadvantages,
-  renderCommonnessRatedAdvantagesOrDisadvantages,
-} from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
+import { renderCommonnessRatedAdvantagesOrDisadvantages } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import {
   attributedCustomName,
   attributedName,
   attributedNameFromTranslation,
 } from "./partial/markdown.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import { joinPrerequisiteParts } from "./partial/prerequisites/part.js"
+import {
+  printActivatableName,
+  type GetResolvedSelectOptionById,
+} from "./partial/prerequisites/single/activatable.js"
 import {
   getInstanceByIdR,
   translateMapR,
@@ -194,30 +197,87 @@ const renderVariantValues = <T>(
     },
   )
 
-const renderAutomaticAdvantagesOrDisadvantages = <
-  E extends "Advantage" | "Disadvantage",
-  ID extends string,
->(
-  entity: E,
+const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends string | undefined>(
+  entity: "Advantage" | "Disadvantage",
   items: AutomaticAdvantageDisadvantage<ID>[] | undefined,
-): StdReader<string, "t" | "tm" | "lc" | "ibi", E> =>
-  Reader.asks(({ translate, translateMap, getInstanceById, localeCompare }) =>
-    items === undefined || !isNotEmpty(items)
-      ? translate("none")
-      : items
-          .map(
-            item =>
-              attributedCustomName(
-                translateMap,
-                getInstanceById,
-                "race",
-                t => t.name_in_library ?? t.name,
-                entity,
-                item.id,
-              ) ?? MISSING_VALUE,
-          )
-          .toSorted(localeCompare)
-          .join(", "),
+  emptyString: T,
+): StdReader<
+  string | T,
+  "t" | "tm" | "lc" | "ibi" | "rso",
+  ActivatableIdentifier["kind"] | "Aspect"
+> =>
+  Reader.asks(
+    ({ translate, translateMap, getInstanceById, getResolvedSelectOptionById, localeCompare }) =>
+      items === undefined || !isNotEmpty(items)
+        ? emptyString
+        : joinPrerequisiteParts(
+            translate,
+            translateMap,
+            localeCompare,
+            items
+              .map(item =>
+                printActivatableName(
+                  getInstanceById,
+                  translate,
+                  Case(entity, item.id),
+                  item.options,
+                  item.level,
+                  getResolvedSelectOptionById,
+                  true,
+                ),
+              )
+              .filter(isNotNullish)
+              .map(nameComponents => ({
+                type: "activatable",
+                part: { value: nameComponents, sentenceType: undefined, isMeta: false },
+              })),
+          ),
+  )
+
+/**
+ * Render the names of commonness-rated advantages and disadvantages together.
+ */
+export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | undefined>(
+  advantages: AutomaticAdvantageDisadvantage<string>[] | undefined,
+  disadvantages: AutomaticAdvantageDisadvantage<string>[] | undefined,
+  emptyString: T,
+): StdReader<
+  string | T,
+  "t" | "tm" | "lc" | "ibi" | "rso",
+  ActivatableIdentifier["kind"] | "Aspect"
+> =>
+  Reader.asks(
+    ({ translate, translateMap, getInstanceById, getResolvedSelectOptionById, localeCompare }) =>
+      mapNullable(
+        ensureNonEmpty(
+          [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].flatMap(
+            ([entity, items]) =>
+              items
+                ?.map(item =>
+                  printActivatableName(
+                    getInstanceById,
+                    translate,
+                    Case(entity, item.id),
+                    item.options,
+                    item.level,
+                    getResolvedSelectOptionById,
+                    true,
+                  ),
+                )
+                .filter(isNotNullish) ?? [],
+          ),
+        ),
+        renderedItems =>
+          joinPrerequisiteParts(
+            translate,
+            translateMap,
+            localeCompare,
+            renderedItems.map(nameComponents => ({
+              type: "activatable",
+              part: { value: nameComponents, sentenceType: undefined, isMeta: false },
+            })),
+          ),
+      ) ?? emptyString,
   )
 
 const renderCommonCultures = (
@@ -242,8 +302,8 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
     getInstanceById: GetInstanceById<
       | "Publication"
       | "Attribute"
-      | "Advantage"
-      | "Disadvantage"
+      | ActivatableIdentifier["kind"]
+      | "Aspect"
       | "Culture"
       | "DerivedCharacteristic"
     >
@@ -313,7 +373,10 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
               "Automatic Advantages",
               raceVariants,
               v => v.automatic_advantages,
-              advs => renderAutomaticAdvantagesOrDisadvantages("Advantage", advs).run(env),
+              advs =>
+                renderAutomaticAdvantagesOrDisadvantages("Advantage", advs, translate("none")).run(
+                  env,
+                ),
               vt => vt.automatic_advantages,
               true,
             ).run(env),
@@ -321,7 +384,12 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
               "Automatic Disadvantages",
               raceVariants,
               v => v.automatic_disadvantages,
-              advs => renderAutomaticAdvantagesOrDisadvantages("Disadvantage", advs).run(env),
+              advs =>
+                renderAutomaticAdvantagesOrDisadvantages(
+                  "Disadvantage",
+                  advs,
+                  translate("none"),
+                ).run(env),
               vt => vt.automatic_disadvantages,
               true,
             ).run(env),
@@ -341,7 +409,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
                   ? isSplit
                     ? undefined
                     : translate("none")
-                  : renderCommonnessRatedAdvantagesAndDisadvantages(
+                  : renderAutomaticAdvantagesAndDisadvantages(
                       ...advsDisadvs,
                       isSplit ? undefined : translate("none"),
                     ).run(env),
