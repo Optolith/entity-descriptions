@@ -1,25 +1,16 @@
+import { Reader } from "@elyukai/utils/reader"
 import type {
   CheckResultArithmetic,
   CheckResultBasedModifier,
-  CheckResultValue,
+  ExpressionBasedParameterValue,
 } from "@optolith/database-schema/gen"
-import { mapNullableDefault } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { divisionFormatter, multiplicationFormatter } from "../../mathOperation.js"
-import { translateR, type StdReader } from "../../reader.js"
-
-const renderCheckResultBaseValue = (baseValue: CheckResultValue) => {
-  switch (baseValue.kind) {
-    case "QualityLevels":
-      return translateR("QL")
-    case "SkillPoints":
-      return translateR("SP")
-    case "SkillRating":
-      return translateR("SR")
-    default:
-      return assertExhaustive(baseValue)
-  }
-}
+import {
+  divisionFormatter,
+  multiplicationFormatter,
+  renderMathOperation,
+} from "../../mathOperation.js"
+import { type StdEnv, type StdReader } from "../../reader.js"
 
 const getArithmeticFormatter = (arithmetic: CheckResultArithmetic) => {
   switch (arithmetic.kind) {
@@ -32,18 +23,6 @@ const getArithmeticFormatter = (arithmetic: CheckResultArithmetic) => {
   }
 }
 
-interface CheckResultBased {
-  /**
-   * The base value that is derived from the check result.
-   */
-  base: CheckResultValue
-
-  /**
-   * If defined, it modifies the base value.
-   */
-  modifier?: CheckResultBasedModifier
-}
-
 /**
  * Appends the modifier of a check-result-based parameter of an activatable skill to the base value, using the appropriate arithmetic formatter.
  */
@@ -53,10 +32,25 @@ export const appendCheckResultModifier = (left: string, modifier: CheckResultBas
 }
 
 /**
- * Returns the value text for a check-result-based parameter of an activatable
- * skill.
+ * Renders a value that is based on the result of the skill check, which can
+ * either be a simple value or a math operation.
  */
-export const renderCheckResultBasedValue = (value: CheckResultBased): StdReader<string, "t"> =>
-  renderCheckResultBaseValue(value.base).map(base =>
-    mapNullableDefault(value.modifier, modifier => appendCheckResultModifier(base, modifier), base),
+export const renderExpressionBasedParameterValue = (
+  value: ExpressionBasedParameterValue,
+): StdReader<string | number, "t"> =>
+  Reader.asks(({ translate }: StdEnv<"t">) =>
+    renderMathOperation(value, expressionValue => {
+      switch (expressionValue.kind) {
+        case "Constant":
+          return expressionValue.Constant
+        case "QualityLevels":
+          return translate("QL")
+        case "SkillPoints":
+          return translate("SP")
+        case "SkillRating":
+          return translate("SR")
+        default:
+          return assertExhaustive(expressionValue)
+      }
+    }),
   )

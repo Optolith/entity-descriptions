@@ -53,7 +53,7 @@ import {
   renderNonModifiableOneTimeCost,
 } from "./partial/rated/activatable/cost.js"
 import {
-  renderCheckResultBasedDuration,
+  renderExpressionBasedDuration,
   renderMusicDuration,
   renderOneTimeDuration,
   renderSustainedDuration,
@@ -1503,8 +1503,8 @@ const renderMagicalRuneCraftingTime = (craftingTime: MagicalRuneCraftingTime) =>
   )
 
 const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
-  renderCheckResultBasedDuration(duration.fast).map2(
-    renderCheckResultBasedDuration(duration.slow),
+  renderExpressionBasedDuration(duration.fast).map2(
+    renderExpressionBasedDuration(duration.slow),
     (fast, slow) => `${slow} / ${fast}`,
   )
 

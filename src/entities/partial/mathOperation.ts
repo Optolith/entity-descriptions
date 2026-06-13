@@ -48,14 +48,19 @@ export const groupFormatter: UnaryFormatter = value => `(${printOperand(value)})
 /**
  * Render a math operation as a string, using the provided function to render the values.
  */
-export const renderMathOperation = <T>(
+export const renderMathOperation = <T, R extends string | number>(
   operation: MathOperation<T>,
-  renderValue: (value: T) => string,
-): string => {
+  renderValue: (value: T) => R,
+  renderDirectValue?: (value: T) => R,
+): R | string => {
+  if (operation.kind === "Value" && renderDirectValue) {
+    return renderDirectValue(operation.Value)
+  }
+
   const renderWithParenthesis = (
     op: MathOperation<T>,
     addParenthesisTo: MathOperation<T>["kind"][] = [],
-  ): string => {
+  ): R | string => {
     const rendered = renderMathOperation(op, renderValue)
     return addParenthesisTo.includes(op.kind) ? groupFormatter(rendered) : rendered
   }
