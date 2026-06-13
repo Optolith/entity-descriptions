@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.20](https://github.com/Optolith/entity-descriptions/compare/v0.4.19...v0.4.20) (2026-06-13)
+
+
+### Features
+
+* expression-based activatable skill parameters ([f2749ff](https://github.com/Optolith/entity-descriptions/commit/f2749ff383047f6f5d221e3114996762d3d29a8b))
+
 ## [0.4.19](https://github.com/Optolith/entity-descriptions/compare/v0.4.18...v0.4.19) (2026-06-13)
 
 
