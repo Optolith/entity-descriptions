@@ -478,21 +478,25 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                       return MISSING_VALUE
                     }
 
+                    const cultureLanguageTranslation = translateMap(lang.translations)
+
                     return (
                       languageTranslation.name +
                       parensIf(
-                        [
-                          translateMap(language.customSpecializations?.translations)?.description,
-                          ...(lang.specializations?.map(
-                            specId =>
-                              translateMap(
-                                getInstanceById("LanguageSpecialization", specId)?.translations,
-                              )?.name,
-                          ) ?? []),
-                        ]
-                          .filter(isNotNullish)
-                          .toSorted(localeCompare)
-                          .join(", "),
+                        cultureLanguageTranslation?.specialization ??
+                          cultureLanguageTranslation?.specializationPrompt ??
+                          [
+                            translateMap(language.customSpecializations?.translations)?.description,
+                            ...(lang.specializations?.map(
+                              specId =>
+                                translateMap(
+                                  getInstanceById("LanguageSpecialization", specId)?.translations,
+                                )?.name,
+                            ) ?? []),
+                          ]
+                            .filter(isNotNullish)
+                            .toSorted(localeCompare)
+                            .join(", "),
                       )
                     )
                   })
