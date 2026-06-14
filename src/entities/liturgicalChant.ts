@@ -1,10 +1,19 @@
-import { type LiturgyTradition, type RatedIdentifier } from "@optolith/database-schema/gen"
+import {
+  type BlessedTradition,
+  type Blessing_ID,
+  type LiturgyTradition,
+  type RatedIdentifier,
+} from "@optolith/database-schema/gen"
 import type { Compare } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
+import type {
+  GetAllChildInstancesForParent,
+  GetAllInstances,
+  GetInstanceById,
+} from "../helpers/getTypes.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderEnhancements } from "./partial/enhancements.js"
@@ -23,6 +32,64 @@ import { renderImprovementCost } from "./partial/rated/improvementCost.js"
 import { renderSkillCheckWithPenalty } from "./partial/rated/skillCheck.js"
 import type { EnvMap } from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
+
+const getTextForBlessingTraditions = (
+  deps: {
+    translate: Translate
+    translateMap: TranslateMap
+    localeCompare: Compare<string>
+    getAllInstances: GetAllInstances<"BlessedTradition">
+  },
+  id: Blessing_ID,
+): RawDefinitionListEntityDescriptionSectionItem => {
+  const blessedTraditions = deps.getAllInstances("BlessedTradition")
+
+  const primaryTradition = blessedTraditions.find(trad => trad.content.primaryBlessing === id)
+
+  const secondaryTraditions = blessedTraditions.filter(trad => {
+    switch (trad.content.restricted_blessings?.kind) {
+      case "Six":
+        return !trad.content.restricted_blessings.Six.includes(id)
+      case "Three":
+        return !trad.content.restricted_blessings.Three.includes(id)
+      case undefined:
+        return false
+      default:
+        return assertExhaustive(trad.content.restricted_blessings)
+    }
+  })
+
+  const translateTradition = (trad: { id: string; content: BlessedTradition }) => {
+    const traditionTranslation = deps.translateMap(trad.content.translations)
+    const name = traditionTranslation?.name_compressed ?? traditionTranslation?.name
+
+    if (name === undefined) {
+      return undefined
+    }
+
+    return attributedInstance(name, "BlessedTradition", trad.id, {
+      context: '"traditions"',
+    })
+  }
+
+  const secondaryTraditionTexts = secondaryTraditions
+    .map(translateTradition)
+    .filter(isNotNullish)
+    .sort(deps.localeCompare)
+
+  const text = [
+    deps.translate("General"),
+    primaryTradition ? translateTradition(primaryTradition) : undefined,
+    ...secondaryTraditionTexts,
+  ]
+    .filter(isNotNullish)
+    .join(", ")
+
+  return {
+    label: deps.translate("Traditions"),
+    value: text,
+  }
+}
 
 const getTextForTraditions = (
   deps: {
@@ -92,8 +159,9 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
   "Blessing",
   {
     getInstanceById: GetInstanceById<"Publication" | "TargetCategory">
+    getAllInstances: GetAllInstances<"BlessedTradition">
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById, getAllInstances }, locale, { id, content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
@@ -104,7 +172,9 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    localeCompare: locale.compare,
     getInstanceById,
+    getAllInstances,
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
@@ -129,6 +199,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
             translation.duration,
           ),
           renderTargetCategory(entry.target).run(env),
+          getTextForBlessingTraditions(env, id),
         ],
       },
     ],
