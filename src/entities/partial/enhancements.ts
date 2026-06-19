@@ -71,22 +71,24 @@ export const renderEnhancements = (
         Reader.traverse(
           filteredEnhancements.toSorted(on(e => e.content.skill_rating, compareNumber)),
           enhancement => renderEnhancement(enhancement, parentImprovementCost),
-        ).thenW(enhancementDescriptions => {
-      const nonNullishDescriptions = enhancementDescriptions.filter(isNotNullish)
-
-      if (nonNullishDescriptions.length === 0) {
-        return Reader.of(undefined)
-      }
-
-      return translateR("Enhancements").map(
-        (label): RawEntityDescriptionSection => ({
-          type: "labeled",
-          label,
-          value: {
-            type: "plain",
-            text: nonNullishDescriptions.join("\n"),
-          },
-        }),
+        ),
       )
-    }),
+      .thenW(enhancementDescriptions => {
+        const nonNullishDescriptions = enhancementDescriptions.filter(isNotNullish)
+
+        if (nonNullishDescriptions.length === 0) {
+          return Reader.of(undefined)
+        }
+
+        return translateR("Enhancements").map(
+          (label): RawEntityDescriptionSection => ({
+            type: "labeled",
+            label,
+            value: {
+              type: "plain",
+              text: nonNullishDescriptions.join("\n"),
+            },
+          }),
+        )
+      }),
   )

@@ -291,6 +291,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { content: entry, entity, id },
+    options,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -320,6 +321,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
             return assertExhaustive(param)
         }
       },
+      publicationOptions: options.publications,
     } satisfies Partial<EnvMap>
 
     const { castingTime, cost, range, duration } = renderFastPerformanceParameters(
@@ -389,6 +391,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { content: entry, entity, id },
+    options,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -418,6 +421,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
             return assertExhaustive(param)
         }
       },
+      publicationOptions: options.publications,
     } satisfies Partial<EnvMap>
 
     const { castingTime, cost, range, duration } = renderSlowPerformanceParameters(

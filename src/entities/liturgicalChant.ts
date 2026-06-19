@@ -14,6 +14,7 @@ import type {
   GetAllInstances,
   GetInstanceById,
 } from "../helpers/getTypes.js"
+import type { LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderEnhancements } from "./partial/enhancements.js"
@@ -96,6 +97,7 @@ const getTextForTraditions = (
     translate: Translate
     translateMap: TranslateMap
     localeCompare: Compare<string>
+    localeJoin: LocaleJoin
     getInstanceById: GetInstanceById<"BlessedTradition" | "Aspect">
   },
   values: LiturgyTradition[],
@@ -137,7 +139,7 @@ const getTextForTraditions = (
             return attributedStringName
           }
 
-          return `${attributedStringName} (${aspects.join(" and ")})`
+          return `${attributedStringName} (${deps.localeJoin(aspects, "conjunction")})`
         }
         default:
           return assertExhaustive(trad)
@@ -233,8 +235,9 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
     { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { content: entry, entity, id },
+    options,
   ) => {
-    const { translate, translateMap, compare: localeCompare } = locale
+    const { translate, translateMap, compare: localeCompare, join: localeJoin } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -262,6 +265,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
             return assertExhaustive(param)
         }
       },
+      publicationOptions: options.publications,
     } satisfies Partial<EnvMap>
 
     const { castingTime, cost, range, duration } = renderFastPerformanceParameters(
@@ -295,6 +299,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
                 translate,
                 translateMap,
                 localeCompare,
+                localeJoin,
                 getInstanceById,
               },
               entry.traditions,
@@ -335,8 +340,9 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { content: entry, entity, id },
+    options,
   ) => {
-    const { translate, translateMap, compare: localeCompare } = locale
+    const { translate, translateMap, compare: localeCompare, join: localeJoin } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -364,6 +370,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             return assertExhaustive(param)
         }
       },
+      publicationOptions: options.publications,
     } satisfies Partial<EnvMap>
 
     const { castingTime, cost, range, duration } = renderSlowPerformanceParameters(
@@ -397,6 +404,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
                 translate,
                 translateMap,
                 localeCompare,
+                localeJoin,
                 getInstanceById,
               },
               entry.traditions,
