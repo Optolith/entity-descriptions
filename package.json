@@ -10,6 +10,7 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./publication-options": "./lib/references/publicationOptions.js",
     "./entities/*": "./lib/entities/*.js"
   },
   "scripts": {

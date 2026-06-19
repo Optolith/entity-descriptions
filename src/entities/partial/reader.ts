@@ -32,6 +32,7 @@ import type {
   TranslationParamsInArray,
   Translations,
 } from "../../helpers/translate.js"
+import type { PublicationOptions } from "../../references/publicationOptions.js"
 import { attributedCustomName, attributedName, customName } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./rated/activatable/nonModifiableSuffix.js"
@@ -62,6 +63,7 @@ export type EnvMap<
   getAllInstances: GetAllInstances<AE>
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE>
   getResolvedSelectOptionById: GetResolvedSelectOptionById
+  publicationOptions: PublicationOptions
 }
 
 /**
@@ -82,6 +84,7 @@ export type EnvMapAbbr = {
   ai: "getAllInstances"
   acibp: "getChildInstancesForInstanceId"
   rso: "getResolvedSelectOptionById"
+  po: "publicationOptions"
 }
 
 /**

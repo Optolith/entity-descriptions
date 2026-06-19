@@ -12,6 +12,7 @@ import type {
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
 import type { RawEntityDescriptionSection } from "../../index.js"
+import { filterIncludedPublicationEntriesMapR } from "../../references/publicationOptions.js"
 import { printEnhancementPrerequisites } from "./prerequisites/index.js"
 import {
   getChildInstancesForInstanceIdR,
@@ -60,15 +61,17 @@ export const renderEnhancements = (
   parentImprovementCost: ImprovementCost,
 ): StdReader<
   RawEntityDescriptionSection | undefined,
-  "t" | "tm" | "lc" | "lj" | "ibi" | "acibp",
-  RatedIdentifier["kind"] | "Enhancement",
+  "t" | "tm" | "lc" | "lj" | "ibi" | "acibp" | "po",
+  RatedIdentifier["kind"] | "Enhancement" | "Publication",
   "Enhancement"
 > =>
   getChildInstancesForInstanceIdR("Enhancement", parentId).thenW(enhancements =>
-    Reader.traverse(
-      enhancements.toSorted(on(e => e.content.skill_rating, compareNumber)),
-      enhancement => renderEnhancement(enhancement, parentImprovementCost),
-    ).thenW(enhancementDescriptions => {
+    filterIncludedPublicationEntriesMapR(enhancements, e => e.content)
+      .thenW(filteredEnhancements =>
+        Reader.traverse(
+          filteredEnhancements.toSorted(on(e => e.content.skill_rating, compareNumber)),
+          enhancement => renderEnhancement(enhancement, parentImprovementCost),
+        ).thenW(enhancementDescriptions => {
       const nonNullishDescriptions = enhancementDescriptions.filter(isNotNullish)
 
       if (nonNullishDescriptions.length === 0) {
