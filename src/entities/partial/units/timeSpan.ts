@@ -14,6 +14,7 @@ export type TimeSpanUnit =
   | "Weeks"
   | "Months"
   | "Years"
+  | "Decades"
   | "Centuries"
   | "Actions"
   | "CombatRounds"
@@ -29,6 +30,7 @@ const timeSpanUnitTranslationKeys = {
   Weeks: [".input {$value :number} .input {$style :string} {{{$value} weeks}}", "{$value} weeks", ".input {$value :number} .input {$style :string} {{{$value} wks.}}", "{$value} wks."],
   Months: [".input {$value :number} .input {$style :string} {{{$value} months}}", "{$value} months", ".input {$value :number} .input {$style :string} {{{$value} mos.}}", "{$value} mos."],
   Years: [".input {$value :number} .input {$style :string} {{{$value} years}}", "{$value} years", ".input {$value :number} .input {$style :string} {{{$value} yrs.}}", "{$value} yrs."],
+  Decades: [".input {$value :number} .input {$style :string} {{{$value} decades}}", "{$value} decades", ".input {$value :number} .input {$style :string} {{{$value} dcs.}}", "{$value} dcs."],
   Centuries: [".input {$value :number} .input {$style :string} {{{$value} centuries}}", "{$value} centuries", ".input {$value :number} .input {$style :string} {{{$value} cent.}}", "{$value} cent."],
   Actions: [".input {$value :number} .input {$style :string} {{{$value} actions}}", "{$value} actions", ".input {$value :number} .input {$style :string} {{{$value} act}}", "{$value} act"],
   CombatRounds: [".input {$value :number} .input {$style :string} {{{$value} combat rounds}}", "{$value} combat rounds", ".input {$value :number} .input {$style :string} {{{$value} CR}}", "{$value} CR"],
