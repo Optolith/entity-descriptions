@@ -204,7 +204,8 @@ export const isEntryFromIncludedPublication = (
       const localeOccurrences = translateMap(ref.occurrences)
       return localeOccurrences === undefined
         ? false
-        : isEntryRemovedInPublication(publicationOptions, ref.id, localeOccurrences)
+        : isPublicationIncludedById(getInstanceById, publicationOptions, ref.id) &&
+            isEntryRemovedInPublication(publicationOptions, ref.id, localeOccurrences)
     })
   ) {
     return false
