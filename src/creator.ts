@@ -16,7 +16,10 @@ import type {
   RawNestedDefinitionListEntityDescriptionSection,
 } from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
-import type { PublicationOptions } from "./references/publicationOptions.js"
+import {
+  isEntryFromIncludedPublication,
+  type PublicationOptions,
+} from "./references/publicationOptions.js"
 
 /**
  * A union type of entities with their names as a discriminant property.
@@ -107,7 +110,15 @@ export const createEntityDescriptionCreator =
   (databaseAccessors, locale, entry, options) => {
     const rawEntry = fn(databaseAccessors, locale, entry, options)
 
-    if (rawEntry === undefined) {
+    if (
+      rawEntry === undefined ||
+      !isEntryFromIncludedPublication(
+        { src: rawEntry.references },
+        databaseAccessors.getInstanceById,
+        locale.translateMap,
+        options.publications,
+      )
+    ) {
       return undefined
     }
 
