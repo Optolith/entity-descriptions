@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.23](https://github.com/Optolith/entity-descriptions/compare/v0.4.22...v0.4.23) (2026-06-20)
+
+
+### Features
+
+* apply publication options to enhancements ([b4ba358](https://github.com/Optolith/entity-descriptions/commit/b4ba3583b4a7d7c989fc7b1e81d463ded6a50c54))
+* apply publication options to whole entity description ([344c91f](https://github.com/Optolith/entity-descriptions/commit/344c91f2ba54af021d897540d9f074c674cbe0e2))
+* publication options ([5cc4ce1](https://github.com/Optolith/entity-descriptions/commit/5cc4ce1e0a0df96747b162f8010a41d482f199f9))
+
 ## [0.4.22](https://github.com/Optolith/entity-descriptions/compare/v0.4.21...v0.4.22) (2026-06-14)
 
 
