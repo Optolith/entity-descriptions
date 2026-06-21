@@ -1733,11 +1733,7 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
           combineGeneratedTextWithStaticTranslation(
             translate("Crafting Time (slow / fast)"),
             craftingTime,
-            translation.crafting_time === undefined
-              ? undefined
-              : typeof translation.crafting_time === "string"
-                ? translation.crafting_time
-                : renderSplitMagicalRuneParameterTranslation(translation.crafting_time).run(env),
+            translation.crafting_time,
           ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration (slow / fast)"),
