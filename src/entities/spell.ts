@@ -1369,6 +1369,18 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
+    nonModifiableSuffix: (param: ModifiableParameter): TranslationKeysWithoutParams => {
+      switch (param) {
+        case ModifiableParameter.CastingTime:
+          return " (you cannot use a modification on this ritual’s ritual time)"
+        case ModifiableParameter.Cost:
+          return " (you cannot use a modification on this ritual’s cost)"
+        case ModifiableParameter.Range:
+          return " (you cannot use a modification on this ritual’s range)"
+        default:
+          return assertExhaustive(param)
+      }
+    },
   } satisfies Partial<EnvMap>
 
   const { castingTime, cost, range, duration } = renderSlowOneTimePerformanceParameters(
