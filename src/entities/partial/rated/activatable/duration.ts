@@ -1,9 +1,8 @@
 import { Reader } from "@elyukai/utils/reader"
 import type {
   CastingTimeDuringLovemaking,
-  CheckResultBasedDuration,
   DurationForSustained,
-  FixedDuration,
+  ExpressionBasedDuration,
   Immediate,
   MusicDuration,
   PermanentDuration,
@@ -11,6 +10,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { Case } from "../../../../helpers/enums.js"
 import type { LocaleMap } from "../../../../helpers/translate.js"
 import {
   responsiveTextR,
@@ -22,7 +22,7 @@ import {
 import { replaceTextIfNeeded } from "../../responsiveText.js"
 import { formatCombinedTimeSpanR, formatTimeSpanR } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { renderCheckResultBasedValue } from "./checkResultBased.js"
+import { renderExpressionBasedParameterValue } from "./checkResultBased.js"
 import { wrapAsMaximum, wrapIfMaximum } from "./isMinimumMaximum.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
@@ -41,20 +41,16 @@ const renderImmediateDuration = (value?: Immediate): StdReader<string, "t" | "tm
 const renderPermanentDuration = (value: PermanentDuration): StdReader<string, "t" | "tm" | "rts"> =>
   translateR("Permanent").thenW(text => replaceTextIfNeeded(value.translations, text))
 
-const renderFixedDuration = (value: FixedDuration): StdReader<string, "t" | "tm" | "rts"> =>
-  formatCombinedTimeSpanR(value)
+/**
+ * Returns the text for a duration that is based on an expression.
+ */
+export const renderExpressionBasedDuration = (
+  value: ExpressionBasedDuration,
+): StdReader<string, "t" | "tm" | "rts"> =>
+  renderExpressionBasedParameterValue(value.value)
+    .thenW(expressionValue => formatTimeSpanR(value.unit, expressionValue))
     .then(text => wrapIfMaximum(value.is_maximum, text).map(wrapped => [wrapped, text] as const))
     .thenW(([wrapped, text]) => replaceTextIfNeeded(value.translations, wrapped, text))
-
-/**
- * Renders a duration that is based on the result of the skill check.
- */
-export const renderCheckResultBasedDuration = (
-  value: CheckResultBasedDuration,
-): StdReader<string, "t" | "tm" | "rts"> =>
-  renderCheckResultBasedValue(value)
-    .thenW(text => formatTimeSpanR(value.unit, text))
-    .then(text => wrapIfMaximum(value.is_maximum, text))
 
 const renderIndefiniteDuration = (value: {
   maximum?: OneTimeDuration
@@ -100,11 +96,11 @@ type OneTimeDuration =
     }
   | {
       kind: "Fixed"
-      Fixed: FixedDuration
+      Fixed: Omit<ExpressionBasedDuration, "value"> & { value: number }
     }
   | {
-      kind: "CheckResultBased"
-      CheckResultBased: CheckResultBasedDuration
+      kind: "Expression"
+      Expression: ExpressionBasedDuration
     }
   | {
       kind: "Indefinite"
@@ -133,9 +129,12 @@ export const renderOneTimeDuration = (
     case "Permanent":
       return renderPermanentDuration(value.Permanent)
     case "Fixed":
-      return renderFixedDuration(value.Fixed)
-    case "CheckResultBased":
-      return renderCheckResultBasedDuration(value.CheckResultBased)
+      return renderExpressionBasedDuration({
+        ...value.Fixed,
+        value: Case("Value", Case("Constant", value.Fixed.value)),
+      })
+    case "Expression":
+      return renderExpressionBasedDuration(value.Expression)
     case "Indefinite":
       return renderIndefiniteDuration(value.Indefinite)
     case "DuringLovemaking":

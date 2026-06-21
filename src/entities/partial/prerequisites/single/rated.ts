@@ -27,8 +27,17 @@ export const printRatedPrerequisite = (
     return printDisplayOption(locale.translateMap, prerequisite.display_option)
   }
 
+  const name =
+    attributedCustomName(
+      locale.translateMap,
+      getInstanceById,
+      "prerequisite",
+      (t: { name: string; abbreviation?: string }) => t.abbreviation ?? t.name,
+      prerequisite.id,
+    ) ?? MISSING_VALUE
+
   return {
-    value: `${attributedCustomName(locale.translateMap, getInstanceById, "prerequisite", (t: { name: string; abbreviation?: string }) => t.abbreviation ?? t.name, prerequisite.id) ?? MISSING_VALUE} ${prerequisite.value.toFixed()}`,
+    value: prerequisite.value > 0 ? `${name} ${prerequisite.value.toFixed()}` : name,
     sentenceType: undefined,
     isMeta: false,
   }

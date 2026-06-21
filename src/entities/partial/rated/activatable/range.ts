@@ -1,7 +1,6 @@
 import { Reader } from "@elyukai/utils/reader"
 import type {
-  CheckResultBasedRange,
-  FixedRange,
+  ExpressionBasedRange,
   ModifiableRange,
   Range,
   RangeValue,
@@ -9,6 +8,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { Case } from "../../../../helpers/enums.js"
 import {
   getInstanceByIdFnR,
   modifiableBySpeedOptionalR,
@@ -19,9 +19,9 @@ import {
   type StdReader,
 } from "../../reader.js"
 import { appendNoteIfNeeded, replaceTextIfNeeded } from "../../responsiveText.js"
-import { formatCombinedLengthR, formatLengthR } from "../../units/length.js"
+import { formatLengthR } from "../../units/length.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { renderCheckResultBasedValue } from "./checkResultBased.js"
+import { renderExpressionBasedParameterValue } from "./checkResultBased.js"
 import { wrapIfMaximum } from "./isMinimumMaximum.js"
 import { appendNonModifiableSuffix, ModifiableParameter } from "./nonModifiableSuffix.js"
 
@@ -65,14 +65,9 @@ const renderModifiableRange = (value: ModifiableRange) =>
     .then(text => wrapIfRadius(value.is_radius, text))
     .then(text => wrapIfMaximum(value.is_maximum, text))
 
-const renderFixedRange = (value: FixedRange) =>
-  formatCombinedLengthR(value)
-    .then(text => wrapIfRadius(value.is_radius, text))
-    .then(text => wrapIfMaximum(value.is_maximum, text))
-
-const getCheckResultBasedRangeTranslation = (value: CheckResultBasedRange) =>
-  renderCheckResultBasedValue(value)
-    .thenW(text => formatLengthR(value.unit, text))
+const renderExpressionBasedRange = (value: ExpressionBasedRange) =>
+  renderExpressionBasedParameterValue(value.value)
+    .thenW(expressionValue => formatLengthR(value.unit, expressionValue))
     .then(text => wrapIfRadius(value.is_radius, text))
     .then(text => wrapIfMaximum(value.is_maximum, text))
 
@@ -95,11 +90,11 @@ export const renderNonModifiableRange = (
       }
     | {
         kind: "Fixed"
-        Fixed: FixedRange
+        Fixed: Omit<ExpressionBasedRange, "value"> & { value: number }
       }
     | {
-        kind: "CheckResultBased"
-        CheckResultBased: CheckResultBasedRange
+        kind: "Expression"
+        Expression: ExpressionBasedRange
       },
   shouldAppendNonModifiableSuffix: boolean,
 ): StdReader<string, "t" | "tm" | "rts" | "nms"> => {
@@ -116,13 +111,13 @@ export const renderNonModifiableRange = (
       return translateR("Global")
     case "Touch":
       return translateR("Touch").thenW(appendNonModifiableSuffixIfNeeded)
-    case "Fixed": {
-      return renderFixedRange(value.Fixed).thenW(appendNonModifiableSuffixIfNeeded)
-    }
-    case "CheckResultBased":
-      return getCheckResultBasedRangeTranslation(value.CheckResultBased).then(
-        appendNonModifiableSuffixIfNeeded,
-      )
+    case "Fixed":
+      return renderExpressionBasedRange({
+        ...value.Fixed,
+        value: Case("Value", Case("Constant", value.Fixed.value)),
+      }).thenW(appendNonModifiableSuffixIfNeeded)
+    case "Expression":
+      return renderExpressionBasedRange(value.Expression).thenW(appendNonModifiableSuffixIfNeeded)
     default:
       return assertExhaustive(value)
   }
@@ -142,8 +137,7 @@ export const renderRangeValue = (
     case "Self":
     case "Global":
     case "Touch":
-    case "Fixed":
-    case "CheckResultBased":
+    case "Expression":
       return renderNonModifiableRange(value, shouldAppendNonModifiableSuffix)
     default:
       return assertExhaustive(value)

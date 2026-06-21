@@ -79,7 +79,12 @@ import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
-import { attributedCustomName, attributedInstance, attributedName } from "./partial/markdown.js"
+import {
+  attributedCustomName,
+  attributedInstance,
+  attributedName,
+  attributedNameFromInstance,
+} from "./partial/markdown.js"
 import { printProfessionPrerequisites } from "./partial/prerequisites/index.js"
 import { type GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -88,6 +93,7 @@ import {
   attributedNameR,
   customNameR,
   formatR,
+  getChildInstancesForInstanceIdFnR,
   getChildInstancesForInstanceIdR,
   getInstanceByIdR,
   localeCompareR,
@@ -147,18 +153,18 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
   selector: (pkg: PreparedProfessionPackage) => Reader<SelectorEnv, [T, number][]>,
   equalityFn: Equality<T>,
   renderText: (value: T) => Reader<RenderEnv, string>,
-  defaultValue: number,
+  defaultValue: number | undefined,
 ): Reader<StdEnv<"lc"> & SelectorEnv & RenderEnv, string | undefined> =>
   packages
-    .reduce<Reader<SelectorEnv, [T, number[]][]>>(
-      (accR, pkg, pkgIndex): Reader<SelectorEnv, [T, number[]][]> =>
+    .reduce<Reader<SelectorEnv, [T, (number | undefined)[]][]>>(
+      (accR, pkg, pkgIndex): Reader<SelectorEnv, [T, (number | undefined)[]][]> =>
         accR.map2(selector(pkg), (acc, selected) =>
-          selected.reduce<[T, number[]][]>(
+          selected.reduce<[T, (number | undefined)[]][]>(
             (filledAcc, [values, number]) => {
               const existing = filledAcc.findIndex(([value]) => equalityFn(value, values))
               if (existing >= 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- existing is checked to be >= 0
-                filledAcc[existing]![1][pkgIndex] = number + defaultValue
+                filledAcc[existing]![1][pkgIndex] = number + (defaultValue ?? 0)
                 return filledAcc
               } else {
                 return [
@@ -166,20 +172,26 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
                   [
                     values,
                     Array.from({ length: pkgIndex }, () => defaultValue).concat(
-                      number + defaultValue,
+                      number + (defaultValue ?? 0),
                     ),
                   ],
                 ]
               }
             },
-            acc.map(([value, numbers]): [T, number[]] => [value, [...numbers, defaultValue]]),
+            acc.map(([value, numbers]): [T, (number | undefined)[]] => [
+              value,
+              [...numbers, defaultValue],
+            ]),
           ),
         ),
       Reader.of([]),
     )
     .thenW(list =>
       Reader.traverse(list, ([value, numbers]) =>
-        renderText(value).map(text => `${text} ${numbers.join("/")}`),
+        renderText(value).map(
+          text =>
+            `${text} ${numbers.map(number => (number === undefined ? "—" : number)).join("/")}`,
+        ),
       ),
     )
     .thenW(list => localeSortR(list))
@@ -273,20 +285,27 @@ const renderLanguagesScriptsOption = (
 ): Reader<StdEnv<"t">, string> =>
   renderVariantLanguagesScriptsOption(undefined, { kind: "Override", Override: option })
 
+const wrapInParensIf = (text: string, condition: boolean) => (condition ? parensIf(text) : text)
+
 const renderSkillSpecializationOption = (
   option: SkillSpecializationOptions,
-): Reader<StdEnv<"f" | "t" | "tm" | "lj" | "ibi", "Skill" | "SkillGroup">, string> =>
-  Reader.asks(({ format, translate, translateMap, localeJoin, getInstanceById }) => {
+): Reader<StdEnv<"f" | "t" | "tm" | "lj" | "lc" | "ibi", "Skill" | "SkillGroup">, string> =>
+  Reader.asks(({ format, translate, translateMap, localeJoin, localeCompare, getInstanceById }) => {
     switch (option.kind) {
       case "Specific":
         return translate("Skill Specialization {$possibleSkills}", {
-          possibleSkills: localeJoin(
-            option.Specific.options.map(
-              id =>
-                attributedName(translateMap, getInstanceById, "profession", "Skill", id) ??
-                MISSING_VALUE,
+          possibleSkills: wrapInParensIf(
+            localeJoin(
+              option.Specific.options
+                .map(
+                  id =>
+                    attributedName(translateMap, getInstanceById, "profession", "Skill", id) ??
+                    MISSING_VALUE,
+                )
+                .toSorted(localeCompare),
+              "disjunction",
             ),
-            "disjunction",
+            option.Specific.options.length > 2,
           ),
         })
       case "Group":
@@ -390,10 +409,12 @@ const renderSkillsOption = (
               )
                 .thenW(localeSortR)
                 .thenW(list =>
-                  translateR("{$apValue} AP to distribute among the following skills: {$list}", {
-                    apValue,
-                    list: list.join(", "),
-                  }),
+                  translateR("maximum SR per skill: {$maxSR}", { maxSR: 8 }).then(maxSRText =>
+                    translateR("{$apValue} AP to distribute among the following skills: {$list}", {
+                      apValue,
+                      list: list.join(", ") + parensIf(maxSRText),
+                    }),
+                  ),
                 ),
       ) ?? Reader.of(undefined))
     : Reader.traverse(professionPackages, pkg => {
@@ -410,10 +431,12 @@ const renderSkillsOption = (
               )
                 .thenW(localeSortR)
                 .thenW(list =>
-                  translateR("{$apValue} AP to distribute among the following skills: {$list}", {
-                    apValue: skillsOption.ap_value,
-                    list: list.join(", "),
-                  }),
+                  translateR("maximum SR per skill: {$maxSR}", { maxSR: 8 }).then(maxSRText =>
+                    translateR("{$apValue} AP to distribute among the following skills: {$list}", {
+                      apValue: skillsOption.ap_value,
+                      list: list.join(", ") + parensIf(maxSRText),
+                    }),
+                  ),
                 )
       }).map(list => list.join(" / "))
 
@@ -733,7 +756,9 @@ const getEnhancementNameComponents = (
       instance,
       attributedName(translateMap, getInstanceById, "profession", instance.parent) ?? MISSING_VALUE,
     ),
-    options: translateMap(instance.translations)?.name ?? MISSING_VALUE,
+    options:
+      attributedNameFromInstance(translateMap, instance, "prerequisite", "Enhancement", id) ??
+      MISSING_VALUE,
   }
 }
 
@@ -839,12 +864,12 @@ const renderSingleActivatableNameChunk = (
 ) =>
   chunk === undefined
     ? MISSING_VALUE
-    : wrapActivatableInAttributedString(
-        isEnhancementNameComponents(chunk)
-          ? renderEnhancementNameComponents(chunk)
-          : renderActivatableNameComponents(translateMap, chunk, false),
-        chunk.id,
-      )
+    : isEnhancementNameComponents(chunk)
+      ? renderEnhancementNameComponents(chunk)
+      : wrapActivatableInAttributedString(
+          renderActivatableNameComponents(translateMap, chunk, false),
+          chunk.id,
+        )
 
 const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
   Reader.asks(
@@ -1047,7 +1072,7 @@ const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPa
         Reader.of(pkg.content.spells?.map(ct => [ct.id, ct.rating_modifier]) ?? []),
       deepEqual,
       renderSpellworkName,
-      0,
+      undefined,
     ),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join("; "))
 
@@ -1176,7 +1201,7 @@ const renderLiturgicalChants = (professionPackages: NonEmptyArray<PreparedProfes
         Reader.of(pkg.content.liturgical_chants?.map(ct => [ct.id, ct.rating_modifier]) ?? []),
       deepEqual,
       renderLiturgicalChantName,
-      0,
+      undefined,
     ),
     renderLiturgiesOption(professionPackages),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join(", "))
@@ -1321,13 +1346,15 @@ const renderProfessionVariantText = (
           variant.liturgical_chants,
           renderLiturgicalChantName,
         ),
-      ]).map(
-        lists =>
-          lists
-            .filter(isNotEmpty)
-            .map(list => list.join(", "))
-            .join("; ") + (translation.concluding_text ?? ""),
-      )
+      ]).map(lists => {
+        const nonEmptyLists = lists.filter(isNotEmpty)
+        return (
+          nonEmptyLists.map(list => list.join(", ")).join("; ") +
+          (translation.concluding_text !== undefined
+            ? `${nonEmptyLists.length > 0 ? ". " : ""}${translation.concluding_text}`
+            : "")
+        )
+      })
 
 const renderProfessionVariant = (
   base: ProfessionPackage,
@@ -1393,7 +1420,15 @@ const groupProfessionVariantsThatContainTheSameChanges = (
 
 const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
   professionPackages.length > 1
-    ? Reader.of(UNHANDLED_VALUE)
+    ? getChildInstancesForInstanceIdFnR<"ProfessionVariant">().map(
+        getChildInstancesForInstanceId =>
+          professionPackages.some(
+            professionPackage =>
+              getChildInstancesForInstanceId("ProfessionVariant", professionPackage.id).length > 0,
+          )
+            ? UNHANDLED_VALUE
+            : undefined,
+      )
     : getChildInstancesForInstanceIdR("ProfessionVariant", professionPackages[0].id).thenW(
         variants =>
           groupProfessionVariantsThatContainTheSameChanges(variants).thenW(groupedVariants =>

@@ -28,6 +28,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
       | "SocialStatus"
       | "Aspect"
       | "Property"
+      | "PersonalityTrait"
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }

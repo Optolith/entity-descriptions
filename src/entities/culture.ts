@@ -298,12 +298,23 @@ const renderCommonProfessions = (
           renderCommonProfessionGroup(
             "Blessed Professions",
             commonProfessions.Grouped.blessed,
-            constraint =>
-              renderTraditionConstraint(
-                getChildInstancesForInstanceId,
-                "BlessedTradition",
-                constraint.Tradition,
-              ),
+            constraint => {
+              switch (constraint.kind) {
+                case "Profession":
+                  return renderProfessionConstraint(
+                    getChildInstancesForInstanceId,
+                    constraint.Profession,
+                  )
+                case "Tradition":
+                  return renderTraditionConstraint(
+                    getChildInstancesForInstanceId,
+                    "BlessedTradition",
+                    constraint.Tradition,
+                  )
+                default:
+                  return assertExhaustive(constraint)
+              }
+            },
           ).map(blessed => [
             {
               type: "definitionList",
@@ -467,21 +478,25 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                       return MISSING_VALUE
                     }
 
+                    const cultureLanguageTranslation = translateMap(lang.translations)
+
                     return (
                       languageTranslation.name +
                       parensIf(
-                        [
-                          translateMap(language.customSpecializations?.translations)?.description,
-                          ...(lang.specializations?.map(
-                            specId =>
-                              translateMap(
-                                getInstanceById("LanguageSpecialization", specId)?.translations,
-                              )?.name,
-                          ) ?? []),
-                        ]
-                          .filter(isNotNullish)
-                          .toSorted(localeCompare)
-                          .join(", "),
+                        cultureLanguageTranslation?.specialization ??
+                          cultureLanguageTranslation?.specializationPrompt ??
+                          [
+                            translateMap(language.customSpecializations?.translations)?.description,
+                            ...(lang.specializations?.map(
+                              specId =>
+                                translateMap(
+                                  getInstanceById("LanguageSpecialization", specId)?.translations,
+                                )?.name,
+                            ) ?? []),
+                          ]
+                            .filter(isNotNullish)
+                            .toSorted(localeCompare)
+                            .join(", "),
                       )
                     )
                   })

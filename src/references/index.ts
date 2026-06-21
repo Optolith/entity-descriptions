@@ -4,12 +4,14 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../helpers/locale.js"
 import { fromRawPageRange, normalizePageRanges, printPageRanges } from "./pageRange.js"
+import { isPublicationIncluded, type PublicationOptions } from "./publicationOptions.js"
 
 /**
  * Returns the translation of the references.
  */
 export const getReferencesTranslation = (
   getInstanceById: GetInstanceById<"Publication">,
+  publicationOptions: PublicationOptions,
   locale: LocaleEnvironment,
   references: PublicationRefs,
 ) =>
@@ -22,7 +24,9 @@ export const getReferencesTranslation = (
       if (
         publication === undefined ||
         publicationTranslations === undefined ||
-        occurrences === undefined
+        occurrences === undefined ||
+        (publicationOptions.onlyShowReferencesToIncludedPublications &&
+          !isPublicationIncluded(publicationOptions, ref.id, publication))
       ) {
         return undefined
       }

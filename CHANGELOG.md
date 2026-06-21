@@ -2,6 +2,117 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.24](https://github.com/Optolith/entity-descriptions/compare/v0.4.23...v0.4.24) (2026-06-20)
+
+
+### Bug Fixes
+
+* only remove entry due to publication if publication is included ([3a97493](https://github.com/Optolith/entity-descriptions/commit/3a97493d515f6c0e0fdab2828dd9335611b3459f))
+
+## [0.4.23](https://github.com/Optolith/entity-descriptions/compare/v0.4.22...v0.4.23) (2026-06-20)
+
+
+### Features
+
+* apply publication options to enhancements ([b4ba358](https://github.com/Optolith/entity-descriptions/commit/b4ba3583b4a7d7c989fc7b1e81d463ded6a50c54))
+* apply publication options to whole entity description ([344c91f](https://github.com/Optolith/entity-descriptions/commit/344c91f2ba54af021d897540d9f074c674cbe0e2))
+* publication options ([5cc4ce1](https://github.com/Optolith/entity-descriptions/commit/5cc4ce1e0a0df96747b162f8010a41d482f199f9))
+
+## [0.4.22](https://github.com/Optolith/entity-descriptions/compare/v0.4.21...v0.4.22) (2026-06-14)
+
+
+### Features
+
+* blessing traditions ([b0bbf2d](https://github.com/Optolith/entity-descriptions/commit/b0bbf2dadc483b14e059a0f870dd8c5477f53831))
+
+## [0.4.21](https://github.com/Optolith/entity-descriptions/compare/v0.4.20...v0.4.21) (2026-06-14)
+
+## [0.4.20](https://github.com/Optolith/entity-descriptions/compare/v0.4.19...v0.4.20) (2026-06-13)
+
+
+### Features
+
+* expression-based activatable skill parameters ([f2749ff](https://github.com/Optolith/entity-descriptions/commit/f2749ff383047f6f5d221e3114996762d3d29a8b))
+
+## [0.4.19](https://github.com/Optolith/entity-descriptions/compare/v0.4.18...v0.4.19) (2026-06-13)
+
+
+### Features
+
+* culture language translations ([6d52cc9](https://github.com/Optolith/entity-descriptions/commit/6d52cc9dc1ffe1a953aed87ecda3caabe11054c2))
+
+
+### Bug Fixes
+
+* display activatable spell without rating as dash ([6090056](https://github.com/Optolith/entity-descriptions/commit/609005626e3a272a6a9f5aff949492db74e93f7d))
+
+## [0.4.18](https://github.com/Optolith/entity-descriptions/compare/v0.4.17...v0.4.18) (2026-06-13)
+
+## [0.4.17](https://github.com/Optolith/entity-descriptions/compare/v0.4.16...v0.4.17) (2026-06-08)
+
+
+### Features
+
+* render animist power optional target category ([29fcb50](https://github.com/Optolith/entity-descriptions/commit/29fcb5004e2bbf4081a375b84bc41daac17f861d))
+
+## [0.4.16](https://github.com/Optolith/entity-descriptions/compare/v0.4.15...v0.4.16) (2026-06-08)
+
+
+### Features
+
+* render animist power skill check penalty ([ef7751a](https://github.com/Optolith/entity-descriptions/commit/ef7751ad9f9b995f979d973522c7f27e65ba545c))
+
+
+### Bug Fixes
+
+* swap personality trait prerequisite texts ([abf4ff6](https://github.com/Optolith/entity-descriptions/commit/abf4ff6cbc8b8b09a0436741947ebf9b15cc9974))
+
+## [0.4.15](https://github.com/Optolith/entity-descriptions/compare/v0.4.14...v0.4.15) (2026-06-07)
+
+
+### Bug Fixes
+
+* add sustained cost map interval ([f7c1b31](https://github.com/Optolith/entity-descriptions/commit/f7c1b31452befa0c898a6f21e4624c8084ea5df5))
+* display full tradition name ([2d07eff](https://github.com/Optolith/entity-descriptions/commit/2d07eff1d4b6a5b72ce705e24969e4a384a1d486))
+* ignore rating in prerequisite when zero ([b375702](https://github.com/Optolith/entity-descriptions/commit/b375702ea644fc21b92bb64b811e204aeda7370c))
+* render ap value from explicit select options ([df2178f](https://github.com/Optolith/entity-descriptions/commit/df2178fe131ed9e9d3427ee092a46b2448b09650))
+
+## [0.4.14](https://github.com/Optolith/entity-descriptions/compare/v0.4.13...v0.4.14) (2026-06-07)
+
+
+### Bug Fixes
+
+* display negative disadvantage AP values ([8dd72a0](https://github.com/Optolith/entity-descriptions/commit/8dd72a04ef10aeb300b54ed8fa25ddfb60318a3e))
+* render shorter variant of commonness-rated options ([9f9eae0](https://github.com/Optolith/entity-descriptions/commit/9f9eae0af0800b17247aa2db8c300e0f693eb336))
+* separate variant values and concluding text with a period ([d58ebeb](https://github.com/Optolith/entity-descriptions/commit/d58ebeb35839ced633ba7a47bf6c69283522803d))
+* sort commonness-rated options alphabetically ([25c50dd](https://github.com/Optolith/entity-descriptions/commit/25c50dde77a34a207eb129fbe9ef63bb41e589cc))
+* sort skill spec skill options ([5b63ea8](https://github.com/Optolith/entity-descriptions/commit/5b63ea8244bc499027069e2edd1f48064bf98df4))
+* wrap skill spec options in parens if needed ([dd0562b](https://github.com/Optolith/entity-descriptions/commit/dd0562bfd09b7cf11d8e9c277b3fdcfba11204bc))
+
+## [0.4.13](https://github.com/Optolith/entity-descriptions/compare/v0.4.12...v0.4.13) (2026-06-01)
+
+
+### Bug Fixes
+
+* always display max SR for skill distributions ([248e706](https://github.com/Optolith/entity-descriptions/commit/248e7068b880eb820b60c2c36c0d8157abba1c7e))
+* hide variants term for multi-EL professions without variants ([25331f9](https://github.com/Optolith/entity-descriptions/commit/25331f9e9232081a4d4110e273b7096c4dfacdfd))
+* invalid markdown syntax for enhancement in profession ([0be5077](https://github.com/Optolith/entity-descriptions/commit/0be5077332a126061ca2618d5474d88e096594e4))
+
+## [0.4.12](https://github.com/Optolith/entity-descriptions/compare/v0.4.11...v0.4.12) (2026-05-31)
+
+
+### Features
+
+* add ap and fix minor issues to/with lesson packages ([cf4d0ec](https://github.com/Optolith/entity-descriptions/commit/cf4d0ec0cc615cbd5390919dff79cfe3c409d190))
+* adjust race for schema change and improve commonness rating display ([480f004](https://github.com/Optolith/entity-descriptions/commit/480f004e6e82995c2d651702521a289584360c76))
+* generate favored skills and primary attribute tradition rules ([9bee3c1](https://github.com/Optolith/entity-descriptions/commit/9bee3c1728d11f196f09bfd93afb03033564aa34))
+
+
+### Bug Fixes
+
+* add maximum skill rating appendix ([7be6362](https://github.com/Optolith/entity-descriptions/commit/7be63623b6bbf7fe3f307f17a41efd72b119fd1d))
+* equipment translation type mismatch ([a594c7c](https://github.com/Optolith/entity-descriptions/commit/a594c7cc5f44c7b52c3886dbce10ba37ed8d5f76))
+
 ## [0.4.11](https://github.com/Optolith/entity-descriptions/compare/v0.4.10...v0.4.11) (2026-03-23)
 
 

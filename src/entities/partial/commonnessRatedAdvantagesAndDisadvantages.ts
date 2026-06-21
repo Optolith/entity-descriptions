@@ -10,6 +10,7 @@ import type {
 import { ensureNonEmpty } from "@optolith/helpers/array"
 import { Case } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
+import type { LocaleCompare } from "../../helpers/locale.js"
 import type { TranslateMap, TranslationKeysWithoutParams } from "../../helpers/translate.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../index.js"
 import {
@@ -53,6 +54,7 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
   translateMap: TranslateMap,
   getInstanceById: GetInstanceById<E>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  localeCompare: LocaleCompare,
   entity: E,
   item: CommonnessRatedAdvantageDisadvantage<string>,
 ): string => {
@@ -81,7 +83,7 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
           customTranslation?.options === undefined
             ? (item.options?.map(
                 option =>
-                  renderNameComponentsOptions(false, getResolvedSelectOptionById, id, [option]) ??
+                  renderNameComponentsOptions(true, getResolvedSelectOptionById, id, [option]) ??
                   MISSING_VALUE,
               ) ?? [])
             : [customTranslation.options]
@@ -98,17 +100,10 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
             base: name,
             level,
             nameBuilderRules: makeNameBuilderRulesWithDefaults(instance.nameBuilderRules),
-            options:
-              customTranslation?.options === undefined
-                ? (item.options?.map(
-                    option =>
-                      renderNameComponentsOptions(false, getResolvedSelectOptionById, id, [
-                        option,
-                      ]) ?? MISSING_VALUE,
-                  ) ?? [])
-                : [customTranslation.options],
+            options,
           },
           false,
+          list => list.toSorted(localeCompare).join(", "),
         )
       },
       entity,
@@ -137,6 +132,7 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
               translateMap,
               getInstanceById,
               getResolvedSelectOptionById,
+              localeCompare,
               entity,
               item,
             ),
@@ -164,6 +160,7 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
                   translateMap,
                   getInstanceById,
                   getResolvedSelectOptionById,
+                  localeCompare,
                   entity,
                   item,
                 ),

@@ -99,6 +99,7 @@ export const printGeneralPrerequisiteGroup = (
     | "Property"
     | "Aspect"
     | "Enhancement"
+    | "PersonalityTrait"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -149,6 +150,12 @@ export const printGeneralPrerequisiteGroup = (
       return printTextPrerequisite(locale, prerequisite.Text)
     case "SexualCharacteristic":
       return printSexualCharacteristicPrerequisite(locale, prerequisite.SexualCharacteristic)
+    case "PersonalityTrait":
+      return printPersonalityTraitPrerequisite(
+        getInstanceById,
+        locale,
+        prerequisite.PersonalityTrait,
+      )
     default:
       return assertExhaustive(prerequisite)
   }
@@ -203,6 +210,7 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
     | "Property"
     | "Aspect"
     | "Enhancement"
+    | "PersonalityTrait"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -232,6 +240,7 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
     case "Enhancement":
     case "Text":
     case "SexualCharacteristic":
+    case "PersonalityTrait":
       return printGeneralPrerequisiteGroup(
         getInstanceById,
         getResolvedSelectOptionById,

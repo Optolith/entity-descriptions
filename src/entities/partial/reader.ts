@@ -32,6 +32,7 @@ import type {
   TranslationParamsInArray,
   Translations,
 } from "../../helpers/translate.js"
+import type { PublicationOptions } from "../../references/publicationOptions.js"
 import { attributedCustomName, attributedName, customName } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./rated/activatable/nonModifiableSuffix.js"
@@ -62,6 +63,7 @@ export type EnvMap<
   getAllInstances: GetAllInstances<AE>
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE>
   getResolvedSelectOptionById: GetResolvedSelectOptionById
+  publicationOptions: PublicationOptions
 }
 
 /**
@@ -82,6 +84,7 @@ export type EnvMapAbbr = {
   ai: "getAllInstances"
   acibp: "getChildInstancesForInstanceId"
   rso: "getResolvedSelectOptionById"
+  po: "publicationOptions"
 }
 
 /**
@@ -317,6 +320,14 @@ export const getChildInstancesForInstanceIdR = <CE extends keyof ChildEntityMap>
   { getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE> },
   { id: string; content: ChildEntityMap[CE][0] }[]
 > => Reader.asks(env => env.getChildInstancesForInstanceId(entityName, parentId))
+
+/**
+ * Gets a function to retrieve all child instances of an entity from the database by their child entity name and their parent’s identifier.
+ */
+export const getChildInstancesForInstanceIdFnR = <CE extends keyof ChildEntityMap>(): Reader<
+  { getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE> },
+  GetAllChildInstancesForParent<CE>
+> => Reader.asks(env => env.getChildInstancesForInstanceId)
 
 /**
  * Joins a list of strings according to the locale’s rules for the given type.

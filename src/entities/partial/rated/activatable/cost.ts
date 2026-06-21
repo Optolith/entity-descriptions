@@ -20,7 +20,11 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import { type LocaleMap } from "../../../../helpers/translate.js"
+import {
+  responsiveTranslate,
+  type LocaleMap,
+  type Translate,
+} from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
 import {
   formatEnergyFnR,
@@ -36,8 +40,12 @@ import {
   type StdEnv,
   type StdReader,
 } from "../../reader.js"
-import { appendNoteIfNeeded, replaceTextIfNeeded } from "../../responsiveText.js"
-import { formatCombinedTimeSpanR } from "../../units/timeSpan.js"
+import {
+  appendNoteIfNeeded,
+  replaceTextIfNeeded,
+  type ResponsiveTextSize,
+} from "../../responsiveText.js"
+import { formatCombinedTimeSpan, formatCombinedTimeSpanR } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendCheckResultModifier } from "./checkResultBased.js"
 import { wrapIfMinimum } from "./isMinimumMaximum.js"
@@ -159,7 +167,7 @@ export const renderModifiableOneTimeCost = (value: {
           ),
   )
 
-const appendIntervalToCost = (interval: DurationUnitValue | undefined, baseCost: string) =>
+const appendIntervalToCostR = (interval: DurationUnitValue | undefined, baseCost: string) =>
   interval === undefined
     ? Reader.of(baseCost)
     : formatCombinedTimeSpanR(interval, true).then(formattedInterval =>
@@ -167,6 +175,25 @@ const appendIntervalToCost = (interval: DurationUnitValue | undefined, baseCost:
           cost: baseCost,
           interval: formattedInterval,
         }),
+      )
+
+const appendIntervalToCost = (
+  translate: Translate,
+  responsiveTextSize: ResponsiveTextSize,
+  interval: DurationUnitValue | undefined,
+  baseCost: string,
+) =>
+  interval === undefined
+    ? baseCost
+    : responsiveTranslate(
+        translate,
+        responsiveTextSize,
+        "{$cost} per {$interval}",
+        "{$cost}/{$interval}",
+        {
+          cost: baseCost,
+          interval: formatCombinedTimeSpan(translate, responsiveTextSize, interval, true),
+        },
       )
 
 type NonModifiableOneTimeCost = {
@@ -193,7 +220,7 @@ export const renderNonModifiableOneTimeCost = (
     .thenW(base => appendFamiliarsTrickLPCostIfNeeded(value.lp_value, base))
     .thenW(base => appendPerCountableToCostIfNeeded(value.per, base))
     .then(base => appendPermanentCostIfNeeded(value.permanent_value, base))
-    .then(base => appendIntervalToCost(value.interval, base))
+    .then(base => appendIntervalToCostR(value.interval, base))
     .then(base => appendElvenPermanentCostIfNeeded(value.permanent, base))
     .then(base => wrapIfMinimum(value.is_minimum, base))
     .then(base => appendNoteIfNeeded(value.translations, base))
@@ -298,7 +325,21 @@ export const renderOneTimeCostMap = (
 
 const renderSustainedCostMap = (value: SustainedCostMap) =>
   formatEnergyFnR
-    .thenW(formatEnergy => renderResponsiveMap(value, option => option.value, formatEnergy))
+    .thenW(formatEnergy =>
+      Reader.ask<StdEnv<"t" | "rts">>().thenW(({ translate, responsiveTextSize }) =>
+        renderResponsiveMap(
+          value,
+          option => option.value,
+          singleValue =>
+            appendIntervalToCost(
+              translate,
+              responsiveTextSize,
+              value.interval,
+              formatEnergy(singleValue),
+            ),
+        ),
+      ),
+    )
     .then(text => appendNonModifiableSuffix(ModifiableParameter.Cost, text))
 
 /**
@@ -335,7 +376,7 @@ const buildSustainedCost = (
     () => Reader.of(activationCost),
   ).thenW(identity)
 
-  const intervalCostWithLabel = appendIntervalToCost(interval, intervalCost)
+  const intervalCostWithLabel = appendIntervalToCostR(interval, intervalCost)
 
   return activationCostWithLabel.map2(
     intervalCostWithLabel,

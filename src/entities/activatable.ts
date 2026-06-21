@@ -1382,6 +1382,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "SocialStatus"
       | "Weapon"
       | "Patron"
+      | "PersonalityTrait"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
@@ -1435,9 +1436,14 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             ).run(env)
           : []
 
+    const makeTraditionName: (name: string) => string =
+      entityName === "BlessedTradition" || entityName === "MagicalTradition"
+        ? name => translate("Tradition ({$tradition})", { tradition: name })
+        : name => name
+
     return {
       title:
-        (translation.name_in_library ?? translation.name) +
+        makeTraditionName(translation.name_in_library ?? translation.name) +
         (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
       subtitle: mapNullable(baseEntry.usage_type, usageType => {
         switch (usageType.kind) {
@@ -1613,6 +1619,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                     apValue,
                     entry,
                     translation,
+                    entityName === "Disadvantage",
                   ) + append,
               }
             }),

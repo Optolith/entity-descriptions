@@ -16,6 +16,10 @@ import type {
   RawNestedDefinitionListEntityDescriptionSection,
 } from "./index.js"
 import { getReferencesTranslation } from "./references/index.js"
+import {
+  isEntryFromIncludedPublication,
+  type PublicationOptions,
+} from "./references/publicationOptions.js"
 
 /**
  * A union type of entities with their names as a discriminant property.
@@ -103,10 +107,18 @@ export const createEntityDescriptionCreator =
   >(
     fn: EntityDescriptionCreator<ES, A, RawEntityDescription>,
   ): EntityDescriptionCreator<ES, A> =>
-  (databaseAccessors, locale, entry) => {
-    const rawEntry = fn(databaseAccessors, locale, entry)
+  (databaseAccessors, locale, entry, options) => {
+    const rawEntry = fn(databaseAccessors, locale, entry, options)
 
-    if (rawEntry === undefined) {
+    if (
+      rawEntry === undefined ||
+      !isEntryFromIncludedPublication(
+        { src: rawEntry.references },
+        databaseAccessors.getInstanceById,
+        locale.translateMap,
+        options.publications,
+      )
+    ) {
       return undefined
     }
 
@@ -122,6 +134,7 @@ export const createEntityDescriptionCreator =
           ? undefined
           : getReferencesTranslation(
               databaseAccessors.getInstanceById,
+              options.publications,
               locale,
               rawEntry.references,
             ),
@@ -138,4 +151,9 @@ export type EntityDescriptionCreator<
     getInstanceById: GetInstanceById<"Publication">
   },
   R = EntityDescription,
-> = (databaseAccessors: A, locale: LocaleEnvironment, entry: TaggedEntity<ES>) => R | undefined
+> = (
+  databaseAccessors: A,
+  locale: LocaleEnvironment,
+  entry: TaggedEntity<ES>,
+  options: { publications: PublicationOptions },
+) => R | undefined

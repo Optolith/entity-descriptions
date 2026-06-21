@@ -60,7 +60,7 @@ import {
   renderNonModifiableSustainedCost,
 } from "./partial/rated/activatable/cost.js"
 import {
-  renderCheckResultBasedDuration,
+  renderExpressionBasedDuration,
   renderMusicDuration,
   renderOneTimeDuration,
   renderSustainedDuration,
@@ -298,6 +298,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { content: entry, entity, id },
+    options,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -327,6 +328,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
             return assertExhaustive(param)
         }
       },
+      publicationOptions: options.publications,
     } satisfies Partial<EnvMap>
 
     const { castingTime, cost, range, duration } = renderFastPerformanceParameters(
@@ -396,6 +398,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     { getInstanceById, getChildInstancesForInstanceId, idMap },
     locale,
     { content: entry, entity, id },
+    options,
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -425,6 +428,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
             return assertExhaustive(param)
         }
       },
+      publicationOptions: options.publications,
     } satisfies Partial<EnvMap>
 
     const { castingTime, cost, range, duration } = renderSlowPerformanceParameters(
@@ -1039,8 +1043,9 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       | "AnimistPower"
       | "Tribe"
     >
+    idMap: IdMap
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById, idMap }, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
@@ -1117,7 +1122,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheck(entry.check).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
           renderEffect(mergedEffect).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(
@@ -1125,6 +1130,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
             duration,
             translation.duration,
           ),
+          entry.target ? renderTargetCategory(entry.target).run(env) : undefined,
           renderProperty(entry.property).run(env),
           {
             label: translate("Tribe Tradition"),
@@ -1773,6 +1779,12 @@ const renderMagicalRuneCraftingTimePart = (
 const renderMagicalRuneCraftingTime = (craftingTime: MagicalRuneCraftingTime) =>
   renderMagicalRuneCraftingTimePart(craftingTime, "Actions").map2(
     renderMagicalRuneCraftingTimePart(craftingTime, "Days"),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
+const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
+  renderExpressionBasedDuration(duration.fast).map2(
+    renderExpressionBasedDuration(duration.slow),
     (fast, slow) => `${slow} / ${fast}`,
   )
 
