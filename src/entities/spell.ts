@@ -58,6 +58,7 @@ import {
   renderModifiableOneTimeCost,
   renderNonModifiableOneTimeCost,
   renderNonModifiableSustainedCost,
+  renderOneTimeCostMap,
 } from "./partial/rated/activatable/cost.js"
 import {
   renderExpressionBasedDuration,
@@ -1599,6 +1600,8 @@ const renderBannzeichenCost = (options: Lazy<BannzeichenOption[]>, cost: Bannzei
       return Reader.sequence(cost.Disjunction.list.map(renderSingleEnergyCost)).thenW(text =>
         localeJoinR(text, "disjunction"),
       )
+    case "Map":
+      return renderOneTimeCostMap(cost.Map)
     case "DerivedFromOption":
       return renderOptionDerivedEnergyCost(options, option => option.cost?.value)
     default:
