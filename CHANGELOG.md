@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.25](https://github.com/Optolith/entity-descriptions/compare/v0.4.24...v0.4.25) (2026-06-21)
+
+
+### Features
+
+* support goblin ritual and bannzeichen entities ([16e585d](https://github.com/Optolith/entity-descriptions/commit/16e585d190bedd956245109f1cd8e7606fd182b6)), closes [#8](https://github.com/Optolith/entity-descriptions/issues/8) [#6](https://github.com/Optolith/entity-descriptions/issues/6) [#7](https://github.com/Optolith/entity-descriptions/issues/7)
+
+
+### Bug Fixes
+
+* print of zibilja ritual parameter cannot be modified ([126e8bb](https://github.com/Optolith/entity-descriptions/commit/126e8bb4b0e5cbf0b253d4ae190b785fa9dba456))
+
 ## [0.4.24](https://github.com/Optolith/entity-descriptions/compare/v0.4.23...v0.4.24) (2026-06-20)
 
 
