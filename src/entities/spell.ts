@@ -11,15 +11,14 @@ import {
   type AnimistPowerPerformanceParameters,
   type ArcaneBardTraditionReference,
   type ArcaneDancerTraditionReference,
-  type FamiliarsTrickPerformanceParameters,
-  type FamiliarsTrickProperty,
   type BannzeichenCost,
   type BannzeichenCraftingTime,
   type BannzeichenDuration,
   type BannzeichenImprovementCost,
   type BannzeichenOption,
+  type FamiliarsTrickPerformanceParameters,
+  type FamiliarsTrickProperty,
   type MagicalRuneCost,
-  type SingleBannzeichenCost,
   type MagicalRuneCraftingTime,
   type MagicalRuneDuration,
   type MagicalRuneImprovementCost,
@@ -28,6 +27,7 @@ import {
   type OldParameterBySpeed,
   type Property_ID,
   type RatedIdentifier,
+  type SingleBannzeichenCost,
   type SpellworkTraditions,
   type Tribe_ID,
 } from "@optolith/database-schema/gen"
@@ -1524,7 +1524,10 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
   }
 })
 
-const deriveValueGroupsFromNamedOptions = <T, O extends { translations?: Record<string, { name: string } | undefined> }>(
+const deriveValueGroupsFromNamedOptions = <
+  T,
+  O extends { translations?: Record<string, { name: string } | undefined> },
+>(
   options: Lazy<O[]>,
   grouper: (option: O) => T,
   comparator: Compare<T>,
@@ -1559,7 +1562,12 @@ const deriveValueGroupsFromMagicalRuneOptions = <T>(
 const renderSingleEnergyCost = (cost: Pick<SingleBannzeichenCost, "value" | "translations">) =>
   formatEnergyR(cost.value).thenW(text => appendNoteIfNeeded(cost.translations, text))
 
-const renderOptionDerivedEnergyCost = <O extends { translations?: Record<string, { name: string } | undefined>; cost?: { value: number } }>(
+const renderOptionDerivedEnergyCost = <
+  O extends {
+    translations?: Record<string, { name: string } | undefined>
+    cost?: { value: number }
+  },
+>(
   options: Lazy<O[]>,
   grouper: (option: O) => number | undefined,
 ): StdReader<string, "t" | "tm" | "lc" | "lj" | "eu"> =>
@@ -1600,7 +1608,6 @@ const renderBannzeichenCost = (options: Lazy<BannzeichenOption[]>, cost: Bannzei
   }
 }
 
-
 const renderBannzeichenCraftingTimePart = (
   craftingTime: BannzeichenCraftingTime,
   unit: TimeSpanUnit,
@@ -1626,22 +1633,21 @@ const renderBannzeichenCraftingTimePart = (
     })
   })
 
-const renderBannzeichenCraftingTime = (craftingTime: BannzeichenCraftingTime): StdReader<string, "t" | "tm" | "rts"> =>
+const renderBannzeichenCraftingTime = (
+  craftingTime: BannzeichenCraftingTime,
+): StdReader<string, "t" | "tm" | "rts"> =>
   renderBannzeichenCraftingTimePart(craftingTime, "Actions").map2(
     renderBannzeichenCraftingTimePart(craftingTime, "Days"),
     (fast, slow) => `${slow} / ${fast}`,
   )
 
-const renderSlowFastCheckResultBasedDuration = (duration: BannzeichenDuration | MagicalRuneDuration) =>
-  renderCheckResultBasedDuration(duration.fast).map2(
-    renderCheckResultBasedDuration(duration.slow),
+const renderSlowFastCheckResultBasedDuration = (
+  duration: BannzeichenDuration | MagicalRuneDuration,
+) =>
+  renderExpressionBasedDuration(duration.fast).map2(
+    renderExpressionBasedDuration(duration.slow),
     (fast, slow) => `${slow} / ${fast}`,
   )
-
-const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
-  renderSlowFastCheckResultBasedDuration(duration)
-
-
 
 const renderBannzeichenImprovementCost = (
   options: Lazy<BannzeichenOption[]>,
@@ -1659,8 +1665,7 @@ const renderBannzeichenImprovementCost = (
             : renderImprovementCostValue(option.improvement_cost),
         compareNullish((a, b) => a.localeCompare(b)),
         selectedImprovementCost => selectedImprovementCost ?? MISSING_VALUE,
-      )
-        .then(value => translateR("Improvement Cost").map(label => ({ label, value })))
+      ).then(value => translateR("Improvement Cost").map(label => ({ label, value })))
     default:
       return assertExhaustive(improvementCost)
   }
@@ -1719,8 +1724,10 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
             translation.crafting_time === undefined
               ? undefined
               : typeof (translation.crafting_time as any) === "string"
-              ? (translation.crafting_time as any)
-              : renderSplitMagicalRuneParameterTranslation(translation.crafting_time as any).run(env),
+                ? (translation.crafting_time as any)
+                : renderSplitMagicalRuneParameterTranslation(translation.crafting_time as any).run(
+                    env,
+                  ),
           ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration (slow / fast)"),
@@ -1783,10 +1790,7 @@ const renderMagicalRuneCraftingTime = (craftingTime: MagicalRuneCraftingTime) =>
   )
 
 const renderMagicalRuneDuration = (duration: MagicalRuneDuration) =>
-  renderExpressionBasedDuration(duration.fast).map2(
-    renderExpressionBasedDuration(duration.slow),
-    (fast, slow) => `${slow} / ${fast}`,
-  )
+  renderSlowFastCheckResultBasedDuration(duration)
 
 const renderMagicalRuneImprovementCost = (
   options: Lazy<MagicalRuneOption[]>,
@@ -1804,8 +1808,7 @@ const renderMagicalRuneImprovementCost = (
             : renderImprovementCostValue(option.improvement_cost),
         compareNullish((a, b) => a.localeCompare(b)),
         selectedImprovementCost => selectedImprovementCost ?? MISSING_VALUE,
-      )
-        .then(value => translateR("Improvement Cost").map(label => ({ label, value })))
+      ).then(value => translateR("Improvement Cost").map(label => ({ label, value })))
     default:
       return assertExhaustive(improvementCost)
   }
