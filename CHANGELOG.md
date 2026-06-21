@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.26](https://github.com/Optolith/entity-descriptions/compare/v0.4.25...v0.4.26) (2026-06-21)
+
+
+### Features
+
+* support hauerkettenzauber, keulenzauber and schweinetrommelzauber entities ([73d85f7](https://github.com/Optolith/entity-descriptions/commit/73d85f79b20ea97b3490e32edb888499321e8055))
+
 ## [0.4.25](https://github.com/Optolith/entity-descriptions/compare/v0.4.24...v0.4.25) (2026-06-21)
 
 
