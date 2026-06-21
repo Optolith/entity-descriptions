@@ -1431,13 +1431,11 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
           ),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
-          duration === undefined
-            ? undefined
-            : combineGeneratedTextWithStaticTranslation(
-                translate("Duration"),
-                duration,
-                translation.duration,
-              ),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Duration"),
+            duration,
+            translation.duration,
+          ),
           renderTargetCategory(entry.target).run(env),
           renderProperty(entry.property).run(env),
           renderImprovementCost(entry.improvement_cost).run(env),
