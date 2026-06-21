@@ -1407,7 +1407,7 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
           castingTime: renderedCastingTime,
           cost: renderNonModifiableSustainedCost(parameters.cost).run(env),
           range: renderRange(parameters.range).run(env),
-          duration: undefined,
+          duration: renderSustainedDuration(undefined).run(env),
         }
       }
       default:
@@ -1671,6 +1671,20 @@ const renderBannzeichenImprovementCost = (
   }
 }
 
+const renderSplitMagicalRuneParameterTranslation = (
+  parameter: OldParameterBySpeed,
+): StdReader<string, "rts"> =>
+  responsiveR(
+    () => parameter.fast.full,
+    () => parameter.fast.abbr,
+  ).map2(
+    responsiveR(
+      () => parameter.slow.full,
+      () => parameter.slow.abbr,
+    ),
+    (fast, slow) => `${slow} / ${fast}`,
+  )
+
 /**
  * Get a JSON representation of the rules text for a Bannzeichen.
  */
@@ -1723,11 +1737,9 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
             craftingTime,
             translation.crafting_time === undefined
               ? undefined
-              : typeof (translation.crafting_time as any) === "string"
-                ? (translation.crafting_time as any)
-                : renderSplitMagicalRuneParameterTranslation(translation.crafting_time as any).run(
-                    env,
-                  ),
+              : typeof translation.crafting_time === "string"
+                ? translation.crafting_time
+                : renderSplitMagicalRuneParameterTranslation(translation.crafting_time).run(env),
           ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration (slow / fast)"),
@@ -1743,20 +1755,6 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
     references: entry.src,
   }
 })
-
-const renderSplitMagicalRuneParameterTranslation = (
-  parameter: OldParameterBySpeed,
-): StdReader<string, "rts"> =>
-  responsiveR(
-    () => parameter.fast.full,
-    () => parameter.fast.abbr,
-  ).map2(
-    responsiveR(
-      () => parameter.slow.full,
-      () => parameter.slow.abbr,
-    ),
-    (fast, slow) => `${slow} / ${fast}`,
-  )
 
 const renderMagicalRuneCraftingTimePart = (
   craftingTime: MagicalRuneCraftingTime,
