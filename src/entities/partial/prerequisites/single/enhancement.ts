@@ -1,86 +1,83 @@
+import { Reader } from "@elyukai/utils/reader"
 import type {
   EnhancementPrerequisite,
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { fromUniformCase } from "tsondb/schema/gen"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import type { LocaleMap } from "../../../../helpers/translate.js"
-import { attributedNameFromInstance } from "../../markdown.js"
+import {
+  attributedNameFromInstanceR,
+  getInstanceByIdR,
+  translateR,
+  type StdEnv,
+  type StdReader,
+} from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printLabel = (
-  locale: Pick<LocaleEnvironment, "translate">,
-  skillId: SkillWithEnhancementsIdentifier,
-): string => {
+const printLabel = (skillId: SkillWithEnhancementsIdentifier): StdReader<string, "t"> => {
   switch (skillId.kind) {
     case "Spell":
     case "Ritual":
-      return locale.translate("spell enhancement")
+      return translateR("spell enhancement")
     case "LiturgicalChant":
     case "Ceremony":
-      return locale.translate("liturgical enhancement")
+      return translateR("liturgical enhancement")
     default:
       return assertExhaustive(skillId)
   }
 }
 
-const getSkill = (
-  getInstanceById: GetInstanceById<"Spell" | "Ritual" | "LiturgicalChant" | "Ceremony">,
-  parentId: SkillWithEnhancementsIdentifier,
-): { translations: LocaleMap<{ name: string }> } | undefined => {
-  switch (parentId.kind) {
-    case "Spell":
-      return getInstanceById("Spell", parentId.Spell)
-    case "Ritual":
-      return getInstanceById("Ritual", parentId.Ritual)
-    case "LiturgicalChant":
-      return getInstanceById("LiturgicalChant", parentId.LiturgicalChant)
-    case "Ceremony":
-      return getInstanceById("Ceremony", parentId.Ceremony)
-    default:
-      return assertExhaustive(parentId)
-  }
+type EnvExtra = {
+  hideParent?: true
 }
 
 /**
  * Get the translation of an external enhancement prerequisite.
  */
 export const printEnhancementPrerequisite = (
-  getInstanceById: GetInstanceById<
-    "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony" | "Enhancement"
-  >,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: EnhancementPrerequisite,
-): PrerequisitePart | undefined => {
-  const enhancement = getInstanceById("Enhancement", prerequisite.id)
-
-  const skill = enhancement && getSkill(getInstanceById, enhancement.parent)
-
-  return {
-    label: `${enhancement ? printLabel(locale, enhancement.parent) : MISSING_VALUE} `,
-    value: `${
-      attributedNameFromInstance(
-        locale.translateMap,
-        enhancement,
-        "prerequisite",
-        "Enhancement",
-        prerequisite.id,
-      ) ?? MISSING_VALUE
-    } ${locale.translate("for")} ${
-      (enhancement &&
-        attributedNameFromInstance(
-          locale.translateMap,
-          skill,
-          "prerequisite",
-          enhancement.parent.kind,
-          fromUniformCase(enhancement.parent),
-        )) ??
-      MISSING_VALUE
-    }`,
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): Reader<
+  StdEnv<"t" | "tm" | "ibi", "Enhancement" | "Spell" | "Ritual" | "LiturgicalChant" | "Ceremony"> &
+    EnvExtra,
+  PrerequisitePart | undefined
+> =>
+  getInstanceByIdR("Enhancement", prerequisite.id).thenW(enhancement =>
+    enhancement === undefined
+      ? Reader.of(undefined)
+      : getInstanceByIdR(enhancement.parent).thenW(skill =>
+          printLabel(enhancement.parent).thenW(label =>
+            Reader.asks((env: EnvExtra) => env.hideParent ?? false).thenW(hideParent =>
+              attributedNameFromInstanceR(
+                enhancement,
+                "prerequisite",
+                "Enhancement",
+                prerequisite.id,
+              )
+                .map(name => name ?? MISSING_VALUE)
+                .thenW(name =>
+                  hideParent
+                    ? Reader.of(name)
+                    : attributedNameFromInstanceR(
+                        skill,
+                        "prerequisite",
+                        enhancement.parent.kind,
+                        fromUniformCase(enhancement.parent),
+                      )
+                        .map(skillName => skillName ?? MISSING_VALUE)
+                        .thenW(skillName =>
+                          translateR("for").map(forText => `${name} ${forText} ${skillName}`),
+                        ),
+                )
+                .map(
+                  (value): PrerequisitePart => ({
+                    label: `${label} `,
+                    value,
+                    sentenceType: undefined,
+                    isMeta: false,
+                  }),
+                ),
+            ),
+          ),
+        ),
+  )

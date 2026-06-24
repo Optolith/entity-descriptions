@@ -33,7 +33,12 @@ import type {
   Translations,
 } from "../../helpers/translate.js"
 import type { PublicationOptions } from "../../references/publicationOptions.js"
-import { attributedCustomName, attributedName, customName } from "./markdown.js"
+import {
+  attributedCustomName,
+  attributedName,
+  attributedNameFromInstance,
+  customName,
+} from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./rated/activatable/nonModifiableSuffix.js"
 import { Speed } from "./rated/activatable/speed.js"
@@ -239,6 +244,16 @@ export const attributedNameR = <
   { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
   string | undefined
 > => Reader.asks(env => attributedName(env.translateMap, env.getInstanceById, context, ...args))
+
+/**
+ * Retrieves the `name` property of the specified entry in an attributed string.
+ */
+export const attributedNameFromInstanceR = (
+  instance: { translations: LocaleMap<{ name: string }> } | undefined,
+  context: string,
+  ...args: IdArgsVariant
+): Reader<{ translateMap: TranslateMap }, string | undefined> =>
+  Reader.asks(env => attributedNameFromInstance(env.translateMap, instance, context, ...args))
 
 /**
  * Applies a function to the translation of the specified entry and renders it in an attributed string.

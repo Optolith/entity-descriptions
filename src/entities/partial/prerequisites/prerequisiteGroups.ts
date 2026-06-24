@@ -145,7 +145,10 @@ export const printGeneralPrerequisiteGroup = (
     case "RatedSum":
       return printRatedSumPrerequisite(getInstanceById, locale, prerequisite.RatedSum)
     case "Enhancement":
-      return printEnhancementPrerequisite(getInstanceById, locale, prerequisite.Enhancement)
+      return printEnhancementPrerequisite(prerequisite.Enhancement).run({
+        ...locale,
+        getInstanceById,
+      })
     case "Text":
       return printTextPrerequisite(locale, prerequisite.Text)
     case "SexualCharacteristic":
@@ -443,7 +446,11 @@ export const printEnhancementPrerequisiteGroup = (
     case "Rated":
       return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     case "Enhancement":
-      return printEnhancementPrerequisite(getInstanceById, locale, prerequisite.Enhancement)
+      return printEnhancementPrerequisite(prerequisite.Enhancement).run({
+        ...locale,
+        getInstanceById,
+        hideParent: true,
+      })
     default:
       return assertExhaustive(prerequisite)
   }
