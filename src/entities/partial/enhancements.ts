@@ -49,7 +49,7 @@ const renderEnhancement = (
     >().map(env =>
       translation === undefined
         ? undefined
-        : `- ^[${translation.name}](entity: "Enhancement") (${env.translate("SR {$value}", { value: enhancement.content.skill_rating })}, ${env.translate("{$value} AP", { value: getEnhancementAPValue(enhancement.content.adventurePoints, parentImprovementCost) })}): ${translation.effect}${enhancement.content.prerequisites === undefined ? "" : ` ${env.translate(".input {$hiddenCount :number} {{Prerequisites}}", { hiddenCount: enhancement.content.prerequisites.length })}: ${printEnhancementPrerequisites(env.getInstanceById, { translate: env.translate, translateMap: env.translateMap, compare: env.localeCompare, join: env.localeJoin }, enhancement.content.prerequisites)}`}`,
+        : `- ^[${translation.name}](entity: "Enhancement") (${env.translate("SR {$value}", { value: enhancement.content.skill_rating })}, ${env.translate("{$value} AP", { value: getEnhancementAPValue(enhancement.content.adventurePoints, parentImprovementCost) })}): ${translation.effect.split("\n").join("\n  ")}${enhancement.content.prerequisites === undefined ? "" : ` ${env.translate(".input {$hiddenCount :number} {{Prerequisites}}", { hiddenCount: enhancement.content.prerequisites.length })}: ${printEnhancementPrerequisites(env.getInstanceById, { translate: env.translate, translateMap: env.translateMap, compare: env.localeCompare, join: env.localeJoin }, enhancement.content.prerequisites)}`}`,
     ),
   )
 
