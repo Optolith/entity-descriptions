@@ -146,6 +146,7 @@ const getTextForTraditions = (
       }
     })
     .filter(isNotNullish)
+    .sort(deps.localeCompare)
     .join(", ")
 
   return {
