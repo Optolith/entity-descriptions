@@ -3,9 +3,11 @@ import type {
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { fromUniformCase } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../../../helpers/locale.js"
 import type { LocaleMap } from "../../../../helpers/translate.js"
+import { attributedNameFromInstance } from "../../markdown.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -59,10 +61,24 @@ export const printEnhancementPrerequisite = (
 
   return {
     label: `${enhancement ? printLabel(locale, enhancement.parent) : MISSING_VALUE} `,
-    value: `*${
-      locale.translateMap(enhancement?.translations)?.name ?? MISSING_VALUE
-    }* ${locale.translate("for")} ${
-      locale.translateMap(skill?.translations)?.name ?? MISSING_VALUE
+    value: `${
+      attributedNameFromInstance(
+        locale.translateMap,
+        enhancement,
+        "prerequisite",
+        "Enhancement",
+        prerequisite.id,
+      ) ?? MISSING_VALUE
+    } ${locale.translate("for")} ${
+      (enhancement &&
+        attributedNameFromInstance(
+          locale.translateMap,
+          skill,
+          "prerequisite",
+          enhancement.parent.kind,
+          fromUniformCase(enhancement.parent),
+        )) ??
+      MISSING_VALUE
     }`,
     sentenceType: undefined,
     isMeta: false,
