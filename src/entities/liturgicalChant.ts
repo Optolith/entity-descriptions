@@ -48,16 +48,20 @@ const getTextForBlessingTraditions = (
   const primaryTradition = blessedTraditions.find(trad => trad.content.primaryBlessing === id)
 
   const secondaryTraditions = blessedTraditions.filter(trad => {
-    switch (trad.content.restricted_blessings?.kind) {
-      case "Six":
-        return !trad.content.restricted_blessings.Six.includes(id)
-      case "Three":
-        return !trad.content.restricted_blessings.Three.includes(id)
-      case undefined:
-        return false
-      default:
-        return assertExhaustive(trad.content.restricted_blessings)
+    if (trad.content.type.kind === "Church") {
+      switch (trad.content.type.Church.restrictedBlessings?.kind) {
+        case "Six":
+          return !trad.content.type.Church.restrictedBlessings.Six.includes(id)
+        case "Three":
+          return !trad.content.type.Church.restrictedBlessings.Three.includes(id)
+        case undefined:
+          return false
+        default:
+          return assertExhaustive(trad.content.type.Church.restrictedBlessings)
+      }
     }
+
+    return false
   })
 
   const translateTradition = (trad: { id: string; content: BlessedTradition }) => {

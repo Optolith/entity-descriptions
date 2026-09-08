@@ -1119,21 +1119,23 @@ const renderRestrictedBlessings = (restrictedBlessings: RestrictedBlessings) => 
 
 const renderSingleBlessings = (traditions: BlessedTradition_ID[]) =>
   Reader.traverse(traditions, traditionId =>
-    getInstanceByIdR("BlessedTradition", traditionId).map(tradition =>
-      tradition
-        ? { restrictedBlessings: tradition.restricted_blessings, type: tradition.type }
-        : undefined,
-    ),
-  ).thenW(restrictedBlessingsList =>
-    !isNotEmpty(restrictedBlessingsList)
-      ? Reader.of(undefined)
-      : restrictedBlessingsList.length === 1
-        ? (() => {
-            const [first] = restrictedBlessingsList
-            const { restrictedBlessings, type } = first ?? {}
-            return type?.kind === "Shamanistic"
-              ? Reader.of(undefined)
-              : restrictedBlessings === undefined
+    getInstanceByIdR("BlessedTradition", traditionId).map(tradition => tradition?.type),
+  )
+    .map(traditionTypes => traditionTypes.filter(isNotNullish))
+    .thenW(traditionTypes =>
+      !isNotEmpty(traditionTypes)
+        ? Reader.of(undefined)
+        : traditionTypes.length === 1
+          ? (() => {
+              const [first] = traditionTypes
+
+              if (first.kind === "Shamanistic") {
+                return Reader.of(undefined)
+              }
+
+              const { restrictedBlessings } = first.Church
+
+              return restrictedBlessings === undefined
                 ? translateR("The Twelve Blessings")
                 : translateR("The Twelve Blessings").thenW(base =>
                     renderRestrictedBlessings(restrictedBlessings).thenW(list =>
@@ -1142,19 +1144,20 @@ const renderSingleBlessings = (traditions: BlessedTradition_ID[]) =>
                       }).map(note => base + parensIf(note)),
                     ),
                   )
-          })()
-        : restrictedBlessingsList.every(trad => trad?.type.kind === "Shamanistic")
-          ? Reader.of(undefined)
-          : restrictedBlessingsList.some(
-                trad =>
-                  trad?.restrictedBlessings !== undefined || trad?.type.kind === "Shamanistic",
-              )
-            ? translateR("The Twelve Blessings").map2(
-                translateR("depends on selected tradition"),
-                (base, note) => base + parensIf(note),
-              )
-            : translateR("The Twelve Blessings"),
-  )
+            })()
+          : traditionTypes.every(trad => trad.kind === "Shamanistic")
+            ? Reader.of(undefined)
+            : traditionTypes.some(
+                  trad =>
+                    (trad.kind === "Church" && trad.Church.restrictedBlessings !== undefined) ||
+                    trad.kind === "Shamanistic",
+                )
+              ? translateR("The Twelve Blessings").map2(
+                  translateR("depends on selected tradition"),
+                  (base, note) => base + parensIf(note),
+                )
+              : translateR("The Twelve Blessings"),
+    )
 
 const renderBlessings = (traditions: string[][]) => {
   if (traditions.every(isEmpty)) {
