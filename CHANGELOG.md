@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.5.0](https://github.com/Optolith/entity-descriptions/compare/v0.4.26...v0.5.0) (2026-09-08)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.54.0 and other newer dependencies
+
+### build
+
+* **deps:** upgrade to schema 0.54.0 and other newer dependencies ([5ebe2df](https://github.com/Optolith/entity-descriptions/commit/5ebe2df9e468da66f792dd6e40e414037f395579))
+
+### Features
+
+* attributed names for enhancement prerequisites ([0e8600a](https://github.com/Optolith/entity-descriptions/commit/0e8600ac4999c4c7f83b6c719d8955dcc7f87512))
+
+### Bug Fixes
+
+* do not display enchantment parent in parent description ([7e3d5da](https://github.com/Optolith/entity-descriptions/commit/7e3d5daf565eb1729b6f6a31229cd7bfa826bf0d)), closes [#26](https://github.com/Optolith/entity-descriptions/issues/26)
+* indentation for multi-paragraph enhancements ([206f13c](https://github.com/Optolith/entity-descriptions/commit/206f13cc5730148e98c5263cc891a53c10391e3f))
+* sort liturgical chant traditions alphabetically ([2255cd4](https://github.com/Optolith/entity-descriptions/commit/2255cd44f8df474ce4b17b253ead84c4f2c10217)), closes [#35](https://github.com/Optolith/entity-descriptions/issues/35)
 ## [0.4.26](https://github.com/Optolith/entity-descriptions/compare/v0.4.25...v0.4.26) (2026-06-21)
 
 
