@@ -18,7 +18,7 @@ export const getFocusRuleEntityDescription = createEntityDescriptionCreator<
 
   return {
     title: translation.name,
-    badge: entry.level,
+    badge: { type: "level", value: romanize(entry.level) },
     className: "focus-rule",
     body: [
       {

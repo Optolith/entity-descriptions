@@ -262,7 +262,7 @@ const renderPenaltyValue = (
       return penalty.ByAttack.list
         .map(
           (penaltyByAttack, index) =>
-            `${penaltyByAttack.value.toFixed()} (${renderPenaltyByAttackLabel(
+            `${sign(penaltyByAttack.value)} (${renderPenaltyByAttackLabel(
               translate,
               penalty.ByAttack.attack_replacement,
               index + offset,
@@ -1522,6 +1522,21 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             return assertExhaustive(usageType)
         }
       }),
+      badge: mapNullable(
+        entityName === "CombatStyleSpecialAbility" || entityName === "AdvancedCombatSpecialAbility"
+          ? entry.type
+          : undefined,
+        combatType => {
+          switch (combatType.kind) {
+            case "Armed":
+              return { type: "armedCombat", value: translate("AC") }
+            case "Unarmed":
+              return { type: "unarmedCombat", value: translate("UC") }
+            default:
+              return assertExhaustive(combatType)
+          }
+        },
+      ),
       className: "special-ability",
       body: [
         mapNullable(translation.special_rules, specialRules => ({

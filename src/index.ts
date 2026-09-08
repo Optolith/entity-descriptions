@@ -82,7 +82,7 @@ export type { LocaleEnvironment }
 export type EntityDescription = {
   title: string
   subtitle?: string
-  badge?: number
+  badge?: { type: "level" | "armedCombat" | "unarmedCombat"; value: string }
   className: string
   body: EntityDescriptionSection[]
   errata?: { date: string; description: string }[]
@@ -93,7 +93,8 @@ export type EntityDescription = {
  * A labeled or unlabeled section of a library entry text.
  */
 export type EntityDescriptionSection =
-  EntityDescriptionSectionContent | LabeledEntityDescriptionSection<EntityDescriptionSectionContent>
+  | EntityDescriptionSectionContent
+  | LabeledEntityDescriptionSection<EntityDescriptionSectionContent>
 
 /**
  * A labeled section of a library entry text.
@@ -110,7 +111,9 @@ export type LabeledEntityDescriptionSection<
  * A slice of the content of a library entry text.
  */
 export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescriptionSection> =
-  PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
+  | PlainEntityDescriptionSection
+  | DL
+  | TableEntityDescriptionSection
 
 /**
  * A JSON representation of the rules text for a library entry that has not been
@@ -119,7 +122,7 @@ export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescription
 export type RawEntityDescription = {
   title: string
   subtitle?: string
-  badge?: number
+  badge?: { type: "level" | "armedCombat" | "unarmedCombat"; value: string }
   className: string
   body: (RawEntityDescriptionSection | undefined)[]
   errata?: Errata
@@ -137,7 +140,9 @@ export type RawEntityDescriptionSection =
  * A slice of the content of a library entry text.
  */
 export type RawEntityDescriptionSectionContent<DL = RawDefinitionListEntityDescriptionSection> =
-  PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
+  | PlainEntityDescriptionSection
+  | DL
+  | TableEntityDescriptionSection
 
 /**
  * A plain text, possibly containing Markdown syntax.
