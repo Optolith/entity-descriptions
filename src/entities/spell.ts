@@ -58,7 +58,7 @@ import {
   renderModifiableOneTimeCost,
   renderNonModifiableOneTimeCost,
   renderNonModifiableSustainedCost,
-  renderOneTimeCostMap,
+  renderStandaloneCostMap,
 } from "./partial/rated/activatable/cost.js"
 import {
   renderExpressionBasedDuration,
@@ -174,7 +174,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
     >
   }
 >(({ getInstanceById }, locale, { content: entry }) => {
-  const { translate, translateMap, compare: localeCompare } = locale
+  const { translate, translateMap, format, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -184,6 +184,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -301,7 +302,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     { content: entry, entity, id },
     options,
   ) => {
-    const { translate, translateMap, compare: localeCompare } = locale
+    const { translate, translateMap, format, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -311,6 +312,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     const env = {
       translate,
       translateMap,
+      format,
       getInstanceById,
       getChildInstancesForInstanceId,
       localeJoin: locale.join,
@@ -401,7 +403,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     { content: entry, entity, id },
     options,
   ) => {
-    const { translate, translateMap, compare: localeCompare } = locale
+    const { translate, translateMap, format, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -411,6 +413,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     const env = {
       translate,
       translateMap,
+      format,
       getInstanceById,
       getChildInstancesForInstanceId,
       localeJoin: locale.join,
@@ -486,7 +489,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -496,6 +499,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
@@ -566,7 +570,7 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -576,6 +580,7 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     localeCompare: locale.compare,
@@ -618,7 +623,7 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -628,6 +633,7 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     speed: Speed.Slow,
     energyUnit: "ArcaneEnergy",
@@ -701,7 +707,7 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
     >
   }
 >(({ getInstanceById }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -711,6 +717,7 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
@@ -770,7 +777,7 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
     >
   }
 >(({ getInstanceById }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -780,6 +787,7 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeCompare: locale.compare,
     localeJoin: locale.join,
@@ -853,7 +861,7 @@ const renderFamiliarsTrickPerformanceParameters = (
     cost: string
     duration: string
   },
-  "t" | "tm" | "rts" | "eu" | "nms" | "lj"
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj"
 > => {
   switch (params.kind) {
     case "OneTime":
@@ -893,7 +901,7 @@ export const getFamiliarsTrickEntityDescription = createEntityDescriptionCreator
     >
   }
 >(({ getInstanceById }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -903,6 +911,7 @@ export const getFamiliarsTrickEntityDescription = createEntityDescriptionCreator
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
@@ -968,7 +977,7 @@ const renderAnimistPowerPerformanceParameters = (
     cost: string
     duration: string
   },
-  "t" | "tm" | "rts" | "eu" | "nms" | "lj"
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj"
 > => {
   switch (params.kind) {
     case "OneTime":
@@ -1047,7 +1056,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1057,6 +1066,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
@@ -1178,7 +1188,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }
 >(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1188,6 +1198,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
@@ -1276,7 +1287,7 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1286,6 +1297,7 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     energyUnit: "ArcaneEnergy",
@@ -1362,7 +1374,7 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1372,6 +1384,7 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeJoin: locale.join,
     speed: Speed.Slow,
@@ -1466,7 +1479,7 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1476,6 +1489,7 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeCompare: locale.compare,
     localeJoin: locale.join,
@@ -1613,7 +1627,7 @@ const renderBannzeichenCost = (options: Lazy<BannzeichenOption[]>, cost: Bannzei
         localeJoinR(text, "disjunction"),
       )
     case "Map":
-      return renderOneTimeCostMap(cost.Map)
+      return renderStandaloneCostMap(cost.Map)
     case "DerivedFromOption":
       return renderOptionDerivedEnergyCost(options, option => option.cost?.value)
     default:
@@ -1648,7 +1662,7 @@ const renderBannzeichenCraftingTimePart = (
 
 const renderBannzeichenCraftingTime = (
   craftingTime: BannzeichenCraftingTime,
-): StdReader<string, "t" | "tm" | "rts"> =>
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
   renderBannzeichenCraftingTimePart(craftingTime, "Actions").map2(
     renderBannzeichenCraftingTimePart(craftingTime, "Days"),
     (fast, slow) => `${slow} / ${fast}`,
@@ -1710,7 +1724,7 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"BannzeichenOption">
   }
 >(({ getInstanceById, getChildInstancesForInstanceId }, locale, { id, content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1720,6 +1734,7 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeCompare: locale.compare,
     localeJoin: locale.join,
@@ -1834,7 +1849,7 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, getChildInstancesForInstanceId, idMap }, locale, { id, content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -1844,6 +1859,7 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     getInstanceById,
     localeCompare: locale.compare,
     localeJoin: locale.join,

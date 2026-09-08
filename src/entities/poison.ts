@@ -19,7 +19,7 @@ import type {
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
-import type { Translate, TranslateMap } from "../helpers/translate.js"
+import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderDice } from "./partial/dice.js"
 import {
@@ -90,6 +90,7 @@ const renderLevel = (
 const renderAddiction = (
   translate: Translate,
   translateMap: TranslateMap,
+  format: Format,
   getInstanceById: GetInstanceById<"Disease">,
   addiction: IntoxicantAddiction,
 ) =>
@@ -128,6 +129,8 @@ const renderAddiction = (
         value: withdrawalPrevention.amount,
         interval: formatTimeSpan(
           translate,
+          translateMap,
+          format,
           ResponsiveTextSize.Full,
           { kind: "Days" },
           (() => {
@@ -150,6 +153,7 @@ const renderAddiction = (
 const renderIntoxicantValues = (
   translate: Translate,
   translateMap: TranslateMap,
+  format: Format,
   getInstanceById: GetInstanceById<"Disease">,
   intoxicant: Intoxicant,
 ) => {
@@ -163,13 +167,14 @@ const renderIntoxicantValues = (
     addiction:
       intoxicant.addiction === undefined
         ? undefined
-        : renderAddiction(translate, translateMap, getInstanceById, intoxicant.addiction),
+        : renderAddiction(translate, translateMap, format, getInstanceById, intoxicant.addiction),
   }
 }
 
 const renderSourceTypeBasedValues = (
   translate: Translate,
   translateMap: TranslateMap,
+  format: Format,
   getInstanceById: GetInstanceById<"Disease">,
   sourceType: PoisonSourceType,
 ): {
@@ -221,6 +226,7 @@ const renderSourceTypeBasedValues = (
           : renderIntoxicantValues(
               translate,
               translateMap,
+              format,
               getInstanceById,
               sourceType.AlchemicalPoison.intoxicant,
             )),
@@ -259,6 +265,7 @@ const renderSourceTypeBasedValues = (
           : renderIntoxicantValues(
               translate,
               translateMap,
+              format,
               getInstanceById,
               sourceType.PlantPoison.intoxicant,
             )),
@@ -399,7 +406,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, getResolvedSelectOptionById, idMap }, locale, { content: entry }) => {
-  const { translate, translateMap, join: localeJoin, compare: localeCompare } = locale
+  const { translate, translateMap, format, join: localeJoin, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -429,7 +436,13 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     prerequisitesBrewingProcess,
     tradeSecret,
     note,
-  } = renderSourceTypeBasedValues(translate, translateMap, getInstanceById, entry.source_type)
+  } = renderSourceTypeBasedValues(
+    translate,
+    translateMap,
+    format,
+    getInstanceById,
+    entry.source_type,
+  )
 
   return {
     title: translation.name,

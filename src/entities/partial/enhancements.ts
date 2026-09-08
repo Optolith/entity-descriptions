@@ -83,7 +83,7 @@ export const renderEnhancements = (
         return translateR("Enhancements").map(
           (label): RawEntityDescriptionSection => ({
             type: "labeled",
-            label,
+            label: `${label}:`,
             value: {
               type: "plain",
               text: nonNullishDescriptions.join("\n"),

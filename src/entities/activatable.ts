@@ -21,7 +21,6 @@ import type {
   BindingCost,
   BlessedTraditionTranslation,
   CombatRelatedSpecialAbilityIdentifier,
-  CombatSpecialAbilityUsageType,
   CombatTechniqueIdentifier,
   DaggerRitualCost,
   EnchantmentCost,
@@ -52,7 +51,7 @@ import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleEnvironment, LocaleJoin } from "../helpers/locale.js"
-import type { Translate, TranslateMap } from "../helpers/translate.js"
+import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   GetAllResolvedNewSkillApplications,
   GetAllResolvedSelectOptions,
@@ -73,6 +72,7 @@ import {
   printActivatableName,
   type GetResolvedSelectOptionById,
 } from "./partial/prerequisites/single/activatable.js"
+import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedNameR,
@@ -125,7 +125,7 @@ export type BaseActivatable = {
   levels?: number
   maximum?: number
   select_options?: SelectOptions
-  usage_type?: CombatSpecialAbilityUsageType
+  usage_type?: Case<"Passive" | "Active" | "BasicManeuver" | "SpecialManeuver">
   advanced?: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[]
   penalty?: Penalty
   combat_techniques?: ApplicableCombatTechniques
@@ -557,8 +557,8 @@ const renderVolumeValue = (
     case "Map":
       return renderResponsiveMap(
         volume.Map,
-        option => option.points,
-        values => translate("{$points} points", { points: values }),
+        option => Reader.of(option.points),
+        values => translateR("{$points} points", { points: values }),
       ).run({
         translate,
         translateMap,
@@ -593,6 +593,7 @@ const renderVolumeValue = (
 const renderArcaneEnergyCost = (
   translate: Translate,
   translateMap: TranslateMap,
+  format: Format,
   localeJoin: LocaleJoin,
   responsiveTextSize: ResponsiveTextSize,
   levels: number | undefined,
@@ -618,6 +619,8 @@ const renderArcaneEnergyCost = (
                 cost: str,
                 interval: formatTimeSpan(
                   translate,
+                  translateMap,
+                  format,
                   responsiveTextSize,
                   interval.unit,
                   interval.value,
@@ -685,6 +688,8 @@ const renderArcaneEnergyCost = (
         cost: translate("{$value} AE", { value: cost.Interval.value }),
         interval: formatTimeSpan(
           translate,
+          translateMap,
+          format,
           responsiveTextSize,
           cost.Interval.interval.unit,
           cost.Interval.interval.value,
@@ -701,6 +706,8 @@ const renderArcaneEnergyCost = (
           }),
           interval: formatTimeSpan(
             translate,
+            translateMap,
+            format,
             responsiveTextSize,
             cost.ActivationAndHalfInterval.interval.unit,
             cost.ActivationAndHalfInterval.interval.value,
@@ -734,24 +741,11 @@ const renderArcaneEnergyCost = (
         ),
       })
     case "Map":
-      return renderResponsiveMap(
-        cost.Map,
-        option => option.value,
-        values => translate("{$value} AE", { value: values }),
-        cost.Map.options.every(option => option.permanent_value !== undefined)
-          ? {
-              surround: values =>
-                translate(", {$value} of which are permanent", {
-                  value: values,
-                }),
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
-              getAdditionalValue: option => option.permanent_value!,
-            }
-          : undefined,
-      ).run({
+      return renderStandaloneCostMap(cost.Map).run({
         translate,
         translateMap,
         responsiveTextSize,
+        energyUnit: "ArcaneEnergy",
       })
     case "Variable":
       return translate("Variable")
@@ -806,8 +800,8 @@ const renderBindingCost = (
     case "Map":
       return renderResponsiveMap(
         cost.Map,
-        option => option.permanent_value,
-        values => translate("{$value} permanent AE", { value: values }),
+        option => Reader.of(option.permanentValue),
+        values => translateR("{$value} permanent AE", { value: values }),
       ).run({
         translate,
         translateMap,
@@ -849,6 +843,7 @@ const renderLifePointsCost = (translate: Translate, cost: LifePointsCost | undef
 const renderCost = (
   translate: Translate,
   translateMap: TranslateMap,
+  format: Format,
   localeJoin: LocaleJoin,
   localeCompare: LocaleCompare,
   getAllResolvedSelectOptions: () => ResolvedSelectOption[],
@@ -875,6 +870,7 @@ const renderCost = (
               ? renderArcaneEnergyCost(
                   translate,
                   translateMap,
+                  format,
                   localeJoin,
                   responsiveTextSize,
                   levels,
@@ -883,6 +879,7 @@ const renderCost = (
               : renderArcaneEnergyCost(
                   translate,
                   translateMap,
+                  format,
                   localeJoin,
                   responsiveTextSize,
                   levels,
@@ -891,6 +888,7 @@ const renderCost = (
             : renderArcaneEnergyCost(
                 translate,
                 translateMap,
+                format,
                 localeJoin,
                 responsiveTextSize,
                 levels,
@@ -1396,7 +1394,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
     locale,
     { entity: entityName, content: entry, id },
   ) => {
-    const { translate, translateMap } = locale
+    const { translate, translateMap, format } = locale
     const translation = translateMap<BaseActivatableTranslation>(entry.translations)
     const responsiveTextSize: ResponsiveTextSize = ResponsiveTextSize.Full
 
@@ -1447,6 +1445,8 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
         (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
       subtitle: mapNullable(baseEntry.usage_type, usageType => {
         switch (usageType.kind) {
+          case "Active":
+            return translate("Active")
           case "Passive":
             return translate("Passive")
           case "BasicManeuver":
@@ -1575,6 +1575,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
               renderCost(
                 translate,
                 translateMap,
+                format,
                 locale.join,
                 locale.compare,
                 () => getAllResolvedSelectOptions(wrappedId),

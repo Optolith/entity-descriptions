@@ -1,7 +1,15 @@
 import { Reader } from "@elyukai/utils/reader"
-import type { Translate, TranslationKeyMatchingParams } from "../../../helpers/translate.js"
+import type { Case } from "tsondb/schema/gen"
+import type {
+  Format,
+  LocaleMap,
+  Translate,
+  TranslateMap,
+  TranslationKeyMatchingParams,
+} from "../../../helpers/translate.js"
 import type { StdEnv } from "../reader.js"
 import { type ResponsiveTextSize, responsive } from "../responsiveText.js"
+import { MISSING_VALUE } from "../unknown.js"
 
 /**
  * Possible units to use for time spans.
@@ -20,6 +28,25 @@ export type TimeSpanUnit =
   | "CombatRounds"
   | "SeductionActions"
   | "Rounds"
+
+/**
+ * Possible units to use for time spans, including the possibility of creating your own.
+ */
+export type TimeSpanUnitObject =
+  | { kind: TimeSpanUnit }
+  | Case<
+      "Custom",
+      {
+        translations: LocaleMap<{
+          name: string
+          symbol: string
+          fullNumber: string
+          full: string
+          compressedNumber: string
+          compressed: string
+        }>
+      }
+    >
 
 // prettier-ignore
 const timeSpanUnitTranslationKeys = {
@@ -50,11 +77,35 @@ const timeSpanUnitTranslationKeys = {
  */
 export const formatTimeSpan = (
   translate: Translate,
+  translateMap: TranslateMap,
+  format: Format,
   responsiveTextSize: ResponsiveTextSize,
-  unit: { kind: TimeSpanUnit } | TimeSpanUnit,
+  unit: TimeSpanUnitObject | TimeSpanUnit,
   value: number | string,
   interval = false,
 ): string => {
+  if (typeof unit === "object" && unit.kind === "Custom") {
+    const translation = translateMap(unit.Custom.translations)
+
+    if (translation === undefined) {
+      return MISSING_VALUE
+    }
+
+    return responsive(
+      responsiveTextSize,
+      () =>
+        format(typeof value === "number" ? translation.fullNumber : translation.full, {
+          value,
+          style: interval ? "interval" : "default",
+        }),
+      () =>
+        format(typeof value === "number" ? translation.compressedNumber : translation.compressed, {
+          value,
+          style: interval ? "interval" : "default",
+        }),
+    )
+  }
+
   const [fullNumberKey, fullKey, compressedNumberKey, compressedKey] =
     timeSpanUnitTranslationKeys[typeof unit === "string" ? unit : unit.kind]
 
@@ -78,32 +129,44 @@ export const formatTimeSpan = (
  */
 export const formatCombinedTimeSpan = (
   translate: Translate,
+  translateMap: TranslateMap,
+  format: Format,
   responsiveTextSize: ResponsiveTextSize,
   object: {
-    unit: { kind: TimeSpanUnit }
+    unit: TimeSpanUnitObject
     value: number | string
   },
   interval = false,
-): string => formatTimeSpan(translate, responsiveTextSize, object.unit, object.value, interval)
+): string =>
+  formatTimeSpan(
+    translate,
+    translateMap,
+    format,
+    responsiveTextSize,
+    object.unit,
+    object.value,
+    interval,
+  )
 
 /**
  * Returns the text for a time span unit.
  */
 export const formatTimeSpanR = (
-  unit: { kind: TimeSpanUnit } | TimeSpanUnit,
+  unit: TimeSpanUnitObject | TimeSpanUnit,
   value: number | string,
   interval?: boolean,
-): Reader<StdEnv<"t" | "rts">, string> =>
-  Reader.asks(({ translate, responsiveTextSize }) =>
-    formatTimeSpan(translate, responsiveTextSize, unit, value, interval),
+): Reader<StdEnv<"t" | "tm" | "f" | "rts">, string> =>
+  Reader.asks(({ translate, translateMap, format, responsiveTextSize }) =>
+    formatTimeSpan(translate, translateMap, format, responsiveTextSize, unit, value, interval),
   )
 /**
  * Returns the text for a time span unit.
  */
 export const formatCombinedTimeSpanR = (
   object: {
-    unit: { kind: TimeSpanUnit }
+    unit: TimeSpanUnitObject
     value: number | string
   },
   interval?: boolean,
-): Reader<StdEnv<"t" | "rts">, string> => formatTimeSpanR(object.unit, object.value, interval)
+): Reader<StdEnv<"t" | "tm" | "f" | "rts">, string> =>
+  formatTimeSpanR(object.unit, object.value, interval)

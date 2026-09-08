@@ -30,13 +30,13 @@ export const renderFastOneTimePerformanceParameters = (
   value: FastOneTimePerformanceParameters,
 ): StdReader<
   RenderedPerformanceParameters,
-  "t" | "tm" | "lj" | "eu" | "rts" | "nms" | "ibi",
+  "t" | "tm" | "f" | "lj" | "eu" | "rts" | "nms" | "ibi",
   "SkillModificationLevel"
 > =>
   renderFastCastingTime(value.casting_time)
     .thenW(castingTime =>
       renderOneTimeCost(value.cost).then(cost =>
-        renderRange(value.range).then(range =>
+        renderRange(value.range).thenW(range =>
           renderOneTimeDuration(value.duration).map(duration => ({
             castingTime,
             cost,
@@ -55,13 +55,13 @@ export const renderFastSustainedPerformanceParameters = (
   value: FastSustainedPerformanceParameters,
 ): StdReader<
   RenderedPerformanceParameters,
-  "t" | "tm" | "lj" | "eu" | "rts" | "nms" | "ibi",
+  "t" | "tm" | "f" | "lj" | "eu" | "rts" | "nms" | "ibi",
   "SkillModificationLevel"
 > =>
   renderFastCastingTime(value.casting_time)
     .thenW(castingTime =>
       renderSustainedCost(value.cost).then(cost =>
-        renderRange(value.range).then(range =>
+        renderRange(value.range).thenW(range =>
           renderSustainedDuration(value.duration).map(duration => ({
             castingTime,
             cost,
@@ -82,7 +82,7 @@ export const renderFastPerformanceParameters = (
     | { kind: "Sustained"; Sustained: FastSustainedPerformanceParameters },
 ): StdReader<
   RenderedPerformanceParameters,
-  "t" | "tm" | "lj" | "eu" | "rts" | "nms" | "ibi",
+  "t" | "tm" | "f" | "lj" | "eu" | "rts" | "nms" | "ibi",
   "SkillModificationLevel"
 > => {
   switch (value.kind) {
@@ -101,17 +101,17 @@ export const renderFastPerformanceParameters = (
 export const renderSlowOneTimePerformanceParameters = <CastingTime>(
   renderCastingTime: (
     value: CastingTime,
-  ) => StdReader<string, "t" | "rts" | "nms" | "ibi", "SkillModificationLevel">,
+  ) => StdReader<string, "t" | "tm" | "f" | "rts" | "nms" | "ibi", "SkillModificationLevel">,
   value: OneTimePerformanceParameters<CastingTime>,
 ): StdReader<
   RenderedPerformanceParameters,
-  "t" | "tm" | "lj" | "eu" | "rts" | "nms" | "ibi",
+  "t" | "tm" | "f" | "lj" | "eu" | "rts" | "nms" | "ibi",
   "SkillModificationLevel"
 > =>
   renderCastingTime(value.casting_time)
     .thenW(castingTime =>
       renderOneTimeCost(value.cost).then(cost =>
-        renderRange(value.range).then(range =>
+        renderRange(value.range).thenW(range =>
           renderOneTimeDuration(value.duration).map(duration => ({
             castingTime,
             cost,
@@ -130,13 +130,13 @@ export const renderSlowSustainedPerformanceParameters = (
   value: SlowSustainedPerformanceParameters,
 ): StdReader<
   RenderedPerformanceParameters,
-  "t" | "tm" | "lj" | "eu" | "rts" | "nms" | "ibi",
+  "t" | "tm" | "f" | "lj" | "eu" | "rts" | "nms" | "ibi",
   "SkillModificationLevel"
 > =>
   renderSlowCastingTime(value.casting_time)
     .thenW(castingTime =>
       renderSustainedCost(value.cost).then(cost =>
-        renderRange(value.range).then(range =>
+        renderRange(value.range).thenW(range =>
           renderSustainedDuration(value.duration).map(duration => ({
             castingTime,
             cost,
@@ -157,7 +157,7 @@ export const renderSlowPerformanceParameters = (
     | { kind: "Sustained"; Sustained: SlowSustainedPerformanceParameters },
 ): StdReader<
   RenderedPerformanceParameters,
-  "t" | "tm" | "lj" | "eu" | "rts" | "nms" | "ibi",
+  "t" | "tm" | "f" | "lj" | "eu" | "rts" | "nms" | "ibi",
   "SkillModificationLevel"
 > => {
   switch (value.kind) {

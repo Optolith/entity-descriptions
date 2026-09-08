@@ -26,7 +26,7 @@ import { renderExpressionBasedParameterValue } from "./checkResultBased.js"
 import { wrapAsMaximum, wrapIfMaximum } from "./isMinimumMaximum.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
-const renderImmediateDuration = (value?: Immediate): StdReader<string, "t" | "tm" | "rts"> =>
+const renderImmediateDuration = (value?: Immediate): StdReader<string, "t" | "tm" | "f" | "rts"> =>
   translateR("Immediate")
     .thenW(
       base =>
@@ -46,7 +46,7 @@ const renderPermanentDuration = (value: PermanentDuration): StdReader<string, "t
  */
 export const renderExpressionBasedDuration = (
   value: ExpressionBasedDuration,
-): StdReader<string, "t" | "tm" | "rts"> =>
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
   renderExpressionBasedParameterValue(value.value)
     .thenW(expressionValue => formatTimeSpanR(value.unit, expressionValue))
     .then(text => wrapIfMaximum(value.is_maximum, text).map(wrapped => [wrapped, text] as const))
@@ -57,7 +57,7 @@ const renderIndefiniteDuration = (value: {
   translations: LocaleMap<{
     description: ResponsiveText | string
   }>
-}): StdReader<string, "t" | "tm" | "rts"> => {
+}): StdReader<string, "t" | "tm" | "f" | "rts"> => {
   const { maximum, translations } = value
   return translateMapR<{
     description: ResponsiveText | string
@@ -83,7 +83,7 @@ const renderIndefiniteDuration = (value: {
 
 const renderDurationDuringLovemaking = (
   value: CastingTimeDuringLovemaking,
-): StdReader<string, "t" | "rts"> => formatCombinedTimeSpanR(value)
+): StdReader<string, "t" | "tm" | "f" | "rts"> => formatCombinedTimeSpanR(value)
 
 type OneTimeDuration =
   | {
@@ -122,7 +122,7 @@ type OneTimeDuration =
  */
 export const renderOneTimeDuration = (
   value: OneTimeDuration,
-): StdReader<string, "t" | "tm" | "rts"> => {
+): StdReader<string, "t" | "tm" | "f" | "rts"> => {
   switch (value.kind) {
     case "Immediate":
       return renderImmediateDuration(value.Immediate)
@@ -149,7 +149,7 @@ export const renderOneTimeDuration = (
  */
 export const renderSustainedDuration = (
   value: DurationForSustained | undefined,
-): StdReader<string, "t" | "rts"> =>
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
   value === undefined
     ? responsiveTranslateR("Sustained", "(S)")
     : formatCombinedTimeSpanR(value.maximum).then(maxText => wrapAsMaximum(maxText))

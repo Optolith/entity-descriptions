@@ -165,7 +165,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
     getAllInstances: GetAllInstances<"BlessedTradition">
   }
 >(({ getInstanceById, getAllInstances }, locale, { id, content: entry }) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
@@ -175,6 +175,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
   const env = {
     translate,
     translateMap,
+    format,
     localeCompare: locale.compare,
     getInstanceById,
     getAllInstances,
@@ -238,7 +239,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
     { content: entry, entity, id },
     options,
   ) => {
-    const { translate, translateMap, compare: localeCompare, join: localeJoin } = locale
+    const { translate, translateMap, format, compare: localeCompare, join: localeJoin } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -248,6 +249,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
     const env = {
       translate,
       translateMap,
+      format,
       getInstanceById,
       getChildInstancesForInstanceId,
       localeJoin: locale.join,
@@ -343,7 +345,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     { content: entry, entity, id },
     options,
   ) => {
-    const { translate, translateMap, compare: localeCompare, join: localeJoin } = locale
+    const { translate, translateMap, format, compare: localeCompare, join: localeJoin } = locale
     const translation = translateMap(entry.translations)
 
     if (translation === undefined) {
@@ -353,6 +355,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     const env = {
       translate,
       translateMap,
+      format,
       getInstanceById,
       getChildInstancesForInstanceId,
       localeJoin: locale.join,

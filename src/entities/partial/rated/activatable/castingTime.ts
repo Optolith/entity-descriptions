@@ -15,6 +15,7 @@ import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "../../../../helpers/enums.js"
 import { getInstanceByIdFnR, modifiableBySpeedR, type StdReader } from "../../reader.js"
+import { appendNoteIfNeeded } from "../../responsiveText.js"
 import { formatCombinedTimeSpanR, formatTimeSpanR } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendNonModifiableSuffix, ModifiableParameter } from "./nonModifiableSuffix.js"
@@ -38,28 +39,34 @@ const deriveModifiableCastingTime = (
 
 const renderModifiableCastingTime = (
   value: ModifiableCastingTime,
-): StdReader<string, "t" | "rts" | "s" | "ibi", "SkillModificationLevel"> =>
-  deriveModifiableCastingTime(value.initial_modification_level).thenW(castingTime =>
-    castingTime === undefined ? Reader.of(MISSING_VALUE) : formatCombinedTimeSpanR(castingTime),
-  )
+): StdReader<string, "t" | "tm" | "f" | "rts" | "s" | "ibi", "SkillModificationLevel"> =>
+  deriveModifiableCastingTime(value.initial_modification_level)
+    .thenW(castingTime =>
+      castingTime === undefined ? Reader.of(MISSING_VALUE) : formatCombinedTimeSpanR(castingTime),
+    )
+    .thenW(text => appendNoteIfNeeded(value.translations, text))
 
 const renderCastingTimeDuringLovemaking = (
   value: CastingTimeDuringLovemaking,
-): StdReader<string, "t" | "rts"> => formatCombinedTimeSpanR(value)
+): StdReader<string, "t" | "tm" | "f" | "rts"> => formatCombinedTimeSpanR(value)
 
 /**
  * Renders the text for a non-modifiable casting time of a fast activatable skill.
  */
 export const renderFastSkillNonModifiableCastingTime = (
   value: FastSkillNonModifiableCastingTime,
-): StdReader<string, "t" | "rts"> => formatTimeSpanR(Case("Actions"), value.actions)
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
+  formatTimeSpanR(Case("Actions"), value.actions).thenW(text =>
+    appendNoteIfNeeded(value.translations, text),
+  )
 
 /**
  * Get the text for a non-modifiable casting time of a slow activatable skill.
  */
 export const renderSlowSkillNonModifiableCastingTime = (
   value: SlowSkillNonModifiableCastingTime,
-): StdReader<string, "t" | "rts"> => formatCombinedTimeSpanR(value)
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
+  formatCombinedTimeSpanR(value).thenW(text => appendNoteIfNeeded(value.translations, text))
 
 /**
  * Translate casting time.
@@ -67,9 +74,9 @@ export const renderSlowSkillNonModifiableCastingTime = (
 export const renderCastingTime = <NonModifiable extends object>(
   renderNonModifiableCastingTime: (
     value: NonModifiable,
-  ) => StdReader<string, "t" | "rts" | "s" | "nms">,
+  ) => StdReader<string, "t" | "tm" | "f" | "rts" | "s" | "nms">,
   value: CastingTime<NonModifiable>,
-): StdReader<string, "t" | "rts" | "s" | "nms" | "ibi", "SkillModificationLevel"> => {
+): StdReader<string, "t" | "tm" | "f" | "rts" | "s" | "nms" | "ibi", "SkillModificationLevel"> => {
   switch (value.kind) {
     case "Modifiable":
       return renderModifiableCastingTime(value.Modifiable)
@@ -85,7 +92,7 @@ export const renderCastingTime = <NonModifiable extends object>(
 const renderCastingTimeIncludingLovemaking = <NonModifiable extends object>(
   renderNonModifiableCastingTime: (
     value: NonModifiable,
-  ) => StdReader<string, "t" | "rts" | "s" | "nms">,
+  ) => StdReader<string, "t" | "tm" | "f" | "rts" | "s" | "nms">,
   value: CastingTimeIncludingLovemaking<NonModifiable>,
 ) =>
   Reader.sequence([
@@ -99,7 +106,7 @@ const renderCastingTimeIncludingLovemaking = <NonModifiable extends object>(
  */
 export const renderFastCastingTime = (
   value: FastCastingTime,
-): StdReader<string, "t" | "rts" | "nms" | "ibi", "SkillModificationLevel"> =>
+): StdReader<string, "t" | "tm" | "f" | "rts" | "nms" | "ibi", "SkillModificationLevel"> =>
   renderCastingTimeIncludingLovemaking(renderFastSkillNonModifiableCastingTime, value).with(
     env => ({ ...env, speed: Speed.Fast }),
   )
@@ -109,7 +116,7 @@ export const renderFastCastingTime = (
  */
 export const renderSlowCastingTime = (
   value: SlowCastingTime,
-): StdReader<string, "t" | "rts" | "nms" | "ibi", "SkillModificationLevel"> =>
+): StdReader<string, "t" | "tm" | "f" | "rts" | "nms" | "ibi", "SkillModificationLevel"> =>
   renderCastingTimeIncludingLovemaking(renderSlowSkillNonModifiableCastingTime, value).with(
     env => ({ ...env, speed: Speed.Slow }),
   )

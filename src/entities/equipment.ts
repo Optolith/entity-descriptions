@@ -56,7 +56,7 @@ import { mapNullable } from "@optolith/helpers/nullable"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { FormatNumber, LocaleCompare, LocaleJoin } from "../helpers/locale.js"
-import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
+import type { Format, LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   IdMap,
   LabeledEntityDescriptionSection,
@@ -276,13 +276,25 @@ export const renderMeleeWeapon = <Damage>(
   }
 }
 
-const renderReloadTime = (translate: Translate, reloadTime: ReloadTime[]) =>
+const renderReloadTime = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  format: Format,
+  reloadTime: ReloadTime[],
+) =>
   isNotEmpty(reloadTime)
     ? reloadTime.length > 1
       ? translate("{$value} actions", {
           value: reloadTime.map(time => time.value).join("/"),
         })
-      : formatTimeSpan(translate, ResponsiveTextSize.Full, "Actions", reloadTime[0].value)
+      : formatTimeSpan(
+          translate,
+          translateMap,
+          format,
+          ResponsiveTextSize.Full,
+          "Actions",
+          reloadTime[0].value,
+        )
     : MISSING_VALUE
 
 const renderRangeBrackets = (rangeBrackets: RangeBrackets) =>
@@ -306,6 +318,7 @@ const renderMeleeDamage = (translate: Translate) => (damage: MeleeDamage) =>
 export const renderRangedWeapon = <Damage>(
   translate: Translate,
   translateMap: TranslateMap,
+  format: Format,
   getInstanceById: GetInstanceById<"RangedCombatTechnique" | AmmunitionishIdentifier["kind"]>,
   measurements: Required<LocaleMeasurementAdjustments>,
   renderDamage: (damage: Damage) => string,
@@ -328,7 +341,7 @@ export const renderRangedWeapon = <Damage>(
         },
         {
           label: translate("Reload Time"),
-          value: renderReloadTime(translate, use.reload_time),
+          value: renderReloadTime(translate, translateMap, format, use.reload_time),
         },
         {
           label: translate("Range Brackets"),
@@ -1071,7 +1084,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
     idMap: IdMap
   }
 >(({ getInstanceById, idMap }, locale, entry) => {
-  const { translate, translateMap } = locale
+  const { translate, translateMap, format } = locale
 
   if (entry.entity === "Book") {
     const translation = translateMap(entry.content.translations)
@@ -1213,6 +1226,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             renderRangedWeapon(
               translate,
               translateMap,
+              format,
               getInstanceById,
               locale.measurementAdjustments,
               renderRangedDamage(translate),
@@ -1242,6 +1256,8 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
                 ? translate("unlimited")
                 : formatTimeSpan(
                     translate,
+                    translateMap,
+                    format,
                     ResponsiveTextSize.Full,
                     burningTime.Limited.unit,
                     burningTime.Limited.value,
