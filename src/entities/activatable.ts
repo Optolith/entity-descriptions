@@ -1,7 +1,7 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
-import { on } from "@elyukai/utils/function"
+import { constant, on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
@@ -37,6 +37,7 @@ import type {
   PropertyDeclaration,
   PublicationRefs,
   RatedIdentifier,
+  RestrictedBlessings,
   SelectOptions,
   Skill_ID,
   SpecialRule,
@@ -1276,6 +1277,56 @@ const renderFavoredSkillsSelection = (
         ),
       )
 
+const getRestrictedBlessingsSpecialRuleLabelKey = (
+  restrictedBlessings: "All" | RestrictedBlessings,
+) => {
+  if (restrictedBlessings === "All") {
+    return "No Blessings"
+  }
+
+  switch (restrictedBlessings.kind) {
+    case "Three":
+      return "Restricted Blessings"
+    case "Six":
+      return "Strongly Restricted Blessings"
+    default:
+      return assertExhaustive(restrictedBlessings)
+  }
+}
+
+const renderRestrictedBlessingsSpecialRule = (
+  restrictedBlessings: "All" | RestrictedBlessings,
+  nameOfPeopleWithThisTradition: string,
+): StdReader<SpecialRule, "t" | "tm" | "ibi" | "lc" | "lj", "Blessing"> =>
+  translateR(getRestrictedBlessingsSpecialRuleLabelKey(restrictedBlessings)).thenW(label =>
+    restrictedBlessings === "All"
+      ? translateR("{$nameOfBlessedOnes} cannot use blessings.", {
+          nameOfBlessedOnes: nameOfPeopleWithThisTradition,
+        }).map(text => ({
+          label,
+          text,
+        }))
+      : Reader.traverse(
+          restrictedBlessings.kind === "Three"
+            ? restrictedBlessings.Three
+            : restrictedBlessings.Six,
+          id =>
+            attributedNameR("restricted-blessings", "Blessing", id).map(
+              name => name ?? MISSING_VALUE,
+            ),
+        )
+          .thenW(localeSortR)
+          .thenW(list =>
+            translateR("{$nameOfBlessedOnes} cannot use {$blessings :list type=disjunction}.", {
+              nameOfBlessedOnes: nameOfPeopleWithThisTradition,
+              blessings: list,
+            }).map(text => ({
+              label,
+              text,
+            })),
+          ),
+  )
+
 const renderFavoredSkillsSpecialRule = (
   favoredCombatTechniques: FavoredCombatTechniques | undefined,
   favoredSkills: Skill_ID[],
@@ -1329,8 +1380,10 @@ const renderPrimaryAttributeSpecialRule = (
   }))
 
 const renderAdditionalSpecialRules = (
+  fixedSpecialRules: SpecialRule[],
   traditionName: string,
   nameOfPeopleWithThisTradition: string,
+  restrictedBlessings: "All" | RestrictedBlessings | undefined,
   favoredCombatTechniques: FavoredCombatTechniques | undefined,
   favoredSkills: Skill_ID[] | undefined,
   favoredSkillsSelection: FavoredSkillsSelection | undefined,
@@ -1338,11 +1391,15 @@ const renderAdditionalSpecialRules = (
 ) =>
   Reader.sequence<
     StdEnv<
-      "t" | "tm" | "ibi" | "lc",
-      "Attribute" | "Skill" | "CloseCombatTechnique" | "RangedCombatTechnique"
+      "t" | "tm" | "ibi" | "lc" | "lj",
+      "Attribute" | "Skill" | "CloseCombatTechnique" | "RangedCombatTechnique" | "Blessing"
     >,
     SpecialRule | undefined
   >([
+    restrictedBlessings === undefined
+      ? Reader.of(undefined)
+      : renderRestrictedBlessingsSpecialRule(restrictedBlessings, nameOfPeopleWithThisTradition),
+    ...fixedSpecialRules.map(rule => Reader.of(rule)),
     favoredSkills === undefined
       ? Reader.of(undefined)
       : renderFavoredSkillsSpecialRule(
@@ -1381,6 +1438,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Weapon"
       | "Patron"
       | "PersonalityTrait"
+      | "Blessing"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
@@ -1407,32 +1465,39 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       translateMap,
       getInstanceById,
       localeCompare: locale.compare,
+      localeJoin: locale.join,
     } satisfies Partial<EnvMap>
 
     const baseEntry: BaseActivatable = entry
 
     const wrappedId = Case(entityName, id)
 
-    const additionalSpecialRules =
+    const addAdditionalSpecialRules =
       entityName === "BlessedTradition"
-        ? renderAdditionalSpecialRules(
-            translation.name,
-            (translation as BlessedTraditionTranslation).nameOfBlessedOnes,
-            entry.favored_combat_techniques,
-            entry.favored_skills,
-            entry.favored_skills_selection,
-            entry.primary,
-          ).run(env)
-        : entityName === "MagicalTradition"
-          ? renderAdditionalSpecialRules(
+        ? (baseList: SpecialRule[]) =>
+            renderAdditionalSpecialRules(
+              baseList,
               translation.name,
-              (translation as MagicalTraditionTranslation).nameOfSpellcasters,
-              undefined,
-              undefined,
-              undefined,
+              (translation as BlessedTraditionTranslation).nameOfBlessedOnes,
+              entry.type.kind === "Church" ? entry.type.Church.restrictedBlessings : "All",
+              entry.favored_combat_techniques,
+              entry.favored_skills,
+              entry.favored_skills_selection,
               entry.primary,
             ).run(env)
-          : []
+        : entityName === "MagicalTradition"
+          ? (baseList: SpecialRule[]) =>
+              renderAdditionalSpecialRules(
+                baseList,
+                translation.name,
+                (translation as MagicalTraditionTranslation).nameOfSpellcasters,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                entry.primary,
+              ).run(env)
+          : constant([])
 
     const makeTraditionName: (name: string) => string =
       entityName === "BlessedTradition" || entityName === "MagicalTradition"
@@ -1461,8 +1526,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       body: [
         mapNullable(translation.special_rules, specialRules => ({
           type: "plain",
-          text: specialRules
-            .concat(additionalSpecialRules)
+          text: addAdditionalSpecialRules(specialRules)
             .map(specialRule =>
               specialRule.label === undefined
                 ? `- ${specialRule.text}`
