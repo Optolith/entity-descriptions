@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.7.0](https://github.com/Optolith/entity-descriptions/compare/v0.6.0...v0.7.0) (2026-09-08)
+
+### ⚠ BREAKING CHANGES
+
+* combat type badges
+* **deps:** upgrade to schema 0.56.0
+
+### build
+
+* **deps:** upgrade to schema 0.56.0 ([b784991](https://github.com/Optolith/entity-descriptions/commit/b784991d8775bf4315e369891601bf37288b884f))
+
+### Features
+
+* combat type badges ([f1824df](https://github.com/Optolith/entity-descriptions/commit/f1824dfd23ae34e6af7334e9e5182c9dbc45603f))
 ## [0.6.0](https://github.com/Optolith/entity-descriptions/compare/v0.5.1...v0.6.0) (2026-09-08)
 
 ### ⚠ BREAKING CHANGES
