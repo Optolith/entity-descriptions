@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.0](https://github.com/Optolith/entity-descriptions/compare/v0.5.1...v0.6.0) (2026-09-08)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.55.0
+
+### build
+
+* **deps:** upgrade to schema 0.55.0 ([0dff095](https://github.com/Optolith/entity-descriptions/commit/0dff0950d939beec0e688e792c58d6d0a2ce44d7))
+
+### Bug Fixes
+
+* restricted blessings for traditions ([ca26c4c](https://github.com/Optolith/entity-descriptions/commit/ca26c4cadc77198b164967074735707ac6ec8593)), closes [#42](https://github.com/Optolith/entity-descriptions/issues/42)
 ## [0.5.1](https://github.com/Optolith/entity-descriptions/compare/v0.5.0...v0.5.1) (2026-09-08)
 ## [0.5.0](https://github.com/Optolith/entity-descriptions/compare/v0.4.26...v0.5.0) (2026-09-08)
 
