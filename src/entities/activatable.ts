@@ -495,31 +495,41 @@ const renderApplicableCombatTechniquesValue = (
               "applicable-combat-technique",
               specific.id,
             ) ?? MISSING_VALUE
+
+          const weapons =
+            specific.weapons === undefined
+              ? undefined
+              : locale.translate("only {$weapons}", {
+                  weapons: locale.join(
+                    specific.weapons
+                      .map(
+                        weapon =>
+                          attributedName(
+                            locale.translateMap,
+                            getInstanceById,
+                            "applicable-combat-technique",
+                            "Weapon",
+                            weapon,
+                          ) ?? MISSING_VALUE,
+                      )
+                      .toSorted(locale.compare),
+                    "conjunction",
+                  ),
+                })
+
           const mainWithRestriction =
             specific.restriction === undefined
-              ? main
+              ? main + wrapInParens([weapons])
               : renderApplicableCombatTechniquesRestriction(
                   getInstanceById,
                   locale,
                   main,
                   specific.restriction,
                   translation,
-                  specific.weapons === undefined
-                    ? undefined
-                    : locale.translate("only {$weapons}", {
-                        weapons: locale.join(
-                          specific.weapons
-                            .map(
-                              weapon =>
-                                locale.translateMap(getInstanceById("Weapon", weapon)?.translations)
-                                  ?.name ?? MISSING_VALUE,
-                            )
-                            .toSorted(locale.compare),
-                          "conjunction",
-                        ),
-                      }),
+                  weapons,
                   undefined,
                 )
+
           return mainWithRestriction
         })
         .toSorted(locale.compare)
