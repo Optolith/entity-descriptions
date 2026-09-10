@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.8.0](https://github.com/Optolith/entity-descriptions/compare/v0.7.2...v0.8.0) (2026-09-10)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.57.0
+
+### build
+
+* **deps:** upgrade to schema 0.57.0 ([34ffc15](https://github.com/Optolith/entity-descriptions/commit/34ffc15a9d39a32fe22f88f8ad405af0581a47cc))
 ## [0.7.2](https://github.com/Optolith/entity-descriptions/compare/v0.7.1...v0.7.2) (2026-09-10)
 
 ### Bug Fixes
