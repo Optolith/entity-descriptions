@@ -643,6 +643,7 @@ const renderArcaneEnergyCost = (
                   responsiveTextSize,
                   interval.unit,
                   interval.value,
+                  true,
                 ),
               })
 
@@ -712,6 +713,7 @@ const renderArcaneEnergyCost = (
           responsiveTextSize,
           cost.Interval.interval.unit,
           cost.Interval.interval.value,
+          true,
         ),
       })
     case "ActivationAndHalfInterval":
@@ -730,6 +732,7 @@ const renderArcaneEnergyCost = (
             responsiveTextSize,
             cost.ActivationAndHalfInterval.interval.unit,
             cost.ActivationAndHalfInterval.interval.value,
+            true,
           ),
         }),
       )

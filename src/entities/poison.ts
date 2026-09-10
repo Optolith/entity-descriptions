@@ -143,6 +143,7 @@ const renderAddiction = (
                 return assertExhaustive(withdrawalPrevention.interval)
             }
           })(),
+          true,
         ),
       }),
     ),
