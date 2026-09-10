@@ -34,6 +34,7 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
+    "@elyukai/markdown": "^0.3.2",
     "@elyukai/utils": "^0.3.4",
     "@optolith/adventure-points": "^0.1.1",
     "@optolith/helpers": "^0.2.2",

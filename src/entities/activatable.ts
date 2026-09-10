@@ -1,3 +1,4 @@
+import { stripInlineMarkdown } from "@elyukai/markdown/render/strip"
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
@@ -1069,7 +1070,7 @@ const renderAdvancedValue = (
       entry.DeriveFromExternalOption.display_option === undefined,
   )
 
-  return [
+  const arr = [
     ...advanced.map((entry): string | undefined => {
       switch (entry.kind) {
         case "General":
@@ -1146,9 +1147,9 @@ const renderAdvancedValue = (
       : translate(".input {$count :number} {{{$count} more by primary patron}}", {
           count: derivedFromExternalOptionEntriesToGenerate,
         }),
-  ]
-    .filter(isNotNullish)
-    .join(", ")
+  ].filter(isNotNullish)
+
+  return arr.some(item => stripInlineMarkdown(item).includes(",")) ? arr.join("; ") : arr.join(", ")
 }
 
 const renderDeriveFromExternalOptionTable = (
