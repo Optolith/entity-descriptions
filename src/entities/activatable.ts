@@ -1070,6 +1070,8 @@ const renderAdvancedValue = (
       entry.DeriveFromExternalOption.display_option === undefined,
   )
 
+  const anyEntriesToGenerate = count(advanced, entry => entry.kind === "Any")
+
   const arr = [
     ...advanced.map((entry): string | undefined => {
       switch (entry.kind) {
@@ -1138,6 +1140,8 @@ const renderAdvancedValue = (
           }
 
           return undefined
+        case "Any":
+          return undefined
         default:
           return assertExhaustive(entry)
       }
@@ -1147,6 +1151,14 @@ const renderAdvancedValue = (
       : translate(".input {$count :number} {{{$count} more by primary patron}}", {
           count: derivedFromExternalOptionEntriesToGenerate,
         }),
+    anyEntriesToGenerate === 0
+      ? undefined
+      : translate(
+          ".input {$count :number} {{Here you can select {$count} fitting special abilities.}}",
+          {
+            count: anyEntriesToGenerate,
+          },
+        ),
   ].filter(isNotNullish)
 
   return arr.some(item => stripInlineMarkdown(item).includes(",")) ? arr.join("; ") : arr.join(", ")
