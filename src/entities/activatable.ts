@@ -496,6 +496,13 @@ const renderApplicableCombatTechniquesValue = (
               specific.id,
             ) ?? MISSING_VALUE
 
+          if (specific.translation !== undefined) {
+            const specificTranslation = locale.translateMap(specific.translation)
+            if (specificTranslation) {
+              return main + wrapInParens([specificTranslation.restriction])
+            }
+          }
+
           const weapons =
             specific.weapons === undefined
               ? undefined
