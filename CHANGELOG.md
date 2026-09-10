@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.7.2](https://github.com/Optolith/entity-descriptions/compare/v0.7.1...v0.7.2) (2026-09-10)
+
+### Bug Fixes
+
+* render custom restriction translation ([301584c](https://github.com/Optolith/entity-descriptions/commit/301584c5ccfd06eab99cc7a53989dbebe43af3f9))
+* render mounted restriction separately ([d577a34](https://github.com/Optolith/entity-descriptions/commit/d577a34649e623590863cd789110e63de4d717ce))
+* render weapon restriction if no other restriction is defined ([0092068](https://github.com/Optolith/entity-descriptions/commit/009206838b47dbb1b302de32f04588726bee7e25))
+* use semicolons in applicable combat techniques if helpful ([aae7d8a](https://github.com/Optolith/entity-descriptions/commit/aae7d8ad871f5c722e542ee1a0833764be1a4dc1))
 ## [0.7.1](https://github.com/Optolith/entity-descriptions/compare/v0.7.0...v0.7.1) (2026-09-09)
 ## [0.7.0](https://github.com/Optolith/entity-descriptions/compare/v0.6.0...v0.7.0) (2026-09-08)
 
