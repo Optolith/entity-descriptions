@@ -344,7 +344,7 @@ const renderApplicableCombatTechniquesRestriction = <
       if (weapons === undefined) {
         return `${main} ${locale.translate("while mounted")}`
       } else {
-        return main + wrapInParens([weapons], locale.translate("while mounted"))
+        return main + wrapInParens([weapons, locale.translate("while mounted")])
       }
     case "Race": {
       const raceName = attributedName(
