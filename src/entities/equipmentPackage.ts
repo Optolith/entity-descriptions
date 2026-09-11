@@ -180,6 +180,8 @@ const getAtomicEquipmentCost = (entry: TaggedEntity<EquipmentIdentifier["kind"]>
           return "Various"
         case "DependingOnPurchaseOrSale":
           return entry.content.cost.DependingOnPurchaseOrSale.purchase
+        case "Range":
+          return [entry.content.cost.Range.from, entry.content.cost.Range.to]
         default:
           return assertExhaustive(entry.content.cost)
       }

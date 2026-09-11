@@ -357,6 +357,14 @@ const renderCost = (translate: Translate, translateMap: TranslateMap, cost: Pois
       )} (${translate("sale")})`
     case "Indefinite":
       return translateMap(cost.Indefinite.translations)?.description ?? MISSING_VALUE
+    case "Range":
+      return translate(
+        ".input {$from :number} .input {$to :number} {{{$from}–{$to} silverthalers}}",
+        {
+          from: cost.Range.from,
+          to: cost.Range.to,
+        },
+      )
     default:
       return assertExhaustive(cost)
   }
