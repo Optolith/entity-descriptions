@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.9.2](https://github.com/Optolith/entity-descriptions/compare/v0.9.1...v0.9.2) (2026-09-11)
+
+### Bug Fixes
+
+* only display quality levels for alchemical poisons ([c8a3fb5](https://github.com/Optolith/entity-descriptions/commit/c8a3fb5f254d778518bc9b4f2e6c9fa3682359d4))
+* render cost per level if alchemical poison ([6ace67d](https://github.com/Optolith/entity-descriptions/commit/6ace67dcec1b1af9b58ebf23250932000728c1f4))
 ## [0.9.1](https://github.com/Optolith/entity-descriptions/compare/v0.9.0...v0.9.1) (2026-09-11)
 
 ### Bug Fixes
