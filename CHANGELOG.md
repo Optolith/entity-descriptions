@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.9.0](https://github.com/Optolith/entity-descriptions/compare/v0.8.0...v0.9.0) (2026-09-11)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.58.0
+
+### build
+
+* **deps:** upgrade to schema 0.58.0 ([fe93cf7](https://github.com/Optolith/entity-descriptions/commit/fe93cf72768cf397a671bd4e883b1bd18288697c))
+
+### Features
+
+* use nameInAPValue for animal shape text generation ([d1c8017](https://github.com/Optolith/entity-descriptions/commit/d1c801791532bdcf1004c67d1e8ae5cb53ae4f07))
+
+### Bug Fixes
+
+* render brew for cauldron enchantments ([866703a](https://github.com/Optolith/entity-descriptions/commit/866703a4500a9d6e47a59cf78919aa9ebcbca05a))
+* render translation replacement if available ([6f890fd](https://github.com/Optolith/entity-descriptions/commit/6f890fd9885c070934c32db5dc5b745a86b46ac8))
+* time interval display when value is 1 ([ada5cc7](https://github.com/Optolith/entity-descriptions/commit/ada5cc768286ced1a26bacf18a4c16a3d289aa40))
 ## [0.8.0](https://github.com/Optolith/entity-descriptions/compare/v0.7.2...v0.8.0) (2026-09-10)
 
 ### ⚠ BREAKING CHANGES
