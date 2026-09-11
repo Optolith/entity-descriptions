@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.9.1](https://github.com/Optolith/entity-descriptions/compare/v0.9.0...v0.9.1) (2026-09-11)
+
+### Bug Fixes
+
+* missing general poison note ([3d0085d](https://github.com/Optolith/entity-descriptions/commit/3d0085dbc1435bad216be21a421f31ee2ab5be69))
+* missing unit in poison time spans ([942425f](https://github.com/Optolith/entity-descriptions/commit/942425f3ba9586671ab19f3be7b7cc2532746cc6))
 ## [0.9.0](https://github.com/Optolith/entity-descriptions/compare/v0.8.0...v0.9.0) (2026-09-11)
 
 ### ⚠ BREAKING CHANGES
