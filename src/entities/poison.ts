@@ -381,20 +381,29 @@ const renderCost = (translate: Translate, translateMap: TranslateMap, cost: Pois
 const renderValueCost = (
   translate: Translate,
   translateMap: TranslateMap,
+  sourceType: PoisonSourceType,
   cost: PoisonCost,
   value: number | undefined,
-): RawDefinitionListEntityDescriptionSectionItem =>
-  value === undefined
+): RawDefinitionListEntityDescriptionSectionItem => {
+  const wrapInPerLevel =
+    sourceType.kind === "AlchemicalPoison" || sourceType.kind === "AlchemicalPactGiftPoison"
+      ? (costStr: string) => translate("{$cost} per level", { cost: costStr })
+      : (costStr: string) => costStr
+
+  return value === undefined
     ? {
         label: translate("Cost"),
-        value: renderCost(translate, translateMap, cost),
+        value: wrapInPerLevel(renderCost(translate, translateMap, cost)),
       }
     : {
         label: translate("Value/Cost"),
-        value: `${translate(".input {$value :number} {{{$value} silverthalers}}", {
-          value,
-        })} / ${renderCost(translate, translateMap, cost)}`,
+        value: wrapInPerLevel(
+          `${translate(".input {$value :number} {{{$value} silverthalers}}", {
+            value,
+          })} / ${renderCost(translate, translateMap, cost)}`,
+        ),
       }
+}
 
 /**
  * Get a JSON representation of the rules text for a poison.
@@ -538,7 +547,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
               },
           entry.cost === undefined
             ? undefined
-            : renderValueCost(translate, translateMap, entry.cost, entry.value),
+            : renderValueCost(translate, translateMap, entry.source_type, entry.cost, entry.value),
           special === undefined
             ? undefined
             : {
