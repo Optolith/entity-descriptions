@@ -604,12 +604,17 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
             label: translate("Quality Levels"),
             value: translate("The poison levels equals the QL."),
           },
-          note === undefined
-            ? undefined
-            : {
+          translation.notes !== undefined
+            ? {
                 label: translate("Note"),
-                value: note,
-              },
+                value: translation.notes,
+              }
+            : note === undefined
+              ? undefined
+              : {
+                  label: translate("Note"),
+                  value: note,
+                },
         ],
       },
     ],
