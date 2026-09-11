@@ -1,3 +1,4 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { MathOperation } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 
@@ -106,6 +107,22 @@ export const renderMathOperation = <T, R extends string | number>(
       return assertExhaustive(operation)
   }
 }
+
+/**
+ * Render a math operation as a string, using the provided function to render the values.
+ */
+export const renderMathOperationR = <T, R extends string | number, E>(
+  operation: MathOperation<T>,
+  renderValue: (value: T) => Reader<E, R>,
+  renderDirectValue?: (value: T) => Reader<E, R>,
+): Reader<E, R | string> =>
+  Reader.asks(env =>
+    renderMathOperation(
+      operation,
+      value => renderValue(value).run(env),
+      renderDirectValue ? value => renderDirectValue(value).run(env) : undefined,
+    ),
+  )
 
 /**
  * Evaluate a math operation, using the provided function to evaluate the values.

@@ -1,5 +1,6 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
+import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
@@ -21,19 +22,20 @@ import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
-import { renderDice } from "./partial/dice.js"
+import { renderDice, renderDiceR } from "./partial/dice.js"
 import {
   renderAlternativeNames,
   renderChance,
   renderLaboratoryLevel,
   renderResistance,
 } from "./partial/herbary.js"
-import { renderMathOperation } from "./partial/mathOperation.js"
+import { renderMathOperationR } from "./partial/mathOperation.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
+import { translateMapR, translateR, type EnvMap, type StdReader } from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
-import { formatTimeSpan } from "./partial/units/timeSpan.js"
+import { formatTimeSpan, formatTimeSpanR } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
 
 const renderApplicationType = (
@@ -284,53 +286,59 @@ const renderSourceTypeBasedValues = (
   }
 }
 
-const renderStart = (translate: Translate, translateMap: TranslateMap, start: PoisonStart) => {
+const renderStart = (start: PoisonStart): StdReader<string, "t" | "tm" | "f" | "rts"> => {
   switch (start.kind) {
     case "Immediate":
-      return translate("immediate")
+      return translateR("immediate")
     case "ExpressionBased":
-      return renderMathOperation(start.ExpressionBased.value, value => {
-        switch (value.kind) {
-          case "Constant":
-            return value.Constant.toFixed()
-          case "Dice":
-            return renderDice(translate, value.Dice)
-          case "CircleOfDamnation":
-            return translate("CoD")
-          default:
-            return assertExhaustive(value)
-        }
-      })
+      return renderMathOperationR(
+        start.ExpressionBased.value,
+        (value): StdReader<string | number, "t"> => {
+          switch (value.kind) {
+            case "Constant":
+              return Reader.of(value.Constant)
+            case "Dice":
+              return renderDiceR(value.Dice)
+            case "CircleOfDamnation":
+              return translateR("CoD")
+            default:
+              return assertExhaustive(value)
+          }
+        },
+      ).thenW(value => formatTimeSpanR(start.ExpressionBased.unit, value))
     case "Indefinite":
-      return translateMap(start.Indefinite.translations)?.description ?? MISSING_VALUE
+      return translateMapR(start.Indefinite.translations).map(
+        translation => translation?.description ?? UNHANDLED_VALUE,
+      )
     default:
       return assertExhaustive(start)
   }
 }
 
-const renderDuration = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  duration: PoisonDuration,
-) => {
+const renderDuration = (duration: PoisonDuration): StdReader<string, "t" | "tm" | "f" | "rts"> => {
   switch (duration.kind) {
     case "Instant":
-      return translate("instant")
+      return translateR("instant")
     case "ExpressionBased":
-      return renderMathOperation(duration.ExpressionBased.value, value => {
-        switch (value.kind) {
-          case "Constant":
-            return value.Constant.toFixed()
-          case "Dice":
-            return renderDice(translate, value.Dice)
-          case "CircleOfDamnation":
-            return translate("CoD")
-          default:
-            return assertExhaustive(value)
-        }
-      })
+      return renderMathOperationR(
+        duration.ExpressionBased.value,
+        (value): StdReader<string | number, "t"> => {
+          switch (value.kind) {
+            case "Constant":
+              return Reader.of(value.Constant)
+            case "Dice":
+              return renderDiceR(value.Dice)
+            case "CircleOfDamnation":
+              return translateR("CoD")
+            default:
+              return assertExhaustive(value)
+          }
+        },
+      ).thenW(value => formatTimeSpanR(duration.ExpressionBased.unit, value))
     case "Indefinite":
-      return translateMap(duration.Indefinite.translations)?.description ?? UNHANDLED_VALUE
+      return translateMapR(duration.Indefinite.translations).map(
+        translation => translation?.description ?? UNHANDLED_VALUE,
+      )
     default:
       return assertExhaustive(duration)
   }
@@ -422,6 +430,13 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     return undefined
   }
 
+  const env = {
+    translate,
+    translateMap,
+    format,
+    responsiveTextSize: ResponsiveTextSize.Full,
+  } satisfies Partial<EnvMap>
+
   const applicationType = renderApplicationType(
     translate,
     localeJoin,
@@ -505,15 +520,15 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
               },
           {
             label: translate("Start"),
-            value: renderStart(translate, translateMap, entry.start),
+            value: renderStart(entry.start).run(env),
           },
           {
             label: translate("Duration"),
             value:
-              renderDuration(translate, translateMap, entry.duration.default) +
+              renderDuration(entry.duration.default).run(env) +
               (entry.duration.reduced === undefined
                 ? ""
-                : ` / ${renderDuration(translate, translateMap, entry.duration.reduced)}`),
+                : ` / ${renderDuration(entry.duration.reduced).run(env)}`),
           },
           legality === undefined
             ? undefined
