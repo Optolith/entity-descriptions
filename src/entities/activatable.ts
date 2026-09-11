@@ -21,6 +21,7 @@ import type {
   Aspect_ID,
   BindingCost,
   BlessedTraditionTranslation,
+  Brew_ID,
   CombatRelatedSpecialAbilityIdentifier,
   CombatTechniqueIdentifier,
   DaggerRitualCost,
@@ -79,6 +80,7 @@ import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedNameR,
   localeSortR,
+  nameR,
   translateR,
   type EnvMap,
   type StdEnv,
@@ -132,6 +134,7 @@ export type BaseActivatable = {
   penalty?: Penalty
   combat_techniques?: ApplicableCombatTechniques
   volume?: Volume
+  brew?: Brew_ID
   cost?: EnchantmentCost | DaggerRitualCost | MagicalSignCost | number
   property?: PropertyDeclaration
   aspect?: Aspect_ID
@@ -608,6 +611,8 @@ const renderVolumeValue = (
       return assertExhaustive(volume)
   }
 }
+
+const renderBrew = (brew: Brew_ID) => nameR("Brew", brew).map(name => name ?? MISSING_VALUE)
 
 const renderArcaneEnergyCost = (
   translate: Translate,
@@ -1472,6 +1477,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Patron"
       | "PersonalityTrait"
       | "Blessing"
+      | "Brew"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
@@ -1682,6 +1688,10 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                 responsiveTextSize,
                 volume,
               ),
+            })),
+            mapNullable(baseEntry.brew, brew => ({
+              label: translate("Brew"),
+              value: renderBrew(brew).run(env),
             })),
             mapNullable(baseEntry.cost, cost =>
               renderCost(
