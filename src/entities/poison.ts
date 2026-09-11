@@ -600,10 +600,13 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
                     ),
                   ),
               },
-          {
-            label: translate("Quality Levels"),
-            value: translate("The poison levels equals the QL."),
-          },
+          entry.source_type.kind === "AlchemicalPoison" ||
+          entry.source_type.kind === "AlchemicalPactGiftPoison"
+            ? {
+                label: translate("Quality Levels"),
+                value: translate("The poison levels equals the QL."),
+              }
+            : undefined,
           translation.notes !== undefined
             ? {
                 label: translate("Note"),
