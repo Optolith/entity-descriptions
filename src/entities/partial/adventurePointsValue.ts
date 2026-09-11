@@ -174,6 +174,10 @@ export const renderAdventurePointsValue = (
       }
     }
     case "DerivedFromSelection": {
+      const derivedTranslation = translateMap(value.DerivedFromSelection.translations)
+      if (derivedTranslation?.replacement !== undefined) {
+        return derivedTranslation.replacement
+      }
       const derivedSelectOptions = entry.select_options?.derived
       if (derivedSelectOptions === undefined) {
         return renderFixedSelectOptionsAdventurePointsValue(
