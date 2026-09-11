@@ -231,7 +231,7 @@ export const renderAdventurePointsValue = (
           return translate("{$values} adventure points for a {$sized} animal shape", {
             values: sizes.map(size => applyNegative(size.content.ap_value)).join("/"),
             sized: sizes
-              .map(size => translateMap(size.content.translations)?.name ?? MISSING_VALUE)
+              .map(size => translateMap(size.content.translations)?.nameInAPValue ?? MISSING_VALUE)
               .join("/"),
           })
         }
