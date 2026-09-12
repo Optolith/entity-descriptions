@@ -11,6 +11,7 @@ import type {
   AdvancedSpecialAbility,
   AdvancedSpecialAbilityRestrictedOptionIdentifier,
   AdvantageDisadvantagePrerequisites,
+  AdvantageDisadvantageSubtype,
   AdventurePointsValue,
   ApplicableAllCombatTechniquesRestriction,
   ApplicableCloseCombatTechniquesRestriction,
@@ -127,6 +128,7 @@ type AdvancedIdentifierSpecialAbility = string | Case<AdvancedSpecialAbilityKind
  */
 export type BaseActivatable = {
   levels?: number
+  subtype?: AdvantageDisadvantageSubtype
   maximum?: number
   select_options?: SelectOptions
   usage_type?: Case<"Passive" | "Active" | "BasicManeuver" | "SpecialManeuver">
@@ -161,6 +163,38 @@ export type BaseActivatableTranslation = {
   ap_value?: string
   ap_value_append?: string
   errata?: Errata
+}
+
+const renderAdvantageDisadvantageSubtype = (subtype: AdvantageDisadvantageSubtype) => {
+  switch (subtype.kind) {
+    case "MagicalHonor":
+      return translateR("Magical Honor")
+    case "MagicalPunishment":
+      return translateR("Magical Punishment")
+    case "MagicalRank":
+      return translateR("Magical Rank")
+    case "MagicalTitle":
+      return translateR("Magical Title")
+    default:
+      return assertExhaustive(subtype)
+  }
+}
+
+const renderCombatSpecialAbilityType = (
+  usageType: Case<"Passive" | "Active" | "BasicManeuver" | "SpecialManeuver">,
+) => {
+  switch (usageType.kind) {
+    case "Active":
+      return translateR("Active")
+    case "Passive":
+      return translateR("Passive")
+    case "BasicManeuver":
+      return translateR("Basic Maneuver")
+    case "SpecialManeuver":
+      return translateR("Special Maneuver")
+    default:
+      return assertExhaustive(usageType)
+  }
 }
 
 const renderPropertyValue = (
@@ -1547,20 +1581,13 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       title:
         makeTraditionName(translation.name_in_library ?? translation.name) +
         (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
-      subtitle: mapNullable(baseEntry.usage_type, usageType => {
-        switch (usageType.kind) {
-          case "Active":
-            return translate("Active")
-          case "Passive":
-            return translate("Passive")
-          case "BasicManeuver":
-            return translate("Basic Maneuver")
-          case "SpecialManeuver":
-            return translate("Special Maneuver")
-          default:
-            return assertExhaustive(usageType)
-        }
-      }),
+      subtitle:
+        mapNullable(baseEntry.subtype, subtype =>
+          renderAdvantageDisadvantageSubtype(subtype).run(env),
+        ) ??
+        mapNullable(baseEntry.usage_type, usageType =>
+          renderCombatSpecialAbilityType(usageType).run(env),
+        ),
       badge: mapNullable(
         entityName === "CombatStyleSpecialAbility" || entityName === "AdvancedCombatSpecialAbility"
           ? entry.type
