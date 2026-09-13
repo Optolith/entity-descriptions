@@ -153,6 +153,7 @@ export type BaseActivatable = {
  */
 export type BaseActivatableTranslation = {
   name: string
+  additionalName?: string
   name_in_library?: string
   rules?: string
   range?: string
@@ -1583,8 +1584,9 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
 
     return {
       title:
-        makeTraditionName(translation.name_in_library ?? translation.name) +
-        (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
+        makeTraditionName(
+          translation.name_in_library ?? translation.name + parensIf(translation.additionalName),
+        ) + (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
       subtitle:
         mapNullable(baseEntry.subtype, subtype =>
           renderAdvantageDisadvantageSubtype(subtype).run(env),
