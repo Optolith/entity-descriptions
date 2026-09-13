@@ -1048,6 +1048,7 @@ const renderAdvancedValue = (
   translate: Translate,
   translateMap: TranslateMap,
   localeJoin: LocaleJoin,
+  localeCompare: LocaleCompare,
   getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   entityName: StyleSpecialAbilityKind,
@@ -1086,16 +1087,18 @@ const renderAdvancedValue = (
         ) as [string, string]
 
         return [
-          ...uniqueOptions.map(option =>
-            renderAdvancedSpecialAbilityName(
-              translate,
-              translateMap,
-              getInstanceById,
-              getResolvedSelectOptionById,
-              entityName,
-              option,
-            ),
-          ),
+          ...uniqueOptions
+            .map(option =>
+              renderAdvancedSpecialAbilityName(
+                translate,
+                translateMap,
+                getInstanceById,
+                getResolvedSelectOptionById,
+                entityName,
+                option,
+              ),
+            )
+            .toSorted(localeCompare),
           translate(
             "one or two of these special abilities can alternatively be replaced by advanced special abilities {$first} and/or {$second}",
             { first, second },
@@ -1653,6 +1656,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                       translate,
                       translateMap,
                       locale.join,
+                      locale.compare,
                       getInstanceById,
                       getResolvedSelectOptionById,
                       entityName,
