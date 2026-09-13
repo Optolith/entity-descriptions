@@ -4,6 +4,7 @@ import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
 import { constant, on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { reduceCompare } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
@@ -1119,79 +1120,102 @@ const renderAdvancedValue = (
   const anyEntriesToGenerate = count(advanced, entry => entry.kind === "Any")
 
   const arr = [
-    ...advanced.map((entry): string | undefined => {
-      switch (entry.kind) {
-        case "General":
-          return renderAdvancedSpecialAbilityName(
-            translate,
-            translateMap,
-            getInstanceById,
-            getResolvedSelectOptionById,
-            entityName,
-            entry.General,
-          )
-        case "RestrictOptions":
-          return renderAdvancedSpecialAbilityName(
-            translate,
-            translateMap,
-            getInstanceById,
-            getResolvedSelectOptionById,
-            entityName,
-            entry.RestrictOptions.id,
-            entry.RestrictOptions.option,
-          )
-        case "OneOf": {
-          if (entry.OneOf.display_option !== undefined) {
-            switch (entry.OneOf.display_option.kind) {
-              case "Hide":
-                return undefined
-              case "ReplaceWith":
-                return (
-                  translateMap(entry.OneOf.display_option.ReplaceWith.translations)?.replacement ??
-                  MISSING_VALUE
-                )
-              default:
-                return assertExhaustive(entry.OneOf.display_option)
-            }
-          }
-
-          return localeJoin(
-            entry.OneOf.options.map(option =>
+    ...advanced
+      .map((entry): ["general" | "special", string | undefined] | undefined => {
+        switch (entry.kind) {
+          case "General":
+            return [
+              "general",
               renderAdvancedSpecialAbilityName(
                 translate,
                 translateMap,
                 getInstanceById,
                 getResolvedSelectOptionById,
                 entityName,
-                option,
+                entry.General,
               ),
-            ),
-            "disjunction",
-          )
-        }
-        case "DeriveFromExternalOption":
-          if (entry.DeriveFromExternalOption.display_option !== undefined) {
-            switch (entry.DeriveFromExternalOption.display_option.kind) {
-              case "Hide":
-                return undefined
-              case "ReplaceWith":
-                return (
-                  translateMap(
-                    entry.DeriveFromExternalOption.display_option.ReplaceWith.translations,
-                  )?.replacement ?? MISSING_VALUE
-                )
-              default:
-                return assertExhaustive(entry.DeriveFromExternalOption.display_option)
+            ]
+          case "RestrictOptions":
+            return [
+              "general",
+              renderAdvancedSpecialAbilityName(
+                translate,
+                translateMap,
+                getInstanceById,
+                getResolvedSelectOptionById,
+                entityName,
+                entry.RestrictOptions.id,
+                entry.RestrictOptions.option,
+              ),
+            ]
+          case "OneOf": {
+            if (entry.OneOf.display_option !== undefined) {
+              switch (entry.OneOf.display_option.kind) {
+                case "Hide":
+                  return undefined
+                case "ReplaceWith":
+                  return [
+                    "special",
+                    translateMap(entry.OneOf.display_option.ReplaceWith.translations)
+                      ?.replacement ?? MISSING_VALUE,
+                  ]
+                default:
+                  return assertExhaustive(entry.OneOf.display_option)
+              }
             }
-          }
 
-          return undefined
-        case "Any":
-          return undefined
-        default:
-          return assertExhaustive(entry)
-      }
-    }),
+            return [
+              "general",
+              localeJoin(
+                entry.OneOf.options.map(option =>
+                  renderAdvancedSpecialAbilityName(
+                    translate,
+                    translateMap,
+                    getInstanceById,
+                    getResolvedSelectOptionById,
+                    entityName,
+                    option,
+                  ),
+                ),
+                "disjunction",
+              ),
+            ]
+          }
+          case "DeriveFromExternalOption":
+            if (entry.DeriveFromExternalOption.display_option !== undefined) {
+              switch (entry.DeriveFromExternalOption.display_option.kind) {
+                case "Hide":
+                  return undefined
+                case "ReplaceWith":
+                  return [
+                    "special",
+                    translateMap(
+                      entry.DeriveFromExternalOption.display_option.ReplaceWith.translations,
+                    )?.replacement ?? MISSING_VALUE,
+                  ]
+                default:
+                  return assertExhaustive(entry.DeriveFromExternalOption.display_option)
+              }
+            }
+
+            return undefined
+          case "Any":
+            return undefined
+          default:
+            return assertExhaustive(entry)
+        }
+      })
+      .filter(
+        (item): item is ["general" | "special", string] =>
+          isNotNullish(item) && item[1] !== undefined,
+      )
+      .toSorted(
+        reduceCompare(
+          on(([type]) => type, localeCompare),
+          on(([, value]) => value, localeCompare),
+        ),
+      )
+      .map(value => value[1]),
     derivedFromExternalOptionEntriesToGenerate === 0
       ? undefined
       : translate(".input {$count :number} {{{$count} more by primary patron}}", {
