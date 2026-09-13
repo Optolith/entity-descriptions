@@ -4,22 +4,16 @@ import type {
   SpecificAffectedTargetCategoryIdentifier,
   TargetCategory_ID,
 } from "@optolith/database-schema/gen"
-import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
-import { getInstanceByIdFnR, translateMapR, translateR, type StdReader } from "../../reader.js"
+import { attributedNameR, translateMapR, translateR, type StdReader } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"
 
 const renderPredefined = (targetCategoryId: TargetCategory_ID) =>
-  getInstanceByIdFnR<"TargetCategory">()
-    .thenW(
-      getInstanceById =>
-        mapNullable(getInstanceById("TargetCategory", targetCategoryId), targetCategory =>
-          translateMapR(targetCategory.translations).map(translation => translation?.name),
-        ) ?? Reader.of(undefined),
-    )
-    .map(translation => translation ?? MISSING_VALUE)
+  attributedNameR("target-category", "TargetCategory", targetCategoryId).map(
+    name => name ?? MISSING_VALUE,
+  )
 
 const getTargetCategoryTranslationByType = (
   id: SpecificAffectedTargetCategoryIdentifier,
