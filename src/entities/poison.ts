@@ -427,6 +427,8 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       | "Aspect"
       | "Property"
       | "PersonalityTrait"
+      | "Blessing"
+      | "Cantrip"
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     idMap: IdMap

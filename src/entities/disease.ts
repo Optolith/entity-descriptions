@@ -23,6 +23,7 @@ type BaseDisease = {
   cause: Cause[]
   isChildhoodDisease?: boolean
   isMagicalDisease?: boolean
+  isSexuallyTransmittableDisease?: boolean
   src: PublicationRefs
   translations: LocaleMap<BaseDiseaseTranslation>
 }
@@ -92,6 +93,9 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
             [
               baseEntry.isChildhoodDisease === true ? translate("childhood disease") : undefined,
               baseEntry.isMagicalDisease === true ? translate("magical disease") : undefined,
+              baseEntry.isSexuallyTransmittableDisease === true
+                ? translate("sexually transmittable disease")
+                : undefined,
             ].filter(isNotNullish),
           )?.join(", "),
         ),

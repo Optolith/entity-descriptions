@@ -48,6 +48,7 @@ import { printSexualCharacteristicPrerequisite } from "./single/sexualCharacteri
 import { printSocialStatusPrerequisite } from "./single/socialStatus.js"
 import { printStatePrerequisite } from "./single/state.js"
 import { printTextPrerequisite } from "./single/text.js"
+import { printTinyActivatablePrerequisite } from "./single/tinyActivatable.js"
 
 /**
  * Print the translation of a derived characteristic prerequisite group.
@@ -100,6 +101,8 @@ export const printGeneralPrerequisiteGroup = (
     | "Aspect"
     | "Enhancement"
     | "PersonalityTrait"
+    | "Blessing"
+    | "Cantrip"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -134,6 +137,13 @@ export const printGeneralPrerequisiteGroup = (
       return printBlessedTraditionPrerequisite(locale, prerequisite.BlessedTradition)
     case "MagicalTradition":
       return printMagicalTraditionPrerequisite(locale, prerequisite.MagicalTradition)
+    case "TinyActivatable":
+      return printTinyActivatablePrerequisite(prerequisite.TinyActivatable).run({
+        getInstanceById,
+        translateMap: locale.translateMap,
+      })
+    case "AnySpecialAbilityOfGroup":
+      return printMagicalTraditionPrerequisite(locale, prerequisite.AnySpecialAbilityOfGroup)
     case "Rated":
       return printRatedPrerequisite(getInstanceById, locale, prerequisite.Rated)
     case "RatedMinimumNumber":
@@ -214,6 +224,8 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
     | "Aspect"
     | "Enhancement"
     | "PersonalityTrait"
+    | "Blessing"
+    | "Cantrip"
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   locale: LocaleEnvironment,
@@ -237,6 +249,8 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
     case "Activatable":
     case "BlessedTradition":
     case "MagicalTradition":
+    case "AnySpecialAbilityOfGroup":
+    case "TinyActivatable":
     case "Rated":
     case "RatedMinimumNumber":
     case "RatedSum":
