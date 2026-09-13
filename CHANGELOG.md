@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.11.1](https://github.com/Optolith/entity-descriptions/compare/v0.11.0...v0.11.1) (2026-09-13)
+
+### Features
+
+* attributed target category ([8411c00](https://github.com/Optolith/entity-descriptions/commit/8411c00eb0ac8df5f4335a41db951578cbaffe26))
+
+### Bug Fixes
+
+* advanced special ability sorting ([fd8ec9c](https://github.com/Optolith/entity-descriptions/commit/fd8ec9cf41625bc67f243850045f2bdf358bae5b)), closes [#50](https://github.com/Optolith/entity-descriptions/issues/50)
+* advanced special ability sorting (other parts) ([75ccc67](https://github.com/Optolith/entity-descriptions/commit/75ccc671ad4a60116067a0b5df143d0b1c1cc3f9))
+* display additional name ([460385e](https://github.com/Optolith/entity-descriptions/commit/460385ee19ea7be58766fb46859256514c75208f))
 ## [0.11.0](https://github.com/Optolith/entity-descriptions/compare/v0.10.0...v0.11.0) (2026-09-13)
 
 ### ⚠ BREAKING CHANGES
