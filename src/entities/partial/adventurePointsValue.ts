@@ -91,11 +91,11 @@ const renderSelectOptionsAdventurePointsValue = <T extends ResolvedSelectOptionI
     case "DerivedFromImprovementCost": {
       const start = derivedLabel()
       return `${start}: ${locale.translate("{$value} Adventure Points", {
-        value: Array.from(
-          { length: 5 - derivedRangeStart },
-          (_, index) =>
+        value: Array.from({ length: 5 - derivedRangeStart }, (_, index) =>
+          applyNegative(
             (index + derivedRangeStart) * (config.DerivedFromImprovementCost.multiplier ?? 1) +
-            (config.DerivedFromImprovementCost.offset ?? 0),
+              (config.DerivedFromImprovementCost.offset ?? 0),
+          ),
         ).join("/"),
       })}`
     }
