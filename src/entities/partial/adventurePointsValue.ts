@@ -335,30 +335,38 @@ export const renderAdventurePointsValue = (
     }
     case "DependingOnActive":
       return `${translate(".input {$value :number} {{{$value} Adventure Points}}", {
-        value: value.DependingOnActive.inactive,
+        value: applyNegative(value.DependingOnActive.inactive),
       })} (${translate(".input {$value :number} {{{$value} Adventure Points with {$name}}}", {
-        value: value.DependingOnActive.active,
+        value: applyNegative(value.DependingOnActive.active),
         name: getNameForId(value.DependingOnActive.id) ?? MISSING_VALUE,
       })})`
     case "DependingOnActiveInstances":
       switch (value.DependingOnActiveInstances.kind) {
         case "Threshold":
-          return translate(".input {$value :number} {{{$value} Adventure Points}}", {
-            value: value.DependingOnActiveInstances.Threshold.normal,
-          })
+          if (entry.levels === undefined) {
+            return translate(".input {$value :number} {{{$value} Adventure Points}}", {
+              value: applyNegative(value.DependingOnActiveInstances.Threshold.normal),
+            })
+          } else {
+            return translate(".input {$value :number} {{{$value} Adventure Points per level}}", {
+              value: applyNegative(value.DependingOnActiveInstances.Threshold.normal),
+            })
+          }
         case "Expression": {
           const expression = value.DependingOnActiveInstances.Expression
           const values = Array.from({ length: entry.maximum ?? 3 }, (_, index) =>
-            evaluateMathOperation(expression, exprValue => {
-              switch (exprValue.kind) {
-                case "Constant":
-                  return exprValue.Constant
-                case "Active":
-                  return index
-                default:
-                  return assertExhaustive(exprValue)
-              }
-            }),
+            applyNegative(
+              evaluateMathOperation(expression, exprValue => {
+                switch (exprValue.kind) {
+                  case "Constant":
+                    return exprValue.Constant
+                  case "Active":
+                    return index
+                  default:
+                    return assertExhaustive(exprValue)
+                }
+              }),
+            ),
           ).join("/")
           const labels = Array.from(
             { length: entry.maximum ?? 3 },
