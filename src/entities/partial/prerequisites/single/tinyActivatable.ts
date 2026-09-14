@@ -1,8 +1,8 @@
 import type { TinyActivatablePrerequisite } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../../../env.js"
-import { attributedCustomNameR } from "../../reader.js"
+import { attributedNameR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
-import { printDisplayOptionR } from "../displayOption.js"
+import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
 /**
@@ -10,18 +10,11 @@ import type { PrerequisitePart } from "../part.js"
  */
 export const printTinyActivatablePrerequisite = (
   prerequisite: TinyActivatablePrerequisite,
-): StdReader<PrerequisitePart | undefined, "tm" | "ibi", "Blessing" | "Cantrip"> => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOptionR(prerequisite.display_option)
-  }
-
-  return attributedCustomNameR(
-    "prerequisite",
-    (t: { name: string; abbreviation?: string }) => t.abbreviation ?? t.name,
-    prerequisite.id,
-  ).map(name => ({
-    value: name ?? MISSING_VALUE,
-    sentenceType: undefined,
-    isMeta: false,
-  }))
-}
+): StdReader<PrerequisitePart | undefined, "tm" | "ibi", "Blessing" | "Cantrip"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : attributedNameR("prerequisite", prerequisite.id).map(name => ({
+        value: name ?? MISSING_VALUE,
+        sentenceType: undefined,
+        isMeta: false,
+      }))

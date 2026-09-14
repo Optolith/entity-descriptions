@@ -1067,6 +1067,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
     format,
     getInstanceById,
     localeJoin: locale.join,
+    localeCompare: locale.compare,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -1078,7 +1079,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
   const prerequisites =
     entry.prerequisites === undefined
       ? undefined
-      : printAnimistPowerPrerequisites(getInstanceById, locale, entry.prerequisites)
+      : printAnimistPowerPrerequisites(entry.prerequisites).run(env)
 
   const additionalEffectsFromLevels =
     entry.levels
@@ -1198,7 +1199,9 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
     translateMap,
     format,
     getInstanceById,
+    getResolvedSelectOptionById,
     localeJoin: locale.join,
+    localeCompare: locale.compare,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
@@ -1247,12 +1250,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
             ? undefined
             : {
                 label: translate("Prerequisites"),
-                value: printGeodeRitualPrerequisites(
-                  getInstanceById,
-                  getResolvedSelectOptionById,
-                  locale,
-                  entry.prerequisites,
-                ),
+                value: printGeodeRitualPrerequisites(entry.prerequisites).run(env),
               },
           renderProperty(entry.property).run(env),
           {

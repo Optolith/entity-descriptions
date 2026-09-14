@@ -25,6 +25,7 @@ import type {
 } from "../helpers/getTypes.js"
 import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
+import type { ActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderCommonnessRatedAdvantagesOrDisadvantages } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import {
   attributedCustomName,
@@ -201,33 +202,29 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
   "t" | "tm" | "lc" | "ibi" | "rso",
   ActivatableIdentifier["kind"] | "Aspect"
 > =>
-  Reader.asks(
-    ({ translate, translateMap, getInstanceById, getResolvedSelectOptionById, localeCompare }) =>
-      items === undefined || !isNotEmpty(items)
-        ? emptyString
-        : joinPrerequisiteParts(
-            translate,
-            translateMap,
-            localeCompare,
-            items
-              .map(item =>
-                printActivatableName(
-                  getInstanceById,
-                  translate,
-                  Case(entity, item.id),
-                  item.options,
-                  item.level,
-                  getResolvedSelectOptionById,
-                  true,
-                ),
-              )
-              .filter(isNotNullish)
-              .map(nameComponents => ({
-                type: "activatable",
-                part: { value: nameComponents, sentenceType: undefined, isMeta: false },
-              })),
-          ),
-  )
+  items === undefined || !isNotEmpty(items)
+    ? Reader.of(emptyString)
+    : Reader.traverse(
+        items,
+        (
+          item,
+        ): StdReader<
+          ActivatableNameComponents | undefined,
+          "t" | "rso" | "ibi",
+          ActivatableIdentifier["kind"] | "Aspect"
+        > =>
+          printActivatableName(Case(entity, item.id), item.options, item.level).with(env => ({
+            ...env,
+            displayedInProfession: true,
+          })),
+      )
+        .map(renderedItems =>
+          renderedItems.filter(isNotNullish).map(nameComponents => ({
+            type: "activatable",
+            part: { value: nameComponents, sentenceType: undefined, isMeta: false },
+          })),
+        )
+        .thenW(joinPrerequisiteParts)
 
 /**
  * Render the names of commonness-rated advantages and disadvantages together.
@@ -241,38 +238,35 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
   "t" | "tm" | "lc" | "ibi" | "rso",
   ActivatableIdentifier["kind"] | "Aspect"
 > =>
-  Reader.asks(
-    ({ translate, translateMap, getInstanceById, getResolvedSelectOptionById, localeCompare }) =>
-      mapNullable(
-        ensureNonEmpty(
-          [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].flatMap(
-            ([entity, items]) =>
-              items
-                ?.map(item =>
-                  printActivatableName(
-                    getInstanceById,
-                    translate,
-                    Case(entity, item.id),
-                    item.options,
-                    item.level,
-                    getResolvedSelectOptionById,
-                    true,
-                  ),
-                )
-                .filter(isNotNullish) ?? [],
-          ),
+  Reader.traverse(
+    [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const],
+    ([entity, items]) =>
+      Reader.traverse(
+        items ?? [],
+        (
+          item,
+        ): StdReader<
+          ActivatableNameComponents | undefined,
+          "t" | "rso" | "ibi",
+          ActivatableIdentifier["kind"] | "Aspect"
+        > =>
+          printActivatableName(Case(entity, item.id), item.options, item.level).with(env => ({
+            ...env,
+            displayedInProfession: true,
+          })),
+      )
+
+        .map(renderedItems => renderedItems.filter(isNotNullish)),
+  ).thenW(
+    (items): StdReader<string | T, "t" | "tm" | "lc"> =>
+      mapNullable(ensureNonEmpty(items.flat()), safeItems =>
+        joinPrerequisiteParts(
+          safeItems.map(nameComponents => ({
+            type: "activatable",
+            part: { value: nameComponents, sentenceType: undefined, isMeta: false },
+          })),
         ),
-        renderedItems =>
-          joinPrerequisiteParts(
-            translate,
-            translateMap,
-            localeCompare,
-            renderedItems.map(nameComponents => ({
-              type: "activatable",
-              part: { value: nameComponents, sentenceType: undefined, isMeta: false },
-            })),
-          ),
-      ) ?? emptyString,
+      ) ?? Reader.of(emptyString),
   )
 
 const renderCommonCultures = (

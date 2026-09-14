@@ -1,11 +1,11 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { RulePrerequisite } from "@optolith/database-schema/gen"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { StdReader } from "../../../../env.js"
 import type { PrerequisitePart } from "../part.js"
 
 /**
  * Get the translation of a rule prerequisite.
  */
 export const printRulePrerequisite = (
-  _locale: LocaleEnvironment,
   _prerequisite: RulePrerequisite,
-): PrerequisitePart | undefined => undefined
+): StdReader<PrerequisitePart | undefined, never> => Reader.of(undefined)

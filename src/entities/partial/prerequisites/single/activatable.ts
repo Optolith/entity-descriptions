@@ -1,3 +1,4 @@
+import { Reader } from "@elyukai/utils/reader"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
@@ -8,10 +9,11 @@ import type {
   ActivatablePrerequisite,
   RequirableSelectOptionIdentifier,
 } from "@optolith/database-schema/gen"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import type { LocaleMap, Translate } from "../../../../helpers/translate.js"
-import { getNameComponents } from "../../activatableNameChunks.js"
+import type { StdEnv, StdReader } from "../../../../env.js"
+import type { LocaleMap } from "../../../../helpers/translate.js"
+import { getNameComponents, type ActivatableNameComponents } from "../../activatableNameChunks.js"
+import { getInstanceByIdR, translateR } from "../../reader.js"
+import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -27,82 +29,70 @@ export type GetResolvedSelectOptionById = (
  * Get the name components of an activatable.
  */
 export const printActivatableName = (
-  getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
-  translate: Translate,
   id: ActivatableIdentifier,
   options: RequirableSelectOptionIdentifier[] | undefined,
   level: number | undefined,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  displayedInProfession: boolean,
-) => {
-  const entry:
-    | {
-        nameBuilderRules?: ActivatableNameBuilderRules
-        translations: LocaleMap<{ name: string }>
-      }
-    | undefined = getInstanceById(id)
-
-  if (entry === undefined) {
-    return undefined
-  }
-
-  return getNameComponents(
-    translate,
-    id,
-    options,
-    level,
-    entry.nameBuilderRules,
-    entry.translations,
-    t => t.name,
-    getResolvedSelectOptionById,
-    displayedInProfession,
+): StdReader<
+  ActivatableNameComponents | undefined,
+  "t" | "rso" | "ibi" | "dip",
+  ActivatableIdentifier["kind"] | "Aspect"
+> =>
+  getInstanceByIdR(id).thenW(
+    (
+      entry:
+        | {
+            nameBuilderRules?: ActivatableNameBuilderRules
+            translations: LocaleMap<{ name: string }>
+          }
+        | undefined,
+    ) =>
+      entry === undefined
+        ? Reader.of(undefined)
+        : Reader.asks(
+            (env: StdEnv<"t" | "rso" | "ibi" | "dip", ActivatableIdentifier["kind"] | "Aspect">) =>
+              getNameComponents(
+                env.translate,
+                id,
+                options,
+                level,
+                entry.nameBuilderRules,
+                entry.translations,
+                t => t.name,
+                env.getResolvedSelectOptionById,
+                env.displayedInProfession,
+              ),
+          ),
   )
-}
 
 /**
  * Get the translation of a blessed tradition prerequisite.
  */
 export const printActivatablePrerequisite = (
-  getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: ActivatablePrerequisite,
-  displayedInProfession: boolean,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  const nameComponents = printActivatableName(
-    getInstanceById,
-    locale.translate,
-    prerequisite.id,
-    prerequisite.options,
-    prerequisite.level,
-    getResolvedSelectOptionById,
-    displayedInProfession,
-  )
-
-  if (nameComponents === undefined) {
-    return undefined
-  }
-
-  return {
-    label: `${
-      prerequisite.id.kind === "Advantage"
-        ? prerequisite.active
-          ? locale.translate("advantage")
-          : locale.translate("no advantage")
-        : prerequisite.id.kind === "Disadvantage"
-          ? prerequisite.active
-            ? locale.translate("disadvantage")
-            : locale.translate("no disadvantage")
-          : prerequisite.active
-            ? locale.translate("special ability")
-            : locale.translate("no special ability")
-    } `,
-    value: nameComponents,
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<
+  PrerequisitePart | undefined,
+  "t" | "tm" | "rso" | "ibi" | "dip",
+  ActivatableIdentifier["kind"] | "Aspect"
+> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : printActivatableName(prerequisite.id, prerequisite.options, prerequisite.level).then(
+        nameComponents =>
+          (prerequisite.id.kind === "Advantage"
+            ? prerequisite.active
+              ? translateR("advantage")
+              : translateR("no advantage")
+            : prerequisite.id.kind === "Disadvantage"
+              ? prerequisite.active
+                ? translateR("disadvantage")
+                : translateR("no disadvantage")
+              : prerequisite.active
+                ? translateR("special ability")
+                : translateR("no special ability")
+          ).map((label): PrerequisitePart | undefined => ({
+            label: `${label} `,
+            value: nameComponents ?? MISSING_VALUE,
+            sentenceType: undefined,
+            isMeta: false,
+          })),
+      )

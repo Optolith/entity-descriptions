@@ -1025,15 +1025,12 @@ const renderAdvancedSpecialAbilityName = (
 
   return `^[${
     mapNullable(
-      printActivatableName(
+      printActivatableName(normalizedId, option, undefined).run({
         getInstanceById,
         translate,
-        normalizedId,
-        option,
-        undefined,
         getResolvedSelectOptionById,
-        false,
-      ),
+        displayedInProfession: false,
+      }),
       name => renderActivatableNameComponents(translateMap, name, false),
     ) ?? MISSING_VALUE
   }](entity: "${normalizedId.kind}", instance: "${fromUniformCase(normalizedId)}", style: "normal")`
@@ -1561,6 +1558,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       getInstanceById,
       localeCompare: locale.compare,
       localeJoin: locale.join,
+      getResolvedSelectOptionById,
     } satisfies Partial<EnvMap>
 
     const baseEntry: BaseActivatable = entry
@@ -1701,24 +1699,18 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                 value:
                   wrappedId.kind === "Advantage" || wrappedId.kind === "Disadvantage"
                     ? printAdvantageDisadvantagePrerequisites(
-                        getInstanceById,
-                        getResolvedSelectOptionById,
-                        locale,
                         prerequisites,
                         translation.name,
                         wrappedId.kind,
-                      )
+                      ).run(env)
                     : printGeneralPrerequisites(
-                        getInstanceById,
-                        getResolvedSelectOptionById,
-                        locale,
                         prerequisites as GeneralPrerequisites,
                         mapNullable(baseEntry.levels, levels => ({
                           id: wrappedId,
                           levels,
                         })),
                         renderTrailingAdvancedPrerequisitesNote(translate, entityName),
-                      ),
+                      ).run(env),
               }),
             ),
             mapNullable(baseEntry.combat_techniques, combatTechniques => ({

@@ -1,13 +1,14 @@
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { StdReader } from "../../../../env.js"
+import { translateR } from "../../reader.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printType = (locale: LocaleEnvironment, type: "Advantage" | "Disadvantage"): string => {
+const printType = (type: "Advantage" | "Disadvantage") => {
   switch (type) {
     case "Advantage":
-      return locale.translate("advantage")
+      return translateR("advantage")
     case "Disadvantage":
-      return locale.translate("disadvantage")
+      return translateR("disadvantage")
     default:
       return assertExhaustive(type)
   }
@@ -17,14 +18,18 @@ const printType = (locale: LocaleEnvironment, type: "Advantage" | "Disadvantage"
  * Get the translation of a culture prerequisite.
  */
 export const printCommonSuggestedByRCPPrerequisite = (
-  locale: LocaleEnvironment,
   name: string,
   type: "Advantage" | "Disadvantage",
-): PrerequisitePart | undefined => ({
-  value: locale.translate(
-    "Race, culture, or profession must have {$entry} as an automatic or suggested {$itemOfCategory}",
-    { entry: name, itemOfCategory: printType(locale, type) },
-  ),
-  sentenceType: undefined,
-  isMeta: false,
-})
+): StdReader<PrerequisitePart | undefined, "t"> =>
+  printType(type)
+    .then(itemOfCategory =>
+      translateR(
+        "Race, culture, or profession must have {$entry} as an automatic or suggested {$itemOfCategory}",
+        { entry: name, itemOfCategory },
+      ),
+    )
+    .map((value): PrerequisitePart | undefined => ({
+      value,
+      sentenceType: undefined,
+      isMeta: false,
+    }))

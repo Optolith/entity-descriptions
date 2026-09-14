@@ -8,13 +8,13 @@ import { defaultLocaleEnvironment } from "../../../../helpers/locale.js"
 describe("getTextPrerequisiteTranslation", () => {
   it("returns a PrerequisitePart object for the prerequisite", () => {
     assert.deepEqual(
-      printTextPrerequisite(defaultLocaleEnvironment, {
+      printTextPrerequisite({
         verification: Case("Pass"),
         sentence_type: undefined,
         translations: {
           "en-US": { text: "A" },
         },
-      }),
+      }).run(defaultLocaleEnvironment),
       {
         value: "A",
         sentenceType: undefined,
@@ -23,12 +23,12 @@ describe("getTextPrerequisiteTranslation", () => {
     )
 
     assert.deepEqual(
-      printTextPrerequisite(defaultLocaleEnvironment, {
+      printTextPrerequisite({
         verification: Case("Pass"),
         sentence_type: Case("Standalone"),
         is_meta: true,
         translations: {},
-      }),
+      }).run(defaultLocaleEnvironment),
       {
         value: MISSING_VALUE,
         sentenceType: Case("Standalone"),

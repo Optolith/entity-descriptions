@@ -1285,22 +1285,13 @@ const renderProfessionVariantText = (
         >,
         string[]
       >([
-        Reader.asks(env =>
-          variant.prerequisites === undefined
-            ? []
-            : [
-                `${env.translate("Additional Prerequisites")}: ${printProfessionPrerequisites(
-                  env.getInstanceById,
-                  env.getResolvedSelectOptionById,
-                  {
-                    ...env,
-                    join: env.localeJoin,
-                    compare: env.localeCompare,
-                  },
-                  variant.prerequisites,
-                )}`,
-              ],
-        ),
+        variant.prerequisites === undefined
+          ? Reader.of([])
+          : printProfessionPrerequisites(variant.prerequisites).thenW(prerequisitesText =>
+              translateR("Additional Prerequisites").map(label => [
+                `${label}: ${prerequisitesText}`,
+              ]),
+            ),
         renderVariantOption(
           base,
           variant,
@@ -1557,20 +1548,11 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
                 pkg => Reader.of(pkg.content.prerequisites),
                 deepEqual,
                 prerequisitesLists =>
-                  Reader.of(
-                    prerequisitesLists
-                      .map(prerequisites =>
-                        prerequisites === undefined
-                          ? translate("none")
-                          : printProfessionPrerequisites(
-                              getInstanceById,
-                              getResolvedSelectOptionById,
-                              locale,
-                              prerequisites,
-                            ),
-                      )
-                      .join(" / "),
-                  ),
+                  Reader.traverse(prerequisitesLists, prerequisites =>
+                    prerequisites === undefined
+                      ? translateR("none")
+                      : printProfessionPrerequisites(prerequisites),
+                  ).map(list => list.join(" / ")),
               ).run(env),
             },
             {

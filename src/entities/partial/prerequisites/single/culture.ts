@@ -1,7 +1,7 @@
 import type { CulturePrerequisite } from "@optolith/database-schema/gen"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { attributedNameFromSafeTranslation } from "../../markdown.js"
+import type { StdReader } from "../../../../env.js"
+import { attributedNameR, translateR } from "../../reader.js"
+import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -9,30 +9,15 @@ import type { PrerequisitePart } from "../part.js"
  * Get the translation of a culture prerequisite.
  */
 export const printCulturePrerequisite = (
-  getInstanceById: GetInstanceById<"Culture">,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: CulturePrerequisite,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  const culture = getInstanceById("Culture", prerequisite.id)
-  const cultureTranslation = locale.translateMap(culture?.translations)
-
-  if (cultureTranslation === undefined) {
-    return undefined
-  }
-
-  return {
-    label: `${locale.translate("Culture")} `,
-    value: attributedNameFromSafeTranslation(
-      cultureTranslation,
-      "prerequisite",
-      "Culture",
-      prerequisite.id,
-    ),
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<PrerequisitePart | undefined, "t" | "tm" | "ibi", "Culture"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : attributedNameR("prerequisite", "Culture", prerequisite.id).thenW(name =>
+        translateR("Culture").map((label): PrerequisitePart | undefined => ({
+          label: `${label} `,
+          value: name ?? MISSING_VALUE,
+          sentenceType: undefined,
+          isMeta: false,
+        })),
+      )

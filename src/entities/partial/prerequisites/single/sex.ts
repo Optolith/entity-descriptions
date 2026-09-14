@@ -1,14 +1,15 @@
 import type { BinarySex, SexPrerequisite } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { Translate } from "../../../../helpers/translate.js"
+import type { StdReader } from "../../../../env.js"
+import { translateR } from "../../reader.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printId = (translate: Translate, id: BinarySex): string => {
+const printId = (id: BinarySex) => {
   switch (id.kind) {
     case "Male":
-      return translate("Male")
+      return translateR("Male")
     case "Female":
-      return translate("Female")
+      return translateR("Female")
     default:
       return assertExhaustive(id)
   }
@@ -18,10 +19,10 @@ const printId = (translate: Translate, id: BinarySex): string => {
  * Get the translation of a (binary) sex prerequisite.
  */
 export const printBinarySexPrerequisite = (
-  translate: Translate,
   prerequisite: SexPrerequisite,
-): PrerequisitePart | undefined => ({
-  value: printId(translate, prerequisite.id),
-  sentenceType: undefined,
-  isMeta: false,
-})
+): StdReader<PrerequisitePart | undefined, "t"> =>
+  printId(prerequisite.id).map(value => ({
+    value,
+    sentenceType: undefined,
+    isMeta: false,
+  }))

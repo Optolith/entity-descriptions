@@ -1,5 +1,6 @@
 import type { ActivatableIdentifier } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import { printInfluencePrerequisites } from "./partial/prerequisites/index.js"
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
@@ -29,6 +30,16 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
       return undefined
     }
 
+    const env = {
+      translate,
+      translateMap,
+      getInstanceById,
+      localeCompare: locale.compare,
+      localeJoin: locale.join,
+      getResolvedSelectOptionById,
+      getChildInstancesForInstanceId,
+    } satisfies Partial<EnvMap>
+
     return {
       title: translation.name,
       className: "influence",
@@ -52,13 +63,7 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
                   ? undefined
                   : {
                       label: translate("Prerequisites"),
-                      value: printInfluencePrerequisites(
-                        getInstanceById,
-                        getResolvedSelectOptionById,
-                        getChildInstancesForInstanceId,
-                        locale,
-                        entry.prerequisites,
-                      ),
+                      value: printInfluencePrerequisites(entry.prerequisites).run(env),
                     },
               ],
             },

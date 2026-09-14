@@ -1,6 +1,7 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { mapNullable } from "@elyukai/utils/nullable"
+import { Reader } from "@elyukai/utils/reader"
 import type {
   ActivatableIdentifier,
   AdvantageDisadvantagePrerequisites,
@@ -24,20 +25,18 @@ import type {
   PrerequisitesForLevels,
   ProfessionPrerequisites,
   PublicationPrerequisites,
-  RatedIdentifier,
   SpellworkPrerequisites,
 } from "@optolith/database-schema/gen"
 import { numAsc } from "@optolith/helpers/compare"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { GetAllChildInstancesForParent, GetInstanceById } from "../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../helpers/locale.js"
-import type { TranslateMap } from "../../../helpers/translate.js"
+import type { StdEnv, StdReader } from "../../../env.js"
 import {
   renderActivatableNameComponents,
   renderActivatableNameComponentsCombinedIfPossible,
 } from "../activatableNameChunks.js"
+import { localeJoinR, translateR } from "../reader.js"
 import { MISSING_VALUE } from "../unknown.js"
 import { printDisplayOption } from "./displayOption.js"
 import { hasPartValueObject, joinPrerequisiteParts, type PrerequisitePart } from "./part.js"
@@ -57,95 +56,98 @@ import {
   printPublicationPrerequisiteGroup,
   printSpellworkPrerequisiteGroup,
 } from "./prerequisiteGroups.js"
-import type { GetResolvedSelectOptionById } from "./single/activatable.js"
 
 type Prerequisite = { kind: string }
 
 const printPrerequisiteGroup = (
-  translateMap: TranslateMap,
   group: PrerequisiteGroup<unknown>,
-): PrerequisitePart => ({
-  value: translateMap(group.translations)?.text ?? MISSING_VALUE,
-  sentenceType: undefined,
-  isMeta: false,
-})
-
-const printPrerequisitesDisjunction = <T extends Prerequisite>(
-  getPrerequisiteTranslation: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "join" | "compare">,
-  disjunction: PrerequisitesDisjunction<T>,
-): PrerequisitePart | undefined => {
-  if (disjunction.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, disjunction.display_option)
-  }
-
-  const { list: disjunctionList } = disjunction
-  const [first, ...other] = disjunctionList.map(getPrerequisiteTranslation).filter(isNotNullish)
-
-  if (first === undefined) {
-    return undefined
-  }
-
-  if (
-    disjunctionList.length < 2 ||
-    (isNotEmpty(disjunctionList) &&
-      disjunctionList.slice(1).every(part => part.kind === disjunctionList[0].kind))
-  ) {
-    return {
-      label: first.label,
-      value:
-        hasPartValueObject(first) && other.every(hasPartValueObject)
-          ? renderActivatableNameComponentsCombinedIfPossible(
-              locale.translate,
-              locale.translateMap,
-              [first.value, ...other.map(part => part.value)],
-              true,
-              list => locale.join(list.toSorted(locale.compare), "disjunction"),
-            )
-          : locale.join(
-              [first, ...other].map(part =>
-                typeof part.value === "string"
-                  ? part.value
-                  : renderActivatableNameComponents(locale.translateMap, part.value, true),
-              ),
-              "disjunction",
-            ),
-      sentenceType: undefined,
-      isMeta: false,
-    }
-  }
-
-  return {
-    value: locale.join(
-      [first, ...other].map(
-        part =>
-          (part.label ?? "") +
-          (typeof part.value === "string"
-            ? part.value
-            : renderActivatableNameComponents(locale.translateMap, part.value, true)),
-      ),
-      "disjunction",
-    ),
+): StdReader<PrerequisitePart, "tm"> =>
+  Reader.asks(env => ({
+    value: env.translateMap(group.translations)?.text ?? MISSING_VALUE,
     sentenceType: undefined,
     isMeta: false,
+  }))
+
+const printPrerequisitesDisjunction = <T extends Prerequisite, SingleEnv>(
+  getPrerequisiteTranslation: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
+  disjunction: PrerequisitesDisjunction<T>,
+): Reader<StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv, PrerequisitePart | undefined> => {
+  if (disjunction.display_option !== undefined) {
+    return printDisplayOption(disjunction.display_option)
   }
+
+  const disjunctionList = disjunction.list
+
+  return Reader.traverse(disjunctionList, getPrerequisiteTranslation)
+    .map(list => list.filter(isNotNullish))
+    .thenW(([first, ...other]) => {
+      if (first === undefined) {
+        return Reader.of(undefined)
+      }
+
+      if (
+        disjunctionList.length < 2 ||
+        (isNotEmpty(disjunctionList) &&
+          disjunctionList.slice(1).every(part => part.kind === disjunctionList[0].kind))
+      ) {
+        return (
+          hasPartValueObject(first) && other.every(hasPartValueObject)
+            ? Reader.asks((env: StdEnv<"t" | "tm" | "lj" | "lc">) =>
+                renderActivatableNameComponentsCombinedIfPossible(
+                  env.translate,
+                  env.translateMap,
+                  [first.value, ...other.map(part => part.value)],
+                  true,
+                  list => env.localeJoin(list.toSorted(env.localeCompare), "disjunction"),
+                ),
+              )
+            : Reader.traverse([first, ...other], part =>
+                Reader.asks((env: StdEnv<"tm">) =>
+                  typeof part.value === "string"
+                    ? part.value
+                    : renderActivatableNameComponents(env.translateMap, part.value, true),
+                ),
+              ).thenW(list => localeJoinR(list, "disjunction"))
+        ).map(value => ({
+          label: first.label,
+          value,
+          sentenceType: undefined,
+          isMeta: false,
+        }))
+      }
+
+      return Reader.traverse([first, ...other], part =>
+        Reader.asks(
+          (env: StdEnv<"tm">) =>
+            (part.label ?? "") +
+            (typeof part.value === "string"
+              ? part.value
+              : renderActivatableNameComponents(env.translateMap, part.value, true)),
+        ),
+      )
+        .thenW(list => localeJoinR(list, "disjunction"))
+        .map(value => ({
+          value,
+          sentenceType: undefined,
+          isMeta: false,
+        }))
+    })
 }
 
 /**
  * Print prerequisites element as a string.
  */
-const printPrerequisitesElement = <T extends Prerequisite>(
-  printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "join" | "compare">,
+const printPrerequisitesElement = <T extends Prerequisite, SingleEnv>(
+  printPrerequisite: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
   element: PrerequisitesElement<T>,
-): PrerequisitePart | undefined => {
+): Reader<StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv, PrerequisitePart | undefined> => {
   switch (element.kind) {
     case "Single":
       return printPrerequisite(element.Single)
     case "Disjunction":
-      return printPrerequisitesDisjunction(printPrerequisite, locale, element.Disjunction)
+      return printPrerequisitesDisjunction(printPrerequisite, element.Disjunction)
     case "Group":
-      return printPrerequisiteGroup(locale.translateMap, element.Group)
+      return printPrerequisiteGroup(element.Group)
     default:
       return assertExhaustive(element)
   }
@@ -154,47 +156,39 @@ const printPrerequisitesElement = <T extends Prerequisite>(
 /**
  * Print plain prerequisites as a string.
  */
-const printPlainPrerequisites = <T extends Prerequisite>(
-  printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "compare" | "join">,
+const printPlainPrerequisites = <T extends Prerequisite, SingleEnv>(
+  printPrerequisite: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
   prerequisites: PlainPrerequisites<T>,
-): string =>
-  joinPrerequisiteParts(
-    locale.translate,
-    locale.translateMap,
-    locale.compare,
-    prerequisites
-      .map(element =>
-        mapNullable(printPrerequisitesElement(printPrerequisite, locale, element), part => ({
-          type: element.kind === "Single" ? element.Single.kind : element.kind,
-          part,
-        })),
-      )
-      .filter(isNotNullish),
-  )
+): Reader<StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv, string> =>
+  Reader.traverse(prerequisites, element =>
+    printPrerequisitesElement(printPrerequisite, element).map(nullablePart =>
+      mapNullable(nullablePart, part => ({
+        type: element.kind === "Single" ? element.Single.kind : element.kind,
+        part,
+      })),
+    ),
+  ).thenW(list => joinPrerequisiteParts(list.filter(isNotNullish)))
 
 /**
  * Print prerequisite for level as a string.
  */
-const printPrerequisiteForLevel = <T extends Prerequisite>(
-  printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: LocaleEnvironment,
+const printPrerequisiteForLevel = <T extends Prerequisite, SingleEnv>(
+  printPrerequisite: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
   value: PrerequisiteForLevel<T>,
-) => printPrerequisitesElement(printPrerequisite, locale, value.prerequisite)
+) => printPrerequisitesElement(printPrerequisite, value.prerequisite)
 
 /**
  * Print prerequisites for levels as a string.
  */
-const printPrerequisitesForLevels = <T extends Prerequisite>(
-  printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: LocaleEnvironment,
+const printPrerequisitesForLevels = <T extends Prerequisite, SingleEnv>(
+  printPrerequisite: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
   value: PrerequisitesForLevels<T>,
   printPreviousLevelPrerequisites?: {
     levels: number
     createPrerequisite: (level: number) => T
   },
   trailingText?: string,
-): string => {
+): Reader<StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv, string> => {
   const previousLevelPrerequisites: PrerequisitesForLevels<T> =
     printPreviousLevelPrerequisites === undefined
       ? []
@@ -224,154 +218,103 @@ const printPrerequisitesForLevels = <T extends Prerequisite>(
 
   const hasOnlyBasePrerequisites = groupedByLevel.size === 1 && hasBasePrerequisites
 
-  const printedParts = [
+  const printedParts: Reader<StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv, string>[] = [
     ...(hasBasePrerequisites
       ? []
       : [
-          `${locale.translate("Level {$level}", {
+          translateR("Level {$level}", {
             level: romanize(1),
-          })}: ${locale.translate("none")}`,
+          }).then(levelLabel =>
+            translateR("none").map(levelValue => `${levelLabel}: ${levelValue}`),
+          ),
         ]),
     ...sortedByLevel.map(([levelNumber, prerequisites]) => {
-      const prerequisitesString = joinPrerequisiteParts(
-        locale.translate,
-        locale.translateMap,
-        locale.compare,
-        [
-          ...prerequisites
-            .map(element =>
-              mapNullable(printPrerequisiteForLevel(printPrerequisite, locale, element), part => ({
-                type:
-                  element.prerequisite.kind === "Single"
-                    ? element.prerequisite.Single.kind
-                    : element.prerequisite.kind,
-                part,
-              })),
-            )
-            .filter(isNotNullish),
-          ...(levelNumber === 1 && trailingText !== undefined
+      const prerequisitesString = Reader.sequence<
+        StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv,
+        {
+          type: string
+          part: PrerequisitePart
+        }[]
+      >([
+        Reader.traverse(prerequisites, element =>
+          printPrerequisiteForLevel(printPrerequisite, element).map(nullablePart =>
+            mapNullable(nullablePart, part => ({
+              type:
+                element.prerequisite.kind === "Single"
+                  ? element.prerequisite.Single.kind
+                  : element.prerequisite.kind,
+              part,
+            })),
+          ),
+        ).map(list => list.filter(isNotNullish)),
+        Reader.of(
+          levelNumber === 1 && trailingText !== undefined
             ? [
                 {
                   type: "trailing",
                   part: { value: trailingText, sentenceType: undefined, isMeta: false },
                 },
               ]
-            : []),
-        ],
-      )
+            : [],
+        ),
+      ]).then(list => joinPrerequisiteParts(list.flat()))
 
       return hasOnlyBasePrerequisites
         ? prerequisitesString
-        : `${locale.translate("Level {$level}", {
-            level: romanize(levelNumber),
-          })}: ${prerequisitesString}`
+        : prerequisitesString.then(string =>
+            translateR("Level {$level}", {
+              level: romanize(levelNumber),
+            }).map(levelLabel => `${levelLabel}: ${string}`),
+          )
     }),
   ]
 
-  return printedParts.join("; ")
+  return Reader.sequence(printedParts).map(parts => parts.join("; "))
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- any is necessary because the type of the function is not assignable to T otherwise
+type DeriveEnvF<T extends (...args: any[]) => any> =
+  ReturnType<T> extends Reader<infer E, unknown> ? E : never
 
 /**
  * Print derived characteristic prerequisites as a string.
  */
 export const printDerivedCharacteristicPrerequisites = (
-  locale: LocaleEnvironment,
   value: DerivedCharacteristicPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printDerivedCharacteristicPrerequisiteGroup(locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<
+  DeriveEnvF<typeof printDerivedCharacteristicPrerequisiteGroup> & StdEnv<"lj" | "lc">,
+  string
+> => printPlainPrerequisites(printDerivedCharacteristicPrerequisiteGroup, value)
 
 /**
  * Print publication prerequisites as a string.
  */
 export const printPublicationPrerequisites = (
-  getInstanceById: GetInstanceById<"Publication">,
-  locale: LocaleEnvironment,
   value: PublicationPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printPublicationPrerequisiteGroup(getInstanceById, locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printPublicationPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printPublicationPrerequisiteGroup, value)
 
 /**
  * Print plain general prerequisites as a string.
  */
 export const printPlainGeneralPrerequisites = (
-  getInstanceById: GetInstanceById<
-    | "Race"
-    | "Culture"
-    | "PactCategory"
-    | "PactDomain"
-    | "SocialStatus"
-    | "State"
-    | ActivatableIdentifier["kind"]
-    | RatedIdentifier["kind"]
-    | "Property"
-    | "Aspect"
-    | "Enhancement"
-    | "PersonalityTrait"
-    | "Blessing"
-    | "Cantrip"
-  >,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
   value: PlainGeneralPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite =>
-      printGeneralPrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        locale,
-        prerequisite,
-      ),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printGeneralPrerequisiteGroup>, string> =>
+  printPlainPrerequisites(printGeneralPrerequisiteGroup, value)
 
 /**
  * Print general prerequisites as a string.
  */
 export const printGeneralPrerequisites = (
-  getInstanceById: GetInstanceById<
-    | "Race"
-    | "Culture"
-    | "PactCategory"
-    | "PactDomain"
-    | "SocialStatus"
-    | "State"
-    | ActivatableIdentifier["kind"]
-    | RatedIdentifier["kind"]
-    | "Property"
-    | "Aspect"
-    | "Enhancement"
-    | "PersonalityTrait"
-    | "Blessing"
-    | "Cantrip"
-  >,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
   value: GeneralPrerequisites,
   printPreviousLevelPrerequisites?: {
     id: ActivatableIdentifier
     levels: number
   },
   trailingText?: string,
-): string =>
+): Reader<DeriveEnvF<typeof printGeneralPrerequisiteGroup>, string> =>
   printPrerequisitesForLevels(
-    prerequisite =>
-      printGeneralPrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        locale,
-        prerequisite,
-      ),
-    locale,
+    printGeneralPrerequisiteGroup,
     value,
     printPreviousLevelPrerequisites === undefined
       ? undefined
@@ -393,62 +336,20 @@ export const printGeneralPrerequisites = (
  * Print profession prerequisites as a string.
  */
 export const printProfessionPrerequisites = (
-  getInstanceById: GetInstanceById<
-    "Race" | "Culture" | ActivatableIdentifier["kind"] | RatedIdentifier["kind"] | "Aspect"
-  >,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "compare" | "join">,
   value: ProfessionPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite =>
-      printProfessionPrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        locale,
-        prerequisite,
-      ),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printProfessionPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printProfessionPrerequisiteGroup, value)
 
 /**
  * Print advantage disadvantage prerequisites as a string.
  */
 export const printAdvantageDisadvantagePrerequisites = (
-  getInstanceById: GetInstanceById<
-    | "Race"
-    | "Culture"
-    | "PactCategory"
-    | "PactDomain"
-    | "SocialStatus"
-    | "State"
-    | ActivatableIdentifier["kind"]
-    | RatedIdentifier["kind"]
-    | "Property"
-    | "Aspect"
-    | "Enhancement"
-    | "PersonalityTrait"
-    | "Blessing"
-    | "Cantrip"
-  >,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
   value: AdvantageDisadvantagePrerequisites,
   name: string,
   type: "Advantage" | "Disadvantage",
-): string =>
+): Reader<DeriveEnvF<typeof printAdvantageDisadvantagePrerequisiteGroup>, string> =>
   printPrerequisitesForLevels(
-    prerequisite =>
-      printAdvantageDisadvantagePrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        locale,
-        prerequisite,
-        name,
-        type,
-      ),
-    locale,
+    prerequisite => printAdvantageDisadvantagePrerequisiteGroup(prerequisite, name, type),
     value,
   )
 
@@ -456,146 +357,76 @@ export const printAdvantageDisadvantagePrerequisites = (
  * Print arcane tradition prerequisites as a string.
  */
 export const printArcaneTraditionPrerequisites = (
-  getInstanceById: GetInstanceById<"Culture">,
-  locale: LocaleEnvironment,
   value: ArcaneTraditionPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printArcaneTraditionPrerequisiteGroup(getInstanceById, locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printArcaneTraditionPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printArcaneTraditionPrerequisiteGroup, value)
 
 /**
  * Print personality trait prerequisites as a string.
  */
 export const printPersonalityTraitPrerequisites = (
-  getInstanceById: GetInstanceById<"Race" | "Culture" | "PersonalityTrait">,
-  locale: LocaleEnvironment,
   value: PersonalityTraitPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printPersonalityTraitPrerequisiteGroup(getInstanceById, locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<
+  DeriveEnvF<typeof printPersonalityTraitPrerequisiteGroup> & StdEnv<"lj" | "lc">,
+  string
+> => printPlainPrerequisites(printPersonalityTraitPrerequisiteGroup, value)
 
 /**
  * Print spellwork prerequisites as a string.
  */
 export const printSpellworkPrerequisites = (
-  getInstanceById: GetInstanceById<RatedIdentifier["kind"]>,
-  locale: LocaleEnvironment,
   value: SpellworkPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printSpellworkPrerequisiteGroup(getInstanceById, locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printSpellworkPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printSpellworkPrerequisiteGroup, value)
 
 /**
  * Print liturgy prerequisites as a string.
  */
 export const printLiturgyPrerequisites = (
-  locale: LocaleEnvironment,
   value: LiturgyPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printLiturgyPrerequisiteGroup(locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<
+  DeriveEnvF<typeof printLiturgyPrerequisiteGroup> & StdEnv<"t" | "tm" | "lj" | "lc">,
+  string
+> => printPlainPrerequisites(printLiturgyPrerequisiteGroup, value)
 
 /**
  * Print influence prerequisites as a string.
  */
 export const printInfluencePrerequisites = (
-  getInstanceById: GetInstanceById<"Influence" | "Race" | ActivatableIdentifier["kind"] | "Aspect">,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
-  locale: LocaleEnvironment,
   value: InfluencePrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite =>
-      printInfluencePrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        getChildInstancesForInstanceId,
-        locale,
-        prerequisite,
-      ),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printInfluencePrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printInfluencePrerequisiteGroup, value)
 
 /**
  * Print language prerequisites as a string.
  */
 export const printLanguagePrerequisites = (
-  getInstanceById: GetInstanceById<"Race" | ActivatableIdentifier["kind"] | "Aspect">,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
   value: LanguagePrerequisites,
-): string =>
-  printPrerequisitesForLevels(
-    prerequisite =>
-      printLanguagePrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        locale,
-        prerequisite,
-      ),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printLanguagePrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPrerequisitesForLevels(printLanguagePrerequisiteGroup, value)
 
 /**
  * Print animist power prerequisites as a string.
  */
 export const printAnimistPowerPrerequisites = (
-  getInstanceById: GetInstanceById<"AnimistPower">,
-  locale: LocaleEnvironment,
   value: AnimistPowerPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printAnimistPowerPrerequisiteGroup(getInstanceById, locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<
+  DeriveEnvF<typeof printAnimistPowerPrerequisiteGroup> & StdEnv<"t" | "lj" | "lc">,
+  string
+> => printPlainPrerequisites(printAnimistPowerPrerequisiteGroup, value)
 
 /**
  * Print geode ritual prerequisites as a string.
  */
 export const printGeodeRitualPrerequisites = (
-  getInstanceById: GetInstanceById<"Influence" | ActivatableIdentifier["kind"] | "Aspect">,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  locale: LocaleEnvironment,
   value: GeodeRitualPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite =>
-      printGeodeRitualPrerequisiteGroup(
-        getInstanceById,
-        getResolvedSelectOptionById,
-        locale,
-        prerequisite,
-      ),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printGeodeRitualPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printGeodeRitualPrerequisiteGroup, value)
 
 /**
  * Print enhancement prerequisites as a string.
  */
 export const printEnhancementPrerequisites = (
-  getInstanceById: GetInstanceById<RatedIdentifier["kind"] | "Enhancement">,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "compare" | "join">,
   value: EnhancementPrerequisites,
-): string =>
-  printPlainPrerequisites(
-    prerequisite => printEnhancementPrerequisiteGroup(getInstanceById, locale, prerequisite),
-    locale,
-    value,
-  )
+): Reader<DeriveEnvF<typeof printEnhancementPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainPrerequisites(printEnhancementPrerequisiteGroup, value)

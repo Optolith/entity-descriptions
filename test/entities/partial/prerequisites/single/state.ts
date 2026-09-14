@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import { randomUUID } from "node:crypto"
 import { describe, it } from "node:test"
 import { printStatePrerequisite } from "../../../../../src/entities/partial/prerequisites/single/state.js"
+import { MISSING_VALUE } from "../../../../../src/entities/partial/unknown.js"
 import { Case } from "../../../../../src/helpers/enums.js"
 import type { GetInstanceById } from "../../../../../src/helpers/getTypes.js"
 import { defaultLocaleEnvironment } from "../../../../helpers/locale.js"
@@ -21,10 +22,12 @@ describe("getStatePrerequisiteTranslation", () => {
       },
     })
 
+    const env = { ...defaultLocaleEnvironment, getInstanceById }
+
     assert.deepEqual(
-      printStatePrerequisite(getInstanceById, defaultLocaleEnvironment, {
+      printStatePrerequisite({
         id: ExampleUUID,
-      }),
+      }).run(env),
       {
         label: "State ",
         value: `^[A](context: "prerequisite", entity: "State", instance: "${ExampleUUID}")`,
@@ -34,29 +37,33 @@ describe("getStatePrerequisiteTranslation", () => {
     )
 
     assert.deepEqual(
-      printStatePrerequisite(
-        () => ({
+      printStatePrerequisite({
+        id: ExampleUUID,
+      }).run({
+        ...defaultLocaleEnvironment,
+        getInstanceById: () => ({
           id: ExampleUUID,
           src: [],
           translations: {},
         }),
-        defaultLocaleEnvironment,
-        {
-          id: ExampleUUID,
-        },
-      ),
-      undefined,
+      }),
+      {
+        isMeta: false,
+        label: "State ",
+        sentenceType: undefined,
+        value: MISSING_VALUE,
+      },
     )
 
     assert.deepEqual(
-      printStatePrerequisite(getInstanceById, defaultLocaleEnvironment, {
+      printStatePrerequisite({
         id: ExampleUUID,
         display_option: Case("ReplaceWith", {
           translations: {
             "en-US": { replacement: "Replacement" },
           },
         }),
-      }),
+      }).run({ ...defaultLocaleEnvironment, getInstanceById }),
       {
         value: "Replacement",
         sentenceType: undefined,

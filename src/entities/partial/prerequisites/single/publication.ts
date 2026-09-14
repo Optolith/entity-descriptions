@@ -1,6 +1,7 @@
 import type { PublicationPrerequisite } from "@optolith/database-schema/gen"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { StdReader } from "../../../../env.js"
+import { attributedNameR } from "../../reader.js"
+import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -8,24 +9,14 @@ import type { PrerequisitePart } from "../part.js"
  * Get the translation of a state prerequisite.
  */
 export const printPublicationPrerequisite = (
-  getInstanceById: GetInstanceById<"Publication">,
-  locale: LocaleEnvironment,
   prerequisite: PublicationPrerequisite,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  const publication = getInstanceById("Publication", prerequisite.id)
-  const publicationTranslation = locale.translateMap(publication?.translations)
-
-  if (publicationTranslation === undefined) {
-    return undefined
-  }
-
-  return {
-    value: publicationTranslation.name,
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<PrerequisitePart | undefined, "t" | "tm" | "ibi", "Publication"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : attributedNameR("prerequisite", "Publication", prerequisite.id).map(
+        (name): PrerequisitePart | undefined => ({
+          value: name ?? MISSING_VALUE,
+          sentenceType: undefined,
+          isMeta: false,
+        }),
+      )

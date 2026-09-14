@@ -1,3 +1,4 @@
+import type { AnyNonNullish } from "@elyukai/utils/nullable"
 import type { Reader } from "@elyukai/utils/reader"
 import type { ChildEntityMap, EntityMap } from "@optolith/database-schema/gen"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
@@ -42,6 +43,7 @@ export type EnvMap<
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE>
   getResolvedSelectOptionById: GetResolvedSelectOptionById
   publicationOptions: PublicationOptions
+  displayedInProfession: boolean
 }
 
 /**
@@ -63,6 +65,7 @@ export type EnvMapAbbr = {
   acibp: "getChildInstancesForInstanceId"
   rso: "getResolvedSelectOptionById"
   po: "publicationOptions"
+  dip: "displayedInProfession"
 }
 
 /**
@@ -88,4 +91,5 @@ export type StdReader<
   E extends keyof EntityMap = never,
   AE extends keyof EntityMap = never,
   CE extends keyof ChildEntityMap = never,
-> = Reader<StdEnv<K, E, AE, CE>, T>
+  EX = AnyNonNullish,
+> = Reader<StdEnv<K, E, AE, CE> & EX, T>

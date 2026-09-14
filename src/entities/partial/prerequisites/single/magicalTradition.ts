@@ -3,21 +3,19 @@ import type {
   MagicalTraditionPrerequisiteRestriction,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { StdReader } from "../../../../env.js"
+import { translateR } from "../../reader.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printValue = (
-  locale: LocaleEnvironment,
-  restriction: MagicalTraditionPrerequisiteRestriction | undefined,
-) => {
+const printValue = (restriction: MagicalTraditionPrerequisiteRestriction | undefined) => {
   switch (restriction?.kind) {
     case "CanLearnRituals":
-      return locale.translate("Tradition must be able to use rituals")
+      return translateR("Tradition must be able to use rituals")
     case "CanBindFamiliars":
-      return locale.translate("Tradition must be able to bind familiars")
+      return translateR("Tradition must be able to bind familiars")
     case undefined:
-      return locale.translate("Tradition")
+      return translateR("Tradition")
     default:
       return assertExhaustive(restriction)
   }
@@ -27,16 +25,12 @@ const printValue = (
  * Get the translation of a magical tradition prerequisite.
  */
 export const printMagicalTraditionPrerequisite = (
-  locale: LocaleEnvironment,
   prerequisite: MagicalTraditionPrerequisite,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  return {
-    value: printValue(locale, prerequisite.restriction),
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<PrerequisitePart | undefined, "t" | "tm"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : printValue(prerequisite.restriction).map((value): PrerequisitePart | undefined => ({
+        value,
+        sentenceType: undefined,
+        isMeta: false,
+      }))

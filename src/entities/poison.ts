@@ -446,6 +446,10 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     translate,
     translateMap,
     format,
+    localeJoin,
+    localeCompare,
+    getInstanceById,
+    getResolvedSelectOptionById,
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
@@ -604,11 +608,8 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
                       tradeSecret.prerequisites,
                       prerequisites =>
                         `${translate("Prerequisites")}: ${printPlainGeneralPrerequisites(
-                          getInstanceById,
-                          getResolvedSelectOptionById,
-                          locale,
                           prerequisites,
-                        )}`,
+                        ).run(env)}`,
                     ),
                   ),
               },

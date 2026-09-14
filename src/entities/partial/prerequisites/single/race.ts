@@ -1,7 +1,7 @@
 import type { RacePrerequisite } from "@optolith/database-schema/gen"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { attributedNameFromSafeTranslation } from "../../markdown.js"
+import type { StdReader } from "../../../../env.js"
+import { attributedNameR, translateR } from "../../reader.js"
+import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -9,30 +9,15 @@ import type { PrerequisitePart } from "../part.js"
  * Get the translation of a race prerequisite.
  */
 export const printRacePrerequisite = (
-  getInstanceById: GetInstanceById<"Race">,
-  locale: Pick<LocaleEnvironment, "translate" | "translateMap">,
   prerequisite: RacePrerequisite,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  const race = getInstanceById("Race", prerequisite.id)
-  const raceTranslation = locale.translateMap(race?.translations)
-
-  if (raceTranslation === undefined) {
-    return undefined
-  }
-
-  return {
-    label: `${locale.translate("Race")} `,
-    value: attributedNameFromSafeTranslation(
-      raceTranslation,
-      "prerequisite",
-      "Race",
-      prerequisite.id,
-    ),
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<PrerequisitePart | undefined, "t" | "tm" | "ibi", "Race"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : attributedNameR("prerequisite", "Race", prerequisite.id).thenW(name =>
+        translateR("Race").map((label): PrerequisitePart | undefined => ({
+          label: `${label} `,
+          value: name ?? MISSING_VALUE,
+          sentenceType: undefined,
+          isMeta: false,
+        })),
+      )

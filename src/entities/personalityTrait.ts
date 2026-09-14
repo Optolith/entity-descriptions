@@ -4,6 +4,7 @@ import { compareNullish } from "@elyukai/utils/ordering"
 import { romanize } from "@elyukai/utils/roman"
 import { numAsc } from "@optolith/helpers/compare"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { attributedNameFromInstance } from "./partial/markdown.js"
 import { printPersonalityTraitPrerequisites } from "./partial/prerequisites/index.js"
@@ -24,6 +25,14 @@ export const getPersonalityTraitEntityDescription = createEntityDescriptionCreat
   if (translation === undefined) {
     return undefined
   }
+
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+    localeCompare: locale.compare,
+    localeJoin: locale.join,
+  } satisfies Partial<EnvMap>
 
   return {
     title: `${translation.name} (${translate("Level {$level}", {
@@ -79,11 +88,7 @@ export const getPersonalityTraitEntityDescription = createEntityDescriptionCreat
             ? undefined
             : {
                 label: translate("Prerequisites"),
-                value: printPersonalityTraitPrerequisites(
-                  getInstanceById,
-                  locale,
-                  entry.prerequisites,
-                ),
+                value: printPersonalityTraitPrerequisites(entry.prerequisites).run(env),
               },
         ],
       },

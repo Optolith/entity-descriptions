@@ -1,48 +1,39 @@
+import { Reader } from "@elyukai/utils/reader"
 import type {
   RatedMinimumNumberPrerequisite,
   RatedMinimumNumberPrerequisiteCombatTechniquesTargetGroup,
 } from "@optolith/database-schema/gen"
 import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { attributedName } from "../../markdown.js"
+import type { StdReader } from "../../../../env.js"
+import { attributedNameR, localeJoinR, localeSortR, translateR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printNumberOfTheFollowingSkills = (locale: LocaleEnvironment, number: number): string =>
-  locale.translate(".input {$count :number} {{{$count} of the following skills}}", {
-    count: number,
-  })
+const printNumberOfTheFollowingSkills = (count: number) =>
+  translateR(".input {$count :number} {{{$count} of the following skills}}", { count })
 
-const printNumberOfAllCombatTechniques = (locale: LocaleEnvironment, number: number): string =>
-  locale.translate(".input {$count :number} {{{$count} combat techniques}}", {
-    count: number,
-  })
+const printNumberOfAllCombatTechniques = (count: number) =>
+  translateR(".input {$count :number} {{{$count} combat techniques}}", { count })
 
-const printNumberOfCloseCombatTechniques = (locale: LocaleEnvironment, number: number): string =>
-  locale.translate(".input {$count :number} {{{$count} close combat techniques}}", {
-    count: number,
-  })
+const printNumberOfCloseCombatTechniques = (count: number) =>
+  translateR(".input {$count :number} {{{$count} close combat techniques}}", { count })
 
-const printNumberOfRangedCombatTechniques = (locale: LocaleEnvironment, number: number): string =>
-  locale.translate(".input {$count :number} {{{$count} ranged combat techniques}}", {
-    count: number,
-  })
+const printNumberOfRangedCombatTechniques = (count: number) =>
+  translateR(".input {$count :number} {{{$count} ranged combat techniques}}", { count })
 
 const printNumberOfCombatTechniques = (
-  locale: LocaleEnvironment,
   category: RatedMinimumNumberPrerequisiteCombatTechniquesTargetGroup,
   number: number,
-): string => {
+) => {
   switch (category.kind) {
     case "All":
-      return printNumberOfAllCombatTechniques(locale, number)
+      return printNumberOfAllCombatTechniques(number)
     case "Close":
-      return printNumberOfCloseCombatTechniques(locale, number)
+      return printNumberOfCloseCombatTechniques(number)
     case "Ranged":
-      return printNumberOfRangedCombatTechniques(locale, number)
+      return printNumberOfRangedCombatTechniques(number)
     default:
       return assertExhaustive(category)
   }
@@ -52,88 +43,96 @@ const printNumberOfCombatTechniques = (
  * Get the translation of a rated minimum number prerequisite.
  */
 export const printRatedMinimumNumberPrerequisite = (
-  getInstanceById: GetInstanceById<"Skill" | "Property" | "Aspect">,
-  locale: LocaleEnvironment,
   prerequisite: RatedMinimumNumberPrerequisite,
-): PrerequisitePart | undefined => {
+): StdReader<
+  PrerequisitePart | undefined,
+  "t" | "tm" | "lc" | "lj" | "ibi",
+  "Skill" | "Property" | "Aspect"
+> => {
   if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
+    return printDisplayOption(prerequisite.display_option)
   }
 
   switch (prerequisite.targets.kind) {
-    case "Skills": {
-      const skills = prerequisite.targets.Skills.targets
-        .map(id =>
-          attributedName(locale.translateMap, getInstanceById, "prerequisite", "Skill", id),
+    case "Skills":
+      return Reader.traverse(prerequisite.targets.Skills.targets, id =>
+        attributedNameR("prerequisite", "Skill", id),
+      )
+        .map(skills => skills.filter(isNotNullish))
+        .thenW(localeSortR)
+        .thenW(skills => localeJoinR(skills, "conjunction"))
+        .thenW(list =>
+          printNumberOfTheFollowingSkills(prerequisite.number)
+            .then(count =>
+              translateR(
+                ".input {$minRating :number} {{{$count} on at least SR {$minRating}: {$list}}}", // zwei der folgenden Talente mindestens FW 10:
+                {
+                  count,
+                  minRating: prerequisite.value,
+                  list,
+                },
+              ),
+            )
+            .map(value => ({
+              value,
+              sentenceType: undefined,
+              isMeta: false,
+            })),
         )
-        .filter(isNotNullish)
 
-      return {
-        value: locale.translate(
-          ".input {$minRating :number} {{{$count} on at least SR {$minRating}: {$list}}}", // zwei der folgenden Talente mindestens FW 10:
-          {
-            count: printNumberOfTheFollowingSkills(locale, prerequisite.number),
-            minRating: prerequisite.value,
-            list: locale.join(skills, "conjunction"),
-          },
-        ),
-        sentenceType: undefined,
-        isMeta: false,
-      }
-    }
-
-    case "CombatTechniques": {
+    case "CombatTechniques":
       // de-DE: "Fernkampfwert 10"
       // en-US: "Ranged Combat 10"
       // nl-BE: "Schiet/werpwaarde 10"
       // fr-FR: "Ranged Combat 10"
       // it-IT: "Una tecnica di combattimento a distanza 10"
 
-      return {
-        value: `${printNumberOfCombatTechniques(
-          locale,
-          prerequisite.targets.CombatTechniques.group,
-          prerequisite.number,
-        )} ${prerequisite.value.toFixed()}`,
+      return printNumberOfCombatTechniques(
+        prerequisite.targets.CombatTechniques.group,
+        prerequisite.number,
+      ).map(count => ({
+        value: `${count} ${prerequisite.value.toFixed()}`,
         sentenceType: undefined,
         isMeta: false,
-      }
-    }
+      }))
 
-    case "Spellworks": {
-      return {
-        value: locale.translate(
-          ".input {$count :number} .input {$minRating :number} {{{$count} arcane works with the property {$property} at SR {$minRating} or higher}}",
-          {
-            count: prerequisite.number,
-            property:
-              locale.translateMap(
-                getInstanceById("Property", prerequisite.targets.Spellworks.property)?.translations,
-              )?.name ?? MISSING_VALUE,
-            minRating: prerequisite.value,
-          },
-        ),
-        sentenceType: undefined,
-        isMeta: false,
-      }
-    }
+    case "Spellworks":
+      return attributedNameR("prerequisite", "Property", prerequisite.targets.Spellworks.property)
+        .map(name => name ?? MISSING_VALUE)
+        .thenW(property =>
+          translateR(
+            ".input {$count :number} .input {$minRating :number} {{{$count} arcane works with the property {$property} at SR {$minRating} or higher}}",
+            {
+              count: prerequisite.number,
+              property,
+              minRating: prerequisite.value,
+            },
+          ),
+        )
+        .map((value): PrerequisitePart | undefined => ({
+          value,
+          sentenceType: undefined,
+          isMeta: false,
+        }))
 
     case "Liturgies": {
-      return {
-        value: locale.translate(
-          ".input {$count :number} .input {$minRating :number} {{{$count} liturgical chants and ceremonies with the aspect {$aspect} at SR {$minRating} or higher}}",
-          {
-            count: prerequisite.number,
-            aspect:
-              locale.translateMap(
-                getInstanceById("Aspect", prerequisite.targets.Liturgies.aspect)?.translations,
-              )?.name ?? MISSING_VALUE,
-            minRating: prerequisite.value,
-          },
-        ),
-        sentenceType: undefined,
-        isMeta: false,
-      }
+      return attributedNameR("prerequisite", "Aspect", prerequisite.targets.Liturgies.aspect)
+        .map(name => name ?? MISSING_VALUE)
+        .thenW(aspect =>
+          translateR(
+            ".input {$count :number} .input {$minRating :number} {{{$count} liturgical chants and ceremonies with the aspect {$aspect} at SR {$minRating} or higher}}",
+            {
+              count: prerequisite.number,
+              aspect,
+              minRating: prerequisite.value,
+            },
+          ),
+        )
+        .map((value): PrerequisitePart | undefined => ({
+          value,
+          sentenceType: undefined,
+          isMeta: false,
+        }))
     }
 
     default:

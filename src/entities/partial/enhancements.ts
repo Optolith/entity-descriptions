@@ -11,7 +11,7 @@ import type {
   RatedIdentifier,
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
-import type { StdEnv, StdReader } from "../../env.js"
+import type { StdReader } from "../../env.js"
 import type { RawEntityDescriptionSection } from "../../index.js"
 import { filterIncludedPublicationEntriesMapR } from "../../references/publicationOptions.js"
 import { printEnhancementPrerequisites } from "./prerequisites/index.js"
@@ -37,16 +37,35 @@ const getEnhancementAPValue = (
 const renderEnhancement = (
   enhancement: { id: string; content: Enhancement },
   parentImprovementCost: ImprovementCost,
-) =>
-  translateMapR(enhancement.content.translations).thenW(translation =>
-    Reader.ask<
-      StdEnv<"t" | "tm" | "lc" | "lj" | "ibi", RatedIdentifier["kind"] | "Enhancement">
-    >().map(env =>
-      translation === undefined
-        ? undefined
-        : `- ^[${translation.name}](entity: "Enhancement") (${env.translate("SR {$value}", { value: enhancement.content.skill_rating })}, ${env.translate("{$value} AP", { value: getEnhancementAPValue(enhancement.content.adventurePoints, parentImprovementCost) })}): ${translation.effect.split("\n").join("\n  ")}${enhancement.content.prerequisites === undefined ? "" : ` ${env.translate(".input {$hiddenCount :number} {{Prerequisites}}", { hiddenCount: enhancement.content.prerequisites.length })}: ${printEnhancementPrerequisites(env.getInstanceById, { translate: env.translate, translateMap: env.translateMap, compare: env.localeCompare, join: env.localeJoin }, enhancement.content.prerequisites)}`}`,
-    ),
+) => {
+  const { prerequisites } = enhancement.content
+  return translateMapR(enhancement.content.translations).thenW(translation =>
+    translation === undefined
+      ? Reader.of(undefined)
+      : translateR("SR {$value}", { value: enhancement.content.skill_rating }).thenW(sr =>
+          translateR("{$value} AP", {
+            value: getEnhancementAPValue(
+              enhancement.content.adventurePoints,
+              parentImprovementCost,
+            ),
+          }).thenW(ap =>
+            (prerequisites === undefined
+              ? Reader.of("")
+              : translateR(".input {$hiddenCount :number} {{Prerequisites}}", {
+                  hiddenCount: prerequisites.length,
+                }).thenW(prerequisitesLabel =>
+                  printEnhancementPrerequisites(prerequisites).map(
+                    prerequisitesText => ` ${prerequisitesLabel}: ${prerequisitesText}`,
+                  ),
+                )
+            ).map(
+              prerequisitesText =>
+                `- ^[${translation.name}](entity: "Enhancement") (${sr}, ${ap}): ${translation.effect.split("\n").join("\n  ")}${prerequisitesText}`,
+            ),
+          ),
+        ),
   )
+}
 
 /**
  * Render the enhancements section for an entity description, if applicable.

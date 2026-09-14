@@ -3,15 +3,16 @@ import type {
   SexualCharacteristicPrerequisite,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { StdReader } from "../../../../env.js"
+import { translateR } from "../../reader.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printId = (locale: LocaleEnvironment, id: SexualCharacteristic): string => {
+const printId = (id: SexualCharacteristic) => {
   switch (id.kind) {
     case "Penis":
-      return locale.translate("Penis")
+      return translateR("Penis")
     case "Vagina":
-      return locale.translate("Vagina")
+      return translateR("Vagina")
     default:
       return assertExhaustive(id)
   }
@@ -21,12 +22,16 @@ const printId = (locale: LocaleEnvironment, id: SexualCharacteristic): string =>
  * Get the translation of a sexual characteristic prerequisite.
  */
 export const printSexualCharacteristicPrerequisite = (
-  locale: LocaleEnvironment,
   prerequisite: SexualCharacteristicPrerequisite,
-): PrerequisitePart | undefined => ({
-  value: locale.translate("Person with {$sexualCharacteristic}", {
-    sexualCharacteristic: printId(locale, prerequisite.id),
-  }),
-  sentenceType: undefined,
-  isMeta: false,
-})
+): StdReader<PrerequisitePart | undefined, "t"> =>
+  printId(prerequisite.id)
+    .then(sexualCharacteristic =>
+      translateR("Person with {$sexualCharacteristic}", {
+        sexualCharacteristic,
+      }),
+    )
+    .map(value => ({
+      value,
+      sentenceType: undefined,
+      isMeta: false,
+    }))

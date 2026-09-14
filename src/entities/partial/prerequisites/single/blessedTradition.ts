@@ -3,25 +3,27 @@ import type {
   BlessedTraditionPrerequisiteRestriction,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
+import type { StdReader } from "../../../../env.js"
+import { translateR } from "../../reader.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
-const printValue = (
-  locale: LocaleEnvironment,
-  restriction: BlessedTraditionPrerequisiteRestriction | undefined,
-) => {
+const printValue = (restriction: BlessedTraditionPrerequisiteRestriction | undefined) => {
   switch (restriction?.kind) {
     case "Church":
-      return locale.translate("Tradition ({$tradition})", {
-        tradition: locale.translate("Church"),
-      })
+      return translateR("Church").then(tradition =>
+        translateR("Tradition ({$tradition})", {
+          tradition,
+        }),
+      )
     case "Shamanistic":
-      return locale.translate("Tradition ({$tradition})", {
-        tradition: locale.translate("Shaman"),
-      })
+      return translateR("Shaman").then(tradition =>
+        translateR("Tradition ({$tradition})", {
+          tradition,
+        }),
+      )
     case undefined:
-      return locale.translate("Tradition")
+      return translateR("Tradition")
     default:
       return assertExhaustive(restriction)
   }
@@ -31,17 +33,15 @@ const printValue = (
  * Get the translation of a blessed tradition prerequisite.
  */
 export const printBlessedTraditionPrerequisite = (
-  locale: LocaleEnvironment,
   prerequisite: BlessedTraditionPrerequisite,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  return {
-    label: `${locale.translate("special ability")} `,
-    value: printValue(locale, prerequisite.restriction),
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<PrerequisitePart | undefined, "t" | "tm"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : translateR("special ability").then(label =>
+        printValue(prerequisite.restriction).map((value): PrerequisitePart | undefined => ({
+          label: `${label} `,
+          value,
+          sentenceType: undefined,
+          isMeta: false,
+        })),
+      )

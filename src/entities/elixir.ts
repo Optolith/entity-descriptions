@@ -2,6 +2,7 @@ import { mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import type { ActivatableIdentifier, RatedIdentifier } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { renderAlternativeNames, renderLaboratoryLevel } from "./partial/herbary.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
@@ -41,6 +42,15 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
   if (translation === undefined) {
     return undefined
   }
+
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+    localeCompare: locale.compare,
+    localeJoin: locale.join,
+    getResolvedSelectOptionById,
+  } satisfies Partial<EnvMap>
 
   return {
     title: translation.name,
@@ -83,11 +93,8 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
                   entry.trade_secret.prerequisites,
                   prerequisites =>
                     `${translate("Prerequisites")}: ${printPlainGeneralPrerequisites(
-                      getInstanceById,
-                      getResolvedSelectOptionById,
-                      locale,
                       prerequisites,
-                    )}`,
+                    ).run(env)}`,
                 ),
               ),
           },

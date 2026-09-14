@@ -1,7 +1,8 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { PersonalityTraitPrerequisite } from "@optolith/database-schema/gen"
-import type { GetInstanceById } from "../../../../helpers/getTypes.js"
-import type { LocaleEnvironment } from "../../../../helpers/locale.js"
-import { attributedNameFromSafeTranslation } from "../../markdown.js"
+import type { StdReader } from "../../../../env.js"
+import { attributedNameFromInstanceR, getInstanceByIdR, translateR } from "../../reader.js"
+import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -9,39 +10,37 @@ import type { PrerequisitePart } from "../part.js"
  * Get the translation of a personality trait prerequisite.
  */
 export const printPersonalityTraitPrerequisite = (
-  getInstanceById: GetInstanceById<"PersonalityTrait">,
-  locale: LocaleEnvironment,
   prerequisite: PersonalityTraitPrerequisite,
-): PrerequisitePart | undefined => {
-  if (prerequisite.display_option !== undefined) {
-    return printDisplayOption(locale.translateMap, prerequisite.display_option)
-  }
-
-  const personalityTrait = getInstanceById("PersonalityTrait", prerequisite.id)
-  const personalityTraitTranslation = locale.translateMap(personalityTrait?.translations)
-
-  if (personalityTrait === undefined || personalityTraitTranslation === undefined) {
-    return undefined
-  }
-
-  const name = `${attributedNameFromSafeTranslation(
-    personalityTraitTranslation,
-    "prerequisite",
-    "PersonalityTrait",
-    prerequisite.id,
-  )} (${locale.translate("Level {$level}", {
-    level: personalityTrait.level,
-  })})`
-
-  return {
-    value: prerequisite.active
-      ? locale.translate("must have {$trait}", {
-          trait: name,
-        })
-      : locale.translate("cannot be chosen at the same time as {$trait}", {
-          trait: name,
-        }),
-    sentenceType: undefined,
-    isMeta: false,
-  }
-}
+): StdReader<PrerequisitePart | undefined, "t" | "tm" | "ibi", "PersonalityTrait"> =>
+  prerequisite.display_option !== undefined
+    ? printDisplayOption(prerequisite.display_option)
+    : getInstanceByIdR("PersonalityTrait", prerequisite.id).thenW(personalityTrait =>
+        personalityTrait === undefined
+          ? Reader.of(undefined)
+          : attributedNameFromInstanceR(
+              personalityTrait,
+              "prerequisite",
+              "PersonalityTrait",
+              prerequisite.id,
+            )
+              .map(name => name ?? MISSING_VALUE)
+              .thenW(name =>
+                translateR("Level {$level}", {
+                  level: personalityTrait.level,
+                }).map(level => `${name} (${level})`),
+              )
+              .then(name =>
+                prerequisite.active
+                  ? translateR("must have {$trait}", {
+                      trait: name,
+                    })
+                  : translateR("cannot be chosen at the same time as {$trait}", {
+                      trait: name,
+                    }),
+              )
+              .map(value => ({
+                value,
+                sentenceType: undefined,
+                isMeta: false,
+              })),
+      )

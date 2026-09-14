@@ -2,9 +2,11 @@ import { groupBy } from "@elyukai/utils/array/groups"
 import { deepEqual, equal } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { compareNumber, reduceCompare, type Compare } from "@elyukai/utils/ordering"
+import { Reader } from "@elyukai/utils/reader"
 import type { ActivatableIdentifier, SentenceType } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { fromUniformCase } from "tsondb/schema/gen"
+import type { StdReader } from "../../../env.js"
 import type { LocaleCompare } from "../../../helpers/locale.js"
 import type { Translate, TranslateMap } from "../../../helpers/translate.js"
 import {
@@ -13,6 +15,7 @@ import {
   type ActivatableNameComponents,
 } from "../activatableNameChunks.js"
 import { attributedInstance } from "../markdown.js"
+import { translateR } from "../reader.js"
 
 /**
  * A part of the total list of prerequisites.
@@ -129,70 +132,71 @@ const sortByActivatableGroupAndName = (
 
 const appendPrerequisitePartGroup = (
   previous: string,
-  translate: Translate,
-  translateMap: TranslateMap,
-  localeCompare: LocaleCompare,
   parts: PrerequisitePart[],
   isLast: boolean,
-) => {
+): StdReader<string, "t" | "tm" | "lc"> => {
   if (parts.length === 0) {
-    return previous
+    return Reader.of(previous)
   } else if (parts.every(hasPartValueObject)) {
-    return appendBySentenceType(
-      previous,
-      parts
-        .toSorted(on(part => fromUniformCase(part.value.id), localeCompare))
-        .reduce(
-          (
-            acc: [[ActivatableGroup, string][], number],
-            current,
-            i,
-            arr,
-          ): [[ActivatableGroup, string][], number] => {
-            if (acc[1] > 0) {
-              return [acc[0], acc[1] - 1]
-            }
-
-            const [rendered, furtherIncluded] = joinAdjacentParts(
-              translate,
-              translateMap,
-              localeCompare,
+    return Reader.asks(({ translate, translateMap, localeCompare }) =>
+      appendBySentenceType(
+        previous,
+        parts
+          .toSorted(on(part => fromUniformCase(part.value.id), localeCompare))
+          .reduce(
+            (
+              acc: [[ActivatableGroup, string][], number],
               current,
-              arr.slice(i + 1),
-            )
+              i,
+              arr,
+            ): [[ActivatableGroup, string][], number] => {
+              if (acc[1] > 0) {
+                return [acc[0], acc[1] - 1]
+              }
 
-            return [
-              [
-                ...acc[0],
-                [activatableKindToGroup(current.value.id.kind), (current.label ?? "") + rendered],
-              ],
-              furtherIncluded,
-            ]
-          },
-          [[], 0],
-        )[0]
-        .toSorted(sortByActivatableGroupAndName(localeCompare))
-        .map(grouped => grouped[1])
-        .join(", "),
-      undefined,
-      isLast,
+              const [rendered, furtherIncluded] = joinAdjacentParts(
+                translate,
+                translateMap,
+                localeCompare,
+                current,
+                arr.slice(i + 1),
+              )
+
+              return [
+                [
+                  ...acc[0],
+                  [activatableKindToGroup(current.value.id.kind), (current.label ?? "") + rendered],
+                ],
+                furtherIncluded,
+              ]
+            },
+            [[], 0],
+          )[0]
+          .toSorted(sortByActivatableGroupAndName(localeCompare))
+          .map(grouped => grouped[1])
+          .join(", "),
+        undefined,
+        isLast,
+      ),
     )
   } else {
-    return parts.reduce(
-      (acc, current, i, arr) =>
-        appendBySentenceType(
-          acc,
-          (current.label ?? "") +
-            (typeof current.value === "string"
-              ? current.value
-              : wrapActivatableInAttributedString(
-                  renderActivatableNameComponents(translateMap, current.value, true),
-                  current.value.id,
-                )),
-          current.sentenceType,
-          isLast && i === arr.length - 1,
-        ),
-      previous,
+    return Reader.asks(({ translateMap }) =>
+      parts.reduce(
+        (acc, current, i, arr) =>
+          appendBySentenceType(
+            acc,
+            (current.label ?? "") +
+              (typeof current.value === "string"
+                ? current.value
+                : wrapActivatableInAttributedString(
+                    renderActivatableNameComponents(translateMap, current.value, true),
+                    current.value.id,
+                  )),
+            current.sentenceType,
+            isLast && i === arr.length - 1,
+          ),
+        previous,
+      ),
     )
   }
 }
@@ -201,11 +205,8 @@ const appendPrerequisitePartGroup = (
  * Join prerequisite parts using their configuration.
  */
 export const joinPrerequisiteParts = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  localeCompare: LocaleCompare,
   parts: { type: string; part: PrerequisitePart }[],
-): string =>
+): StdReader<string, "t" | "tm" | "lc"> =>
   groupBy(
     parts,
     on(part => part.type, equal),
@@ -214,15 +215,8 @@ export const joinPrerequisiteParts = (
       type: group[0].type,
       parts: group.map(groupItem => groupItem.part),
     }))
-    .reduce(
-      (acc, partGroup, i, arr) =>
-        appendPrerequisitePartGroup(
-          acc,
-          translate,
-          translateMap,
-          localeCompare,
-          partGroup.parts,
-          i === arr.length - 1,
-        ),
-      parts.every(({ part }) => part.isMeta) ? translate("none") : "",
+    .reduce<StdReader<string, "t" | "tm" | "lc">>(
+      (accR, partGroup, i, arr) =>
+        accR.thenW(acc => appendPrerequisitePartGroup(acc, partGroup.parts, i === arr.length - 1)),
+      parts.every(({ part }) => part.isMeta) ? translateR("none") : Reader.of(""),
     )
