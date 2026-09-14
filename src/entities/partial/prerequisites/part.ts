@@ -54,6 +54,7 @@ const wrapActivatableInAttributedString = (text: string, id: ActivatableIdentifi
   attributedInstance(text, id.kind, fromUniformCase(id), { context: '"prerequisite"' })
 
 const joinAdjacentParts = (
+  translate: Translate,
   translateMap: TranslateMap,
   localeCompare: LocaleCompare,
   part: PrerequisitePart & { value: ActivatableNameComponents },
@@ -63,14 +64,12 @@ const joinAdjacentParts = (
 
   if (valuesWithSameBase.length > 0) {
     return [
-      wrapActivatableInAttributedString(
-        renderActivatableNameComponentsCombinedIfPossible(
-          translateMap,
-          [part.value, ...valuesWithSameBase.map(p => p.value)],
-          true,
-          list => list.toSorted(localeCompare).join(", "),
-        ),
-        part.value.id,
+      renderActivatableNameComponentsCombinedIfPossible(
+        translate,
+        translateMap,
+        [part.value, ...valuesWithSameBase.map(p => p.value)],
+        true,
+        list => list.toSorted(localeCompare).join(", "),
       ),
       valuesWithSameBase.length,
     ]
@@ -130,6 +129,7 @@ const sortByActivatableGroupAndName = (
 
 const appendPrerequisitePartGroup = (
   previous: string,
+  translate: Translate,
   translateMap: TranslateMap,
   localeCompare: LocaleCompare,
   parts: PrerequisitePart[],
@@ -154,6 +154,7 @@ const appendPrerequisitePartGroup = (
             }
 
             const [rendered, furtherIncluded] = joinAdjacentParts(
+              translate,
               translateMap,
               localeCompare,
               current,
@@ -217,6 +218,7 @@ export const joinPrerequisiteParts = (
       (acc, partGroup, i, arr) =>
         appendPrerequisitePartGroup(
           acc,
+          translate,
           translateMap,
           localeCompare,
           partGroup.parts,

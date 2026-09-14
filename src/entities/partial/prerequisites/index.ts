@@ -72,7 +72,7 @@ const printPrerequisiteGroup = (
 
 const printPrerequisitesDisjunction = <T extends Prerequisite>(
   getPrerequisiteTranslation: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: Pick<LocaleEnvironment, "translateMap" | "join">,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "join" | "compare">,
   disjunction: PrerequisitesDisjunction<T>,
 ): PrerequisitePart | undefined => {
   if (disjunction.display_option !== undefined) {
@@ -96,10 +96,11 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
       value:
         hasPartValueObject(first) && other.every(hasPartValueObject)
           ? renderActivatableNameComponentsCombinedIfPossible(
+              locale.translate,
               locale.translateMap,
               [first.value, ...other.map(part => part.value)],
               true,
-              list => locale.join(list, "disjunction"),
+              list => locale.join(list.toSorted(locale.compare), "disjunction"),
             )
           : locale.join(
               [first, ...other].map(part =>
@@ -135,7 +136,7 @@ const printPrerequisitesDisjunction = <T extends Prerequisite>(
  */
 const printPrerequisitesElement = <T extends Prerequisite>(
   printPrerequisite: (prerequisite: T) => PrerequisitePart | undefined,
-  locale: Pick<LocaleEnvironment, "translateMap" | "join">,
+  locale: Pick<LocaleEnvironment, "translate" | "translateMap" | "join" | "compare">,
   element: PrerequisitesElement<T>,
 ): PrerequisitePart | undefined => {
   switch (element.kind) {

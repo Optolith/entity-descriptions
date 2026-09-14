@@ -929,6 +929,7 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
                     possiblyCombined,
                     false,
                     list => localeJoin(list, "disjunction"),
+                    "profession",
                   ),
                   possiblyCombined.id,
                 )

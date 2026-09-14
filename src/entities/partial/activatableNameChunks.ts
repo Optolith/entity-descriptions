@@ -11,7 +11,9 @@ import type {
 import { mapObject } from "@optolith/helpers/object"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { fromUniformCase } from "tsondb/schema/gen"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
+import { attributedInstance } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"
 
@@ -42,9 +44,7 @@ export type CombinedActivatableNameComponents = {
  * function returning a string.
  */
 export type ActivatableNameChunk =
-  | LocaleMap<string>
-  | string
-  | ((translateMap: TranslateMap) => string)
+  LocaleMap<string> | string | ((translateMap: TranslateMap) => string)
 
 const combineChunks = (
   a: ActivatableNameChunk,
@@ -215,22 +215,28 @@ export const renderCombinedActivatableNameComponents = (
   components: CombinedActivatableNameComponents,
   formatAsPrerequisite: boolean,
   join: (list: string[]) => string = list => list.join(", "),
+  context = "prerequisite",
 ): string =>
-  renderActivatableNameComponents(
-    translateMap,
-    {
-      ...components,
-      nameBuilderRules: {
-        ...components.nameBuilderRules,
-        useParenthesis: true,
-      },
-      options: join(
-        components.options.map(chunk =>
-          renderActivatableNameChunk(translateMap, normalizeChunks(chunk)),
+  attributedInstance(
+    renderActivatableNameComponents(
+      translateMap,
+      {
+        ...components,
+        nameBuilderRules: {
+          ...components.nameBuilderRules,
+          useParenthesis: true,
+        },
+        options: join(
+          components.options.map(chunk =>
+            renderActivatableNameChunk(translateMap, normalizeChunks(chunk)),
+          ),
         ),
-      ),
-    },
-    formatAsPrerequisite,
+      },
+      formatAsPrerequisite,
+    ),
+    components.id.kind,
+    fromUniformCase(components.id),
+    { context },
   )
 
 /**
@@ -244,7 +250,12 @@ export const renderMultipleStandaloneActivatableNameComponents = (
 ): string =>
   join(
     components.map(item =>
-      renderActivatableNameComponents(translateMap, item, formatAsPrerequisite),
+      attributedInstance(
+        renderActivatableNameComponents(translateMap, item, formatAsPrerequisite),
+        item.id.kind,
+        fromUniformCase(item.id),
+        { context: '"prerequisite"' },
+      ),
     ),
   )
 
@@ -252,12 +263,40 @@ export const renderMultipleStandaloneActivatableNameComponents = (
  * Renders the name components of multiple activatable entries, combining parts if possible.
  */
 export const renderActivatableNameComponentsCombinedIfPossible = (
+  translate: Translate,
   translateMap: TranslateMap,
   components: ActivatableNameComponents[],
   formatAsPrerequisite: boolean,
   join: (list: string[]) => string = list => list.join(", "),
 ): string => {
+  if (
+    isNotEmpty(components) &&
+    components.length > 1 &&
+    (components.every(c => c.id.kind === "MagicalTradition") ||
+      components.every(c => c.id.kind === "BlessedTradition"))
+  ) {
+    return (
+      attributedInstance(`${translate("Tradition")} (`, components[0].id.kind, undefined, {
+        context: '"prerequisite"',
+      }) +
+      join(
+        components.map(c =>
+          c.options === undefined
+            ? MISSING_VALUE
+            : attributedInstance(
+                renderActivatableNameChunk(translateMap, normalizeChunks(c.options)),
+                c.id.kind,
+                fromUniformCase(c.id),
+                { context: '"prerequisite"' },
+              ),
+        ),
+      ) +
+      attributedInstance(`)`, components[0].id.kind, undefined, { context: '"prerequisite"' })
+    )
+  }
+
   const combined = combineNameComponents(components)
+
   if (combined === undefined) {
     return renderMultipleStandaloneActivatableNameComponents(
       translateMap,
@@ -519,9 +558,7 @@ export const getNameComponents = <T>(
 
   const actualBase = isTradition ? translate("Tradition") : renderedBase
   const actualOptions:
-    | ActivatableNameChunk
-    | [ActivatableNameChunk, ActivatableNameChunk]
-    | undefined = isTradition
+    ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined = isTradition
     ? renderedOptions === undefined
       ? renderedBase
       : [renderedBase, normalizeChunks(renderedOptions)]

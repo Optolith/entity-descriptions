@@ -104,6 +104,7 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
           },
           false,
           list => list.toSorted(localeCompare).join(", "),
+          "commonness",
         )
       },
       entity,
@@ -180,9 +181,7 @@ export const renderValueWithPossibleTranslation = <T>(
   renderValue: (value: T) => string,
   _valueTranslation: string | undefined, // use for debugging purposes to verify whether the translation is correctly generated
 ): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
-  Reader.asks(
-    ({ translate }): RawDefinitionListEntityDescriptionSectionItem => ({
-      label: translate(label),
-      value: /* valueTranslation ?? */ renderValue(value),
-    }),
-  )
+  Reader.asks(({ translate }): RawDefinitionListEntityDescriptionSectionItem => ({
+    label: translate(label),
+    value: /* valueTranslation ?? */ renderValue(value),
+  }))
