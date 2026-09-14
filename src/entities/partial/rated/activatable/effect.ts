@@ -1,8 +1,9 @@
 import type { ActivatableSkillEffect } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdReader } from "../../../../env.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
-import { translateFnR, type StdReader } from "../../reader.js"
+import { translateFnR } from "../../reader.js"
 
 const getContentPartsForQualityLevels = (
   getQualityLevelString: (index: number) => string | number,
@@ -12,31 +13,29 @@ const getContentPartsForQualityLevels = (
     text_after?: string
   },
 ): StdReader<RawDefinitionListEntityDescriptionSectionItem, "t"> =>
-  translateFnR.map(
-    (translate): RawDefinitionListEntityDescriptionSectionItem => ({
-      label: translate("Effect"),
-      value: [
-        {
-          type: "plain",
-          text: source.text_before,
-        },
-        {
-          type: "definitionList",
-          style: "hidden",
-          items: source.quality_levels.map((text, index) => ({
-            label: translate("QL {$value}", {
-              value: getQualityLevelString(index),
-            }),
-            value: text,
-          })),
-        },
-        mapNullable(source.text_after, textAfter => ({
-          type: "plain",
-          text: textAfter,
+  translateFnR.map((translate): RawDefinitionListEntityDescriptionSectionItem => ({
+    label: translate("Effect"),
+    value: [
+      {
+        type: "plain",
+        text: source.text_before,
+      },
+      {
+        type: "definitionList",
+        style: "hidden",
+        items: source.quality_levels.map((text, index) => ({
+          label: translate("QL {$value}", {
+            value: getQualityLevelString(index),
+          }),
+          value: text,
         })),
-      ],
-    }),
-  )
+      },
+      mapNullable(source.text_after, textAfter => ({
+        type: "plain",
+        text: textAfter,
+      })),
+    ],
+  }))
 
 /**
  * Gets the text for the effect of an activatable skill.

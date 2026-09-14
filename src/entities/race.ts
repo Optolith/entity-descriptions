@@ -16,6 +16,7 @@ import type {
   RaceVariantTranslation,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import { Case } from "../helpers/enums.js"
 import type {
   CountInstances,
@@ -35,13 +36,7 @@ import {
   printActivatableName,
   type GetResolvedSelectOptionById,
 } from "./partial/prerequisites/single/activatable.js"
-import {
-  getInstanceByIdR,
-  translateMapR,
-  type EnvMap,
-  type StdEnv,
-  type StdReader,
-} from "./partial/reader.js"
+import { getInstanceByIdR, translateMapR } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
 const renderBaseValues = (

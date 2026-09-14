@@ -1,5 +1,6 @@
 import type { TinyActivatablePrerequisite } from "@optolith/database-schema/gen"
-import { attributedCustomNameR, type StdReader } from "../../reader.js"
+import type { StdReader } from "../../../../env.js"
+import { attributedCustomNameR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOptionR } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"

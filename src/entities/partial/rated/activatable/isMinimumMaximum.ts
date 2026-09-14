@@ -1,5 +1,6 @@
 import { Reader } from "@elyukai/utils/reader"
-import { responsiveTranslateR, type StdReader } from "../../reader.js"
+import type { StdReader } from "../../../../env.js"
+import { responsiveTranslateR } from "../../reader.js"
 
 /**
  * Wraps the text in a translation that indicates it’s a minimum value.

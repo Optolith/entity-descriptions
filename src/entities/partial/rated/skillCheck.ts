@@ -5,6 +5,7 @@ import type {
   SkillCheck,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdReader } from "../../../env.js"
 import { type IdMap } from "../../../index.js"
 import {
   getInstanceByIdFnR,
@@ -13,7 +14,6 @@ import {
   responsiveTranslateR,
   translateMapR,
   translateR,
-  type StdReader,
 } from "../reader.js"
 import { MISSING_VALUE } from "../unknown.js"
 

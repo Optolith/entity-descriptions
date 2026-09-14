@@ -6,9 +6,10 @@ import type {
   ResponsiveTextReplace,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdEnv } from "../../env.js"
 import { type LocaleMap } from "../../helpers/translate.js"
 import { appendInParensIfNotEmpty } from "./rated/activatable/parensIf.js"
-import { responsiveTextOptionalR, responsiveTextR, translateMapR, type StdEnv } from "./reader.js"
+import { responsiveTextOptionalR, responsiveTextR, translateMapR } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**

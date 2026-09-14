@@ -1,6 +1,7 @@
 import type { ImprovementCost } from "@optolith/database-schema/gen"
+import type { StdReader } from "../../../env.js"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../index.js"
-import { translateR, type StdReader } from "../reader.js"
+import { translateR } from "../reader.js"
 
 /**
  * Renders an improvement cost value as a string.

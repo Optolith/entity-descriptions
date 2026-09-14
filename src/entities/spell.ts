@@ -36,6 +36,7 @@ import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare } from "../helpers/locale.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
@@ -91,9 +92,6 @@ import {
   responsiveTranslateR,
   translateMapR,
   translateR,
-  type EnvMap,
-  type StdEnv,
-  type StdReader,
 } from "./partial/reader.js"
 import {
   appendNoteIfNeeded,

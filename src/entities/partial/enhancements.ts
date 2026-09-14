@@ -11,16 +11,11 @@ import type {
   RatedIdentifier,
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
+import type { StdEnv, StdReader } from "../../env.js"
 import type { RawEntityDescriptionSection } from "../../index.js"
 import { filterIncludedPublicationEntriesMapR } from "../../references/publicationOptions.js"
 import { printEnhancementPrerequisites } from "./prerequisites/index.js"
-import {
-  getChildInstancesForInstanceIdR,
-  translateMapR,
-  translateR,
-  type StdEnv,
-  type StdReader,
-} from "./reader.js"
+import { getChildInstancesForInstanceIdR, translateMapR, translateR } from "./reader.js"
 
 const getEnhancementAPValue = (
   adventurePoints: EnhancementAdventurePoints,
@@ -80,15 +75,13 @@ export const renderEnhancements = (
           return Reader.of(undefined)
         }
 
-        return translateR("Enhancements").map(
-          (label): RawEntityDescriptionSection => ({
-            type: "labeled",
-            label: `${label}:`,
-            value: {
-              type: "plain",
-              text: nonNullishDescriptions.join("\n"),
-            },
-          }),
-        )
+        return translateR("Enhancements").map((label): RawEntityDescriptionSection => ({
+          type: "labeled",
+          label: `${label}:`,
+          value: {
+            type: "plain",
+            text: nonNullishDescriptions.join("\n"),
+          },
+        }))
       }),
   )

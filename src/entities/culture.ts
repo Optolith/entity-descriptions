@@ -23,6 +23,7 @@ import type {
   Weighted,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import type { TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type {
@@ -43,7 +44,7 @@ import {
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { translateR, type EnvMap, type StdEnv, type StdReader } from "./partial/reader.js"
+import { translateR } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
 const getAttributedProfessionName = (
@@ -348,8 +349,7 @@ const renderCommonNames = (
   commonNames: CommonNames,
 ): StdReader<
   (
-    | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
-    | undefined
+    RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection> | undefined
   )[],
   "lc"
 > =>
@@ -357,15 +357,13 @@ const renderCommonNames = (
     const groups = [
       ...(commonNames.first_name_groups ?? []),
       ...(commonNames.last_name_groups ?? []),
-    ].map(
-      (group): RawDefinitionListEntityDescriptionSectionItem => ({
-        label: group.label,
-        value: group.names
-          .map(name => name.name + parensIf(name.note))
-          .toSorted(localeCompare)
-          .join(", "),
-      }),
-    )
+    ].map((group): RawDefinitionListEntityDescriptionSectionItem => ({
+      label: group.label,
+      value: group.names
+        .map(name => name.name + parensIf(name.note))
+        .toSorted(localeCompare)
+        .join(", "),
+    }))
 
     const specialRules = commonNames.naming_rules
 

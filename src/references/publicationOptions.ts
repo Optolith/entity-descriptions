@@ -7,7 +7,7 @@ import type {
   Publication_ID,
   PublicationRefs,
 } from "@optolith/database-schema/gen"
-import type { StdReader } from "../entities/partial/reader.js"
+import type { StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { TranslateMap } from "../helpers/translate.js"
 

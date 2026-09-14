@@ -54,6 +54,7 @@ import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleEnvironment, LocaleJoin } from "../helpers/locale.js"
 import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
@@ -79,15 +80,7 @@ import {
 } from "./partial/prerequisites/single/activatable.js"
 import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import {
-  attributedNameR,
-  localeSortR,
-  nameR,
-  translateR,
-  type EnvMap,
-  type StdEnv,
-  type StdReader,
-} from "./partial/reader.js"
+import { attributedNameR, localeSortR, nameR, translateR } from "./partial/reader.js"
 import {
   getResponsiveText,
   getResponsiveTextOptional,

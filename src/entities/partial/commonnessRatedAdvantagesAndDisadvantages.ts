@@ -9,6 +9,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { ensureNonEmpty } from "@optolith/helpers/array"
 import { Case } from "tsondb/schema/gen"
+import type { StdReader } from "../../env.js"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleCompare } from "../../helpers/locale.js"
 import type { TranslateMap, TranslationKeysWithoutParams } from "../../helpers/translate.js"
@@ -20,7 +21,6 @@ import {
 } from "./activatableNameChunks.js"
 import { attributedCustomName } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
-import type { StdReader } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 const convertCommonnessRatedAdvantageOrDisadvantageLevel = (

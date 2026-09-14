@@ -16,106 +16,26 @@ import type {
   GetAllInstances,
   GetInstanceById,
 } from "../../helpers/getTypes.js"
-import type {
-  FormatNumber,
-  LocaleCompare,
-  LocaleJoin,
-  LocaleJoinType,
-} from "../../helpers/locale.js"
+import type { LocaleCompare, LocaleJoin, LocaleJoinType } from "../../helpers/locale.js"
 import type {
   Format,
   LocaleMap,
   Translate,
   TranslateMap,
   TranslationKeyMatchingParamsOfKey,
-  TranslationKeysWithoutParams,
   TranslationParamsInArray,
   Translations,
 } from "../../helpers/translate.js"
-import type { PublicationOptions } from "../../references/publicationOptions.js"
 import {
   attributedCustomName,
   attributedName,
   attributedNameFromInstance,
   customName,
 } from "./markdown.js"
-import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
-import type { ModifiableParameter } from "./rated/activatable/nonModifiableSuffix.js"
 import { Speed } from "./rated/activatable/speed.js"
 import { responsive, ResponsiveTextSize } from "./responsiveText.js"
 import { formatEnergy, type EnergyUnit } from "./units/energy.js"
 import { MISSING_VALUE } from "./unknown.js"
-
-/**
- * The standard set of environment properties for readers in this project.
- */
-export type EnvMap<
-  E extends keyof EntityMap = never,
-  AE extends keyof EntityMap = never,
-  CE extends keyof ChildEntityMap = never,
-> = {
-  format: Format
-  formatNumber: FormatNumber
-  translate: Translate
-  translateMap: TranslateMap
-  localeJoin: LocaleJoin
-  localeCompare: LocaleCompare
-  responsiveTextSize: ResponsiveTextSize
-  speed: Speed
-  energyUnit: EnergyUnit
-  nonModifiableSuffix?: (param: ModifiableParameter) => TranslationKeysWithoutParams
-  getInstanceById: GetInstanceById<E>
-  getAllInstances: GetAllInstances<AE>
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE>
-  getResolvedSelectOptionById: GetResolvedSelectOptionById
-  publicationOptions: PublicationOptions
-}
-
-/**
- * Shortcuts for selecting keys of the shared environment map type.
- */
-export type EnvMapAbbr = {
-  f: "format"
-  fn: "formatNumber"
-  t: "translate"
-  tm: "translateMap"
-  lj: "localeJoin"
-  lc: "localeCompare"
-  rts: "responsiveTextSize"
-  s: "speed"
-  eu: "energyUnit"
-  nms: "nonModifiableSuffix"
-  ibi: "getInstanceById"
-  ai: "getAllInstances"
-  acibp: "getChildInstancesForInstanceId"
-  rso: "getResolvedSelectOptionById"
-  po: "publicationOptions"
-}
-
-/**
- * The standard set of environment properties for readers in this project.
- *
- * The keys are abbreviated to keep type annotations short.
- */
-export type StdEnv<
-  K extends keyof EnvMapAbbr = keyof EnvMapAbbr,
-  E extends keyof EntityMap = never,
-  AE extends keyof EntityMap = never,
-  CE extends keyof ChildEntityMap = never,
-> = Pick<EnvMap<E, AE, CE>, EnvMapAbbr[K]>
-
-/**
- * Shortcut for a reader with common environment properties.
- *
- * The keys are abbreviated to keep return type annotations short.
- */
-export type StdReader<
-  T,
-  K extends keyof EnvMapAbbr,
-  E extends keyof EntityMap = never,
-  AE extends keyof EntityMap = never,
-  CE extends keyof ChildEntityMap = never,
-> = Reader<StdEnv<K, E, AE, CE>, T>
 
 // Specialized constructors for common contexts
 

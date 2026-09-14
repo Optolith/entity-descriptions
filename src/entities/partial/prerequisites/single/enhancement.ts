@@ -5,13 +5,8 @@ import type {
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { fromUniformCase } from "tsondb/schema/gen"
-import {
-  attributedNameFromInstanceR,
-  getInstanceByIdR,
-  translateR,
-  type StdEnv,
-  type StdReader,
-} from "../../reader.js"
+import type { StdEnv, StdReader } from "../../../../env.js"
+import { attributedNameFromInstanceR, getInstanceByIdR, translateR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import type { PrerequisitePart } from "../part.js"
 
@@ -69,14 +64,12 @@ export const printEnhancementPrerequisite = (
                           translateR("for").map(forText => `${name} ${forText} ${skillName}`),
                         ),
                 )
-                .map(
-                  (value): PrerequisitePart => ({
-                    label: `${label} `,
-                    value,
-                    sentenceType: undefined,
-                    isMeta: false,
-                  }),
-                ),
+                .map((value): PrerequisitePart => ({
+                  label: `${label} `,
+                  value,
+                  sentenceType: undefined,
+                  isMeta: false,
+                })),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import { Reader } from "@elyukai/utils/reader"
 import type { Case } from "tsondb/schema/gen"
+import type { StdReader } from "../../../env.js"
 import type {
   Format,
   LocaleMap,
@@ -7,7 +8,6 @@ import type {
   TranslateMap,
   TranslationKeyMatchingParams,
 } from "../../../helpers/translate.js"
-import type { StdEnv } from "../reader.js"
 import { type ResponsiveTextSize, responsive } from "../responsiveText.js"
 import { MISSING_VALUE } from "../unknown.js"
 
@@ -155,7 +155,7 @@ export const formatTimeSpanR = (
   unit: TimeSpanUnitObject | TimeSpanUnit,
   value: number | string,
   interval?: boolean,
-): Reader<StdEnv<"t" | "tm" | "f" | "rts">, string> =>
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
   Reader.asks(({ translate, translateMap, format, responsiveTextSize }) =>
     formatTimeSpan(translate, translateMap, format, responsiveTextSize, unit, value, interval),
   )
@@ -168,5 +168,5 @@ export const formatCombinedTimeSpanR = (
     value: number | string
   },
   interval?: boolean,
-): Reader<StdEnv<"t" | "tm" | "f" | "rts">, string> =>
+): StdReader<string, "t" | "tm" | "f" | "rts"> =>
   formatTimeSpanR(object.unit, object.value, interval)

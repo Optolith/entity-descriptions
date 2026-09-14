@@ -22,6 +22,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdEnv, StdReader } from "../../../../env.js"
 import { type LocaleMap } from "../../../../helpers/translate.js"
 import { renderResponsiveMap } from "../../map.js"
 import {
@@ -35,8 +36,6 @@ import {
   responsiveTranslateR,
   translateMapR,
   translateR,
-  type StdEnv,
-  type StdReader,
 } from "../../reader.js"
 import { appendNoteIfNeeded, replaceTextIfNeeded } from "../../responsiveText.js"
 import { formatCombinedTimeSpanR } from "../../units/timeSpan.js"

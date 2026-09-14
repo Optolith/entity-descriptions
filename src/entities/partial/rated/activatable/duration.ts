@@ -10,15 +10,10 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdReader } from "../../../../env.js"
 import { Case } from "../../../../helpers/enums.js"
 import type { LocaleMap } from "../../../../helpers/translate.js"
-import {
-  responsiveTextR,
-  responsiveTranslateR,
-  translateMapR,
-  translateR,
-  type StdReader,
-} from "../../reader.js"
+import { responsiveTextR, responsiveTranslateR, translateMapR, translateR } from "../../reader.js"
 import { replaceTextIfNeeded } from "../../responsiveText.js"
 import { formatCombinedTimeSpanR, formatTimeSpanR } from "../../units/timeSpan.js"
 import { MISSING_VALUE } from "../../unknown.js"

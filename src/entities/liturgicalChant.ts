@@ -9,6 +9,7 @@ import { isNotNullish } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap } from "../env.js"
 import type {
   GetAllChildInstancesForParent,
   GetAllInstances,
@@ -31,7 +32,6 @@ import { renderNonModifiableRange } from "./partial/rated/activatable/range.js"
 import { renderTargetCategory } from "./partial/rated/activatable/targetCategory.js"
 import { renderImprovementCost } from "./partial/rated/improvementCost.js"
 import { renderSkillCheckWithPenalty } from "./partial/rated/skillCheck.js"
-import type { EnvMap } from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
 
 const getTextForBlessingTraditions = (

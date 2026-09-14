@@ -56,6 +56,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type {
   GetAllChildInstancesForParent,
   GetAllInstances,
@@ -103,9 +104,6 @@ import {
   translateMapFnR,
   translateR,
   translationR,
-  type EnvMap,
-  type StdEnv,
-  type StdReader,
 } from "./partial/reader.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
 

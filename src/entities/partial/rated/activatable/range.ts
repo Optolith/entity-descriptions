@@ -8,6 +8,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdReader } from "../../../../env.js"
 import { Case } from "../../../../helpers/enums.js"
 import {
   getInstanceByIdFnR,
@@ -16,7 +17,6 @@ import {
   translateFnR,
   translateMapR,
   translateR,
-  type StdReader,
 } from "../../reader.js"
 import { appendNoteIfNeeded, replaceTextIfNeeded } from "../../responsiveText.js"
 import { formatLengthR } from "../../units/length.js"

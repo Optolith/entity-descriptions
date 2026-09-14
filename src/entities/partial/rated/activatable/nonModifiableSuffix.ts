@@ -1,9 +1,6 @@
 import { Reader } from "@elyukai/utils/reader"
-import {
-  responsiveTranslateR,
-  type StdEnv,
-  type StdReader,
-} from "../../reader.js"
+import type { StdEnv, StdReader } from "../../../../env.js"
+import { responsiveTranslateR } from "../../reader.js"
 
 /**
  * A parameter that is designed to be modifiable.

@@ -1,5 +1,6 @@
 import type { AnySpecialAbilityOfGroupPrerequisite } from "@optolith/database-schema/gen"
-import { translateR, type StdReader } from "../../reader.js"
+import type { StdReader } from "../../../../env.js"
+import { translateR } from "../../reader.js"
 import { printDisplayOptionR } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
 

@@ -5,12 +5,12 @@ import type {
   ExpressionBasedParameterValue,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdReader } from "../../../../env.js"
 import {
   divisionFormatter,
   multiplicationFormatter,
   renderMathOperation,
 } from "../../mathOperation.js"
-import { type StdEnv, type StdReader } from "../../reader.js"
 
 const getArithmeticFormatter = (arithmetic: CheckResultArithmetic) => {
   switch (arithmetic.kind) {
@@ -38,7 +38,7 @@ export const appendCheckResultModifier = (left: string, modifier: CheckResultBas
 export const renderExpressionBasedParameterValue = (
   value: ExpressionBasedParameterValue,
 ): StdReader<string | number, "t"> =>
-  Reader.asks(({ translate }: StdEnv<"t">) =>
+  Reader.asks(({ translate }) =>
     renderMathOperation(value, expressionValue => {
       switch (expressionValue.kind) {
         case "Constant":

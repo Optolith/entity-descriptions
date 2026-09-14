@@ -1,6 +1,6 @@
 import { Reader } from "@elyukai/utils/reader"
+import type { StdReader } from "../../../env.js"
 import type { Translate, Translations } from "../../../helpers/translate.js"
-import type { StdReader } from "../reader.js"
 import { responsive, type ResponsiveTextSize } from "../responsiveText.js"
 
 type LengthUnit = "Steps" | "Miles"

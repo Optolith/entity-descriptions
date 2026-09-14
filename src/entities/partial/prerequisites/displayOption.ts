@@ -1,8 +1,8 @@
 import { Reader } from "@elyukai/utils/reader"
 import type { DisplayOption } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import type { StdReader } from "../../../env.js"
 import type { TranslateMap } from "../../../helpers/translate.js"
-import type { StdReader } from "../reader.js"
 import { MISSING_VALUE } from "../unknown.js"
 import type { PrerequisitePart } from "./part.js"
 
