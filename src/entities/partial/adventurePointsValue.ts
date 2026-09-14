@@ -78,6 +78,7 @@ const renderFixedSelectOptionsAdventurePointsValue = (
 const renderSelectOptionsAdventurePointsValue = <T extends ResolvedSelectOptionIdentifier>(
   locale: LocaleEnvironment,
   derivedLabel: () => string,
+  derivedRangeStart: number,
   getAllSelectOptions: () => ResolvedSelectOption[],
   getNameForSelectOptionId: (id: ResolvedSelectOptionIdentifier) => string | undefined,
   config: SelectOptionsAdventurePointsValue<T> | undefined,
@@ -91,9 +92,9 @@ const renderSelectOptionsAdventurePointsValue = <T extends ResolvedSelectOptionI
       const start = derivedLabel()
       return `${start}: ${locale.translate("{$value} Adventure Points", {
         value: Array.from(
-          { length: 4 },
+          { length: 5 - derivedRangeStart },
           (_, index) =>
-            (index + 1) * (config.DerivedFromImprovementCost.multiplier ?? 1) +
+            (index + derivedRangeStart) * (config.DerivedFromImprovementCost.multiplier ?? 1) +
             (config.DerivedFromImprovementCost.offset ?? 0),
         ).join("/"),
       })}`
@@ -310,6 +311,7 @@ export const renderAdventurePointsValue = (
                   return translate("A/B/C/D ability")
               }
             },
+            1,
             getAllSelectOptions,
             getNameForSelectOptionId,
             derivedSelectOptions.Skills.ap_value,
@@ -319,6 +321,7 @@ export const renderAdventurePointsValue = (
           return renderSelectOptionsAdventurePointsValue(
             locale,
             () => translate("B/C/D combat technique"),
+            2,
             getAllSelectOptions,
             getNameForSelectOptionId,
             derivedSelectOptions.CombatTechniques.ap_value,
