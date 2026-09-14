@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.11.2](https://github.com/Optolith/entity-descriptions/compare/v0.11.1...v0.11.2) (2026-09-14)
+
+### Bug Fixes
+
+* activatable prerequisite disjunctions ([7895f89](https://github.com/Optolith/entity-descriptions/commit/7895f89735315a6a97a7a03bbcdc1c58361763b9)), closes [#52](https://github.com/Optolith/entity-descriptions/issues/52)
+* correctly signed and labeled AP value depending on active entries ([27e3a7a](https://github.com/Optolith/entity-descriptions/commit/27e3a7a4975368651b443520f08bdd918e81a019))
+* correctly signed value in IC derived AP value ([99fa203](https://github.com/Optolith/entity-descriptions/commit/99fa20395d8e9a378194673388d38e26938982bd))
+* derived combat technique ap value ([0ad0554](https://github.com/Optolith/entity-descriptions/commit/0ad0554f2eee7857dbaa7717a3742e70b5735f1f))
 ## [0.11.1](https://github.com/Optolith/entity-descriptions/compare/v0.11.0...v0.11.1) (2026-09-13)
 
 ### Features
