@@ -926,15 +926,12 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
           } else {
             return isCombinedEnhancementNameComponents(possiblyCombined)
               ? renderCombinedEnhancementNameComponents(possiblyCombined)
-              : wrapActivatableInAttributedString(
-                  renderCombinedActivatableNameComponents(
-                    translateMap,
-                    possiblyCombined,
-                    false,
-                    list => localeJoin(list, "disjunction"),
-                    "profession",
-                  ),
-                  possiblyCombined.id,
+              : renderCombinedActivatableNameComponents(
+                  translateMap,
+                  possiblyCombined,
+                  false,
+                  list => localeJoin(list, "disjunction"),
+                  "profession",
                 )
           }
         }

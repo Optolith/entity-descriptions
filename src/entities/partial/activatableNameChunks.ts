@@ -236,7 +236,7 @@ export const renderCombinedActivatableNameComponents = (
     ),
     components.id.kind,
     fromUniformCase(components.id),
-    { context },
+    { context: `"${context}"` },
   )
 
 /**

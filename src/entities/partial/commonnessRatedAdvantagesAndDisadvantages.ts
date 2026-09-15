@@ -19,7 +19,7 @@ import {
   renderCombinedActivatableNameComponents,
   renderNameComponentsOptions,
 } from "./activatableNameChunks.js"
-import { attributedCustomName } from "./markdown.js"
+import { attributedNameFromText, customName } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"
 
@@ -60,13 +60,12 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
 ): string => {
   const customTranslation = translateMap(item.translations)
   return (
-    attributedCustomName(
+    customName<E>(
       translateMap,
       getInstanceById,
-      entity,
       (translation, instance) => {
         if (customTranslation?.full !== undefined) {
-          return customTranslation.full
+          return attributedNameFromText(customTranslation.full, "commonness", entity, item.id)
         }
 
         const id = makeActivatableIdentifierForCommonnessRatedAdvantageOrDisadvantage(

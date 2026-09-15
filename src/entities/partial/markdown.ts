@@ -65,12 +65,15 @@ export const customName = <
 >(
   translateMap: TranslateMap,
   getInstanceById: GetInstanceById<E>,
-  fn: (translation: EntityMap[E]["translations"][string]) => string,
+  fn: (translation: EntityMap[E]["translations"][string], instance: EntityMap[E]) => string,
   ...args: IdArgsVariant<EntityMap, E>
-) =>
-  mapNullable(translateMap<object>(getInstanceById(...args)?.translations), translation =>
-    fn(translation as EntityMap[E]["translations"][string]),
+) => {
+  const instance = getInstanceById(...args)
+  return mapNullable(translateMap<object>(instance?.translations), translation =>
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- instance must be non-nullish if translation is non-nullish
+    fn(translation as EntityMap[E]["translations"][string], instance!),
   )
+}
 
 /**
  * Renders the name of an instance according to a custom function in an attributed string.
@@ -126,6 +129,18 @@ export const attributedNameFromTranslation = (
   return mapNullable(translation?.name, name =>
     attributedInstance(name, id.entityName, id.id, { context: `"${context}"` }),
   )
+}
+
+/**
+ * Renders the name of an instance in an attributed string.
+ */
+export const attributedNameFromText = (
+  text: string,
+  context: string,
+  ...args: IdArgsVariant<EntityMap, keyof EntityMap>
+): string => {
+  const id = normalizedIdArgs(args)
+  return attributedInstance(text, id.entityName, id.id, { context: `"${context}"` })
 }
 
 /**
