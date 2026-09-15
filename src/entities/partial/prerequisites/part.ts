@@ -25,6 +25,7 @@ export type PrerequisitePart = {
   value: string | ActivatableNameComponents
   sentenceType: SentenceType | undefined
   isMeta: boolean
+  isRemoved?: true
 }
 
 /**
@@ -43,7 +44,8 @@ const countFurtherToCombined = (
       !(
         part.label === remaining.label &&
         deepEqual(part.value.id, remaining.value.id) &&
-        part.value.level === remaining.value.level
+        part.value.level === remaining.value.level &&
+        part.isRemoved === remaining.isRemoved
       ),
   )
 
@@ -137,61 +139,75 @@ const appendPrerequisitePartGroup = (
 ): StdReader<string, "t" | "tm" | "lc"> => {
   if (parts.length === 0) {
     return Reader.of(previous)
-  } else if (parts.every(hasPartValueObject)) {
+  }
+
+  const wrapInNoPrerequisite = (text: string) =>
+    parts[0]?.isRemoved === true
+      ? translateR("no prerequisite {$prerequisite}", { prerequisite: text })
+      : Reader.of(text)
+
+  if (parts.every(hasPartValueObject)) {
     return Reader.asks(({ translate, translateMap, localeCompare }) =>
       appendBySentenceType(
         previous,
-        parts
-          .toSorted(on(part => fromUniformCase(part.value.id), localeCompare))
-          .reduce(
-            (
-              acc: [[ActivatableGroup, string][], number],
-              current,
-              i,
-              arr,
-            ): [[ActivatableGroup, string][], number] => {
-              if (acc[1] > 0) {
-                return [acc[0], acc[1] - 1]
-              }
-
-              const [rendered, furtherIncluded] = joinAdjacentParts(
-                translate,
-                translateMap,
-                localeCompare,
+        wrapInNoPrerequisite(
+          parts
+            .toSorted(on(part => fromUniformCase(part.value.id), localeCompare))
+            .reduce(
+              (
+                acc: [[ActivatableGroup, string][], number],
                 current,
-                arr.slice(i + 1),
-              )
+                i,
+                arr,
+              ): [[ActivatableGroup, string][], number] => {
+                if (acc[1] > 0) {
+                  return [acc[0], acc[1] - 1]
+                }
 
-              return [
-                [
-                  ...acc[0],
-                  [activatableKindToGroup(current.value.id.kind), (current.label ?? "") + rendered],
-                ],
-                furtherIncluded,
-              ]
-            },
-            [[], 0],
-          )[0]
-          .toSorted(sortByActivatableGroupAndName(localeCompare))
-          .map(grouped => grouped[1])
-          .join(", "),
+                const [rendered, furtherIncluded] = joinAdjacentParts(
+                  translate,
+                  translateMap,
+                  localeCompare,
+                  current,
+                  arr.slice(i + 1),
+                )
+
+                return [
+                  [
+                    ...acc[0],
+                    [
+                      activatableKindToGroup(current.value.id.kind),
+                      (current.label ?? "") + rendered,
+                    ],
+                  ],
+                  furtherIncluded,
+                ]
+              },
+              [[], 0],
+            )[0]
+            .toSorted(sortByActivatableGroupAndName(localeCompare))
+            .map(grouped => grouped[1])
+            .join(", "),
+        ).run({ translate }),
         undefined,
         isLast,
       ),
     )
   } else {
-    return Reader.asks(({ translateMap }) =>
+    return Reader.asks(({ translate, translateMap }) =>
       parts.reduce(
         (acc, current, i, arr) =>
           appendBySentenceType(
             acc,
-            (current.label ?? "") +
-              (typeof current.value === "string"
-                ? current.value
-                : wrapActivatableInAttributedString(
-                    renderActivatableNameComponents(translateMap, current.value, true),
-                    current.value.id,
-                  )),
+            wrapInNoPrerequisite(
+              (current.label ?? "") +
+                (typeof current.value === "string"
+                  ? current.value
+                  : wrapActivatableInAttributedString(
+                      renderActivatableNameComponents(translateMap, current.value, true),
+                      current.value.id,
+                    )),
+            ).run({ translate }),
             current.sentenceType,
             isLast && i === arr.length - 1,
           ),

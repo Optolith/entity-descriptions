@@ -36,6 +36,7 @@ import type {
   LiturgiesOptions,
   LiturgyIdentifier,
   MagicalActionIdentifier,
+  PrerequisitesElement,
   Profession_ID,
   ProfessionMagicalSkillIdentifier,
   ProfessionPackage,
@@ -46,6 +47,7 @@ import type {
   ProfessionSpecialAbilityIdentifier,
   ProfessionVariant,
   ProfessionVariantPackageOptions,
+  ProfessionVariantPrerequisites,
   ProfessionVariantTranslation,
   RatedIdentifier,
   RestrictedBlessings,
@@ -86,7 +88,10 @@ import {
   attributedName,
   attributedNameFromInstance,
 } from "./partial/markdown.js"
-import { printProfessionPrerequisites } from "./partial/prerequisites/index.js"
+import {
+  printProfessionPrerequisites,
+  printProfessionVariantPrerequisites,
+} from "./partial/prerequisites/index.js"
 import { type GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
@@ -1082,19 +1087,34 @@ const retrieveBlessedTraditionIdentifierFromPrerequisiteGroup = (
     ? [prerequisite.Activatable.id.BlessedTradition]
     : []
 
+const retrieveBlessedTraditionIdentifierFromPrerequisite = (
+  part: PrerequisitesElement<ProfessionPrerequisiteGroup>,
+) => {
+  switch (part.kind) {
+    case "Single":
+      return retrieveBlessedTraditionIdentifierFromPrerequisiteGroup(part.Single)
+    case "Disjunction":
+      return part.Disjunction.list.flatMap(retrieveBlessedTraditionIdentifierFromPrerequisiteGroup)
+    case "Group":
+      return part.Group.list.flatMap(retrieveBlessedTraditionIdentifierFromPrerequisiteGroup)
+    default:
+      return assertExhaustive(part)
+  }
+}
+
 const retrieveBlessedTraditionIdentifierFromPrerequisites = (
   prerequisites: ProfessionPrerequisites | undefined,
+) => prerequisites?.flatMap(retrieveBlessedTraditionIdentifierFromPrerequisite) ?? []
+
+const retrieveBlessedTraditionIdentifierFromVariantPrerequisites = (
+  prerequisites: ProfessionVariantPrerequisites | undefined,
 ) =>
   prerequisites?.flatMap(part => {
     switch (part.kind) {
-      case "Single":
-        return retrieveBlessedTraditionIdentifierFromPrerequisiteGroup(part.Single)
-      case "Disjunction":
-        return part.Disjunction.list.flatMap(
-          retrieveBlessedTraditionIdentifierFromPrerequisiteGroup,
-        )
-      case "Group":
-        return part.Group.list.flatMap(retrieveBlessedTraditionIdentifierFromPrerequisiteGroup)
+      case "Add":
+        return retrieveBlessedTraditionIdentifierFromPrerequisite(part.Add)
+      case "Remove":
+        return []
       default:
         return assertExhaustive(part)
     }
@@ -1180,7 +1200,7 @@ const renderBlessingsForPackages = (professionPackages: NonEmptyArray<PreparedPr
 
 const renderBlessingsForVariant = (professionVariant: ProfessionVariant) =>
   renderBlessings([
-    retrieveBlessedTraditionIdentifierFromPrerequisites(professionVariant.prerequisites),
+    retrieveBlessedTraditionIdentifierFromVariantPrerequisites(professionVariant.prerequisites),
   ]).map(blessingsText => (blessingsText !== undefined ? [blessingsText] : []))
 
 const renderLiturgicalChantName = (liturgyIds: LiturgyIdentifier[]) =>
@@ -1287,7 +1307,7 @@ const renderProfessionVariantText = (
       >([
         variant.prerequisites === undefined
           ? Reader.of([])
-          : printProfessionPrerequisites(variant.prerequisites).thenW(prerequisitesText =>
+          : printProfessionVariantPrerequisites(variant.prerequisites).thenW(prerequisitesText =>
               translateR("Additional Prerequisites").map(label => [
                 `${label}: ${prerequisitesText}`,
               ]),

@@ -16,14 +16,17 @@ import type {
   LanguagePrerequisites,
   LiturgyPrerequisites,
   PersonalityTraitPrerequisites,
+  PlainDiffPrerequisites,
   PlainGeneralPrerequisites,
   PlainPrerequisites,
+  PrerequisiteDiff,
   PrerequisiteForLevel,
   PrerequisiteGroup,
   PrerequisitesDisjunction,
   PrerequisitesElement,
   PrerequisitesForLevels,
   ProfessionPrerequisites,
+  ProfessionVariantPrerequisites,
   PublicationPrerequisites,
   SpellworkPrerequisites,
 } from "@optolith/database-schema/gen"
@@ -166,6 +169,42 @@ const printPlainPrerequisites = <T extends Prerequisite, SingleEnv>(
         type: element.kind === "Single" ? element.Single.kind : element.kind,
         part,
       })),
+    ),
+  ).thenW(list => joinPrerequisiteParts(list.filter(isNotNullish)))
+
+const printPrerequisiteDiff = <T extends Prerequisite, R, SingleEnv>(
+  printPrerequisite: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
+  map: (element: T, part: PrerequisitePart | undefined) => R,
+  element: PrerequisiteDiff<T>,
+): Reader<StdEnv<"t"> & SingleEnv, R> => {
+  switch (element.kind) {
+    case "Add":
+      return printPrerequisite(element.Add).map(part => map(element.Add, part))
+    case "Remove":
+      return printPrerequisite(element.Remove).map(part =>
+        map(element.Remove, part === undefined ? undefined : { ...part, isRemoved: true }),
+      )
+    default:
+      return assertExhaustive(element)
+  }
+}
+
+/**
+ * Print plain prerequisites as a string.
+ */
+const printPlainDiffPrerequisites = <T extends Prerequisite, SingleEnv>(
+  printPrerequisite: (prerequisite: T) => Reader<SingleEnv, PrerequisitePart | undefined>,
+  prerequisites: PlainDiffPrerequisites<T>,
+): Reader<StdEnv<"t" | "tm" | "lc" | "lj"> & SingleEnv, string> =>
+  Reader.traverse(prerequisites, diffElement =>
+    printPrerequisiteDiff(
+      element => printPrerequisitesElement(printPrerequisite, element),
+      (element, nullablePart) =>
+        mapNullable(nullablePart, part => ({
+          type: element.kind === "Single" ? element.Single.kind : element.kind,
+          part,
+        })),
+      diffElement,
     ),
   ).thenW(list => joinPrerequisiteParts(list.filter(isNotNullish)))
 
@@ -339,6 +378,14 @@ export const printProfessionPrerequisites = (
   value: ProfessionPrerequisites,
 ): Reader<DeriveEnvF<typeof printProfessionPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
   printPlainPrerequisites(printProfessionPrerequisiteGroup, value)
+
+/**
+ * Print profession prerequisites as a string.
+ */
+export const printProfessionVariantPrerequisites = (
+  value: ProfessionVariantPrerequisites,
+): Reader<DeriveEnvF<typeof printProfessionPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
+  printPlainDiffPrerequisites(printProfessionPrerequisiteGroup, value)
 
 /**
  * Print advantage disadvantage prerequisites as a string.
