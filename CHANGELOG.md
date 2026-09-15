@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.12.0](https://github.com/Optolith/entity-descriptions/compare/v0.11.2...v0.12.0) (2026-09-15)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.62.0
+
+### build
+
+* **deps:** upgrade to schema 0.62.0 ([13badb3](https://github.com/Optolith/entity-descriptions/commit/13badb304c61a1f4b48241435d5e19400bbbd145))
+
+### Bug Fixes
+
+* nested attributed strings in professions ([cdecedd](https://github.com/Optolith/entity-descriptions/commit/cdecedd5552bb22af4bfec73c4d06ca4b30e3121))
 ## [0.11.2](https://github.com/Optolith/entity-descriptions/compare/v0.11.1...v0.11.2) (2026-09-14)
 
 ### Bug Fixes
