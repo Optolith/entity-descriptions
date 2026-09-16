@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.13.2](https://github.com/Optolith/entity-descriptions/compare/v0.13.1...v0.13.2) (2026-09-16)
+
+### Features
+
+* add focus rule badges to activatable entries, spellworks and liturgical chants and ceremonies ([dd142b4](https://github.com/Optolith/entity-descriptions/commit/dd142b47f3cd29620d29a2561e4a8ae8ad1d2a2d)), closes [#41](https://github.com/Optolith/entity-descriptions/issues/41)
 ## [0.13.1](https://github.com/Optolith/entity-descriptions/compare/v0.13.0...v0.13.1) (2026-09-16)
 
 ### Bug Fixes
