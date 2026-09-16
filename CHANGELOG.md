@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.13.1](https://github.com/Optolith/entity-descriptions/compare/v0.13.0...v0.13.1) (2026-09-16)
+
+### Bug Fixes
+
+* prepend levels to activatable name in library according to name builder rules ([d97c05b](https://github.com/Optolith/entity-descriptions/commit/d97c05b6301a10f4d7add81d2903f0f51d9f2d0a))
+* print correct any special ability of group prerequisite translation ([0196e4b](https://github.com/Optolith/entity-descriptions/commit/0196e4b5f069ac3893b834275eaf30c16f9e3e18))
 ## [0.13.0](https://github.com/Optolith/entity-descriptions/compare/v0.12.0...v0.13.0) (2026-09-16)
 
 ### ⚠ BREAKING CHANGES
