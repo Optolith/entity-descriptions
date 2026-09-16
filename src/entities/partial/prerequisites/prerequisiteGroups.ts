@@ -22,6 +22,7 @@ import type { StdReader } from "../../../env.js"
 import type { PrerequisitePart } from "./part.js"
 import { printActivatablePrerequisite } from "./single/activatable.js"
 import { printAnimistPowerPrerequisite } from "./single/animistPower.js"
+import { printAnySpecialAbilityOfGroupPrerequisite } from "./single/anySpecialAbilityOfGroup.js"
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
 import { printCommonSuggestedByRCPPrerequisite } from "./single/commonSuggestedByRCP.js"
 import { printCulturePrerequisite } from "./single/culture.js"
@@ -129,7 +130,7 @@ export const printGeneralPrerequisiteGroup = (
     case "TinyActivatable":
       return printTinyActivatablePrerequisite(prerequisite.TinyActivatable)
     case "AnySpecialAbilityOfGroup":
-      return printMagicalTraditionPrerequisite(prerequisite.AnySpecialAbilityOfGroup)
+      return printAnySpecialAbilityOfGroupPrerequisite(prerequisite.AnySpecialAbilityOfGroup)
     case "Rated":
       return printRatedPrerequisite(prerequisite.Rated)
     case "RatedMinimumNumber":
