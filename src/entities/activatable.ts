@@ -67,7 +67,7 @@ import type {
 } from "../index.js"
 import { renderActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
-import { renderResponsiveMap } from "./partial/map.js"
+import { renderParameterMap } from "./partial/map.js"
 import { attributedName } from "./partial/markdown.js"
 import { additionFormatter } from "./partial/mathOperation.js"
 import {
@@ -606,7 +606,7 @@ const renderVolumeValue = (
         levels: volume.ByLevel.list.map((_, index) => romanize(index + 1)).join("/"),
       })
     case "Map":
-      return renderResponsiveMap(
+      return renderParameterMap(
         volume.Map,
         option => Reader.of(option.points),
         values => translateR("{$points} points", { points: values }),
@@ -854,7 +854,7 @@ const renderBindingCost = (
         }),
       })
     case "Map":
-      return renderResponsiveMap(
+      return renderParameterMap(
         cost.Map,
         option => Reader.of(option.permanentValue),
         values => translateR("{$value} permanent AE", { value: values }),

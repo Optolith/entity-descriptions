@@ -35,7 +35,7 @@
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
     "@elyukai/markdown": "^0.3.2",
-    "@elyukai/utils": "^0.3.4",
+    "@elyukai/utils": "^0.3.7",
     "@optolith/adventure-points": "^0.1.1",
     "@optolith/helpers": "^0.2.2",
     "diff": "^9.0.0",
@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@optolith/database-schema": "^0.62.0",
+    "@optolith/database-schema": "^0.63.0",
     "@types/node": "^26.5.0",
     "commit-and-tag-version": "^13.1.2",
     "eslint-config-prettier": "^10.1.8",

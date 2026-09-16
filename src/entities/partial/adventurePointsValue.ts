@@ -1,5 +1,6 @@
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { Reader } from "@elyukai/utils/reader"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
@@ -16,7 +17,10 @@ import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetAllInstances } from "../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../helpers/locale.js"
 import type { BaseActivatable, BaseActivatableTranslation } from "../activatable.js"
+import { renderDefaultValueMapLabel, renderValueMap } from "./map.js"
 import { evaluateMathOperation } from "./mathOperation.js"
+import { translateR } from "./reader.js"
+import { ResponsiveTextSize } from "./responsiveText.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 const typographicSign = (num: number): string => (num > 0 ? "" : "−") + Math.abs(num).toFixed()
@@ -353,21 +357,44 @@ export const renderAdventurePointsValue = (
             })
           }
         case "Expression": {
-          const expression = value.DependingOnActiveInstances.Expression
-          const values = Array.from({ length: entry.maximum ?? 3 }, (_, index) =>
-            applyNegative(
-              evaluateMathOperation(expression, exprValue => {
-                switch (exprValue.kind) {
-                  case "Constant":
-                    return exprValue.Constant
-                  case "Active":
-                    return index
-                  default:
-                    return assertExhaustive(exprValue)
-                }
-              }),
-            ),
-          ).join("/")
+          const { expression, customLabels } = value.DependingOnActiveInstances.Expression
+          const values = Array.from(
+            {
+              length:
+                entry.maximum ?? (customLabels === undefined ? 3 : customLabels.options.length),
+            },
+            (_, index) =>
+              applyNegative(
+                evaluateMathOperation(expression, exprValue => {
+                  switch (exprValue.kind) {
+                    case "Constant":
+                      return exprValue.Constant
+                    case "Active":
+                      return index
+                    default:
+                      return assertExhaustive(exprValue)
+                  }
+                }),
+              ),
+          )
+
+          if (customLabels !== undefined) {
+            return renderValueMap(
+              entry.maximum === undefined
+                ? customLabels
+                : { ...customLabels, options: customLabels.options.slice(0, entry.maximum) },
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- customLabels.options is guaranteed to have at least as many entries as values
+              (_, index) => Reader.of(values[index]!),
+              renderDefaultValueMapLabel,
+              singleValue =>
+                typeof singleValue === "number"
+                  ? translateR(".input {$value :number} {{{$value} Adventure Points}}", {
+                      value: singleValue,
+                    })
+                  : translateR("{$value} Adventure Points", { value: singleValue }),
+            ).run({ translate, translateMap, responsiveTextSize: ResponsiveTextSize.Full })
+          }
+
           const labels = Array.from(
             { length: entry.maximum ?? 3 },
             (_, index) => `${(index + 1).toFixed()}.`,

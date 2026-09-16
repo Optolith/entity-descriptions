@@ -478,3 +478,14 @@ export const mapNullableR =
   <T, U, R>(defaultValue: U, fn: (value: NonNullable<T>) => Reader<U, R>) =>
   (value: T) =>
     isNotNullish(value) ? fn(value) : Reader.of(defaultValue)
+
+/**
+ * Use `Reader` instances directly in a template string.
+ */
+export const sequence = <E>(
+  string: TemplateStringsArray,
+  ...values: (Reader<E, string> | string)[]
+): Reader<E, string> =>
+  Reader.traverse(values, value => (value instanceof Reader ? value : Reader.of(value))).map(
+    resolvedValues => string.reduce((acc, str, i) => acc + str + (resolvedValues[i] ?? ""), ""),
+  )

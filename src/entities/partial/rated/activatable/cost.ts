@@ -24,7 +24,7 @@ import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdEnv, StdReader } from "../../../../env.js"
 import { type LocaleMap } from "../../../../helpers/translate.js"
-import { renderResponsiveMap } from "../../map.js"
+import { renderParameterMap } from "../../map.js"
 import {
   formatEnergyFnR,
   formatEnergyR,
@@ -273,18 +273,18 @@ const renderMultipleOneTimeCosts = (
  * Returns the text for a standalone one-time cost map of an activatable skill.
  */
 export const renderStandaloneCostMap = (value: StandaloneCostMap) =>
-  renderResponsiveMap(
+  renderParameterMap(
     value,
     option => Reader.of(option.value),
     formatEnergyR,
     value.options.every(option => option.value.permanentValue !== undefined)
       ? {
-          surround: values =>
+          format: values =>
             translateR(", {$value} of which are permanent", {
               value: values,
             }),
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
-          getAdditionalValue: option => option.permanentValue!,
+          render: option => Reader.of(option.value.permanentValue!),
         }
       : undefined,
   )
@@ -297,35 +297,35 @@ const renderOneTimeCostMap = (
 ): StdReader<string, "t" | "tm" | "f" | "rts" | "s" | "eu" | "ibi", "SkillModificationLevel"> => {
   switch (value.kind) {
     case "Modifiable":
-      return renderResponsiveMap(
+      return renderParameterMap(
         value.Modifiable.map,
         option =>
           deriveModifiableCost(option.initialModificationLevel).map(cost => cost ?? MISSING_VALUE),
-        formatEnergyR,
+        singleValue => formatEnergyR(singleValue),
         value.Modifiable.map.options.every(option => option.value.permanentValue !== undefined)
           ? {
-              surround: values =>
+              format: values =>
                 translateR(", {$value} of which are permanent", {
                   value: values,
                 }),
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
-              getAdditionalValue: option => option.permanentValue!,
+              render: option => Reader.of(option.value.permanentValue!),
             }
           : undefined,
       )
     case "NonModifiable":
-      return renderResponsiveMap(
+      return renderParameterMap(
         value.NonModifiable.map,
         option => Reader.of(option.value),
         formatEnergyR,
         value.NonModifiable.map.options.every(option => option.value.permanentValue !== undefined)
           ? {
-              surround: values =>
+              format: values =>
                 translateR(", {$value} of which are permanent", {
                   value: values,
                 }),
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
-              getAdditionalValue: option => option.permanentValue!,
+              render: option => Reader.of(option.value.permanentValue!),
             }
           : undefined,
       ).then(text => appendNonModifiableSuffix(ModifiableParameter.Cost, text))
@@ -339,7 +339,7 @@ const renderSustainedCostMap = (
 ): StdReader<string, "t" | "tm" | "f" | "rts" | "s" | "eu" | "ibi", "SkillModificationLevel"> => {
   switch (value.kind) {
     case "Modifiable":
-      return renderResponsiveMap(
+      return renderParameterMap(
         value.Modifiable.map,
         option =>
           deriveModifiableCost(option.initialModificationLevel).map(cost => cost ?? MISSING_VALUE),
@@ -349,9 +349,9 @@ const renderSustainedCostMap = (
           ),
       )
     case "NonModifiable":
-      return renderResponsiveMap(
+      return renderParameterMap(
         value.NonModifiable.map,
-        option => Reader.of(option.value),
+        option => Reader.of(option.value.toFixed()),
         singleValue =>
           formatEnergyR(singleValue).thenW(energy =>
             appendIntervalToCostR(value.NonModifiable.interval, energy),
