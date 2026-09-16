@@ -2,13 +2,14 @@ import { stripInlineMarkdown } from "@elyukai/markdown/render/strip"
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
-import { constant, on } from "@elyukai/utils/function"
+import { constant, identity, on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { reduceCompare } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
+  ActivatableNameBuilderRules,
   AdvancedSpecialAbility,
   AdvancedSpecialAbilityRestrictedOptionIdentifier,
   AdvantageDisadvantagePrerequisites,
@@ -121,6 +122,7 @@ type AdvancedIdentifierSpecialAbility = string | Case<AdvancedSpecialAbilityKind
  * The base fields for a special ability entity in the database.
  */
 export type BaseActivatable = {
+  nameBuilderRules?: ActivatableNameBuilderRules
   levels?: number
   subtype?: AdvantageDisadvantageSubtype
   maximum?: number
@@ -1597,11 +1599,27 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
         ? name => translate("Tradition ({$tradition})", { tradition: name })
         : name => name
 
+    const { levels } = baseEntry
+    const addLevels: (name: string) => string =
+      levels === undefined
+        ? identity
+        : baseEntry.nameBuilderRules?.levelPlacement?.kind === "BeforeOptions"
+          ? name => {
+              const nameParts = name.split("(")
+              if (nameParts.length > 1) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- array is checked to have at least two elements
+                return `${nameParts[0]!}I–${romanize(levels)} (${nameParts.slice(1).join("(")}`
+              }
+              return `${name} I–${romanize(levels)}`
+            }
+          : name => `${name} I–${romanize(levels)}`
+
     return {
-      title:
+      title: addLevels(
         makeTraditionName(
           translation.name_in_library ?? translation.name + parensIf(translation.additionalName),
-        ) + (baseEntry.levels !== undefined ? ` I–${romanize(baseEntry.levels)}` : ""),
+        ),
+      ),
       subtitle:
         mapNullable(baseEntry.subtype, subtype =>
           renderAdvantageDisadvantageSubtype(subtype).run(env),
@@ -1705,9 +1723,9 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                       ).run(env)
                     : printGeneralPrerequisites(
                         prerequisites as GeneralPrerequisites,
-                        mapNullable(baseEntry.levels, levels => ({
+                        mapNullable(levels, safeLevels => ({
                           id: wrappedId,
-                          levels,
+                          levels: safeLevels,
                         })),
                         renderTrailingAdvancedPrerequisitesNote(translate, entityName),
                       ).run(env),
