@@ -4,6 +4,7 @@ import { mapNullable } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import type {
   ActivatableIdentifier,
+  AdvantageDisadvantagePrerequisiteGroup,
   AdvantageDisadvantagePrerequisites,
   AnimistPowerPrerequisites,
   ArcaneTraditionPrerequisites,
@@ -35,11 +36,12 @@ import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdEnv, StdReader } from "../../../env.js"
+import type { RawEntityDescriptionBadge } from "../../../index.js"
 import {
   renderActivatableNameComponents,
   renderActivatableNameComponentsCombinedIfPossible,
 } from "../activatableNameChunks.js"
-import { localeJoinR, translateR } from "../reader.js"
+import { getInstanceByIdR, localeJoinR, translateR } from "../reader.js"
 import { MISSING_VALUE } from "../unknown.js"
 import { printDisplayOption } from "./displayOption.js"
 import { hasPartValueObject, joinPrerequisiteParts, type PrerequisitePart } from "./part.js"
@@ -477,3 +479,38 @@ export const printEnhancementPrerequisites = (
   value: EnhancementPrerequisites,
 ): Reader<DeriveEnvF<typeof printEnhancementPrerequisiteGroup> & StdEnv<"lj" | "lc">, string> =>
   printPlainPrerequisites(printEnhancementPrerequisiteGroup, value)
+
+const getDerivedFocusRuleBadgeFromPrerequisite = (
+  prerequisite: PrerequisitesElement<
+    AdvantageDisadvantagePrerequisiteGroup | GeneralPrerequisiteGroup
+  >,
+): StdReader<number | undefined, "ibi", "FocusRule"> =>
+  prerequisite.kind === "Single" &&
+  prerequisite.Single.kind === "Rule" &&
+  prerequisite.Single.Rule.id.kind === "FocusRule"
+    ? getInstanceByIdR(prerequisite.Single.Rule.id).map(focusRule => focusRule?.level)
+    : Reader.of(undefined)
+
+/**
+ * Get the focus rule badge from prerequisites.
+ */
+export const getDerivedFocusRuleBadgeFromPrerequisites = (
+  prerequisites:
+    AdvantageDisadvantagePrerequisites | GeneralPrerequisites | PlainGeneralPrerequisites,
+): StdReader<RawEntityDescriptionBadge | undefined, "ibi", "FocusRule"> =>
+  Reader.asks(env => {
+    for (const element of prerequisites) {
+      const actualPrerequisite =
+        "level" in element ? (element.level === 1 ? element.prerequisite : undefined) : element
+      if (actualPrerequisite !== undefined) {
+        const badge = getDerivedFocusRuleBadgeFromPrerequisite(actualPrerequisite).run(env)
+        if (badge !== undefined) {
+          return {
+            type: "level",
+            value: romanize(badge),
+          }
+        }
+      }
+    }
+    return undefined
+  })

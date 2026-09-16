@@ -64,6 +64,7 @@ import type {
   GetAllResolvedSelectOptions,
   GetAllResolvedSkillUses,
   RawDefinitionListEntityDescriptionSectionItem,
+  RawEntityDescriptionBadge,
   TableEntityDescriptionSection,
 } from "../index.js"
 import { renderActivatableNameComponents } from "./partial/activatableNameChunks.js"
@@ -72,6 +73,7 @@ import { renderParameterMap } from "./partial/map.js"
 import { attributedName } from "./partial/markdown.js"
 import { additionFormatter } from "./partial/mathOperation.js"
 import {
+  getDerivedFocusRuleBadgeFromPrerequisites,
   printAdvantageDisadvantagePrerequisites,
   printGeneralPrerequisites,
 } from "./partial/prerequisites/index.js"
@@ -1533,6 +1535,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Brew"
       | "Blessing"
       | "Cantrip"
+      | "FocusRule"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
@@ -1627,21 +1630,24 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
         mapNullable(baseEntry.usage_type, usageType =>
           renderCombatSpecialAbilityType(usageType).run(env),
         ),
-      badge: mapNullable(
-        entityName === "CombatStyleSpecialAbility" || entityName === "AdvancedCombatSpecialAbility"
-          ? entry.type
-          : undefined,
-        combatType => {
-          switch (combatType.kind) {
-            case "Armed":
-              return { type: "armedCombat", value: translate("AC") }
-            case "Unarmed":
-              return { type: "unarmedCombat", value: translate("UC") }
-            default:
-              return assertExhaustive(combatType)
-          }
-        },
-      ),
+      badge:
+        mapNullable(
+          entityName === "CombatStyleSpecialAbility" ||
+            entityName === "AdvancedCombatSpecialAbility"
+            ? entry.type
+            : undefined,
+          (combatType): RawEntityDescriptionBadge => {
+            switch (combatType.kind) {
+              case "Armed":
+                return { type: "armedCombat", value: translate("AC") }
+              case "Unarmed":
+                return { type: "unarmedCombat", value: translate("UC") }
+              default:
+                return assertExhaustive(combatType)
+            }
+          },
+        ) ??
+        mapNullable(baseEntry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
       className: "special-ability",
       body: [
         mapNullable(translation.special_rules, specialRules => ({

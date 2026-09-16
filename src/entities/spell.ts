@@ -45,6 +45,7 @@ import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { renderEnhancements } from "./partial/enhancements.js"
 import { attributedCustomName, attributedName } from "./partial/markdown.js"
 import {
+  getDerivedFocusRuleBadgeFromPrerequisites,
   printAnimistPowerPrerequisites,
   printGeodeRitualPrerequisites,
 } from "./partial/prerequisites/index.js"
@@ -289,6 +290,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
       | RatedIdentifier["kind"]
       | "Enhancement"
+      | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
@@ -339,6 +341,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     return {
       title: translation.name,
       className: "spell",
+      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
       body: [
         {
           type: "definitionList",
@@ -390,6 +393,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
       | RatedIdentifier["kind"]
       | "Enhancement"
+      | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
@@ -440,6 +444,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     return {
       title: translation.name,
       className: "ritual",
+      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
       body: [
         {
           type: "definitionList",

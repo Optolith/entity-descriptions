@@ -82,7 +82,7 @@ export type { LocaleEnvironment }
 export type EntityDescription = {
   title: string
   subtitle?: string
-  badge?: { type: "level" | "armedCombat" | "unarmedCombat"; value: string }
+  badge?: RawEntityDescriptionBadge
   className: string
   body: EntityDescriptionSection[]
   errata?: { date: string; description: string }[]
@@ -119,11 +119,19 @@ export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescription
 export type RawEntityDescription = {
   title: string
   subtitle?: string
-  badge?: { type: "level" | "armedCombat" | "unarmedCombat"; value: string }
+  badge?: RawEntityDescriptionBadge
   className: string
   body: (RawEntityDescriptionSection | undefined)[]
   errata?: Errata
   references?: PublicationRefs
+}
+
+/**
+ * A badge that can be displayed next to the title of a library entry.
+ */
+export type RawEntityDescriptionBadge = {
+  type: "level" | "armedCombat" | "unarmedCombat"
+  value: string
 }
 
 /**

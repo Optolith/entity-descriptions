@@ -1,3 +1,4 @@
+import { mapNullable } from "@elyukai/utils/nullable"
 import {
   type BlessedTradition,
   type Blessing_ID,
@@ -20,6 +21,7 @@ import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../h
 import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
 import { renderEnhancements } from "./partial/enhancements.js"
 import { attributedInstance, attributedName } from "./partial/markdown.js"
+import { getDerivedFocusRuleBadgeFromPrerequisites } from "./partial/prerequisites/index.js"
 import { renderOneTimeDuration } from "./partial/rated/activatable/duration.js"
 import { renderEffect } from "./partial/rated/activatable/effect.js"
 import {
@@ -232,6 +234,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
       | "DerivedCharacteristic"
       | RatedIdentifier["kind"]
       | "Enhancement"
+      | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
@@ -282,6 +285,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
     return {
       title: translation.name,
       className: "liturgical-chant",
+      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
       body: [
         {
           type: "definitionList",
@@ -338,6 +342,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
       | RatedIdentifier["kind"]
       | "Enhancement"
+      | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
     idMap: IdMap
@@ -388,6 +393,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     return {
       title: translation.name,
       className: "ceremony",
+      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
       body: [
         {
           type: "definitionList",
