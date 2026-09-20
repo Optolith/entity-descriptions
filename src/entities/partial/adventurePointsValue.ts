@@ -161,13 +161,14 @@ export const renderAdventurePointsValue = (
         return MISSING_VALUE
       }
 
-      const mainValue = `${translate("Level {$level}", {
+      const levelsPrefix = translate("Level {$level}", {
         level: Array.from({ length: entry.levels }, (_, index) => romanize(index + 1)).join("/"),
-      })}: ${value.ByLevel.list.map(applyNegative).join("/")}`
+      })
+      const mainValues = value.ByLevel.list.map(applyNegative).join("/")
 
       const { additionalBySizeCategory } = value.ByLevel
       if (additionalBySizeCategory === undefined) {
-        return mainValue
+        return translate("{$value} Adventure Points", { value: mainValues })
       } else {
         const sizeCategories = ["tiny", "small", "medium", "large", "huge"] as const
         const values = sizeCategories
@@ -175,7 +176,7 @@ export const renderAdventurePointsValue = (
           .join("/")
         const labels = sizeCategories.map(sizeCategory => translate(sizeCategory)).join("/")
 
-        return `${mainValue} + ${translate("{$values} AP for size category {$labels} (per level)", { values, labels })}`
+        return `${levelsPrefix}: ${mainValues} + ${translate("{$values} AP for size category {$labels} (per level)", { values, labels })}`
       }
     }
     case "DerivedFromSelection": {
