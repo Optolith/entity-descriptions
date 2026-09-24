@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.14.0](https://github.com/Optolith/entity-descriptions/compare/v0.13.2...v0.14.0) (2026-09-24)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.65.0
+
+### build
+
+* **deps:** upgrade to schema 0.65.0 ([cb94c96](https://github.com/Optolith/entity-descriptions/commit/cb94c96df8dc3f1d4f5476db729df2ed85ce6b1d))
+
+### Bug Fixes
+
+* missing adventure points label for AP value by level ([9aabd43](https://github.com/Optolith/entity-descriptions/commit/9aabd437d587e7b559c18a730249ea3c66bb8387))
 ## [0.13.2](https://github.com/Optolith/entity-descriptions/compare/v0.13.1...v0.13.2) (2026-09-16)
 
 ### Features
