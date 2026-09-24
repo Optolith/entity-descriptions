@@ -3,7 +3,7 @@ import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../../env.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
-import { translateFnR } from "../../reader.js"
+import { fixedNumberOrString, translateFnR } from "../../reader.js"
 
 const getContentPartsForQualityLevels = (
   getQualityLevelString: (index: number) => string | number,
@@ -25,7 +25,7 @@ const getContentPartsForQualityLevels = (
         style: "hidden",
         items: source.quality_levels.map((text, index) => ({
           label: translate("QL {$value}", {
-            value: getQualityLevelString(index),
+            value: fixedNumberOrString(getQualityLevelString(index)),
           }),
           value: text,
         })),

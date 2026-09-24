@@ -112,15 +112,25 @@ export const formatTimeSpan = (
   return responsive(
     responsiveTextSize,
     () =>
-      translate(typeof value === "number" ? fullNumberKey : fullKey, {
-        value,
-        style: interval ? "interval" : "default",
-      }),
+      translate(
+        typeof value === "number" ? fullNumberKey : fullKey,
+        typeof value === "number"
+          ? {
+              value,
+              style: interval ? "interval" : "default",
+            }
+          : { value },
+      ),
     () =>
-      translate(typeof value === "number" ? compressedNumberKey : compressedKey, {
-        value,
-        style: interval ? "interval" : "default",
-      }),
+      translate(
+        typeof value === "number" ? compressedNumberKey : compressedKey,
+        typeof value === "number"
+          ? {
+              value,
+              style: interval ? "interval" : "default",
+            }
+          : { value },
+      ),
   )
 }
 

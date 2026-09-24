@@ -602,7 +602,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
             : {
                 label: `${translate("AP Value")} (${translate("Trade Secret")})`,
                 value:
-                  translate("{$value} AP", { value: tradeSecret.apValue }) +
+                  translate("{$value} AP", { value: tradeSecret.apValue.toFixed() }) +
                   parensIf(
                     mapNullable(
                       tradeSecret.prerequisites,

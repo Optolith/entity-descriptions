@@ -21,7 +21,7 @@ export const printRatedSumPrerequisite = (
         .thenW(skills =>
           translateR("the SR for {$skill} combined must add up to at least {$minRating}", {
             skill: skills,
-            minRating: prerequisite.sum,
+            minRating: prerequisite.sum.toFixed(),
           }),
         )
         .map(value => ({

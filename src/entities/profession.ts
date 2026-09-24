@@ -7,13 +7,7 @@ import {
 } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual, equal, type Equality } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
-import {
-  isNotNullish,
-  isNullish,
-  mapNullable,
-  nullableToArray,
-  type AnyNonNullish,
-} from "@elyukai/utils/nullable"
+import { isNotNullish, isNullish, mapNullable } from "@elyukai/utils/nullable"
 import { omitKeys } from "@elyukai/utils/object"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
@@ -31,22 +25,18 @@ import type {
   CursesOptions,
   Enhancement,
   Enhancement_ID,
-  ExperienceLevel,
   LanguagesScriptsOptions,
   LiturgiesOptions,
   LiturgyIdentifier,
   MagicalActionIdentifier,
   PrerequisitesElement,
-  Profession_ID,
   ProfessionMagicalSkillIdentifier,
   ProfessionPackage,
-  ProfessionPackageOptions,
   ProfessionPrerequisiteGroup,
   ProfessionPrerequisites,
   ProfessionSpecialAbility,
   ProfessionSpecialAbilityIdentifier,
   ProfessionVariant,
-  ProfessionVariantPackageOptions,
   ProfessionVariantPrerequisites,
   ProfessionVariantTranslation,
   RatedIdentifier,
@@ -93,11 +83,30 @@ import {
   printProfessionVariantPrerequisites,
 } from "./partial/prerequisites/index.js"
 import { type GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import {
+  renderBaseCombatTechniquesForAdventurePointsOption,
+  renderVariantCombatTechniquesForAdventurePointsOption,
+} from "./partial/profession/options/combatTechniquesForAdventurePoints.js"
+import {
+  renderBaseNumberOfSpellworksTotalingAdventurePoints,
+  renderVariantNumberOfSpellworksTotalingAdventurePoints,
+} from "./partial/profession/options/numberOfSpellworksTotalingAdventurePoints.js"
+import {
+  prepareProfessionPackages,
+  type PreparedProfessionPackage,
+} from "./partial/profession/packages.js"
+import {
+  insteadOfR,
+  renderVariantOption,
+  renderVariantOptionPaths,
+} from "./partial/profession/variants.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedCustomNameR,
   attributedNameR,
   customNameR,
+  fixedNumberOrString,
+  formatAPValue,
   formatR,
   getChildInstancesForInstanceIdFnR,
   getChildInstancesForInstanceIdR,
@@ -111,45 +120,6 @@ import {
   translationR,
 } from "./partial/reader.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
-
-type PreparedProfessionPackage = {
-  id: string
-  content: ProfessionPackage
-  experienceLevel: ExperienceLevel
-}
-
-const prepareProfessionPackages = (
-  professionId: Profession_ID,
-): StdReader<
-  PreparedProfessionPackage[],
-  "ibi" | "acibp",
-  "ExperienceLevel",
-  never,
-  "ProfessionPackage"
-> =>
-  Reader.asks(({ getInstanceById, getChildInstancesForInstanceId }) =>
-    getChildInstancesForInstanceId("ProfessionPackage", professionId)
-      .map(
-        (
-          professionPackage,
-        ): {
-          id: string
-          content: ProfessionPackage
-          experienceLevel?: ExperienceLevel
-        } => ({
-          ...professionPackage,
-          experienceLevel: getInstanceById(
-            "ExperienceLevel",
-            professionPackage.content.experience_level,
-          ),
-        }),
-      )
-      .filter(
-        (professionPackage): professionPackage is Required<typeof professionPackage> =>
-          professionPackage.experienceLevel !== undefined,
-      )
-      .toSorted(on(item => item.experienceLevel.adventure_points, compareNumber)),
-  )
 
 const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
   packages: PreparedProfessionPackage[],
@@ -222,9 +192,6 @@ type SpecialAbilities = {
   list: ProfessionSpecialAbility[] | undefined
 }
 
-const insteadOfR = (replacement: string | number, base: string | number) =>
-  translateR("{$replacement} instead of {$base}", { replacement, base })
-
 /**
  * If the selected values of the base and the variant are equal, only renders the value once. Otherwise, renders both values as the variant value replacing the base value.
  */
@@ -244,39 +211,21 @@ const plainOrInsteadOfR = <T, U, E>(
       )
 }
 
-const renderVariantOptionPaths = <T extends AnyNonNullish, Env1, Env2, Env3>(
-  base: T | undefined,
-  variant: VariantOptionAction<T>,
-  paths: {
-    remove: (base: T) => Reader<Env1, string>
-    add: (variant: T) => Reader<Env2, string>
-    update: (base: T, variant: T) => Reader<Env3, string>
-  },
-): Reader<Env1 & Env2 & Env3, string> => {
-  switch (variant.kind) {
-    case "Remove":
-      return base === undefined ? Reader.of(MISSING_VALUE) : paths.remove(base)
-    case "Override":
-      return base === undefined ? paths.add(variant.Override) : paths.update(base, variant.Override)
-    default:
-      return assertExhaustive(variant)
-  }
-}
-
 const renderVariantLanguagesScriptsOption = (
   baseOptions: LanguagesScriptsOptions | undefined,
   variantOptions: VariantOptionAction<LanguagesScriptsOptions>,
 ) =>
   renderVariantOptionPaths(baseOptions, variantOptions, {
     remove: base =>
-      translateR("no Languages and Literacy totaling {$apValue} AP", { apValue: base.ap_value }),
+      translateR("no Languages and Literacy totaling {$apValue} AP", {
+        apValue: base.ap_value.toFixed(),
+      }),
     add: override =>
-      translateR("Languages and Literacy totaling {$apValue} AP", { apValue: override.ap_value }),
+      translateR("Languages and Literacy totaling {$apValue} AP", {
+        apValue: override.ap_value.toFixed(),
+      }),
     update: (base, override) =>
-      translateR("{$replacement} instead of {$base}", {
-        replacement: override.ap_value,
-        base: base.ap_value,
-      }).then(apValue =>
+      insteadOfR(override.ap_value, base.ap_value).then(apValue =>
         translateR("Languages and Literacy totaling {$apValue} AP", {
           apValue,
         }),
@@ -337,7 +286,7 @@ const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
 
         const firstTextR = translateR(
           ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
-          { count: first.number, rating: first.rating_modifier + 6 },
+          { count: first.number, rating: (first.rating_modifier + 6).toFixed() },
         )
 
         const fixedTextR = others.reduce(
@@ -346,7 +295,7 @@ const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
               translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
                 count: other.number,
                 previous: accText,
-                rating: other.rating_modifier + 6,
+                rating: (other.rating_modifier + 6).toFixed(),
               }),
             ),
           firstTextR,
@@ -357,7 +306,7 @@ const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
             ? Reader.of(fixedText)
             : translateR("{$previous}, the others {$rating}", {
                 previous: fixedText,
-                rating: option.rest_rating_modifier + 6,
+                rating: (option.rest_rating_modifier + 6).toFixed(),
               }),
         )
 
@@ -404,7 +353,7 @@ const renderSkillsOption = (
         apValue =>
           professionPackages[0].content.options?.skills?.specific === undefined
             ? translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
-                apValue,
+                apValue: fixedNumberOrString(apValue),
                 skillsOfGroup: skillGroup.nameOfSkillsOfGroup,
               })
             : Reader.traverse(professionPackages[0].content.options.skills.specific, id =>
@@ -412,9 +361,9 @@ const renderSkillsOption = (
               )
                 .thenW(localeSortR)
                 .thenW(list =>
-                  translateR("maximum SR per skill: {$maxSR}", { maxSR: 8 }).then(maxSRText =>
+                  translateR("maximum SR per skill: {$maxSR}", { maxSR: "8" }).then(maxSRText =>
                     translateR("{$apValue} AP to distribute among the following skills: {$list}", {
-                      apValue,
+                      apValue: fixedNumberOrString(apValue),
                       list: list.join(", ") + parensIf(maxSRText),
                     }),
                   ),
@@ -426,7 +375,7 @@ const renderSkillsOption = (
           ? Reader.of("—")
           : skillsOption.specific === undefined
             ? translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
-                apValue: skillsOption.ap_value,
+                apValue: skillsOption.ap_value.toFixed(),
                 skillsOfGroup: skillGroup.nameOfSkillsOfGroup,
               })
             : Reader.traverse(skillsOption.specific, id =>
@@ -434,9 +383,9 @@ const renderSkillsOption = (
               )
                 .thenW(localeSortR)
                 .thenW(list =>
-                  translateR("maximum SR per skill: {$maxSR}", { maxSR: 8 }).then(maxSRText =>
+                  translateR("maximum SR per skill: {$maxSR}", { maxSR: "8" }).then(maxSRText =>
                     translateR("{$apValue} AP to distribute among the following skills: {$list}", {
-                      apValue: skillsOption.ap_value,
+                      apValue: skillsOption.ap_value.toFixed(),
                       list: list.join(", ") + parensIf(maxSRText),
                     }),
                   ),
@@ -479,10 +428,9 @@ const renderVariantCantripsOption = (
                 count: override.number,
               })
                 .then(replacementCount =>
-                  translateR("{$replacement} instead of {$base}", {
-                    replacement: replacementCount,
-                    base: baseCount,
-                  }).then(count => translateR("{$count} from the following list", { count })),
+                  insteadOfR(replacementCount, baseCount).then(count =>
+                    translateR("{$count} from the following list", { count }),
+                  ),
                 )
                 .map(text => `${text}: ${list}`),
             ),
@@ -504,12 +452,7 @@ const renderVariantCantripsOption = (
                     .then(count => translateR("{$count} from the following list", { count }))
                     .map(text => `${text}: ${list}`),
                 )
-                .then(baseText =>
-                  translateR("{$replacement} instead of {$base}", {
-                    replacement: replacementText,
-                    base: baseText,
-                  }),
-                ),
+                .then(baseText => insteadOfR(replacementText, baseText)),
             ),
   })
 
@@ -544,7 +487,7 @@ const renderLiturgiesOption = (
     getTotalingAPValues(professionPackages, pkg => pkg.content.options?.liturgies),
     apValue =>
       translateR("Liturgies totaling {$apValue} AP", {
-        apValue,
+        apValue: fixedNumberOrString(apValue),
       }),
   ) ?? Reader.of(undefined)
 
@@ -637,8 +580,10 @@ const renderVariantCursesOption = (
   variantOptions: VariantOptionAction<CursesOptions>,
 ): StdReader<string, "t"> =>
   renderVariantOptionPaths(baseOptions, variantOptions, {
-    remove: base => translateR("no Curses totaling {$apValue} AP", { apValue: base.ap_value }),
-    add: override => translateR("Curses totaling {$apValue} AP", { apValue: override.ap_value }),
+    remove: base =>
+      translateR("no Curses totaling {$apValue} AP", { apValue: base.ap_value.toFixed() }),
+    add: override =>
+      translateR("Curses totaling {$apValue} AP", { apValue: override.ap_value.toFixed() }),
     update: (base, override) =>
       insteadOfR(override.ap_value, base.ap_value).then(apValue =>
         translateR("Curses totaling {$apValue} AP", {
@@ -667,7 +612,7 @@ const renderVariantSkillsOption = (
     add: override =>
       nameOfSkillsOfGroupR(override.group).thenW(nameOfSkillsOfGroup =>
         translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
-          apValue: override.ap_value,
+          apValue: override.ap_value.toFixed(),
           skillsOfGroup: nameOfSkillsOfGroup,
         }),
       ),
@@ -682,8 +627,8 @@ const renderVariantSkillsOption = (
         plainOrInsteadOfR(base, override, b => b.group, equal, nameOfSkillsOfGroupR).thenW(
           nameOfSkillsOfGroup =>
             translateR("{$apValue} AP to improve other {$skillsOfGroup}", {
-              apValue,
-              skillsOfGroup: nameOfSkillsOfGroup,
+              apValue: fixedNumberOrString(apValue),
+              skillsOfGroup: fixedNumberOrString(nameOfSkillsOfGroup),
             }),
         ),
       ),
@@ -694,8 +639,10 @@ const renderVariantLiturgiesOption = (
   variantOptions: VariantOptionAction<LiturgiesOptions>,
 ): StdReader<string, "t"> =>
   renderVariantOptionPaths(baseOptions, variantOptions, {
-    remove: base => translateR("no Liturgies totaling {$apValue} AP", { apValue: base.ap_value }),
-    add: override => translateR("Liturgies totaling {$apValue} AP", { apValue: override.ap_value }),
+    remove: base =>
+      translateR("no Liturgies totaling {$apValue} AP", { apValue: base.ap_value.toFixed() }),
+    add: override =>
+      translateR("Liturgies totaling {$apValue} AP", { apValue: override.ap_value.toFixed() }),
     update: (base, override) =>
       insteadOfR(override.ap_value, base.ap_value).then(apValue =>
         translateR("Liturgies totaling {$apValue} AP", {
@@ -998,6 +945,11 @@ const renderCombatTechniques = (professionPackages: NonEmptyArray<PreparedProfes
             ).map(renderedOptions => renderedOptions.join(" / ")),
         )
       : Reader.of(undefined),
+    professionPackages.some(
+      pkg => pkg.content.options?.combatTechniquesForAdventurePoints !== undefined,
+    )
+      ? renderBaseCombatTechniquesForAdventurePointsOption(professionPackages)
+      : Reader.of(undefined),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join(", ") ?? "—")
 
 const renderSkills = (
@@ -1075,6 +1027,9 @@ const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPa
       renderSpellworkName,
       undefined,
     ),
+    professionPackages.some(pkg => pkg.content.options?.spellworks !== undefined)
+      ? renderBaseNumberOfSpellworksTotalingAdventurePoints(professionPackages)
+      : Reader.of(undefined),
   ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join("; "))
 
 const retrieveBlessedTraditionIdentifierFromPrerequisiteGroup = (
@@ -1240,35 +1195,16 @@ const renderRatedVariantChanges = <ID, Env>(
 
     const baseValue = baseList?.find(item => deepEqual(item.id, id))?.rating_modifier ?? 0
     return renderInstance(id).thenW(name =>
-      translateR("{$replacement} instead of {$base}", {
-        replacement: `${name} ${(baseValue + rating_modifier).toFixed()}`,
-        base: baseValue,
-      }),
+      insteadOfR(`${name} ${(baseValue + rating_modifier).toFixed()}`, baseValue),
     )
   }).thenW(localeSortR)
-
-const renderVariantOption = <Env, K extends keyof ProfessionVariantPackageOptions>(
-  base: ProfessionPackage,
-  variant: ProfessionVariant,
-  key: K,
-  render: (
-    base: ProfessionPackageOptions[K] | undefined,
-    variant: NonNullable<ProfessionVariantPackageOptions[K]>,
-  ) => Reader<Env, string>,
-): Reader<Env, string[]> =>
-  (variant.options?.[key] === undefined
-    ? Reader.of(undefined)
-    : render(base.options?.[key], variant.options[key])
-  ).map(text => nullableToArray(text))
 
 const renderProfessionVariantLabel = (
   base: ProfessionPackage,
   variant: ProfessionVariant,
   translations: NonEmptyArray<{ id: string; content: ProfessionVariantTranslation }>,
 ) =>
-  translateR("{$value} AP", {
-    value: base.ap_value + (variant.ap_value ?? 0),
-  }).thenW(apValueText =>
+  formatAPValue(base.ap_value + (variant.ap_value ?? 0)).thenW(apValueText =>
     localeSortR(
       translations.map(
         ({ id, content }) =>
@@ -1327,9 +1263,21 @@ const renderProfessionVariantText = (
           "combat_techniques",
           renderVariantCombatTechniquesOption,
         ),
+        renderVariantOption(
+          base,
+          variant,
+          "combatTechniquesForAdventurePoints",
+          renderVariantCombatTechniquesForAdventurePointsOption,
+        ),
         renderVariantOption(base, variant, "cantrips", renderVariantCantripsOption),
         renderVariantOption(base, variant, "curses", renderVariantCursesOption),
         renderVariantOption(base, variant, "skills", renderVariantSkillsOption),
+        renderVariantOption(
+          base,
+          variant,
+          "spellworks",
+          renderVariantNumberOfSpellworksTotalingAdventurePoints,
+        ),
         renderVariantOption(base, variant, "liturgies", renderVariantLiturgiesOption),
         variant.special_abilities === undefined
           ? Reader.of([])
@@ -1500,12 +1448,20 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
     locale,
     { id, content: entry },
   ): RawEntityDescription | undefined => {
-    const { format, translate, translateMap, compare: localeCompare, join: localeJoin } = locale
+    const {
+      format,
+      formatNumber,
+      translate,
+      translateMap,
+      compare: localeCompare,
+      join: localeJoin,
+    } = locale
 
     const translation = translateMap(entry.translations)
 
     const env = {
       format,
+      formatNumber,
       translate,
       translateMap,
       localeCompare,

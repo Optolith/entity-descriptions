@@ -26,6 +26,7 @@ import type { StdEnv, StdReader } from "../../../../env.js"
 import { type LocaleMap } from "../../../../helpers/translate.js"
 import { renderParameterMap } from "../../map.js"
 import {
+  fixedNumberOrString,
   formatEnergyFnR,
   formatEnergyR,
   getInstanceByIdFnR,
@@ -34,6 +35,7 @@ import {
   responsiveR,
   responsiveTextR,
   responsiveTranslateR,
+  responsiveTranslateSplitR,
   translateMapR,
   translateR,
 } from "../../reader.js"
@@ -102,10 +104,11 @@ const appendPermanentCostIfNeeded = (
   baseCost: string,
 ): StdReader<string, "t" | "rts"> =>
   mapNullable(permanentValue, value =>
-    responsiveTranslateR(
+    responsiveTranslateSplitR(
       ".input {$value :number} {{, {$value} of which are permanent}}",
       " ({$value} perm.)",
       { value },
+      { value: value.toFixed() },
     ).map(text => baseCost + text),
   ) ?? Reader.of(baseCost)
 
@@ -114,9 +117,16 @@ const appendElvenPermanentCostIfNeeded = (
   baseCost: string,
 ): StdReader<string, "t" | "tm" | "rts"> =>
   mapNullable(permanent, value =>
-    responsiveTranslateR(".input {$value :number} {{{$value} permanent AE}}", "{$value} pAE", {
-      value: value.value,
-    })
+    responsiveTranslateSplitR(
+      ".input {$value :number} {{{$value} permanent AE}}",
+      "{$value} pAE",
+      {
+        value: value.value,
+      },
+      {
+        value: value.value.toFixed(),
+      },
+    )
       .thenW(text => replaceTextIfNeeded(value.translations, text))
       .map(text => baseCost + text),
   ) ?? Reader.of(baseCost)
@@ -281,7 +291,7 @@ export const renderStandaloneCostMap = (value: StandaloneCostMap) =>
       ? {
           format: values =>
             translateR(", {$value} of which are permanent", {
-              value: values,
+              value: fixedNumberOrString(values),
             }),
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
           render: option => Reader.of(option.value.permanentValue!),
@@ -306,7 +316,7 @@ const renderOneTimeCostMap = (
           ? {
               format: values =>
                 translateR(", {$value} of which are permanent", {
-                  value: values,
+                  value: fixedNumberOrString(values),
                 }),
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
               render: option => Reader.of(option.value.permanentValue!),
@@ -322,7 +332,7 @@ const renderOneTimeCostMap = (
           ? {
               format: values =>
                 translateR(", {$value} of which are permanent", {
-                  value: values,
+                  value: fixedNumberOrString(values),
                 }),
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- is checked beforehand
               render: option => Reader.of(option.value.permanentValue!),
@@ -519,10 +529,10 @@ export const renderMagicalActionCost = (
           "{$firstPersonValue} for the first person; {$additionalPersonValue} for each additional person",
           {
             firstPersonValue: translate("{$value} AE", {
-              value: cost.FirstPerson.value,
+              value: cost.FirstPerson.value.toFixed(),
             }),
             additionalPersonValue: translate("{$value} AE", {
-              value: cost.FirstPerson.value / 2,
+              value: (cost.FirstPerson.value / 2).toFixed(),
             }),
           },
         ),
@@ -536,7 +546,7 @@ export const renderMagicalActionCost = (
         cost.All.minimum === undefined
           ? translate("All AE")
           : translate("All AE, at least {$value} AE", {
-              value: cost.All.minimum,
+              value: cost.All.minimum.toFixed(),
             }),
       )
     case "Map":

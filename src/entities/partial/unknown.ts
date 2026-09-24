@@ -7,3 +7,8 @@ export const MISSING_VALUE = "###MISSING###"
  * String to display when a translation that should be present produces an error.
  */
 export const UNHANDLED_VALUE = "###UNHANDLEDERROR###"
+
+/**
+ * String to display when there is a logic error in text generation.
+ */
+export const LOGIC_ERROR = "###LOGIC_ERROR###"

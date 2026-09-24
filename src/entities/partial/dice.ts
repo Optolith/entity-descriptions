@@ -7,13 +7,13 @@ import { translateR } from "./reader.js"
  * Renders a dice expression like "2D6" into a localized string.
  */
 export const renderDice = (translate: Translate, dice: Dice) =>
-  translate("{$count}D{$sides}", { count: dice.number, sides: dice.sides })
+  translate("{$count}D{$sides}", { count: dice.number.toFixed(), sides: dice.sides.toFixed() })
 
 /**
  * Renders a dice expression like "2D6" into a localized string.
  */
 export const renderDiceR = (dice: Dice) =>
-  translateR("{$count}D{$sides}", { count: dice.number, sides: dice.sides })
+  translateR("{$count}D{$sides}", { count: dice.number.toFixed(), sides: dice.sides.toFixed() })
 
 /**
  * Renders a dice expression with an additional flat modifier, like "2D6+3" or "2D6-1".

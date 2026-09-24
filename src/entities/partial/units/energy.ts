@@ -1,4 +1,5 @@
 import type { Translate, Translations } from "../../../helpers/translate.js"
+import { fixedNumberOrString } from "../reader.js"
 
 /**
  * The unit of an energy cost.
@@ -23,5 +24,5 @@ export const formatEnergy = (
 ): string => {
   const key = lengthUnitTranslationKeys[unit]
 
-  return translate(key, { value })
+  return translate(key, { value: fixedNumberOrString(value) })
 }

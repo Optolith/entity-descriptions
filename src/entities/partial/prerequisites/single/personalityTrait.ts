@@ -26,7 +26,7 @@ export const printPersonalityTraitPrerequisite = (
               .map(name => name ?? MISSING_VALUE)
               .thenW(name =>
                 translateR("Level {$level}", {
-                  level: personalityTrait.level,
+                  level: personalityTrait.level.toFixed(),
                 }).map(level => `${name} (${level})`),
               )
               .then(name =>

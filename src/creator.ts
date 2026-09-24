@@ -126,7 +126,7 @@ export const createEntityDescriptionCreator =
       ...rawEntry,
       body: rawEntry.body.filter(isNotNullish).map(mapRawSection),
       errata: rawEntry.errata?.map(({ date, description }) => ({
-        date: locale.formatDate(date),
+        date: locale.formatDate(new Date(date)),
         description: description.trim(),
       })),
       references:

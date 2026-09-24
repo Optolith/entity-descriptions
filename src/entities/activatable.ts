@@ -174,6 +174,10 @@ const renderAdvantageDisadvantageSubtype = (subtype: AdvantageDisadvantageSubtyp
       return translateR("Magical Rank")
     case "MagicalTitle":
       return translateR("Magical Title")
+    case "BlessedRank":
+      return translateR("Blessed Title")
+    case "BlessedTitle":
+      return translateR("Blessed Title")
     default:
       return assertExhaustive(subtype)
   }
@@ -613,7 +617,10 @@ const renderVolumeValue = (
       return renderParameterMap(
         volume.Map,
         option => Reader.of(option.points),
-        values => translateR("{$points} points", { points: values }),
+        values =>
+          translateR("{$points} points", {
+            points: typeof values === "number" ? values.toFixed() : values,
+          }),
       ).run({
         translate,
         translateMap,
@@ -664,7 +671,7 @@ const renderArcaneEnergyCost = (
               translate(".input {$value :number} {{{$value} permanent AE}}", {
                 value,
               })
-          : value => translate("{$value} AE", { value })
+          : value => translate("{$value} AE", { value: value.toFixed() })
 
       const { interval } = cost.Fixed
 
@@ -716,11 +723,11 @@ const renderArcaneEnergyCost = (
     }
     case "Constant":
       return (
-        translate("{$value} AE", { value: cost.Constant.value }) +
+        translate("{$value} AE", { value: cost.Constant.value.toFixed() }) +
         (cost.Constant.permanent_value === undefined
           ? ""
           : translate(", {$value} of which are permanent", {
-              value: cost.Constant.permanent_value,
+              value: cost.Constant.permanent_value.toFixed(),
             }))
       )
     case "PerCountable": {
@@ -729,9 +736,9 @@ const renderArcaneEnergyCost = (
       return (
         (cost.PerCountable.base_value === undefined
           ? ""
-          : `${translate("{$value} AE", { value: cost.PerCountable.base_value })} + `) +
+          : `${translate("{$value} AE", { value: cost.PerCountable.base_value.toFixed() })} + `) +
         translate("{$cost} per {$countable}", {
-          cost: translate("{$value} AE", { value: cost.PerCountable.value }),
+          cost: translate("{$value} AE", { value: cost.PerCountable.value.toFixed() }),
           countable: getResponsiveText(translation?.per, responsiveTextSize),
         }) +
         parensIf(
@@ -743,7 +750,7 @@ const renderArcaneEnergyCost = (
     }
     case "Interval":
       return translate("{$cost} per {$interval}", {
-        cost: translate("{$value} AE", { value: cost.Interval.value }),
+        cost: translate("{$value} AE", { value: cost.Interval.value.toFixed() }),
         interval: formatTimeSpan(
           translate,
           translateMap,
@@ -757,11 +764,11 @@ const renderArcaneEnergyCost = (
     case "ActivationAndHalfInterval":
       return additionFormatter(
         translate("{$value} AE", {
-          value: cost.ActivationAndHalfInterval.value,
+          value: cost.ActivationAndHalfInterval.value.toFixed(),
         }) + parensIf(translate("activation")),
         translate("{$cost} per {$interval}", {
           cost: translate("{$value} AE", {
-            value: Math.round(cost.ActivationAndHalfInterval.value / 2),
+            value: Math.round(cost.ActivationAndHalfInterval.value / 2).toFixed(),
           }),
           interval: formatTimeSpan(
             translate,
@@ -781,7 +788,7 @@ const renderArcaneEnergyCost = (
         ) ?? MISSING_VALUE) +
         mapNullableDefault(
           cost.Indefinite.modifier,
-          modifier => ` + ${translate("{$value} AE", { value: modifier.value })}`,
+          modifier => ` + ${translate("{$value} AE", { value: modifier.value.toFixed() })}`,
           "",
         )
       )
@@ -824,7 +831,7 @@ const renderArcaneEnergyCost = (
           return cost.ByLevel.levels
             .map((level, index) =>
               translate("{$cost} for level {$level}", {
-                cost: translate("{$value} AE", { value: level.value }),
+                cost: translate("{$value} AE", { value: level.value.toFixed() }),
                 level: romanize(index + 1),
               }),
             )
@@ -861,7 +868,10 @@ const renderBindingCost = (
       return renderParameterMap(
         cost.Map,
         option => Reader.of(option.permanentValue),
-        values => translateR("{$value} permanent AE", { value: values }),
+        values =>
+          translateR("{$value} permanent AE", {
+            value: typeof values === "number" ? values.toFixed() : values,
+          }),
       ).run({
         translate,
         translateMap,
@@ -898,7 +908,7 @@ const renderLifePointsCost = (translate: Translate, cost: LifePointsCost | undef
   cost === undefined
     ? ""
     : // eslint-disable-next-line no-irregular-whitespace
-      ` (+ ${translate("{$value} LP", { value: cost.Fixed.value })})`
+      ` (+ ${translate("{$value} LP", { value: cost.Fixed.value.toFixed() })})`
 
 const renderCost = (
   translate: Translate,
@@ -914,7 +924,7 @@ const renderCost = (
   if (typeof cost === "number") {
     return {
       label: translate("AE Cost"),
-      value: translate("{$value} AE", { value: cost }),
+      value: translate("{$value} AE", { value: cost.toFixed() }),
     }
   }
 

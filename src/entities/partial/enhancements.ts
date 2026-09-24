@@ -42,12 +42,12 @@ const renderEnhancement = (
   return translateMapR(enhancement.content.translations).thenW(translation =>
     translation === undefined
       ? Reader.of(undefined)
-      : translateR("SR {$value}", { value: enhancement.content.skill_rating }).thenW(sr =>
+      : translateR("SR {$value}", { value: enhancement.content.skill_rating.toFixed() }).thenW(sr =>
           translateR("{$value} AP", {
             value: getEnhancementAPValue(
               enhancement.content.adventurePoints,
               parentImprovementCost,
-            ),
+            ).toFixed(),
           }).thenW(ap =>
             (prerequisites === undefined
               ? Reader.of("")

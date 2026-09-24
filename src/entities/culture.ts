@@ -536,7 +536,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                           ) +
                           parensIf(
                             translate("{$value} AP", {
-                              value: processedScripts[0][1],
+                              value: processedScripts[0][1].toFixed(),
                             }),
                           )
                         )
@@ -548,7 +548,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                                 name +
                                 parensIf(
                                   translate("{$value} AP", {
-                                    value: apValue,
+                                    value: apValue.toFixed(),
                                   }),
                                 ),
                             )
@@ -653,7 +653,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
           label:
             translate("Cultural Package {$cultureName}", {
               cultureName: translation.name,
-            }) + parensIf(translate("{$value} AP", { value: culturalPackageApValue })),
+            }) + parensIf(translate("{$value} AP", { value: culturalPackageApValue.toFixed() })),
           value: {
             type: "plain",
             text: culturePackageText,

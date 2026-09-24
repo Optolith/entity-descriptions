@@ -73,7 +73,7 @@ const renderFixedSelectOptionsAdventurePointsValue = (
       .toSorted(on(item => item[1], locale.compare))
       .map(
         ([apValue, itemNames]) =>
-          `${itemNames}: ${locale.translate("{$value} Adventure Points", { value: typeof apValue === "number" ? applyNegative(apValue) : apValue })}`,
+          `${itemNames}: ${locale.translate("{$value} Adventure Points", { value: typeof apValue === "number" ? applyNegative(apValue).toFixed() : apValue })}`,
       )
       .join("; ")
   }
@@ -403,14 +403,14 @@ export const renderAdventurePointsValue = (
 
           if (entry.maximum !== undefined) {
             return translate("{$values} Adventure Points for the {$labels} purchase", {
-              values,
+              values: values.join("/"),
               labels,
             })
           } else {
             return translate(
               "{$values}/and so on Adventure Points for the {$labels}/and so on purchase",
               {
-                values,
+                values: values.join("/"),
                 labels,
               },
             )

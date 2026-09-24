@@ -11,6 +11,7 @@ import type {
   SlowSkillModificationLevelConfig,
 } from "@optolith/database-schema/gen"
 import type { IdArgsVariant } from "tsondb/schema/gen"
+import type { StdReader } from "../../env.js"
 import type {
   GetAllChildInstancesForParent,
   GetAllInstances,
@@ -171,7 +172,7 @@ export const attributedNameR = <
 export const attributedNameFromInstanceR = (
   instance: { translations: LocaleMap<{ name: string }> } | undefined,
   context: string,
-  ...args: IdArgsVariant
+  ...args: IdArgsVariant<EntityMap, keyof EntityMap>
 ): Reader<{ translateMap: TranslateMap }, string | undefined> =>
   Reader.asks(env => attributedNameFromInstance(env.translateMap, instance, context, ...args))
 
@@ -352,6 +353,25 @@ export const responsiveTranslateR = <
   )
 
 /**
+ * Creates a responsive value from a translation key that has a full and a compressed version.
+ */
+export const responsiveTranslateSplitR = <
+  K extends keyof Translations,
+  K2 extends TranslationKeyMatchingParamsOfKey<K>,
+>(
+  fullKey: K,
+  compressedKey: K2,
+  ...rest: [...TranslationParamsInArray<K>, ...TranslationParamsInArray<K2>]
+): Reader<{ translate: Translate; responsiveTextSize: ResponsiveTextSize }, string> =>
+  Reader.asks(({ translate, responsiveTextSize }) =>
+    responsive(
+      responsiveTextSize,
+      () => translate(fullKey, ...(rest.slice(0, 1) as TranslationParamsInArray<K>)),
+      () => translate(compressedKey, ...(rest.slice(1) as TranslationParamsInArray<K2>)),
+    ),
+  )
+
+/**
  * Creates a responsive value from a responsive text.
  */
 export const responsiveTextR = (
@@ -489,3 +509,27 @@ export const sequence = <E>(
   Reader.traverse(values, value => (value instanceof Reader ? value : Reader.of(value))).map(
     resolvedValues => string.reduce((acc, str, i) => acc + str + (resolvedValues[i] ?? ""), ""),
   )
+
+/**
+ * Formats a number according to the locale’s rules, returns a string as-is.
+ */
+export const formatNumber = (value: number): StdReader<string, "fn"> =>
+  Reader.asks(env => env.formatNumber(value))
+
+/**
+ * Formats an AP value in an appreviated form.
+ */
+export const formatAPValue = (value: number): StdReader<string, "t" | "fn"> =>
+  formatNumber(value).thenW(formattedValue => translateR("{$value} AP", { value: formattedValue }))
+
+/**
+ * Formats a number according to the locale’s rules, returns a string as-is.
+ */
+export const formatNumberOrString = (value: number | string): StdReader<string, "fn"> =>
+  Reader.asks(env => (typeof value === "number" ? env.formatNumber(value) : value))
+
+/**
+ * Formats a number in fixed-point notation, returns a string as-is.
+ */
+export const fixedNumberOrString = (value: number | string, fractionDigits?: number): string =>
+  typeof value === "number" ? value.toFixed(fractionDigits) : value

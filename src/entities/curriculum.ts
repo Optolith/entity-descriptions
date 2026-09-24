@@ -421,7 +421,7 @@ const renderAbilityAdjustment = (
         return translate("{$replacement} instead of {$base}", {
           base:
             printedBaseValue === basePoints
-              ? basePoints
+              ? basePoints.toFixed()
               : `<ins>${basePoints.toFixed()}</ins><del>${printedBaseValue?.toFixed() ?? "n/a"}</del>`,
           replacement: `${renderAbilityAdjustmentName(
             translateMap,

@@ -99,7 +99,7 @@ export const renderChance = (
   (item.chance === undefined
     ? undefined
     : translate("{$valueRange} on {$dice}", {
-        valueRange: item.chance === 5 ? 1 : `1–${(item.chance / 5).toFixed()}`,
+        valueRange: item.chance === 5 ? "1" : `1–${(item.chance / 5).toFixed()}`,
         dice: renderDice(translate, { number: 1, sides: 20 }),
       }) +
       (includePercentage

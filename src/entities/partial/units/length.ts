@@ -1,6 +1,7 @@
 import { Reader } from "@elyukai/utils/reader"
 import type { StdReader } from "../../../env.js"
 import type { Translate, Translations } from "../../../helpers/translate.js"
+import { fixedNumberOrString } from "../reader.js"
 import { responsive, type ResponsiveTextSize } from "../responsiveText.js"
 
 type LengthUnit = "Steps" | "Miles"
@@ -31,10 +32,15 @@ export const formatLength = (
   return responsive(
     responsiveTextSize,
     () =>
-      translate(typeof value === "number" ? fullNumberKey : fullKey, {
-        value,
-      }),
-    () => translate(compressedKey, { value }),
+      translate(
+        typeof value === "number" ? fullNumberKey : fullKey,
+        typeof value === "number"
+          ? {
+              value,
+            }
+          : { value },
+      ),
+    () => translate(compressedKey, { value: fixedNumberOrString(value) }),
   )
 }
 

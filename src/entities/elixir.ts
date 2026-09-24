@@ -86,7 +86,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
             label: `${translate("AP Value")} (${translate("Trade Secret")})`,
             value:
               translate("{$value} AP", {
-                value: entry.trade_secret.ap_value,
+                value: entry.trade_secret.ap_value.toFixed(),
               }) +
               parensIf(
                 mapNullable(

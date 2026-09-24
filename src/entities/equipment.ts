@@ -393,7 +393,7 @@ const renderComplexity = (
           return translate("Simple")
         case "Complex":
           return `${translate("Complex")} (${translate("{$value} AP", {
-            value: c.Complex.ap_value,
+            value: c.Complex.ap_value.toFixed(),
           })})`
         case "Various":
           return translate("Various")
