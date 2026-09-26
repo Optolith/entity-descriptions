@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.15.0](https://github.com/Optolith/entity-descriptions/compare/v0.14.0...v0.15.0) (2026-09-26)
+
+### ⚠ BREAKING CHANGES
+
+* tabular descriptions for most equipment
+
+### Features
+
+* add trade secret entity description ([6379f7d](https://github.com/Optolith/entity-descriptions/commit/6379f7d5fb111ad5960db15b16a17e9d3600bf71))
+* tabular descriptions for most equipment ([3c53e81](https://github.com/Optolith/entity-descriptions/commit/3c53e81d8ca55b47c16ebd4727aa34531f42f965))
 ## [0.14.0](https://github.com/Optolith/entity-descriptions/compare/v0.13.2...v0.14.0) (2026-09-24)
 
 ### ⚠ BREAKING CHANGES
