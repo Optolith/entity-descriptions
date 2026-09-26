@@ -1,7 +1,8 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { Page } from "@optolith/database-schema/gen"
 import type { Compare } from "@optolith/helpers/compare"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
-import type { Translate } from "../helpers/translate.js"
+import { translateR } from "../entities/partial/reader.js"
 
 /**
  * A comparison function for two pages.
@@ -55,14 +56,14 @@ export const numberToPage = (number: number): Page => ({
 /**
  * Returns a string representation of a page.
  */
-export const printPage = (translate: Translate, page: Page) => {
+export const printPage = (page: Page) => {
   switch (page.kind) {
     case "InsideCoverFront":
-      return translate("Front Cover Inside")
+      return translateR("Front Cover Inside")
     case "InsideCoverBack":
-      return translate("Back Cover Inside")
+      return translateR("Back Cover Inside")
     case "Numbered":
-      return page.Numbered.toFixed()
+      return Reader.of(page.Numbered.toFixed())
     default:
       return assertExhaustive(page)
   }

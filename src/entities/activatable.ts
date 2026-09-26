@@ -83,7 +83,7 @@ import {
 } from "./partial/prerequisites/single/activatable.js"
 import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { attributedNameR, localeSortR, nameR, translateR } from "./partial/reader.js"
+import { attributedNameR, customNameR, localeSortR, nameR, translateR } from "./partial/reader.js"
 import {
   getResponsiveText,
   getResponsiveTextOptional,
@@ -1546,12 +1546,14 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Blessing"
       | "Cantrip"
       | "FocusRule"
+      | "CeremonialItemSpecialAbilityGroup"
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     getAllResolvedSelectOptions: GetAllResolvedSelectOptions
     getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
     getAllResolvedSkillUses: GetAllResolvedSkillUses
+    translateMap: TranslateMap
   }
 >(
   (
@@ -1628,6 +1630,21 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
           : name => `${name} I–${romanize(levels)}`
 
     return {
+      category:
+        entityName === "CeremonialItemSpecialAbility" && entry.associatedItem !== undefined
+          ? {
+              label: attributedNameR(
+                "category",
+                "CeremonialItemSpecialAbilityGroup",
+                entry.associatedItem,
+              ).map(name => name ?? MISSING_VALUE),
+              value: customNameR(
+                t => t.nameForSorting,
+                "CeremonialItemSpecialAbilityGroup",
+                entry.associatedItem,
+              ).map(name => name ?? MISSING_VALUE),
+            }
+          : undefined,
       title: addLevels(
         makeTraditionName(
           translation.name_in_library ?? translation.name + parensIf(translation.additionalName),

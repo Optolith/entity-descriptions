@@ -1,6 +1,8 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { Page, PageRange as RawPageRange } from "@optolith/database-schema/gen"
 import { range } from "@optolith/helpers/array"
-import type { Translate } from "../helpers/translate.js"
+import { sequence } from "../entities/partial/reader.js"
+import type { StdReader } from "../env.js"
 import { comparePage, equalsPage, printPage, succ } from "./page.js"
 
 /**
@@ -59,13 +61,13 @@ export const normalizePageRanges = (ranges: PageRange[]): PageRange[] =>
 /**
  * Returns a string representation of a page range.
  */
-export const printPageRange = (translate: Translate, pageRange: PageRange) =>
+export const printPageRange = (pageRange: PageRange): StdReader<string, "t"> =>
   pageRange.lastPage === undefined
-    ? printPage(translate, pageRange.firstPage)
-    : `${printPage(translate, pageRange.firstPage)}–${printPage(translate, pageRange.lastPage)}`
+    ? printPage(pageRange.firstPage)
+    : sequence`${printPage(pageRange.firstPage)}–${printPage(pageRange.lastPage)}`
 
 /**
  * Returns a string representation of a list of page ranges.
  */
-export const printPageRanges = (translate: Translate, pageRanges: PageRange[]) =>
-  pageRanges.map(pageRange => printPageRange(translate, pageRange)).join(", ")
+export const printPageRanges = (pageRanges: PageRange[]): StdReader<string, "t"> =>
+  Reader.traverse(pageRanges, printPageRange).map(list => list.join(", "))

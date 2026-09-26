@@ -36,3 +36,8 @@ export type LocaleJoin = (list: string[], type: LocaleJoinType) => string
  * A function that formats a number according to the locale’s rules.
  */
 export type FormatNumber = (value: number) => string
+
+/**
+ * A function that formats a date according to the locale’s rules.
+ */
+export type FormatDate = (date: Date) => string

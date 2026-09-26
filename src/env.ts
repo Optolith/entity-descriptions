@@ -1,6 +1,10 @@
 import type { AnyNonNullish } from "@elyukai/utils/nullable"
 import type { Reader } from "@elyukai/utils/reader"
-import type { ChildEntityMap, EntityMap } from "@optolith/database-schema/gen"
+import type {
+  ChildEntityMap,
+  EntityMap,
+  LocaleMeasurementAdjustments,
+} from "@optolith/database-schema/gen"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./entities/partial/rated/activatable/nonModifiableSuffix.js"
 import type { Speed } from "./entities/partial/rated/activatable/speed.js"
@@ -11,13 +15,14 @@ import type {
   GetAllInstances,
   GetInstanceById,
 } from "./helpers/getTypes.js"
-import type { FormatNumber, LocaleCompare, LocaleJoin } from "./helpers/locale.js"
+import type { FormatDate, FormatNumber, LocaleCompare, LocaleJoin } from "./helpers/locale.js"
 import type {
   Format,
   Translate,
   TranslateMap,
   TranslationKeysWithoutParams,
 } from "./helpers/translate.js"
+import type { IdMap } from "./index.js"
 import type { PublicationOptions } from "./references/publicationOptions.js"
 
 /**
@@ -30,6 +35,7 @@ export type EnvMap<
 > = {
   format: Format
   formatNumber: FormatNumber
+  formatDate: FormatDate
   translate: Translate
   translateMap: TranslateMap
   localeJoin: LocaleJoin
@@ -44,6 +50,8 @@ export type EnvMap<
   getResolvedSelectOptionById: GetResolvedSelectOptionById
   publicationOptions: PublicationOptions
   displayedInProfession: boolean
+  measurementAdjustments: Required<LocaleMeasurementAdjustments>
+  idMap: IdMap
 }
 
 /**
@@ -52,6 +60,7 @@ export type EnvMap<
 export type EnvMapAbbr = {
   f: "format"
   fn: "formatNumber"
+  fd: "formatDate"
   t: "translate"
   tm: "translateMap"
   lj: "localeJoin"
@@ -66,6 +75,8 @@ export type EnvMapAbbr = {
   rso: "getResolvedSelectOptionById"
   po: "publicationOptions"
   dip: "displayedInProfession"
+  ma: "measurementAdjustments"
+  idm: "idMap"
 }
 
 /**

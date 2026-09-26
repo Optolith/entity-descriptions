@@ -1,7 +1,9 @@
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { omitKeys, sortObjectKeysByIndex } from "@elyukai/utils/object"
 import { compareNumber } from "@elyukai/utils/ordering"
+import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
@@ -16,6 +18,7 @@ import type {
   BookType,
   BurningTime,
   CloseCombatTechnique,
+  CloseCombatTechnique_ID,
   CloseCombatTechniqueSpecialRules,
   CombatUse,
   Complexity,
@@ -23,6 +26,8 @@ import type {
   Encumbrance,
   EquipmentIdentifier,
   Errata,
+  GemOrPreciousStone,
+  GemOrPreciousStoneTranslation,
   GenMeleeWeapon,
   GenRangedWeapon,
   HasAdditionalPenalties,
@@ -38,6 +43,7 @@ import type {
   Protection,
   PublicationRefs,
   RangeBrackets,
+  RangedCombatTechnique_ID,
   RangedDamage,
   RangedWeaponUse,
   Reach_ID,
@@ -54,22 +60,47 @@ import type {
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
+import type { StdEnv, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
-import type { FormatNumber, LocaleCompare, LocaleJoin } from "../helpers/locale.js"
-import type { Format, LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
-import type {
-  IdMap,
-  LabeledEntityDescriptionSection,
-  RawDefinitionListEntityDescriptionSectionItem,
-  RawEntityDescriptionSection,
-  RawEntityDescriptionSectionContent,
-  RawNestedDefinitionListEntityDescriptionSection,
+import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
+import {
+  type Format,
+  type LocaleMap,
+  type Translate,
+  type TranslateMap,
+} from "../helpers/translate.js"
+import {
+  type LabeledEntityDescriptionSection,
+  type RawEntityDescriptionSectionContent,
+  type RawNestedDefinitionListEntityDescriptionSection,
+  type RawTabularEntityDescription,
 } from "../index.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
-import { attributedName, attributedNameFromInstance } from "./partial/markdown.js"
+import {
+  attributedName,
+  attributedNameFromInstance,
+  attributedNameFromText,
+} from "./partial/markdown.js"
 import { additionFormatter, subtractionFormatter } from "./partial/mathOperation.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
+import {
+  attributedCustomNameR,
+  formatNumber,
+  getInstanceByIdR,
+  localeSortR,
+  nameR,
+  sequence,
+  translateMapR,
+  translateR,
+} from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
+import {
+  adjustWeight,
+  formatAdjustedWeight,
+  formatArbitrarySilverthalers,
+  formatArbitraryWeight,
+  formatSilverthalers,
+} from "./partial/units/simple.js"
 import { formatTimeSpan } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
 
@@ -379,29 +410,23 @@ const renderRangedDamage = (translate: Translate) => (damage: RangedDamage) => {
   }
 }
 
-const renderComplexity = (
-  translate: Translate,
-  complexity: ArmorComplexity | Complexity | undefined,
-) =>
-  mapNullable(complexity, c => ({
-    label: translate("Complexity"),
-    value: (() => {
-      switch (c.kind) {
-        case "Primitive":
-          return translate("Primitive")
-        case "Simple":
-          return translate("Simple")
-        case "Complex":
-          return `${translate("Complex")} (${translate("{$value} AP", {
-            value: c.Complex.ap_value.toFixed(),
-          })})`
-        case "Various":
-          return translate("Various")
-        default:
-          return assertExhaustive(c)
-      }
-    })(),
-  }))
+const renderComplexity = (complexity: ArmorComplexity | Complexity | undefined) =>
+  mapNullable(complexity, c => {
+    switch (c.kind) {
+      case "Primitive":
+        return translateR("Primitive")
+      case "Simple":
+        return translateR("Simple")
+      case "Complex":
+        return sequence`${translateR("Complex")} (${translateR("{$value} AP", {
+          value: c.Complex.ap_value.toFixed(),
+        })})`
+      case "Various":
+        return translateR("Various")
+      default:
+        return assertExhaustive(c)
+    }
+  }) ?? Reader.of("—")
 
 const renderBlessedTraditionRestriction = (
   translate: Translate,
@@ -630,136 +655,104 @@ const renderNote = (
     ].filter(isNotNullish),
   )?.join("; ")
 
-const renderWeight = (
-  translate: Translate,
-  formatNumber: FormatNumber,
-  measurements: Required<LocaleMeasurementAdjustments>,
-  weight: Weight | JewelryMaterialDifference<Weight>,
-): RawDefinitionListEntityDescriptionSectionItem => {
-  if (typeof weight === "number") {
-    return {
-      label: translate("Weight"),
-      value: translate(".input {$value :number} {{{$value} pounds}}", {
-        value: weight * measurements.stonesMultiplier,
-      }),
-    }
+const renderWeightLabel = (entityName: EquipmentIdentifier["kind"]) => {
+  if (entityName === "Jewelry") {
+    return translateR("Weight (Bronze/Silver/Gold)")
   } else {
-    return {
-      label: translate("Weight (Bronze/Silver/Gold)"),
-      value: translate("{$value} pounds", {
-        value: [weight.bronze, weight.silver, weight.gold]
-          .map(value => formatNumber(value * measurements.stonesMultiplier))
-          .join("/"),
-      }),
-    }
+    return translateR("Weight")
+  }
+}
+
+const renderWeightValue = (weight: Weight | JewelryMaterialDifference<Weight> | undefined) => {
+  if (weight === undefined) {
+    return Reader.of("—")
+  }
+
+  if (typeof weight === "number") {
+    return formatAdjustedWeight(weight)
+  } else {
+    return Reader.traverse([weight.bronze, weight.silver, weight.gold], adjustWeight).thenW(
+      values => formatArbitraryWeight(values.join("/")),
+    )
+  }
+}
+
+const renderCostLabel = (entityName: EquipmentIdentifier["kind"]) => {
+  if (entityName === "Jewelry") {
+    return translateR("Cost (Bronze/Silver/Gold)")
+  } else if (entityName === "GemOrPreciousStone") {
+    return translateR("Cost/10 carats")
+  } else {
+    return translateR("Cost")
   }
 }
 
 const renderCost = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  formatNumber: FormatNumber,
-  cost: Cost | BookCost | JewelryMaterialDifference<number>,
-): { label: string; value: string } => {
-  const renderBookCostVariant = (bookCostVariant: BookCostVariant) => {
+  cost: Cost | BookCost | JewelryMaterialDifference<number> | undefined,
+): StdReader<string, "fn" | "t" | "tm" | "rts"> => {
+  if (cost === undefined) {
+    return Reader.of("—")
+  }
+
+  const renderBookCostVariant = (
+    bookCostVariant: BookCostVariant,
+  ): StdReader<string, "fn" | "t" | "tm" | "rts"> => {
     switch (bookCostVariant.kind) {
-      case "Definite": {
-        const translation = translateMap(bookCostVariant.Definite.translations)
-        return (
-          renderCost(translate, translateMap, formatNumber, bookCostVariant.Definite.cost).value +
-          parensIf(translation?.label)
+      case "Definite":
+        return translateMapR(bookCostVariant.Definite.translations).thenW(translation =>
+          renderCost(bookCostVariant.Definite.cost).map(
+            value => value + parensIf(translation?.label),
+          ),
         )
-      }
-      case "Indefinite": {
-        const translation = translateMap(bookCostVariant.Indefinite.translations)
-        return (translation?.description ?? MISSING_VALUE) + parensIf(translation?.label)
-      }
+
+      case "Indefinite":
+        return translateMapR(bookCostVariant.Indefinite.translations).map(
+          translation => (translation?.description ?? MISSING_VALUE) + parensIf(translation?.label),
+        )
+
       default:
         return assertExhaustive(bookCostVariant)
     }
   }
 
   if ("bronze" in cost) {
-    return {
-      label: translate("Cost (Bronze/Silver/Gold)"),
-      value: translate("{$value} silverthalers", {
-        value: [cost.bronze, cost.silver, cost.gold].map(formatNumber).join("/"),
-      }),
-    }
+    return Reader.traverse([cost.bronze, cost.silver, cost.gold], formatNumber).thenW(values =>
+      formatArbitrarySilverthalers(values.join("/")),
+    )
   } else {
-    return {
-      label: translate("Cost"),
-      value: (() => {
-        switch (cost.kind) {
-          case "Free":
-            return translate("free")
-          case "Various":
-            return translate("various")
-          case "Invaluable":
-            return translate("invaluable")
-          case "Fixed": {
-            const translation = translateMap(cost.Fixed.translations)
-            const main = translate(".input {$value :number} {{{$value} silverthalers}}", {
-              value: cost.Fixed.value,
-            })
-
-            if (translation?.wrap_in_text === undefined) {
-              return main
-            }
-
-            return `${UNHANDLED_VALUE} ${translate(
-              ".input {$value :number} {{{$value} silverthalers}}",
-              {
-                value: cost.Fixed.value,
-              },
-            )}`
-          }
-          case "Range":
-            return translate(
-              ".input {$from :number} .input {$to :number} {{{$from}–{$to} silverthalers}}",
-              {
-                from: cost.Range.from,
-                to: cost.Range.to,
-              },
-            )
-          case "Single":
-            return renderBookCostVariant(cost.Single)
-          case "Multiple":
-            return cost.Multiple.map(renderBookCostVariant).join(", ")
-          default:
-            return assertExhaustive(cost)
-        }
-      })(),
+    switch (cost.kind) {
+      case "Free":
+        return translateR("free")
+      case "Various":
+        return translateR("various")
+      case "Invaluable":
+        return translateR("invaluable")
+      case "Fixed": {
+        return translateMapR(cost.Fixed.translations).thenW(translation =>
+          formatSilverthalers(cost.Fixed.value).thenW(main =>
+            translation?.wrap_in_text === undefined
+              ? Reader.of(main)
+              : sequence`${UNHANDLED_VALUE} ${main}`,
+          ),
+        )
+      }
+      case "Range":
+        return translateR(
+          ".input {$from :number} .input {$to :number} {{{$from}–{$to} silverthalers}}",
+          {
+            from: cost.Range.from,
+            to: cost.Range.to,
+          },
+        )
+      case "Single":
+        return renderBookCostVariant(cost.Single)
+      case "Multiple":
+        return Reader.traverse(cost.Multiple, renderBookCostVariant).map(list => list.join(", "))
+      default:
+        return assertExhaustive(cost)
     }
   }
 }
-
-const renderArmorValues = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  localeCompare: LocaleCompare,
-  getInstanceById: GetInstanceById<"DerivedCharacteristic">,
-  idMap: IdMap,
-  values: NormalizedArmorValues,
-): RawDefinitionListEntityDescriptionSectionItem[] => [
-  { label: translate("Protection"), value: values.protection.toFixed() },
-  { label: translate("Encumbrance"), value: values.encumbrance.toFixed() },
-  {
-    label: translate("Additional Penalties"),
-    value: values.has_additional_penalties
-      ? [idMap.DerivedCharacteristic.Movement, idMap.DerivedCharacteristic.Initiative]
-          .map(
-            dcId =>
-              `${sign(-1)} ${
-                translateMap(getInstanceById("DerivedCharacteristic", dcId)?.translations)
-                  ?.abbreviation ?? MISSING_VALUE
-              }`,
-          )
-          .toSorted(localeCompare)
-          .join(", ")
-      : "—",
-  },
-]
 
 type BaseItem = {
   cost?: Cost | BookCost | JewelryMaterialDifference<number>
@@ -1059,32 +1052,512 @@ const renderBookRules = (
   }
 }
 
+const renderStructurePoints = (structurePoints: StructurePoints | undefined) =>
+  structurePoints !== undefined && isNotEmpty(structurePoints)
+    ? structurePoints.length === 1
+      ? translateR(".input {$value :number} {{{$value} Structure Points}}", {
+          value: structurePoints[0].points,
+        })
+      : translateR("{$value} Structure Points", {
+          value: structurePoints.map(elem => elem.points).join("/"),
+        })
+    : Reader.of("—")
+
+const meleeWeaponColumns = {
+  name: translateR("Name"),
+  damagePoints: translateR("DP"),
+  primaryAttributeDamageThreshold: translateR("P+T"),
+  attackParryModifier: translateR("AT/PA Mod"),
+  reach: translateR("RE"),
+  weight: translateR("Weight"),
+  length: translateR("Length"),
+  cost: translateR("Cost"),
+  complexity: translateR("Complexity"),
+} satisfies Record<string, StdReader<string, "t">>
+
+type MeleeWeaponColumns = keyof typeof meleeWeaponColumns
+
+const rangedWeaponColumns = {
+  name: translateR("Name"),
+  damagePoints: translateR("DP"),
+  reloadTime: translateR("RT"),
+  range: translateR("RA"),
+  ammunition: translateR("Ammunition"),
+  weight: translateR("Weight"),
+  length: translateR("Length"),
+  cost: translateR("Cost"),
+  complexity: translateR("Complexity"),
+} satisfies Record<string, StdReader<string, "t">>
+
+type RangedWeaponColumns = keyof typeof rangedWeaponColumns
+
+const armorColumns = {
+  name: translateR("Name"),
+  protection: translateR("PRO"),
+  encumbrance: translateR("ENC"),
+  additionalPenalties: translateR("Additional Penalties"),
+  weight: translateR("Weight"),
+  cost: translateR("Cost"),
+  complexity: translateR("Complexity"),
+} satisfies Record<string, StdReader<string, "t">>
+
+type ArmorColumns = keyof typeof armorColumns
+
+type GenEquipmentTableEntry<Cols extends string, E> = Pick<
+  RawTabularEntityDescription<Cols, E>,
+  "category" | "labels" | "values" | "additionalInformation"
+>
+
+const createMeleeWeaponTableEntry = (
+  name: string,
+  entityName: EquipmentIdentifier["kind"],
+  instance: {
+    weight?: Weight | JewelryMaterialDifference<Weight>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    restrictedTo?: RestrictedTo
+    complexity?: ArmorComplexity | Complexity
+  },
+  instanceTranslation: {
+    note?: string
+    rules?: string
+    advantage?: string
+    disadvantage?: string
+  },
+  combatTechniqueId: CloseCombatTechnique_ID,
+  use: GenMeleeWeapon<MeleeDamage>,
+): GenEquipmentTableEntry<
+  MeleeWeaponColumns,
+  StdEnv<
+    "fn" | "t" | "tm" | "ibi" | "lj" | "ma" | "rts",
+    "Attribute" | "Reach" | "CloseCombatTechnique"
+  >
+> => {
+  const combatTechnique = getInstanceByIdR("CloseCombatTechnique", combatTechniqueId)
+  const combatTechniqueName = nameR("CloseCombatTechnique", combatTechniqueId)
+  const attributedCombatTechniqueName = combatTechniqueName.map(ctName =>
+    ctName === undefined
+      ? MISSING_VALUE
+      : attributedNameFromText(
+          ctName,
+          "equipment-table",
+          "CloseCombatTechnique",
+          combatTechniqueId,
+        ),
+  )
+
+  return {
+    category: {
+      label: attributedCombatTechniqueName,
+      value: combatTechniqueName.map(ctName => `1-${ctName ?? MISSING_VALUE}`),
+    },
+    labels: sortObjectKeysByIndex(
+      {
+        ...meleeWeaponColumns,
+        weight: renderWeightLabel(entityName),
+        cost: renderCostLabel(entityName),
+      },
+      Object.keys(meleeWeaponColumns) as (keyof typeof meleeWeaponColumns)[],
+    ),
+    values: {
+      name: Reader.of(name),
+      damagePoints: Reader.asks(env => renderMeleeDamage(env.translate)(use.damage)),
+      primaryAttributeDamageThreshold: combatTechnique.thenW(ct =>
+        Reader.asks(env =>
+          renderPrimaryAttributeAndDamageThreshold(
+            env.translateMap,
+            env.getInstanceById,
+            ct,
+            use.damage_threshold,
+          ),
+        ),
+      ),
+      attackParryModifier: Reader.of(
+        renderAttackParryModifier(use.attackModifier, use.parryModifier),
+      ),
+      reach: Reader.asks(env =>
+        renderReach(env.translateMap, env.localeJoin, env.getInstanceById, use.reach),
+      ),
+      weight: renderWeightValue(instance.weight),
+      length: Reader.asks(env =>
+        renderLength(env.translate, env.measurementAdjustments, use.length),
+      ),
+      cost: renderCost(instance.cost),
+      complexity: renderComplexity(instance.complexity),
+    },
+    additionalInformation: [
+      instanceTranslation.note === undefined
+        ? undefined
+        : {
+            label: translateR("Note"),
+            id: "note",
+            value: Reader.of(instanceTranslation.note),
+          },
+      instanceTranslation.rules === undefined
+        ? undefined
+        : {
+            label: translateR("Rules"),
+            id: "rules",
+            value: Reader.of(instanceTranslation.rules),
+          },
+      instanceTranslation.advantage === undefined
+        ? undefined
+        : {
+            label: translateR("Weapon Advantage"),
+            id: "advantage",
+            value: Reader.of(instanceTranslation.advantage),
+          },
+      instanceTranslation.disadvantage === undefined
+        ? undefined
+        : {
+            label: translateR("Weapon Disadvantage"),
+            id: "disadvantage",
+            value: Reader.of(instanceTranslation.disadvantage),
+          },
+    ],
+  }
+}
+
+const createRangedWeaponTableEntry = (
+  name: string,
+  entityName: EquipmentIdentifier["kind"],
+  instance: {
+    weight?: Weight | JewelryMaterialDifference<Weight>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    restrictedTo?: RestrictedTo
+    complexity?: ArmorComplexity | Complexity
+  },
+  instanceTranslation: {
+    note?: string
+    rules?: string
+    advantage?: string
+    disadvantage?: string
+  },
+  combatTechniqueId: RangedCombatTechnique_ID,
+  use: GenRangedWeapon<RangedDamage>,
+): GenEquipmentTableEntry<
+  RangedWeaponColumns,
+  StdEnv<
+    "f" | "fn" | "t" | "tm" | "ibi" | "lj" | "ma" | "rts",
+    | "Attribute"
+    | "Ammunition"
+    | "Weapon"
+    | "RangedCombatTechnique"
+    | "Race"
+    | "Culture"
+    | "MagicalTradition"
+    | "BlessedTradition"
+    | "Profession"
+  >
+> => {
+  const combatTechniqueName = nameR("RangedCombatTechnique", combatTechniqueId)
+  const attributedCombatTechniqueName = combatTechniqueName.map(ctName =>
+    ctName === undefined
+      ? MISSING_VALUE
+      : attributedNameFromText(
+          ctName,
+          "equipment-table",
+          "RangedCombatTechnique",
+          combatTechniqueId,
+        ),
+  )
+
+  return {
+    category: {
+      label: attributedCombatTechniqueName,
+      value: combatTechniqueName.map(ctName => `2-${ctName ?? MISSING_VALUE}`),
+    },
+    labels: sortObjectKeysByIndex(
+      {
+        ...rangedWeaponColumns,
+        weight: renderWeightLabel(entityName),
+        cost: renderCostLabel(entityName),
+      },
+      Object.keys(rangedWeaponColumns) as (keyof typeof rangedWeaponColumns)[],
+    ),
+    values: {
+      name: Reader.of(name),
+      damagePoints: Reader.asks(env => renderRangedDamage(env.translate)(use.damage)),
+      reloadTime: Reader.asks(env =>
+        renderReloadTime(env.translate, env.translateMap, env.format, use.reload_time),
+      ),
+      range: Reader.of(renderRangeBrackets(use.range)),
+      ammunition: Reader.asks(env =>
+        renderAmmunition(env.translateMap, env.getInstanceById, use.ammunition),
+      ),
+      weight: renderWeightValue(instance.weight),
+      length: Reader.asks(env =>
+        renderLength(env.translate, env.measurementAdjustments, use.length),
+      ),
+      cost: renderCost(instance.cost),
+      complexity: renderComplexity(instance.complexity),
+    },
+    additionalInformation: [
+      {
+        label: translateR("Note"),
+        id: "note",
+        value: Reader.asks(env =>
+          renderNote(
+            env.translate,
+            env.translateMap,
+            env.getInstanceById,
+            env.localeJoin,
+            undefined,
+            instance.restrictedTo,
+            name,
+            instanceTranslation.note,
+          ),
+        ),
+      },
+      {
+        label: translateR("Rules"),
+        id: "rules",
+        value: Reader.of(instanceTranslation.rules),
+      },
+      {
+        label: translateR("Weapon Advantage"),
+        id: "advantage",
+        value: Reader.of(instanceTranslation.advantage),
+      },
+      {
+        label: translateR("Weapon Disadvantage"),
+        id: "disadvantage",
+        value: Reader.of(instanceTranslation.disadvantage),
+      },
+    ],
+  }
+}
+
+const createArmorTableEntry = (
+  name: string,
+  entityName: EquipmentIdentifier["kind"],
+  instance: {
+    weight?: Weight | JewelryMaterialDifference<Weight>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    restrictedTo?: RestrictedTo
+    complexity?: ArmorComplexity | Complexity
+  },
+  instanceTranslation: {
+    note?: string
+    rules?: string
+    advantage?: string
+    disadvantage?: string
+  },
+  values: NormalizedArmorValues,
+): GenEquipmentTableEntry<
+  ArmorColumns,
+  StdEnv<
+    "fn" | "t" | "tm" | "ibi" | "lj" | "lc" | "ma" | "idm" | "rts",
+    | "Race"
+    | "Culture"
+    | "MagicalTradition"
+    | "BlessedTradition"
+    | "Profession"
+    | "DerivedCharacteristic"
+  >
+> => ({
+  labels: sortObjectKeysByIndex(
+    { ...armorColumns, weight: renderWeightLabel(entityName), cost: renderCostLabel(entityName) },
+    Object.keys(armorColumns) as (keyof typeof armorColumns)[],
+  ),
+  values: {
+    name: Reader.of(name),
+    protection: Reader.of(values.protection.toFixed()),
+    encumbrance: Reader.of(values.encumbrance.toFixed()),
+    additionalPenalties: values.has_additional_penalties
+      ? Reader.asks((env: StdEnv<"idm">) => [
+          env.idMap.DerivedCharacteristic.Movement,
+          env.idMap.DerivedCharacteristic.Initiative,
+        ])
+          .thenW(dcIds =>
+            Reader.traverse(dcIds, id =>
+              attributedCustomNameR(
+                "equipment-table",
+                t => t.abbreviation,
+                "DerivedCharacteristic",
+                id,
+              ).map(dcName => `${sign(-1)} ${dcName ?? MISSING_VALUE}`),
+            ),
+          )
+          .thenW(localeSortR)
+          .map(names => names.join(", "))
+      : Reader.of("—"),
+    weight: renderWeightValue(instance.weight),
+    cost: renderCost(instance.cost),
+    complexity: renderComplexity(instance.complexity),
+  },
+  additionalInformation: [
+    {
+      label: translateR("Note"),
+      id: "note",
+      value: Reader.asks(env =>
+        renderNote(
+          env.translate,
+          env.translateMap,
+          env.getInstanceById,
+          env.localeJoin,
+          undefined,
+          instance.restrictedTo,
+          name,
+          instanceTranslation.note,
+        ),
+      ),
+    },
+    {
+      label: translateR("Rules"),
+      id: "rules",
+      value: Reader.of(instanceTranslation.rules),
+    },
+    {
+      label: translateR("Armor Advantage"),
+      id: "advantage",
+      value: Reader.of(instanceTranslation.advantage),
+    },
+    {
+      label: translateR("Armor Disadvantage"),
+      id: "disadvantage",
+      value: Reader.of(instanceTranslation.disadvantage),
+    },
+  ],
+})
+
+const createGemOrPreciousStoneTableEntry = (
+  name: string,
+  instance: GemOrPreciousStone,
+  instanceTranslation: GemOrPreciousStoneTranslation | undefined,
+): GenEquipmentTableEntry<
+  "name" | "color" | "cost",
+  StdEnv<
+    "fn" | "t" | "tm" | "lj" | "ma" | "ibi" | "rts",
+    "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+  >
+> => ({
+  labels: {
+    name: translateR("Name"),
+    color: translateR("Color"),
+    cost: renderCostLabel("GemOrPreciousStone"),
+  },
+  values: {
+    name: Reader.of(name),
+    color: Reader.of(instanceTranslation?.color ?? "—"),
+    cost: renderCost(instance.cost),
+  },
+  additionalInformation: [
+    {
+      label: translateR("Note"),
+      id: "note",
+      value: Reader.asks(env =>
+        renderNote(
+          env.translate,
+          env.translateMap,
+          env.getInstanceById,
+          env.localeJoin,
+          undefined,
+          undefined,
+          name,
+          instanceTranslation?.note,
+        ),
+      ),
+    },
+    {
+      label: translateR("Rules"),
+      id: "rules",
+      value: Reader.of(instanceTranslation?.rules),
+    },
+  ],
+})
+
+type SimpleTableEntryColumns = "name" | "weight" | "structurePoints" | "cost" | "complexity"
+const allSimpleKeys = ["name", "weight", "structurePoints", "cost", "complexity"] as const
+
+type SimpleTableEnv = StdEnv<
+  "fn" | "t" | "tm" | "lj" | "ma" | "ibi" | "rts",
+  "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+>
+
+const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: null }>(
+  name: string,
+  entityName: EquipmentIdentifier["kind"],
+  useKeys: R,
+  instance: {
+    weight?: Weight | JewelryMaterialDifference<Weight>
+    structure_points?: StructurePoints
+    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    restrictedTo?: RestrictedTo
+    complexity?: ArmorComplexity | Complexity
+  },
+  instanceTranslation: BaseItemTranslation | undefined,
+): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
+  labels: omitKeys(
+    {
+      name: translateR("Name"),
+      weight: renderWeightLabel(entityName),
+      structurePoints: translateR("Structure Points"),
+      cost: renderCostLabel(entityName),
+      complexity: translateR("Complexity"),
+    },
+    ...allSimpleKeys.filter(key => !(key in useKeys)),
+  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  values: omitKeys(
+    {
+      name: Reader.of(name),
+      structurePoints: renderStructurePoints(instance.structure_points),
+      weight: renderWeightValue(instance.weight),
+      cost: renderCost(instance.cost),
+      complexity: renderComplexity(instance.complexity),
+    },
+    ...allSimpleKeys.filter(key => !(key in useKeys)),
+  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  additionalInformation: [
+    {
+      label: translateR("Note"),
+      id: "note",
+      value: Reader.asks(env =>
+        renderNote(
+          env.translate,
+          env.translateMap,
+          env.getInstanceById,
+          env.localeJoin,
+          undefined,
+          instance.restrictedTo,
+          name,
+          instanceTranslation?.note,
+        ),
+      ),
+    },
+    {
+      label: translateR("Rules"),
+      id: "rules",
+      value: Reader.of(instanceTranslation?.rules),
+    },
+  ],
+})
+
 /**
  * Get a JSON representation of the rules text for equipment.
  */
 export const getEquipmentEntityDescription = createEntityDescriptionCreator<
   Exclude<EquipmentIdentifier["kind"], "Elixir" | "Poison">,
-  {
-    getInstanceById: GetInstanceById<
-      | "Publication"
-      | "Attribute"
-      | "Reach"
-      | "SocialStatus"
-      | "CloseCombatTechnique"
-      | "RangedCombatTechnique"
-      | "MagicalTradition"
-      | "BlessedTradition"
-      | "DerivedCharacteristic"
-      | AmmunitionishIdentifier["kind"]
-      | "Race"
-      | "Culture"
-      | "Profession"
-      | "Skill"
-    >
-    idMap: IdMap
-  }
->(({ getInstanceById, idMap }, locale, entry) => {
-  const { translate, translateMap, format } = locale
+  StdEnv<
+    "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "idm" | "ibi" | "rts",
+    | "Publication"
+    | "Attribute"
+    | "Reach"
+    | "SocialStatus"
+    | "CloseCombatTechnique"
+    | "RangedCombatTechnique"
+    | "MagicalTradition"
+    | "BlessedTradition"
+    | "DerivedCharacteristic"
+    | AmmunitionishIdentifier["kind"]
+    | "Race"
+    | "Culture"
+    | "Profession"
+    | "Skill"
+  >
+>((env, locale, entry) => {
+  const { translate, translateMap } = locale
+
+  const name = getEquipmentName(translate, translateMap, env.getInstanceById, entry)
 
   if (entry.entity === "Book") {
     const translation = translateMap(entry.content.translations)
@@ -1092,8 +1565,6 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
     if (translation === undefined) {
       return undefined
     }
-
-    const name = getEquipmentName(translate, translateMap, getInstanceById, entry)
 
     return {
       title: name,
@@ -1113,7 +1584,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
                 translateMap,
                 locale.join,
                 locale.compare,
-                getInstanceById,
+                env.getInstanceById,
                 entry.content.types,
               ),
             },
@@ -1149,9 +1620,10 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
                     }
                   })(),
                 },
-            mapNullable(entry.content.cost, cost =>
-              renderCost(translate, translateMap, locale.formatNumber, cost),
-            ),
+            mapNullable(entry.content.cost, cost => ({
+              label: translate("Cost"),
+              value: renderCost(cost).run(env),
+            })),
             translation.note === undefined
               ? undefined
               : {
@@ -1199,173 +1671,235 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
 
   const baseItem: BaseItem = entry.content
   const baseItemTranslation: BaseItemTranslation | undefined = translation
-  const name = getEquipmentName(translate, translateMap, getInstanceById, entry)
   const combatValues = normalizeCombatValues(entry)
   const combatTranslation = translateMap(combatValues?.values.translations)
 
-  return {
+  const baseProperties = {
+    type: "tabular" as const,
     title: name,
     className: "equipment",
-    body: [
-      ...(combatValues?.type === "Weapon"
-        ? Object.entries(combatValues.values.melee_uses ?? {}).map(([combatTechniqueId, use]) =>
-            renderMeleeWeapon(
-              translate,
-              translateMap,
-              locale.join,
-              getInstanceById,
-              locale.measurementAdjustments,
-              renderMeleeDamage(translate),
-              combatTechniqueId,
-              use,
-            ),
-          )
-        : []),
-      ...(combatValues?.type === "Weapon"
-        ? Object.entries(combatValues.values.ranged_uses ?? {}).map(([combatTechniqueId, use]) =>
-            renderRangedWeapon(
-              translate,
-              translateMap,
-              format,
-              getInstanceById,
-              locale.measurementAdjustments,
-              renderRangedDamage(translate),
-              combatTechniqueId,
-              use,
-            ),
-          )
-        : []),
-      {
-        type: "definitionList",
-        items: [
-          renderComplexity(translate, baseItem.complexity),
-          ...(combatValues?.type === "Armor"
-            ? renderArmorValues(
-                translate,
-                translateMap,
-                locale.compare,
-                getInstanceById,
-                idMap,
-                combatValues.values,
-              )
-            : []),
-          mapNullable(baseItem.burning_time, burningTime => ({
-            label: translate("Burning Time"),
-            value:
-              burningTime.kind === "Unlimited"
-                ? translate("unlimited")
-                : formatTimeSpan(
-                    translate,
-                    translateMap,
-                    format,
-                    ResponsiveTextSize.Full,
-                    burningTime.Limited.unit,
-                    burningTime.Limited.value,
-                  ),
-          })),
-          mapNullable(baseItemTranslation?.color, color => ({
-            label: translate("Color"),
-            value: color,
-          })),
-          baseItem.structure_points !== undefined && isNotEmpty(baseItem.structure_points)
-            ? {
-                label: translate("Structure Points"),
-                value:
-                  baseItem.structure_points.length === 1
-                    ? translate(".input {$value :number} {{{$value} Structure Points}}", {
-                        value: baseItem.structure_points[0].points,
-                      })
-                    : translate("{$value} Structure Points", {
-                        value: baseItem.structure_points.map(elem => elem.points).join("/"),
-                      }),
-              }
-            : undefined,
-          mapNullable(baseItem.weight, weight =>
-            renderWeight(translate, locale.formatNumber, locale.measurementAdjustments, weight),
-          ),
-          mapNullable(baseItem.cost, cost =>
-            renderCost(translate, translateMap, locale.formatNumber, cost),
-          ),
-          mapNullable(
-            renderNote(
-              translate,
-              translateMap,
-              getInstanceById,
-              locale.join,
-              combatValues?.type === "Weapon" ? combatValues.values.melee_uses : undefined,
-              combatValues?.values.restrictedTo,
-              name,
-              baseItemTranslation?.note,
-            ),
-            note => ({
-              label: translate("Note"),
-              value: note,
-            }),
-          ),
-          baseItemTranslation?.rules !== undefined
-            ? {
-                label: translate("Rules"),
-                value: baseItemTranslation.rules,
-              }
-            : undefined,
-          combatValues?.type === "Weapon" && combatTranslation?.advantage !== undefined
-            ? {
-                label: translate("Weapon Advantage"),
-                value: combatTranslation.advantage,
-              }
-            : undefined,
-          combatValues?.type === "Weapon" && combatTranslation?.disadvantage !== undefined
-            ? {
-                label: translate("Weapon Disadvantage"),
-                value: combatTranslation.disadvantage,
-              }
-            : undefined,
-          combatValues?.type === "Armor" && combatTranslation?.advantage !== undefined
-            ? {
-                label: translate("Armor Advantage"),
-                value: combatTranslation.advantage,
-              }
-            : undefined,
-          combatValues?.type === "Armor" && combatTranslation?.disadvantage !== undefined
-            ? {
-                label: translate("Armor Disadvantage"),
-                value: combatTranslation.disadvantage,
-              }
-            : undefined,
-          baseItemTranslation?.placeOfPublication !== undefined
-            ? {
-                label: translate("Place of Publication"),
-                value: baseItemTranslation.placeOfPublication,
-              }
-            : undefined,
-          baseItemTranslation?.topics !== undefined
-            ? {
-                label: translate("Topics"),
-                value: baseItemTranslation.topics.toSorted(locale.compare).join(", "),
-              }
-            : undefined,
-          baseItemTranslation?.appearance !== undefined
-            ? {
-                label: translate("Appearance"),
-                value: baseItemTranslation.appearance,
-              }
-            : undefined,
-          baseItemTranslation?.components !== undefined
-            ? {
-                label: translate("Components"),
-                value: baseItemTranslation.components,
-              }
-            : undefined,
-          baseItemTranslation?.use !== undefined
-            ? {
-                label: translate("Use"),
-                value: baseItemTranslation.use,
-              }
-            : undefined,
-        ],
-      },
-    ] as (RawEntityDescriptionSection | undefined)[],
     errata: baseItemTranslation?.errata,
     references: entry.content.src,
   }
+
+  return [
+    ...(baseItemTranslation !== undefined && combatValues?.type === "Weapon"
+      ? Object.entries(combatValues.values.melee_uses ?? {}).map(([combatTechniqueId, use]) => ({
+          ...baseProperties,
+          ...createMeleeWeaponTableEntry(
+            name,
+            entry.entity,
+            baseItem,
+            { ...combatTranslation, ...baseItemTranslation },
+            combatTechniqueId,
+            use,
+          ),
+        }))
+      : []),
+    ...(baseItemTranslation !== undefined && combatValues?.type === "Weapon"
+      ? Object.entries(combatValues.values.ranged_uses ?? {}).map(([combatTechniqueId, use]) => ({
+          ...baseProperties,
+          ...createRangedWeaponTableEntry(
+            name,
+            entry.entity,
+            baseItem,
+            { ...combatTranslation, ...baseItemTranslation },
+            combatTechniqueId,
+            use,
+          ),
+        }))
+      : []),
+    ...(baseItemTranslation !== undefined && combatValues?.type === "Armor"
+      ? [
+          {
+            ...baseProperties,
+            ...createArmorTableEntry(
+              name,
+              entry.entity,
+              baseItem,
+              { ...combatTranslation, ...baseItemTranslation },
+              combatValues.values,
+            ),
+          },
+        ]
+      : []),
+    ...(entry.entity === "Weapon" || entry.entity === "Armor"
+      ? []
+      : entry.entity === "GemOrPreciousStone"
+        ? [
+            {
+              ...baseProperties,
+              ...createGemOrPreciousStoneTableEntry(
+                name,
+                entry.content,
+                translateMap(entry.content.translations),
+              ),
+            },
+          ]
+        : entry.entity === "MusicalInstrument" ||
+            entry.entity === "Animal" ||
+            entry.entity === "AnimalCare" ||
+            entry.entity === "Vehicle"
+          ? [
+              {
+                ...baseProperties,
+                ...createSimpleTableEntry(
+                  name,
+                  entry.entity,
+                  {
+                    name: null,
+                    weight: null,
+                    cost: null,
+                  },
+                  baseItem,
+                  baseItemTranslation,
+                ),
+              },
+            ]
+          : [
+              {
+                ...baseProperties,
+                ...createSimpleTableEntry(
+                  name,
+                  entry.entity,
+                  {
+                    name: null,
+                    weight: null,
+                    structurePoints: null,
+                    cost: null,
+                    complexity: null,
+                  },
+                  baseItem,
+                  baseItemTranslation,
+                ),
+              },
+            ]),
+    // {
+    //   title: name,
+    //   className: "equipment",
+    //   body: [
+    //     {
+    //       type: "definitionList",
+    //       items: [
+    //         renderComplexity(translate, baseItem.complexity),
+    //         mapNullable(baseItem.burning_time, burningTime => ({
+    //           label: translate("Burning Time"),
+    //           value:
+    //             burningTime.kind === "Unlimited"
+    //               ? translate("unlimited")
+    //               : formatTimeSpan(
+    //                   translate,
+    //                   translateMap,
+    //                   format,
+    //                   ResponsiveTextSize.Full,
+    //                   burningTime.Limited.unit,
+    //                   burningTime.Limited.value,
+    //                 ),
+    //         })),
+    //         mapNullable(baseItemTranslation?.color, color => ({
+    //           label: translate("Color"),
+    //           value: color,
+    //         })),
+    //         baseItem.structure_points !== undefined && isNotEmpty(baseItem.structure_points)
+    //           ? {
+    //               label: translate("Structure Points"),
+    //               value:
+    //                 baseItem.structure_points.length === 1
+    //                   ? translate(".input {$value :number} {{{$value} Structure Points}}", {
+    //                       value: baseItem.structure_points[0].points,
+    //                     })
+    //                   : translate("{$value} Structure Points", {
+    //                       value: baseItem.structure_points.map(elem => elem.points).join("/"),
+    //                     }),
+    //             }
+    //           : undefined,
+    //         mapNullable(baseItem.weight, weight =>
+    //           renderWeight(translate, locale.formatNumber, locale.measurementAdjustments, weight),
+    //         ),
+    //         mapNullable(baseItem.cost, cost =>
+    //           renderCost(translate, translateMap, locale.formatNumber, cost),
+    //         ),
+    //         mapNullable(
+    //           renderNote(
+    //             translate,
+    //             translateMap,
+    //             getInstanceById,
+    //             locale.join,
+    //             combatValues?.type === "Weapon" ? combatValues.values.melee_uses : undefined,
+    //             combatValues?.values.restrictedTo,
+    //             name,
+    //             baseItemTranslation?.note,
+    //           ),
+    //           note => ({
+    //             label: translate("Note"),
+    //             value: note,
+    //           }),
+    //         ),
+    //         baseItemTranslation?.rules !== undefined
+    //           ? {
+    //               label: translate("Rules"),
+    //               value: baseItemTranslation.rules,
+    //             }
+    //           : undefined,
+    //         combatValues?.type === "Weapon" && combatTranslation?.advantage !== undefined
+    //           ? {
+    //               label: translate("Weapon Advantage"),
+    //               value: combatTranslation.advantage,
+    //             }
+    //           : undefined,
+    //         combatValues?.type === "Weapon" && combatTranslation?.disadvantage !== undefined
+    //           ? {
+    //               label: translate("Weapon Disadvantage"),
+    //               value: combatTranslation.disadvantage,
+    //             }
+    //           : undefined,
+    //         combatValues?.type === "Armor" && combatTranslation?.advantage !== undefined
+    //           ? {
+    //               label: translate("Armor Advantage"),
+    //               value: combatTranslation.advantage,
+    //             }
+    //           : undefined,
+    //         combatValues?.type === "Armor" && combatTranslation?.disadvantage !== undefined
+    //           ? {
+    //               label: translate("Armor Disadvantage"),
+    //               value: combatTranslation.disadvantage,
+    //             }
+    //           : undefined,
+    //         baseItemTranslation?.placeOfPublication !== undefined
+    //           ? {
+    //               label: translate("Place of Publication"),
+    //               value: baseItemTranslation.placeOfPublication,
+    //             }
+    //           : undefined,
+    //         baseItemTranslation?.topics !== undefined
+    //           ? {
+    //               label: translate("Topics"),
+    //               value: baseItemTranslation.topics.toSorted(locale.compare).join(", "),
+    //             }
+    //           : undefined,
+    //         baseItemTranslation?.appearance !== undefined
+    //           ? {
+    //               label: translate("Appearance"),
+    //               value: baseItemTranslation.appearance,
+    //             }
+    //           : undefined,
+    //         baseItemTranslation?.components !== undefined
+    //           ? {
+    //               label: translate("Components"),
+    //               value: baseItemTranslation.components,
+    //             }
+    //           : undefined,
+    //         baseItemTranslation?.use !== undefined
+    //           ? {
+    //               label: translate("Use"),
+    //               value: baseItemTranslation.use,
+    //             }
+    //           : undefined,
+    //       ],
+    //     },
+    //   ] as (RawEntityDescriptionSection | undefined)[],
+    //   errata: baseItemTranslation?.errata,
+    //   references: entry.content.src,
+    // },
+  ]
 })

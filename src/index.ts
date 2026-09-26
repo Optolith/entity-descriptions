@@ -1,3 +1,5 @@
+import type { AnyNonNullish } from "@elyukai/utils/nullable"
+import type { Reader } from "@elyukai/utils/reader"
 import type { TSONDBTypes } from "@optolith/database-schema"
 import type {
   ResolvedNewSkillApplication,
@@ -40,6 +42,7 @@ import {
 } from "./entities/liturgicalChant.js"
 import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
+import { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
 import { getProfessionVersionEntityDescription } from "./entities/profession.js"
@@ -65,6 +68,7 @@ import {
   getZibiljaRitualEntityDescription,
 } from "./entities/spell.js"
 import { getStateEntityDescription } from "./entities/state.js"
+import type { StdEnv } from "./env.js"
 import type {
   CountInstances,
   GetAllChildInstancesForParent,
@@ -79,12 +83,40 @@ export type { LocaleEnvironment }
 /**
  * A JSON representation of the rules text for a library entry.
  */
-export type EntityDescription = {
+export type EntityDescription<Cols extends string> =
+  TextEntityDescription | TabularEntityDescription<Cols> | TabularEntityDescription<Cols>[]
+
+/**
+ * A JSON representation of the rules text for a library entry.
+ */
+export type TextEntityDescription = {
+  type?: "text"
+  category?: {
+    label: string
+    value: string
+  }
   title: string
   subtitle?: string
   badge?: RawEntityDescriptionBadge
   className: string
   body: EntityDescriptionSection[]
+  errata?: { date: string; description: string }[]
+  references?: string
+}
+
+/**
+ * A JSON representation of the rules text for a library entry.
+ */
+export type TabularEntityDescription<Cols extends string> = {
+  type: "tabular"
+  category?: {
+    label: string
+    value: string
+  }
+  title: string
+  labels: { [K in Cols]: string }
+  values: { [K in Cols]: string }
+  additionalInformation?: { label: string; id: string; value: string }[]
   errata?: { date: string; description: string }[]
   references?: string
 }
@@ -116,12 +148,46 @@ export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescription
  * A JSON representation of the rules text for a library entry that has not been
  * cleaned up.
  */
-export type RawEntityDescription = {
+export type RawEntityDescription<Cols extends string = string, E = AnyNonNullish> =
+  | RawTextEntityDescription<E>
+  | RawTabularEntityDescription<Cols, E>
+  | RawTabularEntityDescription<Cols, E>[]
+
+/**
+ * A JSON representation of the rules text for a library entry that has not been
+ * cleaned up.
+ */
+export type RawTextEntityDescription<E> = {
+  type?: "text"
+  category?: {
+    label: Reader<E, string>
+    value: Reader<E, string>
+  }
   title: string
   subtitle?: string
   badge?: RawEntityDescriptionBadge
   className: string
   body: (RawEntityDescriptionSection | undefined)[]
+  errata?: Errata
+  references?: PublicationRefs
+}
+
+/**
+ * A JSON representation of the table for a library entry that has not been
+ * cleaned up.
+ */
+export type RawTabularEntityDescription<Cols extends string, E> = {
+  type: "tabular"
+  category?: {
+    label: Reader<E, string>
+    value: Reader<E, string>
+  }
+  title: string
+  labels: { [K in Cols]: Reader<E, string> }
+  values: { [K in Cols]: Reader<E, string> }
+  additionalInformation?: (
+    { label: Reader<E, string>; id: string; value: Reader<E, string | undefined> } | undefined
+  )[]
   errata?: Errata
   references?: PublicationRefs
 }
@@ -248,7 +314,7 @@ export type TypedCreatorData = {
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
   getAllResolvedSkillUses: GetAllResolvedSkillUses
   idMap: IdMap
-}
+} & StdEnv<"f" | "fd" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "rts">
 
 type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> = EntityDescriptionCreator<
   E,
@@ -457,7 +523,8 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   entityName: E,
   instanceId: string,
   publicationOptions: PublicationOptions,
-): EntityDescription | undefined => {
+  responsiveTextSize: "Compressed" | "Full" = "Full",
+): EntityDescription<string> | undefined => {
   const creator = registeredEntityDescriptionCreators[entityName] as TypedCreator<E>
 
   const instance = database.getInstanceOfEntityById(entityName, instanceId)
@@ -478,6 +545,10 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
       getAllResolvedNewSkillApplications,
       getAllResolvedSkillUses,
       idMap,
+      ...localeEnv,
+      localeJoin: localeEnv.join,
+      localeCompare: localeEnv.compare,
+      responsiveTextSize: ResponsiveTextSize[responsiveTextSize],
     },
     localeEnv,
     { entity: entityName, content: instance, id: instanceId },
