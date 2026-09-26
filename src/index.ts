@@ -68,6 +68,7 @@ import {
   getZibiljaRitualEntityDescription,
 } from "./entities/spell.js"
 import { getStateEntityDescription } from "./entities/state.js"
+import { getTradeSecretEntityDescription } from "./entities/tradeSecret.js"
 import type { StdEnv } from "./env.js"
 import type {
   CountInstances,
@@ -422,6 +423,8 @@ const registeredEntityDescriptionCreators = {
   Vision: getActivatableEntityDescription,
   WandEnchantment: getActivatableEntityDescription,
   WeaponEnchantment: getActivatableEntityDescription,
+  // auxiliary special ability
+  TradeSecret: getTradeSecretEntityDescription,
   // equipment
   Ammunition: getEquipmentEntityDescription,
   Animal: getEquipmentEntityDescription,

@@ -22,10 +22,12 @@ export const formatSilverthalers = (value: number) =>
 /**
  * Returns the text for silverthaler cost.
  */
-export const formatArbitrarySilverthalers = (value: string) =>
-  responsiveTranslateR("{$value} silverthalers", "{$value} S", {
-    value,
-  })
+export const formatArbitrarySilverthalers = (value: string | number) =>
+  typeof value === "number"
+    ? formatSilverthalers(value)
+    : responsiveTranslateR("{$value} silverthalers", "{$value} S", {
+        value,
+      })
 
 /**
  * Returns the text for weight in the weight unit of the locale.
@@ -53,7 +55,36 @@ export const formatAdjustedWeight = (value: number) => adjustWeight(value).thenW
 /**
  * Returns the text for arbitrary weight in the weight unit of the locale.
  */
-export const formatArbitraryWeight = (value: string) =>
-  responsiveTranslateR("{$value} pounds", "{$value} lbs", {
-    value,
-  })
+export const formatArbitraryWeight = (value: string | number) =>
+  typeof value === "number"
+    ? formatWeight(value)
+    : responsiveTranslateR("{$value} pounds", "{$value} lbs", {
+        value,
+      })
+
+/**
+ * Returns the text for adventure points.
+ */
+export const formatAdventurePoints = (value: number) =>
+  formatNumber(value).thenW(valueStr =>
+    responsiveTranslateSplitR(
+      ".input {$value :number} {{{$value} Adventure Points}}",
+      "{$value} AP",
+      {
+        value,
+      },
+      {
+        value: valueStr,
+      },
+    ),
+  )
+
+/**
+ * Returns the text for arbitrary adventure points.
+ */
+export const formatArbitraryAdventurePoints = (value: string | number) =>
+  typeof value === "number"
+    ? formatAdventurePoints(value)
+    : responsiveTranslateR("{$value} Adventure Points", "{$value} AP", {
+        value,
+      })
