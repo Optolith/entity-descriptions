@@ -9,7 +9,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { diffWordsWithSpace } from "diff"
 import type { StdReader } from "../../../../env.js"
-import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
 import { renderFastCastingTime, renderSlowCastingTime } from "./castingTime.js"
 import { renderOneTimeCost, renderSustainedCost } from "./cost.js"
 import { renderOneTimeDuration, renderSustainedDuration } from "./duration.js"

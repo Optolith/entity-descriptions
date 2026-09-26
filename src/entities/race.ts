@@ -24,7 +24,7 @@ import type {
   GetInstanceById,
 } from "../helpers/getTypes.js"
 import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
-import type { RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
 import type { ActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderCommonnessRatedAdvantagesOrDisadvantages } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
 import {

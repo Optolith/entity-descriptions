@@ -30,11 +30,8 @@ import type {
 } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
-import type {
-  IdMap,
-  LabeledEntityDescriptionSection,
-  RawEntityDescriptionSectionContent,
-} from "../index.js"
+import type { IdMap } from "../index.js"
+import type { RawLabeledEntityDescriptionSection } from "../rawEntityDescription.js"
 import { attributedName } from "./partial/markdown.js"
 import { getBaseProfessionPackageForCurriculum } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -632,9 +629,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
           .map(lessonPackage =>
             mapNullable(
               translateMap(lessonPackage.content.translations),
-              (
-                lessonPackageTranslation,
-              ): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
+              (lessonPackageTranslation): RawLabeledEntityDescriptionSection => {
                 const [boni, mali] = partition(lessonPackage.content.skills ?? [], adjustment => {
                   switch (adjustment.kind) {
                     case "Skill":

@@ -12,7 +12,7 @@ import type {
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../env.js"
-import type { RawEntityDescriptionSection } from "../../index.js"
+import type { RawEntityDescriptionSection } from "../../rawEntityDescription.js"
 import { filterIncludedPublicationEntriesMapR } from "../../references/publicationOptions.js"
 import { printEnhancementPrerequisites } from "./prerequisites/index.js"
 import { getChildInstancesForInstanceIdR, translateMapR, translateR } from "./reader.js"

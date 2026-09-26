@@ -59,7 +59,7 @@ import type {
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
   RawNestedDefinitionListEntityDescriptionSection,
-} from "../index.js"
+} from "../rawEntityDescription.js"
 import {
   combineNameComponents,
   getNameComponents,

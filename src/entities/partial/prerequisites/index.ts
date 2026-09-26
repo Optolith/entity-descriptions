@@ -36,7 +36,7 @@ import { isNotNullish } from "@optolith/helpers/nullable"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdEnv, StdReader } from "../../../env.js"
-import type { RawEntityDescriptionBadge } from "../../../index.js"
+import type { RawEntityDescriptionBadge } from "../../../rawEntityDescription.js"
 import {
   renderActivatableNameComponents,
   renderActivatableNameComponentsCombinedIfPossible,

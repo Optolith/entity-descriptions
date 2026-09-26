@@ -70,11 +70,11 @@ import {
   type TranslateMap,
 } from "../helpers/translate.js"
 import {
-  type LabeledEntityDescriptionSection,
   type RawEntityDescriptionSectionContent,
+  type RawLabeledEntityDescriptionSection,
   type RawNestedDefinitionListEntityDescriptionSection,
   type RawTabularEntityDescription,
-} from "../index.js"
+} from "../rawEntityDescription.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
 import {
   attributedName,
@@ -252,7 +252,7 @@ export const renderMeleeWeapon = <Damage>(
   renderDamage: (damage: Damage) => string,
   closeCombatTechniqueId: string,
   use: GenMeleeWeapon<Damage>,
-): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
+): RawLabeledEntityDescriptionSection => {
   const combatTechnique = getInstanceById("CloseCombatTechnique", closeCombatTechniqueId)
 
   const fields: CloseCombatTechniqueSpecialRules = combatTechnique?.special ?? {
@@ -355,7 +355,7 @@ export const renderRangedWeapon = <Damage>(
   renderDamage: (damage: Damage) => string,
   rangedCombatTechniqueId: string,
   use: GenRangedWeapon<Damage>,
-): LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent> => {
+): RawLabeledEntityDescriptionSection => {
   const combatTechnique = getInstanceById("RangedCombatTechnique", rangedCombatTechniqueId)
 
   return {

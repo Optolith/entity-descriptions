@@ -1,17 +1,10 @@
-import type { AnyNonNullish } from "@elyukai/utils/nullable"
-import type { Reader } from "@elyukai/utils/reader"
 import type { TSONDBTypes } from "@optolith/database-schema"
 import type {
   ResolvedNewSkillApplication,
   ResolvedSelectOption,
   ResolvedSkillUse,
 } from "@optolith/database-schema/cache"
-import type {
-  ActivatableIdentifier,
-  Errata,
-  PublicationRefs,
-  Skill_ID,
-} from "@optolith/database-schema/gen"
+import type { ActivatableIdentifier, Skill_ID } from "@optolith/database-schema/gen"
 import type { TSONDB } from "tsondb"
 import type { EntityDescriptionCreator } from "./creator.js"
 import { getActivatableEntityDescription } from "./entities/activatable.js"
@@ -69,6 +62,7 @@ import {
 } from "./entities/spell.js"
 import { getStateEntityDescription } from "./entities/state.js"
 import { getTradeSecretEntityDescription } from "./entities/tradeSecret.js"
+import type { EntityDescription } from "./entityDescription.js"
 import type { StdEnv } from "./env.js"
 import type {
   CountInstances,
@@ -80,227 +74,6 @@ import type { LocaleEnvironment } from "./helpers/locale.js"
 import type { PublicationOptions } from "./references/publicationOptions.js"
 
 export type { LocaleEnvironment }
-
-/**
- * A JSON representation of the rules text for a library entry.
- */
-export type EntityDescription<Cols extends string> =
-  TextEntityDescription | TabularEntityDescription<Cols> | TabularEntityDescription<Cols>[]
-
-/**
- * A JSON representation of the rules text for a library entry.
- */
-export type TextEntityDescription = {
-  type?: "text"
-  category?: {
-    label: string
-    value: string
-  }
-  title: string
-  subtitle?: string
-  badge?: RawEntityDescriptionBadge
-  className: string
-  body: EntityDescriptionSection[]
-  errata?: { date: string; description: string }[]
-  references?: string
-}
-
-/**
- * A JSON representation of the rules text for a library entry.
- */
-export type TabularEntityDescription<Cols extends string> = {
-  type: "tabular"
-  category?: {
-    label: string
-    value: string
-  }
-  title: string
-  labels: { [K in Cols]: string }
-  values: { [K in Cols]: string }
-  additionalInformation?: { label: string; id: string; value: string }[]
-  errata?: { date: string; description: string }[]
-  references?: string
-}
-
-/**
- * A labeled or unlabeled section of a library entry text.
- */
-export type EntityDescriptionSection =
-  EntityDescriptionSectionContent | LabeledEntityDescriptionSection<EntityDescriptionSectionContent>
-
-/**
- * A labeled section of a library entry text.
- */
-export type LabeledEntityDescriptionSection<
-  Content extends EntityDescriptionSectionContent | RawEntityDescriptionSectionContent,
-> = {
-  type: "labeled"
-  label: string
-  value: EntityDescriptionSectionContent<Content>
-}
-
-/**
- * A slice of the content of a library entry text.
- */
-export type EntityDescriptionSectionContent<DL = DefinitionListEntityDescriptionSection> =
-  PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
-
-/**
- * A JSON representation of the rules text for a library entry that has not been
- * cleaned up.
- */
-export type RawEntityDescription<Cols extends string = string, E = AnyNonNullish> =
-  | RawTextEntityDescription<E>
-  | RawTabularEntityDescription<Cols, E>
-  | RawTabularEntityDescription<Cols, E>[]
-
-/**
- * A JSON representation of the rules text for a library entry that has not been
- * cleaned up.
- */
-export type RawTextEntityDescription<E> = {
-  type?: "text"
-  category?: {
-    label: Reader<E, string>
-    value: Reader<E, string>
-  }
-  title: string
-  subtitle?: string
-  badge?: RawEntityDescriptionBadge
-  className: string
-  body: (RawEntityDescriptionSection | undefined)[]
-  errata?: Errata
-  references?: PublicationRefs
-}
-
-/**
- * A JSON representation of the table for a library entry that has not been
- * cleaned up.
- */
-export type RawTabularEntityDescription<Cols extends string, E> = {
-  type: "tabular"
-  category?: {
-    label: Reader<E, string>
-    value: Reader<E, string>
-  }
-  title: string
-  labels: { [K in Cols]: Reader<E, string> }
-  values: { [K in Cols]: Reader<E, string> }
-  additionalInformation?: (
-    { label: Reader<E, string>; id: string; value: Reader<E, string | undefined> } | undefined
-  )[]
-  errata?: Errata
-  references?: PublicationRefs
-}
-
-/**
- * A badge that can be displayed next to the title of a library entry.
- */
-export type RawEntityDescriptionBadge = {
-  type: "level" | "armedCombat" | "unarmedCombat"
-  value: string
-}
-
-/**
- * A labeled or unlabeled section of a library entry text.
- */
-export type RawEntityDescriptionSection =
-  | RawEntityDescriptionSectionContent
-  | LabeledEntityDescriptionSection<RawEntityDescriptionSectionContent>
-
-/**
- * A slice of the content of a library entry text.
- */
-export type RawEntityDescriptionSectionContent<DL = RawDefinitionListEntityDescriptionSection> =
-  PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
-
-/**
- * A plain text, possibly containing Markdown syntax.
- */
-export type PlainEntityDescriptionSection = {
-  type: "plain"
-  text: string
-}
-
-/**
- * A list of labeled values, such as prerequisites or quality levels.
- */
-export type DefinitionListEntityDescriptionSection = {
-  type: "definitionList"
-  items: DefinitionListEntityDescriptionSectionItem[]
-}
-
-/**
- * A list of labeled values, such as prerequisites or quality levels, nested within another definition list.
- */
-export type NestedDefinitionListEntityDescriptionSection = {
-  type: "definitionList"
-
-  /**
-   * How to render this definition list.
-   *
-   * - `"hidden"`: The definition list does not look like it is nested, it just looks like it belongs to its parent definition list.
-   * - `"nested"`: The definition list is visually nested inside its parent definition list, usually indented and with italic labels instead of bold ones.
-   */
-  style: "hidden" | "nested"
-
-  items: DefinitionListEntityDescriptionSectionItem[]
-}
-
-/**
- * A list of labeled values, such as prerequisites or quality levels.
- */
-export type RawDefinitionListEntityDescriptionSection = {
-  type: "definitionList"
-  items: (RawDefinitionListEntityDescriptionSectionItem | undefined)[]
-}
-
-/**
- * A list of labeled values, such as prerequisites or quality levels, nested within another definition list.
- */
-export type RawNestedDefinitionListEntityDescriptionSection = {
-  type: "definitionList"
-
-  /**
-   * How to render this definition list.
-   *
-   * - `"hidden"`: The definition list does not look like it is nested, it just looks like it belongs to its parent definition list.
-   * - `"nested"`: The definition list is visually nested inside its parent definition list, usually indented and with italic labels instead of bold ones.
-   */
-  style: "hidden" | "nested"
-  items: (RawDefinitionListEntityDescriptionSectionItem | undefined)[]
-}
-
-/**
- * A single labeled value in a definition list.
- */
-export type DefinitionListEntityDescriptionSectionItem = {
-  label: string
-  value: string | EntityDescriptionSectionContent<NestedDefinitionListEntityDescriptionSection>[]
-}
-
-/**
- * A single labeled value in a definition list.
- */
-export type RawDefinitionListEntityDescriptionSectionItem = {
-  label: string
-  value:
-    | string
-    | (
-        | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
-        | undefined
-      )[]
-}
-
-/**
- * A table with a header, rows, and an optional footer.
- */
-export type TableEntityDescriptionSection = {
-  type: "table"
-  header: string[]
-  rows: string[][]
-  footer?: string[]
-}
 
 /**
  * Data passed to an EntityDescriptionCreator function, with the entity type as a type parameter for better type inference.

@@ -63,10 +63,12 @@ import type {
   GetAllResolvedNewSkillApplications,
   GetAllResolvedSelectOptions,
   GetAllResolvedSkillUses,
+} from "../index.js"
+import type {
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescriptionBadge,
-  TableEntityDescriptionSection,
-} from "../index.js"
+  RawTableEntityDescriptionSection,
+} from "../rawEntityDescription.js"
 import { renderActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
 import { renderParameterMap } from "./partial/map.js"
@@ -1246,7 +1248,7 @@ const renderDeriveFromExternalOptionTable = (
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   entityName: ActivatableIdentifier["kind"],
   advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
-): TableEntityDescriptionSection | undefined => {
+): RawTableEntityDescriptionSection | undefined => {
   if (!isStyleSpecialAbilityKind(entityName)) {
     return undefined
   }

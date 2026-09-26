@@ -13,7 +13,7 @@ import type { StdReader } from "../../env.js"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleCompare } from "../../helpers/locale.js"
 import type { TranslateMap, TranslationKeysWithoutParams } from "../../helpers/translate.js"
-import type { RawDefinitionListEntityDescriptionSectionItem } from "../../index.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../../rawEntityDescription.js"
 import {
   makeNameBuilderRulesWithDefaults,
   renderCombinedActivatableNameComponents,

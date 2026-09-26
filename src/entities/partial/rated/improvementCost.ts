@@ -1,6 +1,6 @@
 import type { ImprovementCost } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../../env.js"
-import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../index.js"
+import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../rawEntityDescription.js"
 import { translateR } from "../reader.js"
 
 /**

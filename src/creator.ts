@@ -3,22 +3,24 @@ import { isNotNullish, type AnyNonNullish } from "@elyukai/utils/nullable"
 import type { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { EntityMap } from "@optolith/database-schema/gen"
-import type { StdEnv } from "./env.js"
-import type { LocaleEnvironment } from "./helpers/locale.js"
 import type {
   DefinitionListEntityDescriptionSection,
   EntityDescription,
   EntityDescriptionSection,
   EntityDescriptionSectionContent,
   NestedDefinitionListEntityDescriptionSection,
+  TabularEntityDescription,
+} from "./entityDescription.js"
+import type { StdEnv } from "./env.js"
+import type { LocaleEnvironment } from "./helpers/locale.js"
+import type {
   RawDefinitionListEntityDescriptionSection,
   RawEntityDescription,
   RawEntityDescriptionSection,
   RawEntityDescriptionSectionContent,
   RawNestedDefinitionListEntityDescriptionSection,
   RawTabularEntityDescription,
-  TabularEntityDescription,
-} from "./index.js"
+} from "./rawEntityDescription.js"
 import { getReferencesTranslation } from "./references/index.js"
 import {
   isEntryFromIncludedPublication,

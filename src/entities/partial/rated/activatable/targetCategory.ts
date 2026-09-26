@@ -6,7 +6,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../../env.js"
-import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
+import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
 import { attributedNameR, translateMapR, translateR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"

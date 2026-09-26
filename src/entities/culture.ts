@@ -31,7 +31,7 @@ import type {
   RawEntityDescription,
   RawEntityDescriptionSectionContent,
   RawNestedDefinitionListEntityDescriptionSection,
-} from "../index.js"
+} from "../rawEntityDescription.js"
 import {
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,

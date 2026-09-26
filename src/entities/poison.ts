@@ -22,7 +22,8 @@ import type { EnvMap, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
-import type { IdMap, RawDefinitionListEntityDescriptionSectionItem } from "../index.js"
+import type { IdMap } from "../index.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
 import { renderDice, renderDiceR } from "./partial/dice.js"
 import {
   renderAlternativeNames,

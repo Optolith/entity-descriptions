@@ -2,7 +2,7 @@ import type { ActivatableSkillEffect } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../../env.js"
-import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../index.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
 import { fixedNumberOrString, translateFnR } from "../../reader.js"
 
 const getContentPartsForQualityLevels = (
