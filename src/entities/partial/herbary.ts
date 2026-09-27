@@ -1,4 +1,5 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { AlternativeName, LaboratoryLevel, Resistance } from "@optolith/database-schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
@@ -7,6 +8,7 @@ import type { IdMap } from "../../index.js"
 import { renderDice } from "./dice.js"
 import { attributedName } from "./markdown.js"
 import { parensIf } from "./rated/activatable/parensIf.js"
+import { translateR } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**
@@ -109,15 +111,14 @@ export const renderChance = (
 /**
  * Renders a list of alternative names into a localized string, or returns undefined if there are no alternative names.
  */
-export const renderAlternativeNames = (
-  translate: Translate,
-  alternativeNames: AlternativeName[] | undefined,
-) =>
+export const renderAlternativeNames = (alternativeNames: AlternativeName[] | undefined) =>
   alternativeNames === undefined || !isNotEmpty(alternativeNames)
     ? undefined
     : {
-        label: translate(".input {$hiddenCount :number} {{Alternative Names}}", {
+        label: translateR(".input {$hiddenCount :number} {{Alternative Names}}", {
           hiddenCount: alternativeNames.length,
         }),
-        value: alternativeNames.map(name => name.name + parensIf(name.region)).join(", "),
+        value: Reader.of(
+          alternativeNames.map(name => name.name + parensIf(name.region)).join(", "),
+        ),
       }

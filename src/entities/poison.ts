@@ -17,7 +17,7 @@ import type {
   PoisonStart,
   RatedIdentifier,
 } from "@optolith/database-schema/gen"
-import { createEntityDescriptionCreator } from "../creator.js"
+import { combatDLItem, createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
@@ -492,7 +492,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderAlternativeNames(translate, translation.alternative_names),
+          combatDLItem(renderAlternativeNames(translation.alternative_names), locale),
           {
             label: translate("Level"),
             value: typeof level === "number" ? level.toFixed() : level,

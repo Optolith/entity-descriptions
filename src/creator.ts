@@ -1,6 +1,6 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { isNotNullish, type AnyNonNullish } from "@elyukai/utils/nullable"
-import type { Reader } from "@elyukai/utils/reader"
+import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { EntityMap } from "@optolith/database-schema/gen"
 import type {
@@ -15,9 +15,11 @@ import type { StdEnv } from "./env.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
 import type {
   RawDefinitionListEntityDescriptionSection,
+  RawDefinitionListEntityDescriptionSectionR,
   RawEntityDescription,
   RawEntityDescriptionSection,
   RawEntityDescriptionSectionContent,
+  RawEntityDescriptionSectionR,
   RawNestedDefinitionListEntityDescriptionSection,
   RawTabularEntityDescription,
 } from "./rawEntityDescription.js"
@@ -37,16 +39,18 @@ export type TaggedEntity<ES extends keyof EntityMap> = {
 const mapRawSectionContent = <
   RDL extends { type: "definitionList" },
   DL extends { type: "definitionList" },
+  E,
 >(
-  mapDefinitionList: (definitionList: RDL) => DL,
+  mapDefinitionList: (definitionList: RDL, env: E) => DL,
   section: RawEntityDescriptionSectionContent<RDL>,
+  env: E,
 ): EntityDescriptionSectionContent<DL> => {
   switch (section.type) {
     case "plain":
     case "table":
       return section
     case "definitionList":
-      return mapDefinitionList(section)
+      return mapDefinitionList(section, env)
     default:
       return assertExhaustive(section)
   }
@@ -63,36 +67,45 @@ const mapNestedDefinitionList = (
         ? item.value
         : item.value
             .filter(isNotNullish)
-            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection)),
+            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection, null)),
   })),
 })
 
-const mapDefinitionList = (
-  section: RawDefinitionListEntityDescriptionSection,
+const mapDefinitionList = <E>(
+  section:
+    RawDefinitionListEntityDescriptionSection | RawDefinitionListEntityDescriptionSectionR<E>,
+  env: E,
 ): DefinitionListEntityDescriptionSection => ({
   ...section,
-  items: section.items.filter(isNotNullish).map(item => ({
-    ...item,
-    value:
-      typeof item.value === "string"
-        ? item.value
-        : item.value
-            .filter(isNotNullish)
-            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection)),
-  })),
+  items: section.items.filter(isNotNullish).map(item => {
+    const normalizedValue = item.value instanceof Reader ? item.value.run(env) : item.value
+    return {
+      ...item,
+      label: typeof item.label === "string" ? item.label : item.label.run(env),
+      value:
+        typeof normalizedValue === "string"
+          ? normalizedValue
+          : normalizedValue
+              .filter(isNotNullish)
+              .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection, env)),
+    }
+  }),
 })
 
-const mapRawSection = (section: RawEntityDescriptionSection): EntityDescriptionSection => {
+const mapRawSection = <E>(
+  section: RawEntityDescriptionSection | RawEntityDescriptionSectionR<E>,
+  env: E,
+): EntityDescriptionSection => {
   switch (section.type) {
     case "labeled":
       return {
         ...section,
-        value: mapRawSectionContent(mapDefinitionList, section.value),
+        value: mapRawSectionContent(mapDefinitionList, section.value, env),
       }
     case "plain":
     case "table":
     case "definitionList":
-      return mapRawSectionContent(mapDefinitionList, section)
+      return mapRawSectionContent(mapDefinitionList, section, env)
     default:
       return assertExhaustive(section)
   }
@@ -200,7 +213,9 @@ export const createEntityDescriptionCreator =
               label: rawEntry.category.label.run(databaseAccessors),
               value: rawEntry.category.value.run(databaseAccessors),
             },
-      body: rawEntry.body.filter(isNotNullish).map(mapRawSection),
+      body: rawEntry.body
+        .filter(isNotNullish)
+        .map(section => mapRawSection(section, databaseAccessors)),
       errata: rawEntry.errata?.map(({ date, description }) => ({
         date: locale.formatDate(new Date(date)),
         description: description.trim(),
@@ -229,3 +244,17 @@ export type EntityDescriptionCreator<
   entry: TaggedEntity<ES>,
   options: { publications: PublicationOptions },
 ) => R | undefined
+
+/**
+ * Bridge between Reader and plain string instances in a definition list item.
+ */
+export const combatDLItem = <T, E>(
+  item: { label: Reader<E, string>; value: Reader<E, T> } | undefined,
+  env: E,
+) =>
+  item === undefined
+    ? undefined
+    : {
+        label: item.label.run(env),
+        value: item.value.run(env),
+      }

@@ -25,7 +25,7 @@ export type RawTextEntityDescription<E> = {
   subtitle?: string
   badge?: RawEntityDescriptionBadge
   className: string
-  body: (RawEntityDescriptionSection | undefined)[]
+  body: (RawEntityDescriptionSection | RawEntityDescriptionSectionR<E> | undefined)[]
   errata?: Errata
   references?: PublicationRefs
 }
@@ -66,6 +66,13 @@ export type RawEntityDescriptionSection =
   | RawLabeledEntityDescriptionSection
 
 /**
+ * A labeled or unlabeled section of a library entry text.
+ */
+export type RawEntityDescriptionSectionR<E> =
+  | RawEntityDescriptionSectionContent<RawDefinitionListEntityDescriptionSectionR<E>>
+  | RawLabeledEntityDescriptionSectionR<E>
+
+/**
  * A slice of the content of a library entry text.
  */
 export type RawEntityDescriptionSectionContent<DL> =
@@ -78,6 +85,15 @@ export type RawLabeledEntityDescriptionSection = {
   type: "labeled"
   label: string
   value: RawEntityDescriptionSectionContent<RawDefinitionListEntityDescriptionSection>
+}
+
+/**
+ * A labeled section of a library entry text.
+ */
+export type RawLabeledEntityDescriptionSectionR<E> = {
+  type: "labeled"
+  label: string
+  value: RawEntityDescriptionSectionContent<RawDefinitionListEntityDescriptionSectionR<E>>
 }
 
 /**
@@ -94,6 +110,14 @@ export type RawPlainEntityDescriptionSection = {
 export type RawDefinitionListEntityDescriptionSection = {
   type: "definitionList"
   items: (RawDefinitionListEntityDescriptionSectionItem | undefined)[]
+}
+
+/**
+ * A list of labeled values, such as prerequisites or quality levels.
+ */
+export type RawDefinitionListEntityDescriptionSectionR<E> = {
+  type: "definitionList"
+  items: (RawDefinitionListEntityDescriptionSectionItemR<E> | undefined)[]
 }
 
 /**
@@ -123,6 +147,21 @@ export type RawDefinitionListEntityDescriptionSectionItem = {
         | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
         | undefined
       )[]
+}
+
+/**
+ * A single labeled value in a definition list.
+ */
+export type RawDefinitionListEntityDescriptionSectionItemR<E> = {
+  label: Reader<E, string>
+  value: Reader<
+    E,
+    | string
+    | (
+        | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
+        | undefined
+      )[]
+  >
 }
 
 /**

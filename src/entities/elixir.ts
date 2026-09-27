@@ -1,7 +1,7 @@
 import { mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import type { ActivatableIdentifier, RatedIdentifier } from "@optolith/database-schema/gen"
-import { createEntityDescriptionCreator } from "../creator.js"
+import { combatDLItem, createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import { renderAlternativeNames, renderLaboratoryLevel } from "./partial/herbary.js"
@@ -59,7 +59,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderAlternativeNames(translate, translation.alternative_names),
+          combatDLItem(renderAlternativeNames(translation.alternative_names), locale),
           {
             label: translate("Typical Ingredients"),
             value: translation.typical_ingredients.join(", "),
