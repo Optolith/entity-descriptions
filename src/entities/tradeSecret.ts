@@ -70,7 +70,7 @@ const renderAdventurePointsValue = (
 }
 
 /**
- * Get a JSON representation of the rules text for a state.
+ * Get a JSON representation of the rules text for a trade secret.
  */
 export const getTradeSecretEntityDescription = createEntityDescriptionCreator<"TradeSecret">(
   (_, env, { content: entry }) => {
