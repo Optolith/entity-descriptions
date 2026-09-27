@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.16.0](https://github.com/Optolith/entity-descriptions/compare/v0.15.0...v0.16.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* extract raw and final description types into separate files and exports
+
+* extract raw and final description types into separate files and exports ([4566a3e](https://github.com/Optolith/entity-descriptions/commit/4566a3e47b4635a39fc2a84394bb64e322de7885))
 ## [0.15.0](https://github.com/Optolith/entity-descriptions/compare/v0.14.0...v0.15.0) (2026-09-26)
 
 ### ⚠ BREAKING CHANGES
