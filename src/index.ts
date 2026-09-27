@@ -287,7 +287,6 @@ export type GetAllResolvedSkillUses = (id: Skill_ID) => ResolvedSkillUse[]
 /**
  * Get a JSON representation of the rules text for an entry in the database.
  */
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- false positive
 export const getEntityDescription = <E extends AvailableCreatorEntity>(
   database: TSONDB<TSONDBTypes>,
   localeEnv: LocaleEnvironment,
@@ -297,15 +296,18 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications,
   getAllResolvedSkillUses: GetAllResolvedSkillUses,
   entityName: E,
-  instanceId: string,
+  instance: string | { id: string; content: TSONDBTypes["entityMap"][E] },
   publicationOptions: PublicationOptions,
   responsiveTextSize: "Compressed" | "Full" = "Full",
 ): EntityDescription<string> | undefined => {
   const creator = registeredEntityDescriptionCreators[entityName] as TypedCreator<E>
 
-  const instance = database.getInstanceOfEntityById(entityName, instanceId)
+  const { id: instanceId, content: instanceContent } =
+    typeof instance === "string"
+      ? { id: instance, content: database.getInstanceOfEntityById(entityName, instance) }
+      : instance
 
-  if (!instance) {
+  if (!instanceContent) {
     return undefined
   }
 
@@ -327,7 +329,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
       responsiveTextSize: ResponsiveTextSize[responsiveTextSize],
     },
     localeEnv,
-    { entity: entityName, content: instance, id: instanceId },
+    { entity: entityName, content: instanceContent, id: instanceId },
     { publications: publicationOptions },
   )
 }
