@@ -6,7 +6,8 @@ import type { StdReader } from "../env.js"
 import { renderDefaultValueMapLabel, renderValueMap } from "./partial/map.js"
 import { evaluateMathOperation } from "./partial/mathOperation.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
-import { translateR } from "./partial/reader.js"
+import { parensIfR } from "./partial/rated/activatable/parensIf.js"
+import { sequence, translateR } from "./partial/reader.js"
 import { formatAdventurePoints, formatArbitraryAdventurePoints } from "./partial/units/simple.js"
 
 const renderAdventurePointsValue = (
@@ -90,7 +91,9 @@ export const getTradeSecretEntityDescription = createEntityDescriptionCreator<"T
         apValue: translateR("AP Value"),
       },
       values: {
-        name: Reader.of(translation.name),
+        name: sequence`${translation.name}${parensIfR(
+          entry.is_secret_knowledge ? translateR("Secret Knowledge") : Reader.of(undefined),
+        )}`,
         prerequisites:
           entry.prerequisites === undefined
             ? translateR("none")
