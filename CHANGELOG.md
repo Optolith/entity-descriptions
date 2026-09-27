@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.17.0](https://github.com/Optolith/entity-descriptions/compare/v0.16.0...v0.17.0) (2026-09-27)
+
+### ⚠ BREAKING CHANGES
+
+* add secret knowledge tag to trade secrets
+
+### Bug Fixes
+
+* add secret knowledge tag to trade secrets ([3b1da60](https://github.com/Optolith/entity-descriptions/commit/3b1da60d3eeb18c580758cd0cf2515407e6028c1))
 ## [0.16.0](https://github.com/Optolith/entity-descriptions/compare/v0.15.0...v0.16.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
