@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.17.1](https://github.com/Optolith/entity-descriptions/compare/v0.17.0...v0.17.1) (2026-09-27)
+
+### Features
+
+* allow passing a valid instance with content ([60633ea](https://github.com/Optolith/entity-descriptions/commit/60633eaea0bc9679919f28d0da27e508721bb801))
 ## [0.17.0](https://github.com/Optolith/entity-descriptions/compare/v0.16.0...v0.17.0) (2026-09-27)
 
 ### ⚠ BREAKING CHANGES
