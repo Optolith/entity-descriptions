@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.18.0](https://github.com/Optolith/entity-descriptions/compare/v0.17.1...v0.18.0) (2026-09-28)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.71.0
+
+### build
+
+* **deps:** upgrade to schema 0.71.0 ([02b76ee](https://github.com/Optolith/entity-descriptions/commit/02b76eed648520284bf7dbe3679bc79e0b04462b))
+
+### Features
+
+* all equipment groups have translated categories ([e262add](https://github.com/Optolith/entity-descriptions/commit/e262addb1f1f72d89918fe07dcfe7e3692c1a855))
+* equipment item name appended abbreviations ([7168fd7](https://github.com/Optolith/entity-descriptions/commit/7168fd7f1fe672580c65cc0c34d933aae039e83d))
+* separate sorting values from identifying values ([43b6976](https://github.com/Optolith/entity-descriptions/commit/43b69761a8a19a62938c9d3fb53a3bd1db3c66e0))
+
+### Bug Fixes
+
+* armor needs a specific category for grouping secondary armor ([b260ca0](https://github.com/Optolith/entity-descriptions/commit/b260ca046dd65674406c51ba2b671cadf6ecaa4d))
 ## [0.17.1](https://github.com/Optolith/entity-descriptions/compare/v0.17.0...v0.17.1) (2026-09-27)
 
 ### Features
