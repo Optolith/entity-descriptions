@@ -6,6 +6,7 @@ import type { EntityMap } from "@optolith/database-schema/gen"
 import type {
   DefinitionListEntityDescriptionSection,
   EntityDescription,
+  EntityDescriptionCategory,
   EntityDescriptionSection,
   EntityDescriptionSectionContent,
   NestedDefinitionListEntityDescriptionSection,
@@ -17,6 +18,7 @@ import type {
   RawDefinitionListEntityDescriptionSection,
   RawDefinitionListEntityDescriptionSectionR,
   RawEntityDescription,
+  RawEntityDescriptionCategory,
   RawEntityDescriptionSection,
   RawEntityDescriptionSectionContent,
   RawEntityDescriptionSectionR,
@@ -35,6 +37,18 @@ import {
 export type TaggedEntity<ES extends keyof EntityMap> = {
   [E in ES]: { entity: E; content: EntityMap[E]; id: string }
 }[ES]
+
+const mapRawCategory = <E>(
+  category: RawEntityDescriptionCategory<E> | undefined,
+  env: E,
+): EntityDescriptionCategory | undefined =>
+  category === undefined
+    ? undefined
+    : {
+        label: category.label.run(env),
+        sortingValue: category.sortingValue.run(env),
+        value: category.value.run(env),
+      }
 
 const mapRawSectionContent = <
   RDL extends { type: "definitionList" },
@@ -120,13 +134,7 @@ const mapRawTabular = <
   options: { publications: PublicationOptions },
 ): TabularEntityDescription<Cols> => ({
   ...raw,
-  category:
-    raw.category === undefined
-      ? undefined
-      : {
-          label: raw.category.label.run(env),
-          value: raw.category.value.run(env),
-        },
+  category: mapRawCategory(raw.category, env),
   labels: Object.fromEntries(
     Object.entries<Reader<E, string>>(raw.labels).map(([col, label]) => [col, label.run(env)]),
   ) as { [K in Cols]: string },
@@ -206,13 +214,7 @@ export const createEntityDescriptionCreator =
 
     return {
       ...rawEntry,
-      category:
-        rawEntry.category === undefined
-          ? undefined
-          : {
-              label: rawEntry.category.label.run(databaseAccessors),
-              value: rawEntry.category.value.run(databaseAccessors),
-            },
+      category: mapRawCategory(rawEntry.category, databaseAccessors),
       body: rawEntry.body
         .filter(isNotNullish)
         .map(section => mapRawSection(section, databaseAccessors)),

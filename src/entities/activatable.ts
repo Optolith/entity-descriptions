@@ -1640,11 +1640,12 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
                 "CeremonialItemSpecialAbilityGroup",
                 entry.associatedItem,
               ).map(name => name ?? MISSING_VALUE),
-              value: customNameR(
+              sortingValue: customNameR(
                 t => t.nameForSorting,
                 "CeremonialItemSpecialAbilityGroup",
                 entry.associatedItem,
               ).map(name => name ?? MISSING_VALUE),
+              value: Reader.of(entry.associatedItem),
             }
           : undefined,
       title: addLevels(

@@ -12,15 +12,21 @@ export type RawEntityDescription<Cols extends string = string, E = AnyNonNullish
   | RawTabularEntityDescription<Cols, E>[]
 
 /**
+ * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.
+ */
+export type RawEntityDescriptionCategory<E> = {
+  label: Reader<E, string>
+  sortingValue: Reader<E, string>
+  value: Reader<E, string>
+}
+
+/**
  * A JSON representation of the rules text for a library entry that has not been
  * cleaned up.
  */
 export type RawTextEntityDescription<E> = {
   type?: "text"
-  category?: {
-    label: Reader<E, string>
-    value: Reader<E, string>
-  }
+  category?: RawEntityDescriptionCategory<E>
   title: string
   subtitle?: string
   badge?: RawEntityDescriptionBadge
@@ -36,10 +42,7 @@ export type RawTextEntityDescription<E> = {
  */
 export type RawTabularEntityDescription<Cols extends string, E> = {
   type: "tabular"
-  category?: {
-    label: Reader<E, string>
-    value: Reader<E, string>
-  }
+  category?: RawEntityDescriptionCategory<E>
   title: string
   labels: { [K in Cols]: Reader<E, string> }
   values: { [K in Cols]: Reader<E, string> }

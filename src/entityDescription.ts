@@ -5,14 +5,20 @@ export type EntityDescription<Cols extends string> =
   TextEntityDescription | TabularEntityDescription<Cols> | TabularEntityDescription<Cols>[]
 
 /**
+ * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.
+ */
+export type EntityDescriptionCategory = {
+  label: string
+  sortingValue: string
+  value: string
+}
+
+/**
  * A JSON representation of the rules text for a library entry.
  */
 export type TextEntityDescription = {
   type?: "text"
-  category?: {
-    label: string
-    value: string
-  }
+  category?: EntityDescriptionCategory
   title: string
   subtitle?: string
   badge?: EntityDescriptionBadge
@@ -27,10 +33,7 @@ export type TextEntityDescription = {
  */
 export type TabularEntityDescription<Cols extends string> = {
   type: "tabular"
-  category?: {
-    label: string
-    value: string
-  }
+  category?: EntityDescriptionCategory
   title: string
   labels: { [K in Cols]: string }
   values: { [K in Cols]: string }

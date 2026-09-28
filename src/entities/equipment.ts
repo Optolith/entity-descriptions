@@ -1148,7 +1148,8 @@ const createMeleeWeaponTableEntry = (
   return {
     category: {
       label: attributedCombatTechniqueName,
-      value: combatTechniqueName.map(ctName => `1-${ctName ?? MISSING_VALUE}`),
+      sortingValue: combatTechniqueName.map(ctName => `1-${ctName ?? MISSING_VALUE}`),
+      value: Reader.of("MeleeWeapon"),
     },
     labels: sortObjectKeysByIndex(
       {
@@ -1264,7 +1265,8 @@ const createRangedWeaponTableEntry = (
   return {
     category: {
       label: attributedCombatTechniqueName,
-      value: combatTechniqueName.map(ctName => `2-${ctName ?? MISSING_VALUE}`),
+      sortingValue: combatTechniqueName.map(ctName => `2-${ctName ?? MISSING_VALUE}`),
+      value: Reader.of("RangedWeapon"),
     },
     labels: sortObjectKeysByIndex(
       {
@@ -1357,7 +1359,8 @@ const createArmorTableEntry = (
 > => ({
   category: {
     label: Reader.of("Armor"),
-    value: Reader.of("3-Armor"),
+    sortingValue: Reader.of("3-Armor"),
+    value: Reader.of("Armor"),
   },
   labels: sortObjectKeysByIndex(
     { ...armorColumns, weight: renderWeightLabel(entityName), cost: renderCostLabel(entityName) },
