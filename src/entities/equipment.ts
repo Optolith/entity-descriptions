@@ -1063,6 +1063,89 @@ const renderStructurePoints = (structurePoints: StructurePoints | undefined) =>
         })
     : Reader.of("—")
 
+const orderOfEquipmentCategories: (
+  Exclude<EquipmentIdentifier["kind"], "Weapon"> | "MeleeWeapon" | "RangedWeapon"
+)[] = [
+  "MeleeWeapon",
+  "RangedWeapon",
+  "Ammunition",
+  "Armor",
+  "WeaponAccessory",
+  "Clothes",
+  "ClothingPackage",
+  "TravelGearOrTool",
+  "IlluminationLightSource",
+  "IlluminationRefillOrSupply",
+  "BandageOrRemedy",
+  "Container",
+  "RopeOrChain",
+  "ThievesTool",
+  "ToolOfTheTrade",
+  "OrienteeringAid",
+  "Jewelry",
+  "GemOrPreciousStone",
+  "Stationery",
+  "Book",
+  "MagicalArtifact",
+  "Elixir",
+  "Poison",
+  // "Plant",
+  "MusicalInstrument",
+  "LuxuryGood",
+  "Animal",
+  "AnimalCare",
+  "Vehicle",
+]
+
+const prependOrderToLabel = (
+  category: Exclude<EquipmentIdentifier["kind"], "Weapon"> | "MeleeWeapon" | "RangedWeapon",
+  label: string,
+) =>
+  orderOfEquipmentCategories.includes(category)
+    ? `${(orderOfEquipmentCategories.indexOf(category) + 1).toFixed()}-${label}`
+    : label
+
+const categoryTranslation: Record<
+  EquipmentIdentifier["kind"] | "MeleeWeapon" | "RangedWeapon",
+  StdReader<string, "t">
+> = {
+  Weapon: translateR("Weapons"),
+  MeleeWeapon: translateR("Melee Weapons"),
+  RangedWeapon: translateR("Ranged Weapons"),
+  Ammunition: translateR("Ammunition"),
+  Armor: translateR("Armor"),
+  WeaponAccessory: translateR("Weapon Accessories"),
+  Clothes: translateR("Clothes"),
+  ClothingPackage: translateR("Clothing Packages for Social Status"),
+  TravelGearOrTool: translateR("Travel Gear and Tools"),
+  IlluminationLightSource: translateR("Illumination/Light Sources"),
+  IlluminationRefillOrSupply: translateR("Illumination Refills and Supplies"),
+  BandageOrRemedy: translateR("Bandages and Remedies"),
+  Container: translateR("Containers"),
+  RopeOrChain: translateR("Ropes and Chains"),
+  ThievesTool: translateR("Thieves' Tools"),
+  ToolOfTheTrade: translateR("Tools of the Trade"),
+  Laboratory: translateR("Laboratories"),
+  OrienteeringAid: translateR("Orienteering Aids"),
+  Jewelry: translateR("Jewelry"),
+  GemOrPreciousStone: translateR("Gems and Precious Stones"),
+  Stationery: translateR("Stationery"),
+  Book: translateR("Books"),
+  MagicalArtifact: translateR("Magical Artifacts"),
+  Elixir: translateR("Alchemicae"),
+  Poison: translateR("Poisons"),
+  MusicalInstrument: translateR("Musical Instruments"),
+  LuxuryGood: translateR("Luxury Goods"),
+  Animal: translateR("Animals"),
+  AnimalCare: translateR("Animal Care"),
+  Vehicle: translateR("Vehicles"),
+  CeremonialItem: translateR("Ceremonial Items"),
+  EquipmentOfBlessedOnes: translateR("Equipment of Blessed Ones"),
+  Liebesspielzeug: translateR("Liebesspielzeug"),
+  Newspaper: translateR("Newspapers"),
+  WorkingSupernaturalCreature: translateR("Working Supernatural Creatures"),
+}
+
 const meleeWeaponColumns = {
   name: translateR("Name"),
   damagePoints: translateR("DP"),
@@ -1148,7 +1231,9 @@ const createMeleeWeaponTableEntry = (
   return {
     category: {
       label: attributedCombatTechniqueName,
-      sortingValue: combatTechniqueName.map(ctName => `1-${ctName ?? MISSING_VALUE}`),
+      sortingValue: combatTechniqueName.map(ctName =>
+        prependOrderToLabel("MeleeWeapon", ctName ?? MISSING_VALUE),
+      ),
       value: Reader.of("MeleeWeapon"),
     },
     labels: sortObjectKeysByIndex(
@@ -1265,7 +1350,9 @@ const createRangedWeaponTableEntry = (
   return {
     category: {
       label: attributedCombatTechniqueName,
-      sortingValue: combatTechniqueName.map(ctName => `2-${ctName ?? MISSING_VALUE}`),
+      sortingValue: combatTechniqueName.map(ctName =>
+        prependOrderToLabel("RangedWeapon", ctName ?? MISSING_VALUE),
+      ),
       value: Reader.of("RangedWeapon"),
     },
     labels: sortObjectKeysByIndex(
@@ -1358,8 +1445,8 @@ const createArmorTableEntry = (
   >
 > => ({
   category: {
-    label: Reader.of("Armor"),
-    sortingValue: Reader.of("3-Armor"),
+    label: categoryTranslation.Armor,
+    sortingValue: categoryTranslation.Armor.map(label => prependOrderToLabel("Armor", label)),
     value: Reader.of("Armor"),
   },
   labels: sortObjectKeysByIndex(
@@ -1438,6 +1525,13 @@ const createGemOrPreciousStoneTableEntry = (
     "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
   >
 > => ({
+  category: {
+    label: categoryTranslation.GemOrPreciousStone,
+    sortingValue: categoryTranslation.GemOrPreciousStone.map(label =>
+      prependOrderToLabel("GemOrPreciousStone", label),
+    ),
+    value: Reader.of("GemOrPreciousStone"),
+  },
   labels: {
     name: translateR("Name"),
     color: translateR("Color"),
@@ -1483,7 +1577,7 @@ type SimpleTableEnv = StdEnv<
 
 const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: null }>(
   name: string,
-  entityName: EquipmentIdentifier["kind"],
+  entityName: Exclude<EquipmentIdentifier["kind"], "Weapon">,
   useKeys: R,
   instance: {
     weight?: Weight | JewelryMaterialDifference<Weight>
@@ -1494,6 +1588,13 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
   },
   instanceTranslation: BaseItemTranslation | undefined,
 ): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
+  category: {
+    label: categoryTranslation[entityName],
+    sortingValue: categoryTranslation[entityName].map(label =>
+      prependOrderToLabel(entityName, label),
+    ),
+    value: Reader.of(entityName),
+  },
   labels: omitKeys(
     {
       name: translateR("Name"),
