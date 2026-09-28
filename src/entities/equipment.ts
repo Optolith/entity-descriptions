@@ -1355,6 +1355,10 @@ const createArmorTableEntry = (
     | "DerivedCharacteristic"
   >
 > => ({
+  category: {
+    label: Reader.of("Armor"),
+    value: Reader.of("3-Armor"),
+  },
   labels: sortObjectKeysByIndex(
     { ...armorColumns, weight: renderWeightLabel(entityName), cost: renderCostLabel(entityName) },
     Object.keys(armorColumns) as (keyof typeof armorColumns)[],
