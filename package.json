@@ -1,6 +1,6 @@
 {
   "name": "@optolith/entity-descriptions",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "description": "An interface for generating descriptions for The Dark Eye entities.",
   "files": [
     "lib",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@optolith/database-schema": "^0.72.0",
+    "@optolith/database-schema": "^0.72.1",
     "@types/node": "^26.5.0",
     "commit-and-tag-version": "^13.1.2",
     "eslint-config-prettier": "^10.1.8",
