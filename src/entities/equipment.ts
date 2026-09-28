@@ -55,6 +55,7 @@ import type {
   RestrictedToProfessions,
   RestrictedToRaces,
   SecondaryArmorTranslation,
+  ShieldSize,
   StructurePoints,
   Weight,
 } from "@optolith/database-schema/gen"
@@ -85,8 +86,10 @@ import { additionFormatter, subtractionFormatter } from "./partial/mathOperation
 import { parensIf, parensIfR } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedCustomNameR,
+  attributedNameR,
   formatNumber,
   getInstanceByIdR,
+  localeJoinR,
   localeSortR,
   nameR,
   sequence,
@@ -429,69 +432,111 @@ const renderComplexity = (complexity: ArmorComplexity | Complexity | undefined) 
   }) ?? Reader.of("—")
 
 const renderBlessedTraditionRestriction = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  localeJoin: LocaleJoin,
-  getInstanceById: GetInstanceById<"BlessedTradition">,
   name: string,
   restriction: RestrictedToBlessedTraditions,
-): string => {
-  const getName = (traditionId: string): string | undefined =>
-    translateMap(getInstanceById("BlessedTradition", traditionId)?.translations)?.name
-
+): StdReader<string, "t" | "tm" | "lj" | "ibi", "BlessedTradition"> => {
   if (restriction.isSanctifiedBy) {
     switch (restriction.scope.kind) {
       case "Specific":
         if (!isNotEmpty(restriction.scope.Specific)) {
-          return translate(
-            "Sanctified ({$tradition}); only Blessed Ones of {$tradition} may purchase weapons sanctified by {$tradition}.",
-            { tradition: MISSING_VALUE },
+          return translateR(
+            "Sanctified ({$tradition}); only {$blessedOnes} may purchase weapons sanctified by {$god}.",
+            { tradition: MISSING_VALUE, blessedOnes: MISSING_VALUE, god: MISSING_VALUE },
           )
         } else if (restriction.scope.Specific.length > 1) {
-          const list = restriction.scope.Specific.map(getName).filter(isNotNullish)
-          return translate(
-            "Sanctified ({$sanctifiedTraditions}); only Blessed Ones of {$traditions} may purchase weapons sanctified by {$traditions}, respectively.",
-            {
-              sanctifiedTraditions: localeJoin(list, "unit"),
-              traditions: localeJoin(list, "disjunction"),
-            },
+          return Reader.traverse(restriction.scope.Specific, restrictionId =>
+            attributedCustomNameR(
+              "equipment",
+              t => t.nameOfBlessedOnes,
+              "BlessedTradition",
+              restrictionId,
+            )
+              .map(restrictionName => restrictionName ?? MISSING_VALUE)
+              .thenW(nameOfBlessedOnes =>
+                attributedCustomNameR(
+                  "equipment",
+                  t => t.nameOfGod ?? t.name,
+                  "BlessedTradition",
+                  restrictionId,
+                )
+                  .map(restrictionName => restrictionName ?? MISSING_VALUE)
+                  .map(nameOfGod => [nameOfBlessedOnes, nameOfGod] as const),
+              ),
+          ).thenW(list =>
+            localeJoinR(list.map(e => e[1]).filter(isNotNullish), "unit").thenW(traditions =>
+              localeJoinR(list.map(e => e[1]).filter(isNotNullish), "disjunction").thenW(gods =>
+                localeJoinR(list.map(e => e[0]).filter(isNotNullish), "disjunction").thenW(
+                  blessedOnes =>
+                    translateR(
+                      "Sanctified ({$traditions}); only {$blessedOnes} may purchase weapons sanctified by {$gods}, respectively.",
+                      {
+                        traditions,
+                        blessedOnes,
+                        gods,
+                      },
+                    ),
+                ),
+              ),
+            ),
           )
         } else {
-          return translate(
-            "Sanctified ({$tradition}); only Blessed Ones of {$tradition} may purchase weapons sanctified by {$tradition}.",
-            {
-              tradition: getName(restriction.scope.Specific[0]) ?? MISSING_VALUE,
-            },
+          const [traditionId] = restriction.scope.Specific
+          return attributedCustomNameR(
+            "equipment",
+            t => t.nameOfBlessedOnes,
+            "BlessedTradition",
+            traditionId,
           )
+            .map(restrictionName => restrictionName ?? MISSING_VALUE)
+            .thenW(blessedOnes =>
+              attributedCustomNameR(
+                "equipment",
+                t => t.nameOfGod ?? t.name,
+                "BlessedTradition",
+                traditionId,
+              )
+                .map(restrictionName => restrictionName ?? MISSING_VALUE)
+                .thenW(god =>
+                  translateR(
+                    "Sanctified ({$tradition}); only {$blessedOnes} may purchase weapons sanctified by {$god}.",
+                    {
+                      tradition: god,
+                      blessedOnes,
+                      god,
+                    },
+                  ),
+                ),
+            )
         }
       case "Church":
-        return UNHANDLED_VALUE
+        return Reader.of(UNHANDLED_VALUE)
       case "Shamanistic":
-        return UNHANDLED_VALUE
+        return Reader.of(UNHANDLED_VALUE)
       default:
         return assertExhaustive(restriction.scope)
     }
   } else {
     switch (restriction.scope.kind) {
       case "Specific":
-        return translate(
-          "To buy a {$itemName} during hero creation, the character must have Tradition ({$traditions}).",
-          {
-            itemName: name,
-            traditions: localeJoin(
-              restriction.scope.Specific.map(
-                traditionId =>
-                  translateMap(getInstanceById("BlessedTradition", traditionId)?.translations)
-                    ?.name,
-              ).filter(isNotNullish),
-              "disjunction",
-            ),
-          },
+        return Reader.traverse(restriction.scope.Specific, restrictionId =>
+          attributedNameR("equipment", "BlessedTradition", restrictionId).map(
+            restrictionName => restrictionName ?? MISSING_VALUE,
+          ),
         )
+          .thenW(list => localeJoinR(list.filter(isNotNullish), "disjunction"))
+          .thenW(traditions =>
+            translateR(
+              "To buy a {$itemName} during hero creation, the character must have Tradition ({$traditions}).",
+              {
+                itemName: name,
+                traditions,
+              },
+            ),
+          )
       case "Church":
-        return UNHANDLED_VALUE
+        return Reader.of(UNHANDLED_VALUE)
       case "Shamanistic":
-        return translate(
+        return translateR(
           "To buy a {$itemName} during hero creation, the character must have a shamanistic tradition.",
           {
             itemName: name,
@@ -504,156 +549,170 @@ const renderBlessedTraditionRestriction = (
 }
 
 const renderMagicalTraditionRestriction = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"MagicalTradition">,
-  localeJoin: LocaleJoin,
   name: string,
   restriction: RestrictedToMagicalTraditions,
-): string =>
-  translate(
-    "To buy a {$itemName} during hero creation, the character must have Tradition ({$traditions}).",
-    {
-      itemName: name,
-      traditions: localeJoin(
-        restriction.scope
-          .map(
-            traditionId =>
-              translateMap(getInstanceById("MagicalTradition", traditionId)?.translations)?.name,
-          )
-          .filter(isNotNullish),
-        "disjunction",
-      ),
-    },
+): StdReader<string, "t" | "tm" | "lj" | "ibi", "MagicalTradition"> =>
+  Reader.traverse(restriction.scope, restrictionId =>
+    attributedNameR("equipment", "MagicalTradition", restrictionId).map(
+      restrictionName => restrictionName ?? MISSING_VALUE,
+    ),
   )
+    .thenW(list => localeJoinR(list.filter(isNotNullish), "disjunction"))
+    .thenW(traditions =>
+      translateR(
+        "To buy a {$itemName} during hero creation, the character must have Tradition ({$traditions}).",
+        {
+          itemName: name,
+          traditions,
+        },
+      ),
+    )
 
 const renderRaceRestriction = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"Race">,
-  localeJoin: LocaleJoin,
   name: string,
   restriction: RestrictedToRaces,
-): string =>
-  translate(
-    "To buy a {$name} during hero creation, the character must be from a culture common to the race of {$races}.",
-    {
-      name,
-      races: localeJoin(
-        restriction.scope
-          .map(id => translateMap(getInstanceById("Race", id)?.translations)?.name ?? MISSING_VALUE)
-          .filter(isNotNullish),
-        "disjunction",
-      ),
-    },
+): StdReader<string, "t" | "tm" | "lj" | "ibi", "Race"> =>
+  Reader.traverse(restriction.scope, restrictionId =>
+    attributedNameR("equipment", "Race", restrictionId).map(
+      restrictionName => restrictionName ?? MISSING_VALUE,
+    ),
   )
+    .thenW(list => localeJoinR(list.filter(isNotNullish), "disjunction"))
+    .thenW(races =>
+      translateR(
+        "To buy a {$name} during hero creation, the character must be from a culture common to the race of {$races}.",
+        {
+          name,
+          races,
+        },
+      ),
+    )
 
 const renderCultureRestriction = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"Culture">,
-  localeJoin: LocaleJoin,
   name: string,
   restriction: RestrictedToCultures,
-): string =>
-  translate(
-    "To buy a {$name} during hero creation, the character must be from the culture of the {$cultures}.",
-    {
-      name,
-      cultures: localeJoin(
-        restriction.scope
-          .map(
-            id => translateMap(getInstanceById("Culture", id)?.translations)?.name ?? MISSING_VALUE,
-          )
-          .filter(isNotNullish),
-        "disjunction",
-      ),
-    },
+): StdReader<string, "t" | "tm" | "lj" | "ibi", "Culture"> =>
+  Reader.traverse(restriction.scope, restrictionId =>
+    attributedNameR("equipment", "Culture", restrictionId).map(
+      restrictionName => restrictionName ?? MISSING_VALUE,
+    ),
   )
+    .thenW(list => localeJoinR(list.filter(isNotNullish), "disjunction"))
+    .thenW(cultures =>
+      translateR(
+        "To buy a {$name} during hero creation, the character must be from the culture of the {$cultures}.",
+        {
+          name,
+          cultures,
+        },
+      ),
+    )
 
 const renderProfessionRestriction = (
-  _translate: Translate,
-  _translateMap: TranslateMap,
-  _getInstanceById: GetInstanceById<"Profession">,
-  _localeJoin: LocaleJoin,
   _name: string,
   _restriction: RestrictedToProfessions,
-): string => UNHANDLED_VALUE
+): StdReader<string, "t" | "tm" | "lj" | "ibi", "Profession"> => Reader.of(UNHANDLED_VALUE)
+
+const renderAnyShieldSize = (
+  baseText: "Large Shield" | "Medium Shield" | "Small Shield",
+  structurePoints?: StructurePoints,
+  attackPenalty?: number,
+) =>
+  Reader.sequence<StdEnv<"t" | "fn">, string | undefined>([
+    translateR(baseText),
+    structurePoints === undefined
+      ? Reader.of(undefined)
+      : translateR("{$value} structure points", {
+          value: structurePoints.map(spc => spc.points).join("/"),
+        }),
+    attackPenalty === undefined
+      ? Reader.of(undefined)
+      : formatNumber(attackPenalty).thenW(value =>
+          translateR("additional {$value} AT for main weapon", { value }),
+        ),
+  ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join(", "))
+
+const renderShieldSize = (size: ShieldSize, structurePoints: StructurePoints | undefined) => {
+  switch (size.kind) {
+    case "Large":
+      return renderAnyShieldSize("Large Shield", structurePoints, size.Large.attack_penalty)
+    case "Medium":
+      return renderAnyShieldSize("Medium Shield", structurePoints)
+    case "Small":
+      return renderAnyShieldSize("Small Shield", structurePoints)
+    default:
+      return assertExhaustive(size)
+  }
+}
 
 const renderNote = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<
-    "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
-  >,
-  localeJoin: LocaleJoin,
-  melee_uses:
-    | {
-        [closeCombatTechniqueId: string]: MeleeWeaponUse
-      }
-    | undefined,
+  meleeUse: MeleeWeaponUse | undefined,
+  structurePoints: StructurePoints | undefined,
   restrictedTo: RestrictedTo | undefined,
   name: string,
   note: string | undefined,
-) =>
-  ensureNonEmpty(
-    [
-      Object.values(melee_uses ?? {}).some(use => use.is_parrying_weapon)
-        ? translate("Parrying weapon (PA bonus +1 for the main weapon)")
-        : undefined,
-      restrictedTo?.blessedTraditions === undefined
-        ? undefined
-        : renderBlessedTraditionRestriction(
-            translate,
-            translateMap,
-            localeJoin,
-            getInstanceById,
-            name,
-            restrictedTo.blessedTraditions,
-          ),
-      restrictedTo?.races === undefined
-        ? undefined
-        : renderRaceRestriction(
-            translate,
-            translateMap,
-            getInstanceById,
-            localeJoin,
-            name,
-            restrictedTo.races,
-          ),
-      restrictedTo?.cultures === undefined
-        ? undefined
-        : renderCultureRestriction(
-            translate,
-            translateMap,
-            getInstanceById,
-            localeJoin,
-            name,
-            restrictedTo.cultures,
-          ),
-      restrictedTo?.professions === undefined
-        ? undefined
-        : renderProfessionRestriction(
-            translate,
-            translateMap,
-            getInstanceById,
-            localeJoin,
-            name,
-            restrictedTo.professions,
-          ),
-      restrictedTo?.magicalTraditions === undefined
-        ? undefined
-        : renderMagicalTraditionRestriction(
-            translate,
-            translateMap,
-            getInstanceById,
-            localeJoin,
-            name,
-            restrictedTo.magicalTraditions,
-          ),
-      note,
-    ].filter(isNotNullish),
-  )?.join("; ")
+): StdReader<
+  string | undefined,
+  "t" | "tm" | "lj" | "ibi" | "fn",
+  "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+> => {
+  const {
+    blessedTraditions: restrictedToBlessedTraditions,
+    cultures: restrictedToCultures,
+    magicalTraditions: restrictedToMagicalTraditions,
+    professions: restrictedToProfessions,
+    races: restrictedToRaces,
+  } = restrictedTo ?? {}
+
+  return Reader.sequence<
+    StdEnv<
+      "t" | "tm" | "lj" | "ibi" | "fn",
+      "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+    >,
+    string | undefined
+  >([
+    Reader.sequence([
+      meleeUse?.size === undefined
+        ? Reader.of(undefined)
+        : renderShieldSize(meleeUse.size, structurePoints),
+      meleeUse?.is_parrying_weapon === true
+        ? translateR("Parrying weapon (PA bonus +1 for the main weapon)")
+        : Reader.of(undefined),
+    ])
+      .map(list => ensureNonEmpty(list.filter(isNotNullish)))
+      .thenW(list =>
+        list === undefined ? Reader.of(undefined) : localeJoinR(list, "disjunction"),
+      ),
+    restrictedToBlessedTraditions === undefined
+      ? Reader.of(undefined)
+      : renderBlessedTraditionRestriction(name, restrictedToBlessedTraditions),
+    restrictedToRaces === undefined
+      ? Reader.of(undefined)
+      : renderRaceRestriction(name, restrictedToRaces),
+    restrictedToCultures === undefined
+      ? Reader.of(undefined)
+      : renderCultureRestriction(name, restrictedToCultures),
+    restrictedToProfessions === undefined
+      ? Reader.of(undefined)
+      : renderProfessionRestriction(name, restrictedToProfessions),
+    restrictedToMagicalTraditions === undefined
+      ? Reader.of(undefined)
+      : renderMagicalTraditionRestriction(name, restrictedToMagicalTraditions),
+    Reader.of(note),
+  ]).map(list =>
+    ensureNonEmpty(list.filter(isNotNullish))?.reduce(
+      (acc, elem) =>
+        acc === ""
+          ? elem
+          : acc.endsWith(".")
+            ? `${acc} ${elem}`
+            : elem.endsWith(".")
+              ? `${acc}. ${elem}`
+              : `${acc}; ${elem}`,
+      "",
+    ),
+  )
+}
 
 const renderWeightLabel = (entityName: EquipmentIdentifier["kind"]) => {
   if (entityName === "Jewelry") {
@@ -1210,6 +1269,7 @@ const createMeleeWeaponTableEntry = (
     cost?: Cost | BookCost | JewelryMaterialDifference<number>
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
+    structure_points?: StructurePoints
   },
   instanceTranslation: {
     note?: string
@@ -1223,7 +1283,14 @@ const createMeleeWeaponTableEntry = (
   MeleeWeaponColumns,
   StdEnv<
     "fn" | "t" | "tm" | "ibi" | "lj" | "ma" | "rts",
-    "Attribute" | "Reach" | "CloseCombatTechnique"
+    | "Attribute"
+    | "Reach"
+    | "CloseCombatTechnique"
+    | "Race"
+    | "Culture"
+    | "MagicalTradition"
+    | "BlessedTradition"
+    | "Profession"
   >
 > => {
   const combatTechnique = getInstanceByIdR("CloseCombatTechnique", combatTechniqueId)
@@ -1282,13 +1349,17 @@ const createMeleeWeaponTableEntry = (
       complexity: renderComplexity(instance.complexity),
     },
     additionalInformation: [
-      instanceTranslation.note === undefined
-        ? undefined
-        : {
-            label: translateR("Note"),
-            id: "note",
-            value: Reader.of(instanceTranslation.note),
-          },
+      {
+        label: translateR("Note"),
+        id: "note",
+        value: renderNote(
+          use,
+          instance.structure_points,
+          instance.restrictedTo,
+          name,
+          instanceTranslation.note,
+        ),
+      },
       instanceTranslation.rules === undefined
         ? undefined
         : {
@@ -1322,6 +1393,7 @@ const createRangedWeaponTableEntry = (
     cost?: Cost | BookCost | JewelryMaterialDifference<number>
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
+    structure_points?: StructurePoints
   },
   instanceTranslation: {
     note?: string
@@ -1395,17 +1467,12 @@ const createRangedWeaponTableEntry = (
       {
         label: translateR("Note"),
         id: "note",
-        value: Reader.asks(env =>
-          renderNote(
-            env.translate,
-            env.translateMap,
-            env.getInstanceById,
-            env.localeJoin,
-            undefined,
-            instance.restrictedTo,
-            name,
-            instanceTranslation.note,
-          ),
+        value: renderNote(
+          undefined,
+          instance.structure_points,
+          instance.restrictedTo,
+          name,
+          instanceTranslation.note,
         ),
       },
       {
@@ -1435,6 +1502,7 @@ const createArmorTableEntry = (
     cost?: Cost | BookCost | JewelryMaterialDifference<number>
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
+    structure_points?: StructurePoints
   },
   instanceTranslation: {
     note?: string
@@ -1494,17 +1562,12 @@ const createArmorTableEntry = (
     {
       label: translateR("Note"),
       id: "note",
-      value: Reader.asks(env =>
-        renderNote(
-          env.translate,
-          env.translateMap,
-          env.getInstanceById,
-          env.localeJoin,
-          undefined,
-          instance.restrictedTo,
-          name,
-          instanceTranslation.note,
-        ),
+      value: renderNote(
+        undefined,
+        instance.structure_points,
+        instance.restrictedTo,
+        name,
+        instanceTranslation.note,
       ),
     },
     {
@@ -1557,18 +1620,7 @@ const createGemOrPreciousStoneTableEntry = (
     {
       label: translateR("Note"),
       id: "note",
-      value: Reader.asks(env =>
-        renderNote(
-          env.translate,
-          env.translateMap,
-          env.getInstanceById,
-          env.localeJoin,
-          undefined,
-          undefined,
-          name,
-          instanceTranslation?.note,
-        ),
-      ),
+      value: renderNote(undefined, undefined, undefined, name, instanceTranslation?.note),
     },
     {
       label: translateR("Rules"),
@@ -1630,17 +1682,12 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
     {
       label: translateR("Note"),
       id: "note",
-      value: Reader.asks(env =>
-        renderNote(
-          env.translate,
-          env.translateMap,
-          env.getInstanceById,
-          env.localeJoin,
-          undefined,
-          instance.restrictedTo,
-          name,
-          instanceTranslation?.note,
-        ),
+      value: renderNote(
+        undefined,
+        instance.structure_points,
+        instance.restrictedTo,
+        name,
+        instanceTranslation?.note,
       ),
     },
     {
