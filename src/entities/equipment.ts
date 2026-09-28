@@ -1272,6 +1272,7 @@ const createMeleeWeaponTableEntry = (
     structure_points?: StructurePoints
   },
   instanceTranslation: {
+    secondary_name?: string
     note?: string
     rules?: string
     advantage?: string
@@ -1323,7 +1324,7 @@ const createMeleeWeaponTableEntry = (
       Object.keys(meleeWeaponColumns) as (keyof typeof meleeWeaponColumns)[],
     ),
     values: {
-      name: sequence`${name}${parensIfR(renderMeleeWeaponTypesForName(use))}`,
+      name: sequence`${name}${parensIf(instanceTranslation.secondary_name)}${parensIfR(renderMeleeWeaponTypesForName(use))}`,
       damagePoints: Reader.asks(env => renderMeleeDamage(env.translate)(use.damage)),
       primaryAttributeDamageThreshold: combatTechnique.thenW(ct =>
         Reader.asks(env =>
@@ -1396,6 +1397,7 @@ const createRangedWeaponTableEntry = (
     structure_points?: StructurePoints
   },
   instanceTranslation: {
+    secondary_name?: string
     note?: string
     rules?: string
     advantage?: string
@@ -1447,7 +1449,7 @@ const createRangedWeaponTableEntry = (
       Object.keys(rangedWeaponColumns) as (keyof typeof rangedWeaponColumns)[],
     ),
     values: {
-      name: sequence`${name}${parensIfR(renderRangedWeaponTypesForName(use))}`,
+      name: sequence`${name}${parensIf(instanceTranslation.secondary_name)}${parensIfR(renderRangedWeaponTypesForName(use))}`,
       damagePoints: Reader.asks(env => renderRangedDamage(env.translate)(use.damage)),
       reloadTime: Reader.asks(env =>
         renderReloadTime(env.translate, env.translateMap, env.format, use.reload_time),
@@ -1505,6 +1507,7 @@ const createArmorTableEntry = (
     structure_points?: StructurePoints
   },
   instanceTranslation: {
+    secondary_name?: string
     note?: string
     rules?: string
     advantage?: string
@@ -1533,7 +1536,7 @@ const createArmorTableEntry = (
     Object.keys(armorColumns) as (keyof typeof armorColumns)[],
   ),
   values: {
-    name: Reader.of(name),
+    name: Reader.of(name + parensIf(instanceTranslation.secondary_name)),
     protection: Reader.of(values.protection.toFixed()),
     encumbrance: Reader.of(values.encumbrance.toFixed()),
     additionalPenalties: values.has_additional_penalties
@@ -1612,7 +1615,7 @@ const createGemOrPreciousStoneTableEntry = (
     cost: renderCostLabel("GemOrPreciousStone"),
   },
   values: {
-    name: Reader.of(name),
+    name: Reader.of(name + parensIf(instanceTranslation?.secondary_name)),
     color: Reader.of(instanceTranslation?.color ?? "—"),
     cost: renderCost(instance.cost),
   },
@@ -1670,7 +1673,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
   ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
   values: omitKeys(
     {
-      name: Reader.of(name),
+      name: Reader.of(name + parensIf(instanceTranslation?.secondary_name)),
       structurePoints: renderStructurePoints(instance.structure_points),
       weight: renderWeightValue(instance.weight),
       cost: renderCost(instance.cost),
