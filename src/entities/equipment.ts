@@ -82,7 +82,7 @@ import {
   attributedNameFromText,
 } from "./partial/markdown.js"
 import { additionFormatter, subtractionFormatter } from "./partial/mathOperation.js"
-import { parensIf } from "./partial/rated/activatable/parensIf.js"
+import { parensIf, parensIfR } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedCustomNameR,
   formatNumber,
@@ -1191,6 +1191,17 @@ type GenEquipmentTableEntry<Cols extends string, E> = Pick<
   "category" | "labels" | "values" | "additionalInformation"
 >
 
+const renderMeleeWeaponTypesForName = (use: GenMeleeWeapon<MeleeDamage>) =>
+  Reader.sequence([
+    use.is_two_handed_weapon ? translateR("2H") : Reader.of(undefined),
+    use.is_improvised_weapon ? translateR("i") : Reader.of(undefined),
+  ]).map(types => ensureNonEmpty(types.filter(isNotNullish))?.join(", "))
+
+const renderRangedWeaponTypesForName = (use: GenRangedWeapon<RangedDamage>) =>
+  Reader.sequence([use.is_improvised_weapon ? translateR("i") : Reader.of(undefined)]).map(types =>
+    ensureNonEmpty(types.filter(isNotNullish))?.join(", "),
+  )
+
 const createMeleeWeaponTableEntry = (
   name: string,
   entityName: EquipmentIdentifier["kind"],
@@ -1245,7 +1256,7 @@ const createMeleeWeaponTableEntry = (
       Object.keys(meleeWeaponColumns) as (keyof typeof meleeWeaponColumns)[],
     ),
     values: {
-      name: Reader.of(name),
+      name: sequence`${name}${parensIfR(renderMeleeWeaponTypesForName(use))}`,
       damagePoints: Reader.asks(env => renderMeleeDamage(env.translate)(use.damage)),
       primaryAttributeDamageThreshold: combatTechnique.thenW(ct =>
         Reader.asks(env =>
@@ -1364,7 +1375,7 @@ const createRangedWeaponTableEntry = (
       Object.keys(rangedWeaponColumns) as (keyof typeof rangedWeaponColumns)[],
     ),
     values: {
-      name: Reader.of(name),
+      name: sequence`${name}${parensIfR(renderRangedWeaponTypesForName(use))}`,
       damagePoints: Reader.asks(env => renderRangedDamage(env.translate)(use.damage)),
       reloadTime: Reader.asks(env =>
         renderReloadTime(env.translate, env.translateMap, env.format, use.reload_time),
