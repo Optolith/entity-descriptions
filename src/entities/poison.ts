@@ -24,6 +24,7 @@ import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
 import type { IdMap } from "../index.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
+import { renderCostRange } from "./equipment.js"
 import { renderDice, renderDiceR } from "./partial/dice.js"
 import {
   renderAlternativeNames,
@@ -35,7 +36,7 @@ import { renderMathOperationR } from "./partial/mathOperation.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { translateMapR, translateR } from "./partial/reader.js"
+import { sequence, translateMapR, translateR } from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
 import { formatTimeSpan, formatTimeSpanR } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
@@ -346,35 +347,31 @@ const renderDuration = (duration: PoisonDuration): StdReader<string, "t" | "tm" 
   }
 }
 
-const renderCost = (translate: Translate, translateMap: TranslateMap, cost: PoisonCost) => {
+const renderCost = (cost: PoisonCost) => {
   switch (cost.kind) {
     case "CannotBeExtracted":
-      return translate("cannot be extracted")
+      return translateR("cannot be extracted")
     case "None":
-      return translate("none")
+      return translateR("none")
     case "Constant":
-      return translate(".input {$value :number} {{{$value} silverthalers}}", {
+      return translateR(".input {$value :number} {{{$value} silverthalers}}", {
         value: cost.Constant,
       })
     case "DependingOnPurchaseOrSale":
-      return `${translate(".input {$value :number} {{{$value} silverthalers}}", {
+      return sequence`${translateR(".input {$value :number} {{{$value} silverthalers}}", {
         value: cost.DependingOnPurchaseOrSale.purchase,
-      })} (${translate("purchase")}) / ${translate(
+      })} (${translateR("purchase")}) / ${translateR(
         ".input {$value :number} {{{$value} silverthalers}}",
         {
           value: cost.DependingOnPurchaseOrSale.sale,
         },
-      )} (${translate("sale")})`
+      )} (${translateR("sale")})`
     case "Indefinite":
-      return translateMap(cost.Indefinite.translations)?.description ?? MISSING_VALUE
-    case "Range":
-      return translate(
-        ".input {$from :number} .input {$to :number} {{{$from}–{$to} silverthalers}}",
-        {
-          from: cost.Range.from,
-          to: cost.Range.to,
-        },
+      return translateMapR(cost.Indefinite.translations).map(
+        translation => translation?.description ?? MISSING_VALUE,
       )
+    case "Range":
+      return renderCostRange(cost.Range)
     default:
       return assertExhaustive(cost)
   }
@@ -395,14 +392,14 @@ const renderValueCost = (
   return value === undefined
     ? {
         label: translate("Cost"),
-        value: wrapInPerLevel(renderCost(translate, translateMap, cost)),
+        value: wrapInPerLevel(renderCost(cost).run({ translate, translateMap })),
       }
     : {
         label: translate("Value/Cost"),
         value: wrapInPerLevel(
           `${translate(".input {$value :number} {{{$value} silverthalers}}", {
             value,
-          })} / ${renderCost(translate, translateMap, cost)}`,
+          })} / ${renderCost(cost).run({ translate, translateMap })}`,
         ),
       }
 }

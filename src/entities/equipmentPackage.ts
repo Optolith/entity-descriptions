@@ -78,7 +78,7 @@ const getAtomicCost = (cost: Cost): AtomicCost => {
     case "Fixed":
       return cost.Fixed.value
     case "Range":
-      return [cost.Range.from, cost.Range.to]
+      return cost.Range.to === undefined ? cost.Range.from : [cost.Range.from, cost.Range.to]
     default:
       return assertExhaustive(cost)
   }
@@ -181,7 +181,9 @@ const getAtomicEquipmentCost = (entry: TaggedEntity<EquipmentIdentifier["kind"]>
         case "DependingOnPurchaseOrSale":
           return entry.content.cost.DependingOnPurchaseOrSale.purchase
         case "Range":
-          return [entry.content.cost.Range.from, entry.content.cost.Range.to]
+          return entry.content.cost.Range.to === undefined
+            ? entry.content.cost.Range.from
+            : [entry.content.cost.Range.from, entry.content.cost.Range.to]
         default:
           return assertExhaustive(entry.content.cost)
       }

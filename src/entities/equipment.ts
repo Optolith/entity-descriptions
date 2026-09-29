@@ -23,6 +23,7 @@ import type {
   CombatUse,
   Complexity,
   Cost,
+  CostRange,
   Encumbrance,
   EquipmentIdentifier,
   Errata,
@@ -746,6 +747,27 @@ const renderCostLabel = (entityName: EquipmentIdentifier["kind"]) => {
   }
 }
 
+/**
+ * Render a cost range, e.g. "10–20 silverthalers" or "10+ silverthalers".
+ */
+export const renderCostRange = (range: CostRange): StdReader<string, "t" | "tm"> =>
+  translateMapR(range.translations).thenW(translation => {
+    const { from, to } = range
+    return (
+      to === undefined
+        ? translateR("{$value} silverthalers", {
+            value: `${from.toFixed()}+`,
+          })
+        : translateR(
+            ".input {$from :number} .input {$to :number} {{{$from}–{$to} silverthalers}}",
+            {
+              from,
+              to,
+            },
+          )
+    ).map(main => translation?.wrap_in_text.replace("{0}", main) ?? main)
+  })
+
 const renderCost = (
   cost: Cost | BookCost | JewelryMaterialDifference<number> | undefined,
 ): StdReader<string, "fn" | "t" | "tm" | "rts"> => {
@@ -788,21 +810,13 @@ const renderCost = (
         return translateR("invaluable")
       case "Fixed": {
         return translateMapR(cost.Fixed.translations).thenW(translation =>
-          formatSilverthalers(cost.Fixed.value).thenW(main =>
-            translation?.wrap_in_text === undefined
-              ? Reader.of(main)
-              : sequence`${UNHANDLED_VALUE} ${main}`,
+          formatSilverthalers(cost.Fixed.value).map(
+            main => translation?.wrap_in_text.replace("{0}", main) ?? main,
           ),
         )
       }
       case "Range":
-        return translateR(
-          ".input {$from :number} .input {$to :number} {{{$from}–{$to} silverthalers}}",
-          {
-            from: cost.Range.from,
-            to: cost.Range.to,
-          },
-        )
+        return renderCostRange(cost.Range)
       case "Single":
         return renderBookCostVariant(cost.Single)
       case "Multiple":
