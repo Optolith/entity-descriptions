@@ -10,7 +10,7 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   AmmunitionishIdentifier,
   ArmorComplexity,
-  ArmorType_ID,
+  ArmorType,
   AttackModifier,
   BookCost,
   BookCostVariant,
@@ -886,7 +886,7 @@ type NormalizedArmorValues = {
   protection: Protection
   encumbrance: Encumbrance
   has_additional_penalties: HasAdditionalPenalties
-  armor_type: ArmorType_ID
+  armorType: ArmorType
   hit_zone?: HitZone
   restrictedTo?: RestrictedTo
   translations?: {
