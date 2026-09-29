@@ -61,6 +61,7 @@ import type {
   Weight,
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
+import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { StdEnv, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
@@ -951,7 +952,10 @@ const normalizeCombatValues = (
         case "Armor":
           return {
             type: "Armor",
-            values: baseItem.combat_use.Armor,
+            values: {
+              ...omitKeys(baseItem.combat_use.Armor, "variantOf"),
+              armorType: Case("Variant", { variantOf: baseItem.combat_use.Armor.variantOf }),
+            },
           }
         default:
           return assertExhaustive(baseItem.combat_use)
@@ -1136,13 +1140,23 @@ const renderStructurePoints = (structurePoints: StructurePoints | undefined) =>
         })
     : Reader.of("—")
 
-const orderOfEquipmentCategories: (
-  Exclude<EquipmentIdentifier["kind"], "Weapon"> | "MeleeWeapon" | "RangedWeapon"
-)[] = [
+type EquipmentCategory =
+  | Exclude<EquipmentIdentifier["kind"], "Weapon" | "Armor">
+  | "MeleeWeapon"
+  | "RangedWeapon"
+  | "StandardArmor"
+  | "SpecialArmor"
+  | "Helmets"
+  | "ArmorPieces"
+
+const orderOfEquipmentCategories: EquipmentCategory[] = [
   "MeleeWeapon",
   "RangedWeapon",
   "Ammunition",
-  "Armor",
+  "StandardArmor",
+  "SpecialArmor",
+  "Helmets",
+  "ArmorPieces",
   "WeaponAccessory",
   "Clothes",
   "ClothingPackage",
@@ -1170,16 +1184,19 @@ const orderOfEquipmentCategories: (
   "Vehicle",
 ]
 
-const prependOrderToLabel = (
-  category: Exclude<EquipmentIdentifier["kind"], "Weapon"> | "MeleeWeapon" | "RangedWeapon",
-  label: string,
-) =>
+const prependOrderToLabel = (category: EquipmentCategory, label: string) =>
   orderOfEquipmentCategories.includes(category)
     ? `${(orderOfEquipmentCategories.indexOf(category) + 1).toFixed()}-${label}`
     : label
 
 const categoryTranslation: Record<
-  EquipmentIdentifier["kind"] | "MeleeWeapon" | "RangedWeapon",
+  | EquipmentIdentifier["kind"]
+  | "MeleeWeapon"
+  | "RangedWeapon"
+  | "StandardArmor"
+  | "SpecialArmor"
+  | "Helmets"
+  | "ArmorPieces",
   StdReader<string, "t">
 > = {
   Weapon: translateR("Weapons"),
@@ -1187,6 +1204,10 @@ const categoryTranslation: Record<
   RangedWeapon: translateR("Ranged Weapons"),
   Ammunition: translateR("Ammunition"),
   Armor: translateR("Armor"),
+  StandardArmor: translateR("Standard Armor"),
+  SpecialArmor: translateR("Special Armor"),
+  Helmets: translateR("Helmets"),
+  ArmorPieces: translateR("Pieces of Armor"),
   WeaponAccessory: translateR("Weapon Accessories"),
   Clothes: translateR("Clothes"),
   ClothingPackage: translateR("Clothing Packages for Social Status"),
@@ -1510,6 +1531,31 @@ const createRangedWeaponTableEntry = (
   }
 }
 
+const getArmorCategoryName = (
+  values: NormalizedArmorValues,
+): "StandardArmor" | "SpecialArmor" | "Helmets" | "ArmorPieces" => {
+  switch (values.armorType.kind) {
+    case "Standard":
+      return "StandardArmor"
+    case "StandardVariant":
+    case "Variant":
+      switch (values.hit_zone?.kind) {
+        case "Head":
+          return "Helmets"
+        case "Torso":
+        case "Arms":
+        case "Legs":
+          return "ArmorPieces"
+        case undefined:
+          return "SpecialArmor"
+        default:
+          return assertExhaustive(values.hit_zone)
+      }
+    default:
+      return assertExhaustive(values.armorType)
+  }
+}
+
 const createArmorTableEntry = (
   name: string,
   entityName: EquipmentIdentifier["kind"],
@@ -1539,71 +1585,76 @@ const createArmorTableEntry = (
     | "Profession"
     | "DerivedCharacteristic"
   >
-> => ({
-  category: {
-    label: categoryTranslation.Armor,
-    sortingValue: categoryTranslation.Armor.map(label => prependOrderToLabel("Armor", label)),
-    value: Reader.of("Armor"),
-  },
-  labels: sortObjectKeysByIndex(
-    { ...armorColumns, weight: renderWeightLabel(entityName), cost: renderCostLabel(entityName) },
-    Object.keys(armorColumns) as (keyof typeof armorColumns)[],
-  ),
-  values: {
-    name: Reader.of(name + parensIf(instanceTranslation.secondary_name)),
-    protection: Reader.of(values.protection.toFixed()),
-    encumbrance: Reader.of(values.encumbrance.toFixed()),
-    additionalPenalties: values.has_additional_penalties
-      ? Reader.asks((env: StdEnv<"idm">) => [
-          env.idMap.DerivedCharacteristic.Movement,
-          env.idMap.DerivedCharacteristic.Initiative,
-        ])
-          .thenW(dcIds =>
-            Reader.traverse(dcIds, id =>
-              attributedCustomNameR(
-                "equipment-table",
-                t => t.abbreviation,
-                "DerivedCharacteristic",
-                id,
-              ).map(dcName => `${sign(-1)} ${dcName ?? MISSING_VALUE}`),
-            ),
-          )
-          .thenW(localeSortR)
-          .map(names => names.join(", "))
-      : Reader.of("—"),
-    weight: renderWeightValue(instance.weight),
-    cost: renderCost(instance.cost),
-    complexity: renderComplexity(instance.complexity),
-  },
-  additionalInformation: [
-    {
-      label: translateR("Note"),
-      id: "note",
-      value: renderNote(
-        undefined,
-        instance.structure_points,
-        instance.restrictedTo,
-        name,
-        instanceTranslation.note,
+> => {
+  const categoryName = getArmorCategoryName(values)
+  return {
+    category: {
+      label: categoryTranslation[categoryName],
+      sortingValue: categoryTranslation[categoryName].map(label =>
+        prependOrderToLabel(categoryName, label),
       ),
+      value: Reader.of(categoryName),
     },
-    {
-      label: translateR("Rules"),
-      id: "rules",
-      value: Reader.of(instanceTranslation.rules),
+    labels: sortObjectKeysByIndex(
+      { ...armorColumns, weight: renderWeightLabel(entityName), cost: renderCostLabel(entityName) },
+      Object.keys(armorColumns) as (keyof typeof armorColumns)[],
+    ),
+    values: {
+      name: Reader.of(name + parensIf(instanceTranslation.secondary_name)),
+      protection: Reader.of(values.protection.toFixed()),
+      encumbrance: Reader.of(values.encumbrance.toFixed()),
+      additionalPenalties: values.has_additional_penalties
+        ? Reader.asks((env: StdEnv<"idm">) => [
+            env.idMap.DerivedCharacteristic.Movement,
+            env.idMap.DerivedCharacteristic.Initiative,
+          ])
+            .thenW(dcIds =>
+              Reader.traverse(dcIds, id =>
+                attributedCustomNameR(
+                  "equipment-table",
+                  t => t.abbreviation,
+                  "DerivedCharacteristic",
+                  id,
+                ).map(dcName => `${sign(-1)} ${dcName ?? MISSING_VALUE}`),
+              ),
+            )
+            .thenW(localeSortR)
+            .map(names => names.join(", "))
+        : Reader.of("—"),
+      weight: renderWeightValue(instance.weight),
+      cost: renderCost(instance.cost),
+      complexity: renderComplexity(instance.complexity),
     },
-    {
-      label: translateR("Armor Advantage"),
-      id: "advantage",
-      value: Reader.of(instanceTranslation.advantage),
-    },
-    {
-      label: translateR("Armor Disadvantage"),
-      id: "disadvantage",
-      value: Reader.of(instanceTranslation.disadvantage),
-    },
-  ],
-})
+    additionalInformation: [
+      {
+        label: translateR("Note"),
+        id: "note",
+        value: renderNote(
+          undefined,
+          instance.structure_points,
+          instance.restrictedTo,
+          name,
+          instanceTranslation.note,
+        ),
+      },
+      {
+        label: translateR("Rules"),
+        id: "rules",
+        value: Reader.of(instanceTranslation.rules),
+      },
+      {
+        label: translateR("Armor Advantage"),
+        id: "advantage",
+        value: Reader.of(instanceTranslation.advantage),
+      },
+      {
+        label: translateR("Armor Disadvantage"),
+        id: "disadvantage",
+        value: Reader.of(instanceTranslation.disadvantage),
+      },
+    ],
+  }
+}
 
 const createGemOrPreciousStoneTableEntry = (
   name: string,
@@ -1657,7 +1708,7 @@ type SimpleTableEnv = StdEnv<
 
 const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: null }>(
   name: string,
-  entityName: Exclude<EquipmentIdentifier["kind"], "Weapon">,
+  entityName: Exclude<EquipmentIdentifier["kind"], "Weapon" | "Armor">,
   useKeys: R,
   instance: {
     weight?: Weight | JewelryMaterialDifference<Weight>
