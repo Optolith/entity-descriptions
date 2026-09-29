@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.21.0](https://github.com/Optolith/entity-descriptions/compare/v0.20.0...v0.21.0) (2026-09-29)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.74.0
+
+### build
+
+* **deps:** upgrade to schema 0.74.0 ([7261d88](https://github.com/Optolith/entity-descriptions/commit/7261d88081061afd12ae5d951c820edd1b725b08))
+
+### Features
+
+* different armor categories ([4593569](https://github.com/Optolith/entity-descriptions/commit/4593569768744af928fcd7d33e1cddb9d9129635))
 ## [0.20.0](https://github.com/Optolith/entity-descriptions/compare/v0.19.1...v0.20.0) (2026-09-29)
 
 ### ⚠ BREAKING CHANGES
