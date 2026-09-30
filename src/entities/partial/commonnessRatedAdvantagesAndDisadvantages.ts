@@ -1,26 +1,25 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
-import { mapNullable } from "@elyukai/utils/nullable"
+import { nullableToArray } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
-  ActivatableIdentifier,
   CommonnessRatedAdvantageDisadvantage,
   CommonnessRatedAdvantageDisadvantageLevel,
+  CommonnessRatedAdvantageDisadvantageTranslation,
+  Settings,
 } from "@optolith/database-schema/gen"
 import { ensureNonEmpty } from "@optolith/helpers/array"
 import { Case } from "tsondb/schema/gen"
-import type { StdReader } from "../../env.js"
-import type { GetInstanceById } from "../../helpers/getTypes.js"
-import type { LocaleCompare } from "../../helpers/locale.js"
-import type { TranslateMap, TranslationKeysWithoutParams } from "../../helpers/translate.js"
+import type { StdEnv, StdReader } from "../../env.js"
+import type { TranslationKeysWithoutParams } from "../../helpers/translate.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../rawEntityDescription.js"
 import {
   makeNameBuilderRulesWithDefaults,
   renderCombinedActivatableNameComponents,
   renderNameComponentsOptions,
 } from "./activatableNameChunks.js"
-import { attributedNameFromText, customName } from "./markdown.js"
-import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
+import { attributedNameFromText } from "./markdown.js"
+import { customNameR, localeSortR, translateMapR, translateR } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 const convertCommonnessRatedAdvantageOrDisadvantageLevel = (
@@ -36,80 +35,131 @@ const convertCommonnessRatedAdvantageOrDisadvantageLevel = (
   }
 }
 
-const makeActivatableIdentifierForCommonnessRatedAdvantageOrDisadvantage = (
-  entity: "Advantage" | "Disadvantage",
-  id: string,
-): ActivatableIdentifier => {
-  switch (entity) {
-    case "Advantage":
-      return Case("Advantage", id)
-    case "Disadvantage":
-      return Case("Disadvantage", id)
-    default:
-      return assertExhaustive(entity)
-  }
-}
+const renderOptions = (
+  item: CommonnessRatedAdvantageDisadvantage<string>,
+  id: Case<"Advantage" | "Disadvantage", string>,
+  translation: CommonnessRatedAdvantageDisadvantageTranslation | undefined,
+) =>
+  translation?.options === undefined
+    ? Reader.asks(
+        (env: StdEnv<"rso">) =>
+          item.options?.map(
+            option =>
+              renderNameComponentsOptions(true, env.getResolvedSelectOptionById, id, [option]) ??
+              MISSING_VALUE,
+          ) ?? [],
+      )
+    : Reader.of([translation.options])
 
 const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<E>,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  localeCompare: LocaleCompare,
   entity: E,
   item: CommonnessRatedAdvantageDisadvantage<string>,
-): string => {
-  const customTranslation = translateMap(item.translations)
-  return (
-    customName<E>(
-      translateMap,
-      getInstanceById,
+): StdReader<string, "tm" | "lc" | "rso" | "ibi", E> =>
+  translateMapR(item.translations).thenW(commonnessItemTranslation =>
+    customNameR<E, StdEnv<"tm" | "lc" | "rso">>(
       (translation, instance) => {
-        if (customTranslation?.full !== undefined) {
-          return attributedNameFromText(customTranslation.full, "commonness", entity, item.id)
+        if (commonnessItemTranslation?.full !== undefined) {
+          return Reader.of(
+            attributedNameFromText(commonnessItemTranslation.full, "commonness", entity, item.id),
+          )
         }
 
-        const id = makeActivatableIdentifierForCommonnessRatedAdvantageOrDisadvantage(
-          entity,
-          item.id,
-        )
+        const id = Case<"Advantage" | "Disadvantage", string>(entity, item.id)
 
         const level =
           item.level === undefined
             ? undefined
             : convertCommonnessRatedAdvantageOrDisadvantageLevel(item.level)
 
-        const options =
-          customTranslation?.options === undefined
-            ? (item.options?.map(
-                option =>
-                  renderNameComponentsOptions(true, getResolvedSelectOptionById, id, [option]) ??
-                  MISSING_VALUE,
-              ) ?? [])
-            : [customTranslation.options]
+        return renderOptions(item, id, commonnessItemTranslation).thenW(options => {
+          const name =
+            translation.name_in_library !== undefined && options.length === 0
+              ? translation.name_in_library
+              : translation.name
 
-        const name =
-          translation.name_in_library !== undefined && options.length === 0
-            ? translation.name_in_library
-            : translation.name
-
-        return renderCombinedActivatableNameComponents(
-          translateMap,
-          {
-            id,
-            base: name,
-            level,
-            nameBuilderRules: makeNameBuilderRulesWithDefaults(instance.nameBuilderRules),
-            options,
-          },
-          false,
-          list => list.toSorted(localeCompare).join(", "),
-          "commonness",
-        )
+          return Reader.asks(env =>
+            renderCombinedActivatableNameComponents(
+              env.translateMap,
+              {
+                id,
+                base: name,
+                level,
+                nameBuilderRules: makeNameBuilderRulesWithDefaults(instance.nameBuilderRules),
+                options,
+              },
+              false,
+              list => list.toSorted(env.localeCompare).join(", "),
+              "commonness",
+            ),
+          )
+        })
       },
       entity,
       item.id,
-    ) ?? MISSING_VALUE
+    ).map(name => name ?? MISSING_VALUE),
   )
+
+/**
+ * Exclude supernatural base advantages from the negative commonness-rated list.
+ */
+export const excludeNegativeSupernaturalFromList = (
+  settings: Settings,
+  negativeAdvantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
+): CommonnessRatedAdvantageDisadvantage<string>[] | undefined =>
+  negativeAdvantages?.filter(
+    adv =>
+      adv.id !== settings.supernaturalBaseAdvantages.blessed &&
+      adv.id !== settings.supernaturalBaseAdvantages.spellcasters,
+  )
+
+/**
+ * Get a description for the general negative commonness of supernatural advantages and disadvantages if its base advantages also have a negative commonness rating.
+ */
+export const appendNegativeSupernaturalWithGeneralNegative = (
+  entityName: "Advantage" | "Disadvantage",
+  settings: Settings,
+  negativeAdvantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
+): StdReader<string | undefined, "t"> => {
+  const hasBlessed =
+    negativeAdvantages?.some(adv => adv.id === settings.supernaturalBaseAdvantages.blessed) ?? false
+  const hasSpellcaster =
+    negativeAdvantages?.some(adv => adv.id === settings.supernaturalBaseAdvantages.spellcasters) ??
+    false
+
+  if (hasBlessed && hasSpellcaster) {
+    switch (entityName) {
+      case "Advantage":
+        return translateR("all magical and Blessed One advantages")
+      case "Disadvantage":
+        return translateR("all magical and Blessed One disadvantages")
+      default:
+        return assertExhaustive(entityName)
+    }
+  }
+
+  if (hasBlessed) {
+    switch (entityName) {
+      case "Advantage":
+        return translateR("all Blessed One advantages")
+      case "Disadvantage":
+        return translateR("all Blessed One disadvantages")
+      default:
+        return assertExhaustive(entityName)
+    }
+  }
+
+  if (hasSpellcaster) {
+    switch (entityName) {
+      case "Advantage":
+        return translateR("all magical advantages")
+      case "Disadvantage":
+        return translateR("all magical disadvantages")
+      default:
+        return assertExhaustive(entityName)
+    }
+  }
+
+  return Reader.of(undefined)
 }
 
 /**
@@ -122,24 +172,13 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
   entity: E,
   items: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   emptyString: T,
+  appendedString?: string,
 ): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", E> =>
-  Reader.asks(({ translateMap, getInstanceById, getResolvedSelectOptionById, localeCompare }) =>
-    items === undefined || !isNotEmpty(items)
-      ? emptyString
-      : items
-          .map(item =>
-            renderCommonnessRatedAdvantageOrDisadvantageName(
-              translateMap,
-              getInstanceById,
-              getResolvedSelectOptionById,
-              localeCompare,
-              entity,
-              item,
-            ),
-          )
-          .toSorted(localeCompare)
-          .join(", "),
-  )
+  items === undefined || !isNotEmpty(items)
+    ? Reader.of(emptyString)
+    : Reader.traverse(items, item => renderCommonnessRatedAdvantageOrDisadvantageName(entity, item))
+        .thenW(localeSortR)
+        .map(names => [names, nullableToArray(appendedString)].join(", "))
 
 /**
  * Render the names of commonness-rated advantages and disadvantages together.
@@ -149,27 +188,20 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
   disadvantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   emptyString: T,
 ): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", "Advantage" | "Disadvantage"> =>
-  Reader.asks(
-    ({ translateMap, getInstanceById, getResolvedSelectOptionById, localeCompare }) =>
-      mapNullable(
-        ensureNonEmpty(
-          [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].flatMap(
-            ([entity, items]) =>
-              items?.map(item =>
-                renderCommonnessRatedAdvantageOrDisadvantageName(
-                  translateMap,
-                  getInstanceById,
-                  getResolvedSelectOptionById,
-                  localeCompare,
-                  entity,
-                  item,
-                ),
-              ) ?? [],
-          ),
+  Reader.sequence(
+    [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].map(
+      ([entity, items]) =>
+        Reader.traverse(items ?? [], item =>
+          renderCommonnessRatedAdvantageOrDisadvantageName(entity, item),
         ),
-        renderedItems => renderedItems.toSorted(localeCompare).join(", "),
-      ) ?? emptyString,
+    ),
   )
+    .map(items => ensureNonEmpty(items.flat()))
+    .thenW((renderedItems): StdReader<string | T, "lc"> =>
+      renderedItems === undefined
+        ? Reader.of(emptyString)
+        : localeSortR(renderedItems).map(sortedItems => sortedItems.join(", ")),
+    )
 
 /**
  * Render a value with a possible translation, falling back to explicity rendering the value if no translation is available.

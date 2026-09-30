@@ -41,6 +41,7 @@ import type {
   ProfessionVariantTranslation,
   RatedIdentifier,
   RestrictedBlessings,
+  Settings,
   SkillsOptions,
   SkillSpecializationOptions,
   SkillWithEnhancementsIdentifier,
@@ -69,6 +70,8 @@ import {
   type CombinedActivatableNameComponents,
 } from "./partial/activatableNameChunks.js"
 import {
+  appendNegativeSupernaturalWithGeneralNegative,
+  excludeNegativeSupernaturalFromList,
   renderCommonnessRatedAdvantagesOrDisadvantages,
   renderValueWithPossibleTranslation,
 } from "./partial/commonnessRatedAdvantagesAndDisadvantages.js"
@@ -597,7 +600,9 @@ const renderCursesOption = (option: CursesOptions) =>
   renderVariantCursesOption(undefined, { kind: "Override", Override: option })
 
 const nameOfSkillsOfGroupR = (skillGroupId: string) =>
-  customNameR(t => t.longName, "SkillGroup", skillGroupId).map(name => name ?? MISSING_VALUE)
+  customNameR(t => Reader.of(t.longName), "SkillGroup", skillGroupId).map(
+    name => name ?? MISSING_VALUE,
+  )
 
 const renderVariantSkillsOption = (
   baseOptions: SkillsOptions | undefined,
@@ -1445,6 +1450,7 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
       "ProfessionPackage" | "ProfessionVariant"
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
+    settings: Settings
   }
 >(
   (
@@ -1453,6 +1459,7 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
       getAllInstances,
       getChildInstancesForInstanceId,
       getResolvedSelectOptionById,
+      settings,
     },
     locale,
     { id, content: entry },
@@ -1623,8 +1630,13 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
               values =>
                 renderCommonnessRatedAdvantagesOrDisadvantages(
                   "Advantage",
-                  values,
+                  excludeNegativeSupernaturalFromList(settings, values),
                   translate("none"),
+                  appendNegativeSupernaturalWithGeneralNegative(
+                    "Advantage",
+                    settings,
+                    entry.unsuitable_advantages,
+                  ).run(env),
                 ).run(env),
               translation.unsuitable_advantages,
             ).run(env),
@@ -1636,6 +1648,11 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
                   "Disadvantage",
                   values,
                   translate("none"),
+                  appendNegativeSupernaturalWithGeneralNegative(
+                    "Disadvantage",
+                    settings,
+                    entry.unsuitable_advantages,
+                  ).run(env),
                 ).run(env),
               translation.unsuitable_disadvantages,
             ).run(env),

@@ -1,3 +1,4 @@
+import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
@@ -224,18 +225,30 @@ export const attributedCustomNameFromInstanceR = <
  * Applies a function to the translation of the specified entry.
  */
 export const customNameR = <
-  E extends {
+  T extends {
     [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
       ? K
       : never
   }[keyof EntityMap],
+  E,
 >(
-  fn: (translation: EntityMap[E]["translations"][string]) => string,
-  ...args: IdArgsVariant<EntityMap, E>
+  fn: (
+    translation: EntityMap[T]["translations"][string],
+    instance: EntityMap[T],
+  ) => Reader<E, string>,
+  ...args: IdArgsVariant<EntityMap, T>
 ): Reader<
-  { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
+  E & { translateMap: TranslateMap; getInstanceById: GetInstanceById<T> },
   string | undefined
-> => Reader.asks(env => customName(env.translateMap, env.getInstanceById, fn, ...args))
+> =>
+  Reader.asks(env =>
+    customName(
+      env.translateMap,
+      env.getInstanceById,
+      (...customArgs) => fn(...customArgs).run(env),
+      ...args,
+    ),
+  )
 
 /**
  * Joins a list of strings according to the locale’s rules for the given type.
@@ -328,6 +341,15 @@ export const localeSortR = <T extends string>(
   arr: T[],
 ): Reader<{ localeCompare: LocaleCompare }, T[]> =>
   Reader.asks(({ localeCompare }) => arr.toSorted(localeCompare))
+
+/**
+ * Sorts an array of strings according to the locale’s sorting rules.
+ */
+export const localeSortOnR = <T>(
+  arr: T[],
+  acc: (value: T) => string,
+): Reader<{ localeCompare: LocaleCompare }, T[]> =>
+  Reader.asks(({ localeCompare }) => arr.toSorted(on(acc, localeCompare)))
 
 /**
  * Creates a responsive value from two functions that return the value for the full and compressed version, respectively.
@@ -517,10 +539,14 @@ export const modifyBySpeedR: Reader<
 /**
  * Returns the default values wrapped in a reader if the value is nullish, otherwise applies the given function to the value and returns the result.
  */
-export const mapNullableR =
-  <T, U, R>(defaultValue: U, fn: (value: NonNullable<T>) => Reader<U, R>) =>
-  (value: T) =>
-    isNotNullish(value) ? fn(value) : Reader.of(defaultValue)
+export const mapNullableR: {
+  <T, U, R>(value: T, fn: (value: NonNullable<T>) => Reader<R, U>): Reader<R, U | undefined>
+  <T, U, R>(value: T, fn: (value: NonNullable<T>) => Reader<R, U>, defaultValue: U): Reader<R, U>
+} = <T, U, R>(
+  value: T,
+  fn: (value: NonNullable<T>) => Reader<R, U>,
+  defaultValue?: U,
+): Reader<R, U | undefined> => (isNotNullish(value) ? fn(value) : Reader.of(defaultValue))
 
 /**
  * Use `Reader` instances directly in a template string.
