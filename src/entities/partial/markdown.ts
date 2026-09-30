@@ -118,6 +118,28 @@ export const attributedNameFromInstance = (
 }
 
 /**
+ * Renders the name of an instance according to a custom function in an attributed string.
+ */
+export const attributedCustomNameFromInstance = <E extends { translations: LocaleMap<object> }>(
+  translateMap: TranslateMap,
+  instance: E | undefined,
+  context: string,
+  fn: (translation: E["translations"][string], instance: E) => string,
+  ...args: IdArgsVariant<EntityMap, keyof EntityMap>
+) => {
+  const id = normalizedIdArgs(args)
+  return mapNullable(translateMap<object>(instance?.translations), translation =>
+    attributedInstance(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- instance must be non-nullish if translation is non-nullish
+      fn(translation as E["translations"][string], instance!),
+      id.entityName,
+      id.id,
+      { context: `"${context}"` },
+    ),
+  )
+}
+
+/**
  * Renders the name of an instance in an attributed string.
  */
 export const attributedNameFromTranslation = (

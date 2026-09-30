@@ -1,15 +1,16 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { on } from "@elyukai/utils/function"
+import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { AlternativeName, LaboratoryLevel, Resistance } from "@optolith/database-schema/gen"
-import type { GetInstanceById } from "../../helpers/getTypes.js"
+import type { StdEnv, StdReader } from "../../env.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
-import type { IdMap } from "../../index.js"
+import { getDerivedCharacteristicPositionAndTranslation } from "./derivedCharacteristics.js"
 import { renderDice } from "./dice.js"
-import { attributedName } from "./markdown.js"
 import { parensIf } from "./rated/activatable/parensIf.js"
 import { translateR } from "./reader.js"
-import { MISSING_VALUE } from "./unknown.js"
+import { ResponsiveTextSize } from "./responsiveText.js"
 
 /**
  * Renders a laboratory level into a localized string.
@@ -31,57 +32,33 @@ export const renderLaboratoryLevel = (translate: Translate, level: LaboratoryLev
  * Renders a resistance into a localized string.
  */
 export const renderResistance = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<"DerivedCharacteristic">,
-  idMap: IdMap,
   resistance: Resistance,
-) => {
+): StdReader<string, "t" | "tm" | "ibi", "DerivedCharacteristic"> => {
   switch (resistance.kind) {
-    case "Spirit":
-      return (
-        attributedName(
-          translateMap,
-          getInstanceById,
-          "resistance",
-          "DerivedCharacteristic",
-          idMap.DerivedCharacteristic.Spirit,
-        ) ?? MISSING_VALUE
+    case "Single":
+      return getDerivedCharacteristicPositionAndTranslation(
+        resistance.Single.derivedCharacteristic,
+        "resistance",
       )
+        .with((env: StdEnv<"tm" | "ibi", "DerivedCharacteristic">) => ({
+          responsiveTextSize: ResponsiveTextSize.Full,
+          ...env,
+        }))
+        .map(([, translation]) => translation)
 
-    case "Toughness":
-      return (
-        attributedName(
-          translateMap,
-          getInstanceById,
-          "resistance",
-          "DerivedCharacteristic",
-          idMap.DerivedCharacteristic.Toughness,
-        ) ?? MISSING_VALUE
+    case "Minimum":
+      return Reader.traverse(resistance.Minimum.derivedCharacteristics, id =>
+        getDerivedCharacteristicPositionAndTranslation(id, "resistance"),
       )
-
-    case "LowerOfSpiritAndToughness": {
-      const spiritTranslation =
-        attributedName(
-          translateMap,
-          getInstanceById,
-          "resistance",
-          "DerivedCharacteristic",
-          idMap.DerivedCharacteristic.Spirit,
-        ) ?? MISSING_VALUE
-      const toughnessTranslation =
-        attributedName(
-          translateMap,
-          getInstanceById,
-          "resistance",
-          "DerivedCharacteristic",
-          idMap.DerivedCharacteristic.Toughness,
-        ) ?? MISSING_VALUE
-      return translate("{$first} or {$second}, depending on which value is lower", {
-        first: spiritTranslation,
-        second: toughnessTranslation,
-      })
-    }
+        .with((env: StdEnv<"tm" | "ibi", "DerivedCharacteristic">) => ({
+          responsiveTextSize: ResponsiveTextSize.Full,
+          ...env,
+        }))
+        .thenW(list =>
+          translateR("{$values :list type=disjunction}, depending on which value is lower", {
+            values: list.toSorted(on(p => p[0], compareNumber)).map(p => p[1]),
+          }),
+        )
 
     default:
       return assertExhaustive(resistance)

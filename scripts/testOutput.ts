@@ -1,7 +1,7 @@
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { schema } from "@optolith/database-schema"
-import { createCache, type IdMap as CacheIdMap } from "@optolith/database-schema/cache"
+import { createCache } from "@optolith/database-schema/cache"
 import { deepEqual } from "@optolith/helpers/compare"
 import { MessageFormat } from "messageformat"
 import type { MessageValue } from "messageformat/functions"
@@ -11,14 +11,12 @@ import { argv } from "node:process"
 import { parseArgs, styleText, type InspectColor, type ParseArgsOptionsConfig } from "node:util"
 import { TSONDB } from "tsondb"
 import { fromUniformCase } from "tsondb/schema/gen"
+import type {
+  EntityDescriptionSection,
+  TableEntityDescriptionSection,
+} from "../lib/entityDescription.js"
 import type { LocaleEnvironment } from "../lib/helpers/locale.js"
-import {
-  getEntityDescription,
-  isSupportedEntity,
-  type EntityDescriptionSection,
-  type IdMap,
-  type TableEntityDescriptionSection,
-} from "../lib/index.js"
+import { getEntityDescription, isSupportedEntity } from "../lib/index.js"
 
 const options = {
   data: {
@@ -54,6 +52,12 @@ const db = await TSONDB.create({
   dataRootPath,
   locales: [localeId],
 })
+
+const settings = db.getSingletonInstanceOfEntity("Settings")
+
+if (settings === undefined) {
+  throw new Error("Settings not found")
+}
 
 if (!entity || !db.schema.isEntityName(entity) || !isSupportedEntity(entity)) {
   throw new Error("Invalid entity name")
@@ -169,35 +173,12 @@ const localeEnv: LocaleEnvironment = {
   },
 }
 
-const idMap: IdMap & CacheIdMap = {
-  Advantage: {
-    Blessed: "e5a9bb6d-9791-4d20-bf34-52a3aaf69726",
-    Spellcaster: "9770a700-acb7-4b60-b6ea-a329a9acb26b",
-  },
-  KarmaSpecialAbility: {
-    AspectKnowledge: "a1c2c1ef-9b1a-4c0b-9bc0-51e4b944269e",
-  },
-  MagicalSpecialAbility: {
-    PropertyKnowledge: "5d9f3ba7-0fb8-48ca-aebb-baa01c67b4ab",
-  },
-  DerivedCharacteristic: {
-    LifePoints: "190845e8-c2c8-40ff-8908-248f01b49f8b",
-    Spirit: "b6f98337-77b4-4f8e-9b6d-fda3a49d5c75",
-    Toughness: "1fa344af-3e53-4f25-b36a-7f53f51b90f5",
-    Initiative: "0b97b4ce-75b0-4573-add9-86621dcf52a6",
-    Movement: "0c634904-d238-47ee-9b0f-2d6a9d5ff63a",
-  },
-  ExperienceLevel: {
-    Experienced: "2b0a18c5-40a8-4c86-98b3-a93c85e82497",
-  },
-}
-
-const cache = createCache(db, idMap)
+const cache = createCache(db)
 
 const result = getEntityDescription(
   db,
   localeEnv,
-  idMap,
+  settings,
   (parentId, id) =>
     cache.activatableSelectOptions[parentId.kind][fromUniformCase(parentId)]?.find(option =>
       deepEqual(option.id, id),

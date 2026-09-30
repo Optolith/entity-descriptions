@@ -41,11 +41,11 @@
     "@optolith/helpers": "^0.2.2",
     "diff": "^9.0.0",
     "messageformat": "^4.0.0",
-    "tsondb": "^0.20.0"
+    "tsondb": "^0.21.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@optolith/database-schema": "^0.74.0",
+    "@optolith/database-schema": "^0.75.1",
     "@types/node": "^26.5.0",
     "commit-and-tag-version": "^13.1.2",
     "eslint-config-prettier": "^10.1.8",
@@ -60,5 +60,9 @@
   "type": "module",
   "engines": {
     "node": ">=23"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true,
+    "esbuild@0.28.1": true
   }
 }

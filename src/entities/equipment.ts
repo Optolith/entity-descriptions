@@ -78,6 +78,7 @@ import {
   type RawNestedDefinitionListEntityDescriptionSection,
   type RawTabularEntityDescription,
 } from "../rawEntityDescription.js"
+import { getDerivedCharacteristicPositionAndTranslation } from "./partial/derivedCharacteristics.js"
 import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
 import {
   attributedName,
@@ -92,7 +93,6 @@ import {
   formatNumber,
   getInstanceByIdR,
   localeJoinR,
-  localeSortR,
   nameR,
   sequence,
   translateMapR,
@@ -1577,7 +1577,7 @@ const createArmorTableEntry = (
 ): GenEquipmentTableEntry<
   ArmorColumns,
   StdEnv<
-    "fn" | "t" | "tm" | "ibi" | "lj" | "lc" | "ma" | "idm" | "rts",
+    "fn" | "t" | "tm" | "ibi" | "lj" | "lc" | "ma" | "x" | "rts",
     | "Race"
     | "Culture"
     | "MagicalTradition"
@@ -1604,22 +1604,23 @@ const createArmorTableEntry = (
       protection: Reader.of(values.protection.toFixed()),
       encumbrance: Reader.of(values.encumbrance.toFixed()),
       additionalPenalties: values.has_additional_penalties
-        ? Reader.asks((env: StdEnv<"idm">) => [
-            env.idMap.DerivedCharacteristic.Movement,
-            env.idMap.DerivedCharacteristic.Initiative,
-          ])
+        ? Reader.asks((env: StdEnv<"x">) => env.settings.additionalArmorPenalties)
             .thenW(dcIds =>
               Reader.traverse(dcIds, id =>
-                attributedCustomNameR(
-                  "equipment-table",
-                  t => t.abbreviation,
-                  "DerivedCharacteristic",
-                  id,
-                ).map(dcName => `${sign(-1)} ${dcName ?? MISSING_VALUE}`),
+                getDerivedCharacteristicPositionAndTranslation(id, "equipment-table")
+                  .with((env: StdEnv<"tm" | "ibi", "DerivedCharacteristic">) => ({
+                    ...env,
+                    responsiveTextSize: ResponsiveTextSize.Compressed,
+                  }))
+                  .map(dcName => [dcName[0], `${sign(-1)} ${dcName[1]}`] as const),
               ),
             )
-            .thenW(localeSortR)
-            .map(names => names.join(", "))
+            .map(names =>
+              names
+                .toSorted(on(p => p[0], compareNumber))
+                .map(p => p[1])
+                .join(", "),
+            )
         : Reader.of("—"),
       weight: renderWeightValue(instance.weight),
       cost: renderCost(instance.cost),
@@ -1772,7 +1773,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
 export const getEquipmentEntityDescription = createEntityDescriptionCreator<
   Exclude<EquipmentIdentifier["kind"], "Elixir" | "Poison">,
   StdEnv<
-    "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "idm" | "ibi" | "rts",
+    "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "x" | "ibi" | "rts",
     | "Publication"
     | "Attribute"
     | "Reach"

@@ -40,7 +40,6 @@ import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare } from "../helpers/locale.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
-import { type IdMap } from "../index.js"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { renderEnhancements } from "./partial/enhancements.js"
@@ -294,11 +293,10 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
       | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
-    idMap: IdMap
   }
 >(
   (
-    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    { getInstanceById, getChildInstancesForInstanceId },
     locale,
     { content: entry, entity, id },
     options,
@@ -347,7 +345,7 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
         {
           type: "definitionList",
           items: [
-            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
             renderEffect(translation.effect).run(env),
             combineGeneratedTextWithStaticTranslation(
               translate("Casting Time"),
@@ -397,11 +395,10 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
       | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
-    idMap: IdMap
   }
 >(
   (
-    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    { getInstanceById, getChildInstancesForInstanceId },
     locale,
     { content: entry, entity, id },
     options,
@@ -450,7 +447,7 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
         {
           type: "definitionList",
           items: [
-            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
             renderEffect(translation.effect).run(env),
             combineGeneratedTextWithStaticTranslation(
               translate("Ritual Time"),
@@ -490,9 +487,8 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     getInstanceById: GetInstanceById<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -520,7 +516,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(
@@ -571,9 +567,8 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
     getInstanceById: GetInstanceById<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "Skill"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -601,7 +596,7 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           renderMagicalActionSkill(entry.skill).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
@@ -624,9 +619,8 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
     getInstanceById: GetInstanceById<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "SkillModificationLevel"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -654,7 +648,7 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(
@@ -1057,9 +1051,8 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       | "AnimistPower"
       | "Tribe"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1138,7 +1131,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(mergedEffect).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(
@@ -1286,9 +1279,8 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
       | "MagicalTradition"
       | "DerivedCharacteristic"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1333,7 +1325,7 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           combineGeneratedTextWithStaticTranslation(
             translate("Casting Time"),
@@ -1373,9 +1365,8 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
       | "MagicalTradition"
       | "DerivedCharacteristic"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1438,7 +1429,7 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           combineGeneratedTextWithStaticTranslation(
             translate("Ritual Time"),
@@ -1478,9 +1469,8 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
       | "MagicalTradition"
       | "DerivedCharacteristic"
     >
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1526,7 +1516,7 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           combineGeneratedTextWithStaticTranslation(
             translate("Ritual Time"),
@@ -1848,9 +1838,8 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "Skill"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"MagicalRuneOption">
-    idMap: IdMap
   }
->(({ getInstanceById, getChildInstancesForInstanceId, idMap }, locale, { id, content: entry }) => {
+>(({ getInstanceById, getChildInstancesForInstanceId }, locale, { id, content: entry }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1884,7 +1873,7 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
       {
         type: "definitionList",
         items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           combineGeneratedTextWithStaticTranslation(

@@ -1,20 +1,16 @@
+import { on } from "@elyukai/utils/function"
+import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import type {
+  DerivedCharacteristicSkillCheckPenalty,
   SkillCheckPenalty as GeneralSkillCheckPenalty,
   MagicalRuneCombatTechniqueCheckPenalty,
   SkillCheck,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../env.js"
-import { type IdMap } from "../../../index.js"
-import {
-  getInstanceByIdFnR,
-  responsiveR,
-  responsiveThenR,
-  responsiveTranslateR,
-  translateMapR,
-  translateR,
-} from "../reader.js"
+import { getDerivedCharacteristicPositionAndTranslation } from "../derivedCharacteristics.js"
+import { responsiveTranslateR, translateR } from "../reader.js"
 import { MISSING_VALUE } from "../unknown.js"
 
 /**
@@ -41,53 +37,36 @@ type SkillCheckPenalty =
       CombatTechnique: MagicalRuneCombatTechniqueCheckPenalty
     }
 
+const renderDerivedCharacteristicSkillCheckPenalty = (
+  resistance: DerivedCharacteristicSkillCheckPenalty,
+) => {
+  switch (resistance.kind) {
+    case "Single":
+      return getDerivedCharacteristicPositionAndTranslation(
+        resistance.Single.derivedCharacteristic,
+        "check",
+      ).map(([, translation]) => (resistance.Single.halved ? `${translation}/2` : translation))
+
+    case "Maximum":
+      return Reader.traverse(resistance.Maximum.derivedCharacteristics, id =>
+        getDerivedCharacteristicPositionAndTranslation(id, "check"),
+      ).thenW(list =>
+        translateR("{$values :list type=disjunction}, depending on which value is higher", {
+          values: list.toSorted(on(p => p[0], compareNumber)).map(p => p[1]),
+        }),
+      )
+
+    default:
+      return assertExhaustive(resistance)
+  }
+}
+
 const renderSkillCheckPenalty = (
-  idMap: IdMap,
   penalty: SkillCheckPenalty,
 ): StdReader<string, "t" | "tm" | "rts" | "ibi", "DerivedCharacteristic"> => {
-  const getDerivedCharacteristicTranslation = (id: string) =>
-    getInstanceByIdFnR<"DerivedCharacteristic">()
-      .map(getInstanceById => getInstanceById("DerivedCharacteristic", id))
-      .thenW(dc =>
-        dc === undefined
-          ? Reader.of(undefined)
-          : translateMapR(dc.translations).thenW(translation =>
-              translation === undefined
-                ? Reader.of(undefined)
-                : responsiveR(
-                    () => translation.name,
-                    () => translation.abbreviation,
-                  ),
-            ),
-      )
-      .map(translation => translation ?? MISSING_VALUE)
-
-  const getSpiritTranslation = () =>
-    getDerivedCharacteristicTranslation(idMap.DerivedCharacteristic.Spirit)
-
-  const getToughnessTranslation = () =>
-    getDerivedCharacteristicTranslation(idMap.DerivedCharacteristic.Toughness)
-
   switch (penalty.kind) {
-    case "Spirit":
-      return getSpiritTranslation()
-    case "HalfOfSpirit":
-      return getSpiritTranslation().map(translation => `${translation}/2`)
-    case "Toughness":
-      return getToughnessTranslation()
-    case "HigherOfSpiritAndToughness":
-      return getSpiritTranslation().thenW(spirit =>
-        getToughnessTranslation().thenW(toughness =>
-          responsiveThenR(
-            () =>
-              translateR("{$first} or {$second}, depending on which value is higher", {
-                first: spirit,
-                second: toughness,
-              }),
-            () => Reader.of(`${spirit}/${toughness}`),
-          ),
-        ),
-      )
+    case "DerivedCharacteristic":
+      return renderDerivedCharacteristicSkillCheckPenalty(penalty.DerivedCharacteristic)
     case "SummoningDifficulty":
       return responsiveTranslateR("Invocation Difficulty", "ID")
     case "CreationDifficulty":
@@ -107,7 +86,6 @@ const renderSkillCheckPenalty = (
 export const renderSkillCheckWithPenalty = (
   check: SkillCheck,
   checkPenalty: SkillCheckPenalty | undefined,
-  idMap: IdMap,
 ): StdReader<
   { label: string; value: string },
   "t" | "tm" | "rts" | "ibi",
@@ -116,7 +94,7 @@ export const renderSkillCheckWithPenalty = (
   checkPenalty === undefined
     ? renderSkillCheck(check)
     : renderSkillCheck(check).thenW(checkText =>
-        renderSkillCheckPenalty(idMap, checkPenalty)
+        renderSkillCheckPenalty(checkPenalty)
           .then(penaltyText =>
             responsiveTranslateR(" (modified by {$modifier})", " (−{$modifier})", {
               modifier: penaltyText,

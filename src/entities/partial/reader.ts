@@ -29,6 +29,7 @@ import type {
 } from "../../helpers/translate.js"
 import {
   attributedCustomName,
+  attributedCustomNameFromInstance,
   attributedName,
   attributedNameFromInstance,
   customName,
@@ -195,6 +196,28 @@ export const attributedCustomNameR = <
 > =>
   Reader.asks(env =>
     attributedCustomName(env.translateMap, env.getInstanceById, context, fn, ...args),
+  )
+
+/**
+ * Applies a function to the translation of the specified entry and renders it in an attributed string.
+ */
+export const attributedCustomNameFromInstanceR = <
+  T extends { translations: LocaleMap<{ name: string }> },
+  E,
+>(
+  instance: T | undefined,
+  context: string,
+  fn: (translation: T["translations"][string], instance: T) => Reader<E, string>,
+  ...args: IdArgsVariant<EntityMap, keyof EntityMap>
+): Reader<E & { translateMap: TranslateMap }, string | undefined> =>
+  Reader.asks(env =>
+    attributedCustomNameFromInstance(
+      env.translateMap,
+      instance,
+      context,
+      (...customArgs) => fn(...customArgs).run(env),
+      ...args,
+    ),
   )
 
 /**

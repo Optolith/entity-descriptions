@@ -22,7 +22,6 @@ import type { EnvMap, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
-import type { IdMap } from "../index.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
 import { renderCostRange } from "./equipment.js"
 import { renderDice, renderDiceR } from "./partial/dice.js"
@@ -430,9 +429,8 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       | "Cantrip"
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
-    idMap: IdMap
   }
->(({ getInstanceById, getResolvedSelectOptionById, idMap }, locale, { content: entry }) => {
+>(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }) => {
   const { translate, translateMap, format, join: localeJoin, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -500,13 +498,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
           },
           {
             label: translate("Resistance"),
-            value: renderResistance(
-              translate,
-              translateMap,
-              getInstanceById,
-              idMap,
-              entry.resistance,
-            ),
+            value: renderResistance(entry.resistance).run(env),
           },
           ingestion === undefined
             ? undefined

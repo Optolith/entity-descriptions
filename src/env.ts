@@ -4,6 +4,7 @@ import type {
   ChildEntityMap,
   EntityMap,
   LocaleMeasurementAdjustments,
+  Settings,
 } from "@optolith/database-schema/gen"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./entities/partial/rated/activatable/nonModifiableSuffix.js"
@@ -22,7 +23,6 @@ import type {
   TranslateMap,
   TranslationKeysWithoutParams,
 } from "./helpers/translate.js"
-import type { IdMap } from "./index.js"
 import type { PublicationOptions } from "./references/publicationOptions.js"
 
 /**
@@ -51,7 +51,7 @@ export type EnvMap<
   publicationOptions: PublicationOptions
   displayedInProfession: boolean
   measurementAdjustments: Required<LocaleMeasurementAdjustments>
-  idMap: IdMap
+  settings: Settings
 }
 
 /**
@@ -76,7 +76,7 @@ export type EnvMapAbbr = {
   po: "publicationOptions"
   dip: "displayedInProfession"
   ma: "measurementAdjustments"
-  idm: "idMap"
+  x: "settings"
 }
 
 /**

@@ -1,9 +1,8 @@
 import { reduceWhile } from "@elyukai/utils/array/reductions"
 import { isNotNullish } from "@elyukai/utils/nullable"
-import type { Profession_ID, ProfessionPackage } from "@optolith/database-schema/gen"
+import type { Profession_ID, ProfessionPackage, Settings } from "@optolith/database-schema/gen"
 import type { GetAllChildInstancesForParent, GetAllInstances } from "../../helpers/getTypes.js"
 import type { TranslateMap } from "../../helpers/translate.js"
-import type { IdMap } from "../../index.js"
 
 /**
  * Finds the base profession package for a given curriculum.
@@ -13,7 +12,7 @@ export const getBaseProfessionPackageForCurriculum = (
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<
     "ProfessionVersion" | "ProfessionPackage"
   >,
-  idMap: IdMap,
+  settings: Settings,
   curriculumId: string,
 ) => {
   const baseProfession = getAllInstances("Profession").find(
@@ -31,7 +30,7 @@ export const getBaseProfessionPackageForCurriculum = (
     (_acc: { id: string; content: ProfessionPackage } | undefined, version) =>
       getChildInstancesForInstanceId("ProfessionPackage", version.id).find(
         professionPackage =>
-          professionPackage.content.experience_level === idMap.ExperienceLevel.Experienced,
+          professionPackage.content.experience_level === settings.defaultExperienceLevel,
       ),
     isNotNullish,
     undefined,

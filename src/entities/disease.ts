@@ -9,9 +9,9 @@ import type {
   Resistance,
 } from "@optolith/database-schema/gen"
 import { combatDLItem, createEntityDescriptionCreator } from "../creator.js"
+import type { EnvMap } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
-import type { IdMap } from "../index.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { renderAlternativeNames, renderChance, renderResistance } from "./partial/herbary.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -70,9 +70,8 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
   "AnimalDisease" | "Disease",
   {
     getInstanceById: GetInstanceById<"Publication" | "AnimalType" | "DerivedCharacteristic">
-    idMap: IdMap
   }
->(({ getInstanceById, idMap }, locale, { entity, content: entry }) => {
+>(({ getInstanceById }, locale, { entity, content: entry }) => {
   const { translate, translateMap, compare: localeCompare } = locale
   const baseEntry: BaseDisease = entry
   const translation = translateMap(baseEntry.translations)
@@ -80,6 +79,12 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
   if (translation === undefined) {
     return undefined
   }
+
+  const env = {
+    translate,
+    translateMap,
+    getInstanceById,
+  } satisfies Partial<EnvMap>
 
   return {
     title:
@@ -105,13 +110,7 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
           { label: translate("Progress"), value: translation.progress },
           {
             label: translate("Resistance"),
-            value: renderResistance(
-              translate,
-              translateMap,
-              getInstanceById,
-              idMap,
-              baseEntry.resistance,
-            ),
+            value: renderResistance(baseEntry.resistance).run(env),
           },
           {
             label: translate("Incubation Time"),

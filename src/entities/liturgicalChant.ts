@@ -18,8 +18,7 @@ import type {
 } from "../helpers/getTypes.js"
 import type { LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
-import type { IdMap } from "../index.js"
-import type {  RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
 import { renderEnhancements } from "./partial/enhancements.js"
 import { attributedInstance, attributedName } from "./partial/markdown.js"
 import { getDerivedFocusRuleBadgeFromPrerequisites } from "./partial/prerequisites/index.js"
@@ -238,11 +237,10 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
       | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
-    idMap: IdMap
   }
 >(
   (
-    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    { getInstanceById, getChildInstancesForInstanceId },
     locale,
     { content: entry, entity, id },
     options,
@@ -291,7 +289,7 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
         {
           type: "definitionList",
           items: [
-            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
             renderEffect(translation.effect).run(env),
             combineGeneratedTextWithStaticTranslation(
               translate("Liturgical Time"),
@@ -346,11 +344,10 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
       | "FocusRule"
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"Enhancement">
-    idMap: IdMap
   }
 >(
   (
-    { getInstanceById, getChildInstancesForInstanceId, idMap },
+    { getInstanceById, getChildInstancesForInstanceId },
     locale,
     { content: entry, entity, id },
     options,
@@ -399,7 +396,7 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
         {
           type: "definitionList",
           items: [
-            renderSkillCheckWithPenalty(entry.check, entry.check_penalty, idMap).run(env),
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
             renderEffect(translation.effect).run(env),
             combineGeneratedTextWithStaticTranslation(
               translate("Ceremonial Time"),

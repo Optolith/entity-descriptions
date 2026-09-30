@@ -4,7 +4,7 @@ import type {
   ResolvedSelectOption,
   ResolvedSkillUse,
 } from "@optolith/database-schema/cache"
-import type { ActivatableIdentifier, Skill_ID } from "@optolith/database-schema/gen"
+import type { ActivatableIdentifier, Settings, Skill_ID } from "@optolith/database-schema/gen"
 import type { TSONDB } from "tsondb"
 import type { EntityDescriptionCreator } from "./creator.js"
 import { getActivatableEntityDescription } from "./entities/activatable.js"
@@ -87,8 +87,7 @@ export type TypedCreatorData = {
   getAllResolvedSelectOptions: GetAllResolvedSelectOptions
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
   getAllResolvedSkillUses: GetAllResolvedSkillUses
-  idMap: IdMap
-} & StdEnv<"f" | "fd" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "rts">
+} & StdEnv<"f" | "fd" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "rts" | "x">
 
 type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> = EntityDescriptionCreator<
   E,
@@ -259,17 +258,6 @@ export const supportedEntities = Object.keys(
 ).toSorted() as AvailableCreatorEntity[]
 
 /**
- * Human-readable aliases for certain identifiers in the database.
- */
-export type IdMap = {
-  DerivedCharacteristic: Record<
-    "LifePoints" | "Spirit" | "Toughness" | "Initiative" | "Movement",
-    string
-  >
-  ExperienceLevel: Record<"Experienced", string>
-}
-
-/**
  * A function that returns all resolved select options for an activatable entry.
  */
 export type GetAllResolvedSelectOptions = (id: ActivatableIdentifier) => ResolvedSelectOption[]
@@ -290,7 +278,7 @@ export type GetAllResolvedSkillUses = (id: Skill_ID) => ResolvedSkillUse[]
 export const getEntityDescription = <E extends AvailableCreatorEntity>(
   database: TSONDB<TSONDBTypes>,
   localeEnv: LocaleEnvironment,
-  idMap: IdMap,
+  settings: Settings,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   getAllResolvedSelectOptions: GetAllResolvedSelectOptions,
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications,
@@ -322,11 +310,11 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
       getAllResolvedSelectOptions,
       getAllResolvedNewSkillApplications,
       getAllResolvedSkillUses,
-      idMap,
       ...localeEnv,
       localeJoin: localeEnv.join,
       localeCompare: localeEnv.compare,
       responsiveTextSize: ResponsiveTextSize[responsiveTextSize],
+      settings,
     },
     localeEnv,
     { entity: entityName, content: instanceContent, id: instanceId },

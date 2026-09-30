@@ -17,6 +17,7 @@ import type {
   RestrictedProperty,
   RestrictedSpellwork,
   RestrictedSpellworks,
+  Settings,
   SpellworkAdjustment,
   SpellworkChange,
   SpellworkIdentifier,
@@ -30,7 +31,6 @@ import type {
 } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
 import type { Translate, TranslateMap } from "../helpers/translate.js"
-import type { IdMap } from "../index.js"
 import type { RawLabeledEntityDescriptionSection } from "../rawEntityDescription.js"
 import { attributedName } from "./partial/markdown.js"
 import { getBaseProfessionPackageForCurriculum } from "./partial/professions.js"
@@ -557,11 +557,11 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<
       "LessonPackage" | "ProfessionVersion" | "ProfessionPackage"
     >
-    idMap: IdMap
+    settings: Settings
   }
 >(
   (
-    { getInstanceById, getAllInstances, getChildInstancesForInstanceId, idMap },
+    { getInstanceById, getAllInstances, getChildInstancesForInstanceId, settings },
     { translate, translateMap, compare: localeCompare, join: localeJoin },
     { content: entry, id },
   ) => {
@@ -574,7 +574,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
     const baseProfessionPackage = getBaseProfessionPackageForCurriculum(
       getAllInstances,
       getChildInstancesForInstanceId,
-      idMap,
+      settings,
       id,
     )?.content
 
