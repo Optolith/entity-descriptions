@@ -95,6 +95,36 @@ export const renderValueMap = <T, TE1, TE2, TE3, TE4, TE5, V extends string | nu
           ).map(values => values.join(", "))
         }
 
+        case "Grouped": {
+          return Reader.traverse(map.options, (option, index) =>
+            renderValueMapOptionValue(option, index).thenW(value =>
+              renderValueMapOptionLabel(option, index).map(label => ({
+                value,
+                label,
+                option,
+                index,
+              })),
+            ),
+          ).thenW(options =>
+            Reader.traverse(
+              Map.groupBy(options, ({ value }) => value)
+                .entries()
+                .toArray(),
+              ([value, groupedOptions]) =>
+                sequence<TE3 & TE4 & TE5 & StdEnv<"rts">>`${listPrefixR}${groupedOptions
+                  .map(({ label }) => label)
+                  .join("/")
+                  .trim()}${listSuffixR}: ${formatValue(value)}${Reader.traverse(
+                  moreToAppendFns,
+                  more =>
+                    Reader.traverse(groupedOptions, ({ option, index }) =>
+                      more.render(option, index),
+                    ).thenW(values => more.format(values.join("/"))),
+                ).map(values => values.join(""))}`,
+            ).map(groups => groups.join("; ")),
+          )
+        }
+
         default:
           return assertExhaustive(map.style)
       }

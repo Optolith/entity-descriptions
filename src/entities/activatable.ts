@@ -177,9 +177,13 @@ const renderAdvantageDisadvantageSubtype = (subtype: AdvantageDisadvantageSubtyp
     case "MagicalTitle":
       return translateR("Magical Title")
     case "BlessedRank":
-      return translateR("Blessed Title")
+      return translateR("Blessed Rank")
     case "BlessedTitle":
       return translateR("Blessed Title")
+    case "BlessedHonor":
+      return translateR("Blessed Honor")
+    case "BlessedPunishment":
+      return translateR("Blessed Punishment")
     default:
       return assertExhaustive(subtype)
   }

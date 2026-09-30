@@ -114,6 +114,7 @@ import {
   localeCompareR,
   localeJoinR,
   localeSortR,
+  nameR,
   strictNameR,
   translateMapFnR,
   translateR,
@@ -1004,10 +1005,18 @@ const renderSpellworkName = (spellworkIds: ProfessionMagicalSkillIdentifier[]) =
             : attributedNameR("profession", "MagicalTradition", spellworkId.Spellwork.tradition)
           ).map(traditionName => (baseName ?? MISSING_VALUE) + parensIf(traditionName)),
         )
-      case "MagicalAction":
-        return attributedNameR("profession", spellworkId.MagicalAction.id).map(
-          name => name ?? MISSING_VALUE,
+      case "MagicalAction": {
+        const { id, option } = spellworkId.MagicalAction
+        const main = attributedNameR("profession", id).map(name => name ?? MISSING_VALUE)
+
+        if (option === undefined) {
+          return main
+        }
+
+        return main.thenW(mainName =>
+          nameR("BannzeichenOption", option).map(optionName => mainName + parensIf(optionName)),
         )
+      }
       default:
         return spellworkId
     }
