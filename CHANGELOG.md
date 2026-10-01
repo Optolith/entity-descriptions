@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.23.0](https://github.com/Optolith/entity-descriptions/compare/v0.22.0...v0.23.0) (2026-10-01)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.76.0
+* **deps:** upgrade to schema 0.77.0
+
+### build
+
+* **deps:** upgrade to schema 0.76.0 ([9159998](https://github.com/Optolith/entity-descriptions/commit/915999802a4fb0309f85b4aad08004d799841db6))
+* **deps:** upgrade to schema 0.77.0 ([8a7a01e](https://github.com/Optolith/entity-descriptions/commit/8a7a01e329f348e04298804a350ea4d0244c51ac))
+
+### Features
+
+* all magical and blessed one dis/advantages text derivation ([c00869f](https://github.com/Optolith/entity-descriptions/commit/c00869faf9f928d53513c582d0976b3835c8ee8d)), closes [#62](https://github.com/Optolith/entity-descriptions/issues/62)
+
+### Bug Fixes
+
+* adjust profession option list rendering ([45a55ce](https://github.com/Optolith/entity-descriptions/commit/45a55cee21095aedae4f092f08e1023f0ef8cf82)), closes [#61](https://github.com/Optolith/entity-descriptions/issues/61)
 ## [0.22.0](https://github.com/Optolith/entity-descriptions/compare/v0.21.0...v0.22.0) (2026-09-30)
 
 ### ⚠ BREAKING CHANGES
