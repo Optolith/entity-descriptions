@@ -129,7 +129,7 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
   packages: PreparedProfessionPackage[],
   selector: (pkg: PreparedProfessionPackage) => Reader<SelectorEnv, [T, number][]>,
   equalityFn: Equality<T>,
-  renderText: (value: T) => Reader<RenderEnv, string>,
+  renderPair: (id: T, ratings: string) => Reader<RenderEnv, string>,
   defaultValue: number | undefined,
 ): Reader<StdEnv<"lc"> & SelectorEnv & RenderEnv, string | undefined> =>
   packages
@@ -165,10 +165,7 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
     )
     .thenW(list =>
       Reader.traverse(list, ([value, numbers]) =>
-        renderText(value).map(
-          text =>
-            `${text} ${numbers.map(number => (number === undefined ? "—" : number)).join("/")}`,
-        ),
+        renderPair(value, numbers.map(number => (number === undefined ? "—" : number)).join("/")),
       ),
     )
     .thenW(list => localeSortR(list))
@@ -283,45 +280,57 @@ const renderSkillSpecializationOption = (
     }
   })
 
-const renderCombatTechniquesOption = (option: CombatTechniquesOptions) =>
+const renderCombatTechniquesOption = (
+  option: CombatTechniquesOptions,
+): StdReader<
+  string,
+  "t" | "tm" | "lc" | "lj" | "ibi",
+  "CloseCombatTechnique" | "RangedCombatTechnique"
+> =>
   isNotEmpty(option.fixed)
-    ? (() => {
-        const [first, ...others] = option.fixed
-
-        const firstTextR = translateR(
-          ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
-          { count: first.number, rating: (first.rating_modifier + 6).toFixed() },
-        )
-
-        const fixedTextR = others.reduce(
-          (accTextR, other) =>
-            accTextR.then(accText =>
-              translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
-                count: other.number,
-                previous: accText,
-                rating: (other.rating_modifier + 6).toFixed(),
-              }),
-            ),
-          firstTextR,
-        )
-
-        const completeTextR = fixedTextR.then(fixedText =>
-          option.rest_rating_modifier === undefined
-            ? Reader.of(fixedText)
-            : translateR("{$previous}, the others {$rating}", {
-                previous: fixedText,
-                rating: (option.rest_rating_modifier + 6).toFixed(),
-              }),
-        )
-
-        const listR = Reader.traverse(option.options, id =>
+    ? option.fixed.length === 1 && option.options.length === 2
+      ? Reader.traverse(option.options, id =>
           attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
         )
           .thenW(list => localeSortR(list))
-          .map(list => list.join(", "))
+          .thenW(list => localeJoinR(list, "disjunction"))
+      : (() => {
+          const [first, ...others] = option.fixed
 
-        return completeTextR.thenW(completeText => listR.map(list => `${completeText}: ${list}`))
-      })()
+          const firstTextR = translateR(
+            ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
+            { count: first.number, rating: (first.rating_modifier + 6).toFixed() },
+          )
+
+          const fixedTextR = others.reduce(
+            (accTextR, other) =>
+              accTextR.then(accText =>
+                translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
+                  count: other.number,
+                  previous: accText,
+                  rating: (other.rating_modifier + 6).toFixed(),
+                }),
+              ),
+            firstTextR,
+          )
+
+          const completeTextR = fixedTextR.then(fixedText =>
+            option.rest_rating_modifier === undefined
+              ? Reader.of(fixedText)
+              : translateR("{$previous}, the others {$rating}", {
+                  previous: fixedText,
+                  rating: (option.rest_rating_modifier + 6).toFixed(),
+                }),
+          )
+
+          const listR = Reader.traverse(option.options, id =>
+            attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
+          )
+            .thenW(list => localeSortR(list))
+            .map(list => list.join(", "))
+
+          return completeTextR.thenW(completeText => listR.map(list => `${completeText}: ${list}`))
+        })()
     : Reader.of(MISSING_VALUE)
 
 const getTotalingAPValues = (
@@ -936,8 +945,8 @@ const renderCombatTechniques = (professionPackages: NonEmptyArray<PreparedProfes
       professionPackages,
       pkg => Reader.of(pkg.content.combat_techniques?.map(ct => [ct.id, ct.rating_modifier]) ?? []),
       deepEqual,
-      (ctId: CombatTechniqueIdentifier) =>
-        attributedNameR("profession", ctId).map(name => name ?? MISSING_VALUE),
+      (ctId: CombatTechniqueIdentifier, ratings: string) =>
+        attributedNameR("profession", ctId).map(name => `${name ?? MISSING_VALUE} ${ratings}`),
       6,
     ),
     professionPackages.some(pkg => pkg.content.options?.combat_techniques !== undefined)
@@ -984,8 +993,10 @@ const renderSkills = (
                       .map(skill => [skill.id, skill.rating_modifier]) ?? [],
                 ),
               equal,
-              skillId =>
-                attributedNameR("profession", "Skill", skillId).map(name => name ?? MISSING_VALUE),
+              (skillId, ratings) =>
+                attributedNameR("profession", "Skill", skillId).map(
+                  name => `${name ?? MISSING_VALUE} ${ratings}`,
+                ),
               0,
             ),
             renderSkillsOption(professionPackages, {
@@ -1000,7 +1011,7 @@ const renderSkills = (
     ),
   )
 
-const renderSpellworkName = (spellworkIds: ProfessionMagicalSkillIdentifier[]) =>
+const renderSpellworkName = (spellworkIds: ProfessionMagicalSkillIdentifier[], ratings: string) =>
   Reader.traverse(spellworkIds, spellworkId => {
     switch (spellworkId.kind) {
       case "Spellwork":
@@ -1008,18 +1019,22 @@ const renderSpellworkName = (spellworkIds: ProfessionMagicalSkillIdentifier[]) =
           (spellworkId.Spellwork.tradition === undefined
             ? Reader.of(undefined)
             : attributedNameR("profession", "MagicalTradition", spellworkId.Spellwork.tradition)
-          ).map(traditionName => (baseName ?? MISSING_VALUE) + parensIf(traditionName)),
+          ).map(
+            traditionName => `${(baseName ?? MISSING_VALUE) + parensIf(traditionName)} ${ratings}`,
+          ),
         )
       case "MagicalAction": {
         const { id, option } = spellworkId.MagicalAction
         const main = attributedNameR("profession", id).map(name => name ?? MISSING_VALUE)
 
         if (option === undefined) {
-          return main
+          return main.map(mainName => `${mainName} ${ratings}`)
         }
 
         return main.thenW(mainName =>
-          nameR("BannzeichenOption", option).map(optionName => mainName + parensIf(optionName)),
+          nameR("BannzeichenOption", option).map(
+            optionName => `${mainName + parensIf(optionName)} ${ratings}`,
+          ),
         )
       }
       default:
@@ -1169,10 +1184,19 @@ const renderBlessingsForVariant = (professionVariant: ProfessionVariant) =>
     retrieveBlessedTraditionIdentifierFromVariantPrerequisites(professionVariant.prerequisites),
   ]).map(blessingsText => (blessingsText !== undefined ? [blessingsText] : []))
 
-const renderLiturgicalChantName = (liturgyIds: LiturgyIdentifier[]) =>
+const renderLiturgicalChantName = (liturgyIds: LiturgyIdentifier[], ratings: string) =>
   Reader.traverse(liturgyIds, id =>
     attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
-  ).thenW(list => localeJoinR(list, "disjunction"))
+  )
+    .thenW(localeSortR)
+    .thenW((list): StdReader<string, "t" | "lj"> =>
+      list.length > 2
+        ? translateR(
+            ".input {$count :number} {{{$count} of the following liturgical chants {$rating}}}",
+            { count: 1, rating: ratings },
+          )
+        : localeJoinR(list, "disjunction").map(names => `${names} ${ratings}`),
+    )
 
 const renderLiturgicalChants = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
   Reader.sequence<
@@ -1200,16 +1224,16 @@ const baseHasNoTradition = (base: ProfessionPackage): boolean =>
 const renderRatedVariantChanges = <ID, Env>(
   baseList: "ignore" | { id: ID; rating_modifier: number }[] | undefined,
   variantList: { id: ID; rating_modifier: number }[] | undefined,
-  renderInstance: (id: ID) => Reader<Env, string>,
+  renderInstance: (id: ID, ratings: string) => Reader<Env, string>,
 ) =>
   Reader.traverse(variantList ?? [], ({ id, rating_modifier }) => {
     if (baseList === "ignore") {
-      return renderInstance(id).map(name => `${name} ${rating_modifier.toFixed()}`)
+      return renderInstance(id, rating_modifier.toFixed())
     }
 
     const baseValue = baseList?.find(item => deepEqual(item.id, id))?.rating_modifier ?? 0
-    return renderInstance(id).thenW(name =>
-      insteadOfR(`${name} ${(baseValue + rating_modifier).toFixed()}`, baseValue),
+    return insteadOfR((baseValue + rating_modifier).toFixed(), baseValue).thenW(ratings =>
+      renderInstance(id, ratings),
     )
   }).thenW(localeSortR)
 
