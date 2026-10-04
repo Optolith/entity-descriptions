@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.23.1](https://github.com/Optolith/entity-descriptions/compare/v0.23.0...v0.23.1) (2026-10-04)
+
+### Bug Fixes
+
+* missing commonness entry note ([50af30f](https://github.com/Optolith/entity-descriptions/commit/50af30f7ff11da855709b79b117fc86c045cd225))
+* render style special ability changes in profession variants as replacement ([c2aa322](https://github.com/Optolith/entity-descriptions/commit/c2aa322c303c66beade873781e6f65f66db3697a))
+* show combat technique and skill rating changes in profession variants ([fd2c699](https://github.com/Optolith/entity-descriptions/commit/fd2c6997e4fce5134afa430b103b362900d6dfbd))
+* space after comma in commonness listings ([2f915f2](https://github.com/Optolith/entity-descriptions/commit/2f915f28d672ac93faabbd906ede5178a08102ed))
 ## [0.23.0](https://github.com/Optolith/entity-descriptions/compare/v0.22.0...v0.23.0) (2026-10-01)
 
 ### ⚠ BREAKING CHANGES
