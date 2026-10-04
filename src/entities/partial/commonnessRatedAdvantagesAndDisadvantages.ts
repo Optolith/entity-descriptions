@@ -35,6 +35,8 @@ const convertCommonnessRatedAdvantageOrDisadvantageLevel = (
   }
 }
 
+const escapeBrackets = (text: string) => text.replace(/(?<!\\)(?<brace>[[\]])/gu, "\\$1")
+
 const renderOptions = (
   item: CommonnessRatedAdvantageDisadvantage<string>,
   id: Case<"Advantage" | "Disadvantage", string>,
@@ -49,7 +51,7 @@ const renderOptions = (
               MISSING_VALUE,
           ) ?? [],
       )
-    : Reader.of([translation.options])
+    : Reader.of([escapeBrackets(translation.options)])
 
 const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
   entity: E,
@@ -60,7 +62,12 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
       (translation, instance) => {
         if (commonnessItemTranslation?.full !== undefined) {
           return Reader.of(
-            attributedNameFromText(commonnessItemTranslation.full, "commonness", entity, item.id),
+            attributedNameFromText(
+              escapeBrackets(commonnessItemTranslation.full),
+              "commonness",
+              entity,
+              item.id,
+            ),
           )
         }
 
