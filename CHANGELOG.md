@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.23.2](https://github.com/Optolith/entity-descriptions/compare/v0.23.1...v0.23.2) (2026-10-04)
+
+### Bug Fixes
+
+* escape brackets in commonness translations ([5794c58](https://github.com/Optolith/entity-descriptions/commit/5794c586be22a32aa8836a990a016c64ab079166))
 ## [0.23.1](https://github.com/Optolith/entity-descriptions/compare/v0.23.0...v0.23.1) (2026-10-04)
 
 ### Bug Fixes
