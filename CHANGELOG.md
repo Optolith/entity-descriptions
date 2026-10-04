@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.23.3](https://github.com/Optolith/entity-descriptions/compare/v0.23.2...v0.23.3) (2026-10-04)
+
+### Bug Fixes
+
+* appended string missing when base list empty ([1a33805](https://github.com/Optolith/entity-descriptions/commit/1a33805f295d20fa6a70603cd39d794b7c815c9f))
+* show list of liturgical chants to choose from if more than two ([19a2021](https://github.com/Optolith/entity-descriptions/commit/19a202162fcfb78175967afc2de21bc0fcf1cd8d))
+* show value for combat techniques to choose from if there are exactly two options ([61848ca](https://github.com/Optolith/entity-descriptions/commit/61848caaacd0d21a3d211ff81fb943024a162506))
 ## [0.23.2](https://github.com/Optolith/entity-descriptions/compare/v0.23.1...v0.23.2) (2026-10-04)
 
 ### Bug Fixes
