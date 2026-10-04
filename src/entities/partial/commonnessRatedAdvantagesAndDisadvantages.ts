@@ -88,7 +88,11 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
                 options,
               },
               false,
-              list => list.toSorted(env.localeCompare).join(", "),
+              list =>
+                [
+                  ...list.toSorted(env.localeCompare),
+                  ...nullableToArray(commonnessItemTranslation?.note),
+                ].join(", "),
               "commonness",
             ),
           )
