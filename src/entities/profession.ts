@@ -280,6 +280,8 @@ const renderSkillSpecializationOption = (
     }
   })
 
+const COMBAT_TECHNIQUE_START_RATING = 6
+
 const renderCombatTechniquesOption = (
   option: CombatTechniquesOptions,
 ): StdReader<
@@ -299,7 +301,10 @@ const renderCombatTechniquesOption = (
 
           const firstTextR = translateR(
             ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
-            { count: first.number, rating: (first.rating_modifier + 6).toFixed() },
+            {
+              count: first.number,
+              rating: (first.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
+            },
           )
 
           const fixedTextR = others.reduce(
@@ -308,7 +313,7 @@ const renderCombatTechniquesOption = (
                 translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
                   count: other.number,
                   previous: accText,
-                  rating: (other.rating_modifier + 6).toFixed(),
+                  rating: (other.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
                 }),
               ),
             firstTextR,
@@ -319,7 +324,7 @@ const renderCombatTechniquesOption = (
               ? Reader.of(fixedText)
               : translateR("{$previous}, the others {$rating}", {
                   previous: fixedText,
-                  rating: (option.rest_rating_modifier + 6).toFixed(),
+                  rating: (option.rest_rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
                 }),
           )
 
@@ -947,7 +952,7 @@ const renderCombatTechniques = (professionPackages: NonEmptyArray<PreparedProfes
       deepEqual,
       (ctId: CombatTechniqueIdentifier, ratings: string) =>
         attributedNameR("profession", ctId).map(name => `${name ?? MISSING_VALUE} ${ratings}`),
-      6,
+      COMBAT_TECHNIQUE_START_RATING,
     ),
     professionPackages.some(pkg => pkg.content.options?.combat_techniques !== undefined)
       ? renderSinglePackageValue(
@@ -1225,6 +1230,7 @@ const renderRatedVariantChanges = <ID, Env>(
   baseList: "ignore" | { id: ID; rating_modifier: number }[] | undefined,
   variantList: { id: ID; rating_modifier: number }[] | undefined,
   renderInstance: (id: ID, ratings: string) => Reader<Env, string>,
+  minimum = 0,
 ) =>
   Reader.traverse(variantList ?? [], ({ id, rating_modifier }) => {
     if (baseList === "ignore") {
@@ -1232,8 +1238,8 @@ const renderRatedVariantChanges = <ID, Env>(
     }
 
     const baseValue = baseList?.find(item => deepEqual(item.id, id))?.rating_modifier ?? 0
-    return insteadOfR((baseValue + rating_modifier).toFixed(), baseValue).thenW(ratings =>
-      renderInstance(id, ratings),
+    return insteadOfR((minimum + baseValue + rating_modifier).toFixed(), minimum + baseValue).thenW(
+      ratings => renderInstance(id, ratings),
     )
   }).thenW(localeSortR)
 
@@ -1330,11 +1336,15 @@ const renderProfessionVariantText = (
                 default:
                   return assertExhaustive(specialAbility.action)
               }
-            }),
-        renderRatedVariantChanges(base.combat_techniques, variant.combat_techniques, id =>
-          strictNameR(id),
+        renderRatedVariantChanges(
+          base.combat_techniques,
+          variant.combat_techniques,
+          (id, ratings) => strictNameR(id).map(name => `${name} ${ratings}`),
+          COMBAT_TECHNIQUE_START_RATING,
         ),
-        renderRatedVariantChanges(base.skills, variant.skills, id => strictNameR("Skill", id)),
+        renderRatedVariantChanges(base.skills, variant.skills, (id, ratings) =>
+          strictNameR("Skill", id).map(name => `${name} ${ratings}`),
+        ),
         renderRatedVariantChanges(base.spells, variant.spells, renderSpellworkName),
         renderBlessingsForVariant(variant),
         renderRatedVariantChanges(
