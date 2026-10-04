@@ -185,9 +185,11 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
   emptyString: T,
   appendedString?: string,
 ): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", E> =>
-  items === undefined || !isNotEmpty(items)
+  (items === undefined || !isNotEmpty(items)) && appendedString === undefined
     ? Reader.of(emptyString)
-    : Reader.traverse(items, item => renderCommonnessRatedAdvantageOrDisadvantageName(entity, item))
+    : Reader.traverse(items ?? [], item =>
+        renderCommonnessRatedAdvantageOrDisadvantageName(entity, item),
+      )
         .thenW(localeSortR)
         .map(names => [...names, ...nullableToArray(appendedString)].join(", "))
 
