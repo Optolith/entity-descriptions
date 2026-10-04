@@ -182,7 +182,7 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
     ? Reader.of(emptyString)
     : Reader.traverse(items, item => renderCommonnessRatedAdvantageOrDisadvantageName(entity, item))
         .thenW(localeSortR)
-        .map(names => [names, nullableToArray(appendedString)].join(", "))
+        .map(names => [...names, ...nullableToArray(appendedString)].join(", "))
 
 /**
  * Render the names of commonness-rated advantages and disadvantages together.
