@@ -289,55 +289,59 @@ const renderCombatTechniquesOption = (
   string,
   "t" | "tm" | "lc" | "lj" | "ibi",
   "CloseCombatTechnique" | "RangedCombatTechnique"
-> =>
-  isNotEmpty(option.fixed)
-    ? option.fixed.length === 1 && option.options.length === 2
-      ? Reader.traverse(option.options, id =>
-          attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
-        )
-          .thenW(list => localeSortR(list))
-          .thenW(list => localeJoinR(list, "disjunction"))
-      : (() => {
-          const [first, ...others] = option.fixed
+> => {
+  if (isNotEmpty(option.fixed)) {
+    const [first, ...others] = option.fixed
 
-          const firstTextR = translateR(
-            ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
-            {
-              count: first.number,
-              rating: (first.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
-            },
-          )
+    if (option.fixed.length === 1 && option.options.length === 2) {
+      return Reader.traverse(option.options, id =>
+        attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
+      )
+        .thenW(list => localeSortR(list))
+        .thenW(list => localeJoinR(list, "disjunction"))
+        .map(list => `${list} ${(first.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed()}`)
+    } else {
+      const firstTextR = translateR(
+        ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
+        {
+          count: first.number,
+          rating: (first.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
+        },
+      )
 
-          const fixedTextR = others.reduce(
-            (accTextR, other) =>
-              accTextR.then(accText =>
-                translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
-                  count: other.number,
-                  previous: accText,
-                  rating: (other.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
-                }),
-              ),
-            firstTextR,
-          )
+      const fixedTextR = others.reduce(
+        (accTextR, other) =>
+          accTextR.then(accText =>
+            translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
+              count: other.number,
+              previous: accText,
+              rating: (other.rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
+            }),
+          ),
+        firstTextR,
+      )
 
-          const completeTextR = fixedTextR.then(fixedText =>
-            option.rest_rating_modifier === undefined
-              ? Reader.of(fixedText)
-              : translateR("{$previous}, the others {$rating}", {
-                  previous: fixedText,
-                  rating: (option.rest_rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
-                }),
-          )
+      const completeTextR = fixedTextR.then(fixedText =>
+        option.rest_rating_modifier === undefined
+          ? Reader.of(fixedText)
+          : translateR("{$previous}, the others {$rating}", {
+              previous: fixedText,
+              rating: (option.rest_rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
+            }),
+      )
 
-          const listR = Reader.traverse(option.options, id =>
-            attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
-          )
-            .thenW(list => localeSortR(list))
-            .map(list => list.join(", "))
+      const listR = Reader.traverse(option.options, id =>
+        attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
+      )
+        .thenW(list => localeSortR(list))
+        .map(list => list.join(", "))
 
-          return completeTextR.thenW(completeText => listR.map(list => `${completeText}: ${list}`))
-        })()
-    : Reader.of(MISSING_VALUE)
+      return completeTextR.thenW(completeText => listR.map(list => `${completeText}: ${list}`))
+    }
+  } else {
+    return Reader.of(MISSING_VALUE)
+  }
+}
 
 const getTotalingAPValues = (
   professionPackages: NonEmptyArray<PreparedProfessionPackage>,
