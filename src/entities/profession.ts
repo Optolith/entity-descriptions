@@ -45,6 +45,7 @@ import type {
   SkillsOptions,
   SkillSpecializationOptions,
   SkillWithEnhancementsIdentifier,
+  SpecialAbilityIdentifier,
   VariantOptionAction,
 } from "@optolith/database-schema/gen"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
@@ -1259,6 +1260,25 @@ const renderProfessionVariantLabel = (
       .map(names => names + parensIf(apValueText)),
   )
 
+const styleSpecialAbilityKinds: (SpecialAbilityIdentifier["kind"] | "Enhancement")[] = [
+  "CombatStyleSpecialAbility",
+  "LiturgicalStyleSpecialAbility",
+  "MagicStyleSpecialAbility",
+  "SkillStyleSpecialAbility",
+]
+
+const isStyleSpecialAbility = (
+  specialAbility: ProfessionSpecialAbility,
+): specialAbility is Case<"Constant", ConstantProfessionSpecialAbility> =>
+  specialAbility.kind === "Constant" &&
+  styleSpecialAbilityKinds.includes(specialAbility.Constant.id.kind)
+
+const isStyleSpecialAbilityOfType = (
+  specialAbility: ProfessionSpecialAbility,
+  type: (typeof styleSpecialAbilityKinds)[number],
+): specialAbility is Case<"Constant", ConstantProfessionSpecialAbility> =>
+  specialAbility.kind === "Constant" && type === specialAbility.Constant.id.kind
+
 const renderProfessionVariantText = (
   base: ProfessionPackage,
   variant: ProfessionVariant,
@@ -1328,14 +1348,44 @@ const renderProfessionVariantText = (
           : Reader.traverse(variant.special_abilities, specialAbility => {
               switch (specialAbility.action.kind) {
                 case "Remove":
+                  if (isStyleSpecialAbility(specialAbility.value)) {
+                    const currentStyleType = specialAbility.value.Constant.id.kind
+                    const hasOverride =
+                      variant.special_abilities?.some(
+                        sa =>
+                          sa.action.kind === "Override" &&
+                          isStyleSpecialAbilityOfType(sa.value, currentStyleType),
+                      ) ?? false
+
+                    if (hasOverride) {
+                      return Reader.of(undefined)
+                    }
+                  }
+
                   return translateR("no special ability").thenW(prefix =>
                     renderSpecialAbilityName(specialAbility.value).map(name => `${prefix} ${name}`),
                   )
                 case "Override":
+                  if (isStyleSpecialAbility(specialAbility.value)) {
+                    const currentStyleType = specialAbility.value.Constant.id.kind
+                    const baseStyleSpecialAbility = base.special_abilities?.find(sa =>
+                      isStyleSpecialAbilityOfType(sa, currentStyleType),
+                    )
+
+                    if (baseStyleSpecialAbility !== undefined) {
+                      return renderSpecialAbilityName(baseStyleSpecialAbility).thenW(baseName =>
+                        renderSpecialAbilityName(specialAbility.value).thenW(overrideName =>
+                          insteadOfR(overrideName, baseName),
+                        ),
+                      )
+                    }
+                  }
+
                   return renderSpecialAbilityName(specialAbility.value)
                 default:
                   return assertExhaustive(specialAbility.action)
               }
+            }).map(list => list.filter(isNotNullish)),
         renderRatedVariantChanges(
           base.combat_techniques,
           variant.combat_techniques,
