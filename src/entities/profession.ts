@@ -1200,7 +1200,7 @@ const renderLiturgicalChantName = (liturgyIds: LiturgyIdentifier[], ratings: str
         ? translateR(
             ".input {$count :number} {{{$count} of the following liturgical chants {$rating}}}",
             { count: 1, rating: ratings },
-          )
+          ).map(main => `${main}: ${list.join(", ")}`)
         : localeJoinR(list, "disjunction").map(names => `${names} ${ratings}`),
     )
 
