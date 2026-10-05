@@ -108,6 +108,7 @@ import {
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedCustomNameR,
+  attributedNameFromInstanceR,
   attributedNameR,
   customNameR,
   fixedNumberOrString,
@@ -1340,7 +1341,7 @@ const baseHasNoTradition = (base: ProfessionPackage): boolean =>
 const renderRatedVariantChanges = <ID, Env>(
   baseList: "ignore" | { id: ID; rating_modifier: number }[] | undefined,
   variantList: { id: ID; rating_modifier: number }[] | undefined,
-  renderInstance: (id: ID, ratings: string) => Reader<Env, string>,
+  renderInstance: (id: ID, ratings: string) => Reader<Env, string | undefined>,
   minimum = 0,
 ) =>
   Reader.traverse(variantList ?? [], ({ id, rating_modifier }) => {
@@ -1352,7 +1353,9 @@ const renderRatedVariantChanges = <ID, Env>(
     return insteadOfR((minimum + baseValue + rating_modifier).toFixed(), minimum + baseValue).thenW(
       ratings => renderInstance(id, ratings),
     )
-  }).thenW(localeSortR)
+  })
+    .map(list => list.filter(isNotNullish))
+    .thenW(localeSortR)
 
 const renderProfessionVariantLabel = (
   base: ProfessionPackage,
@@ -1398,7 +1401,7 @@ const renderProfessionVariantText = (
     ? Reader.of(translation.full_text)
     : Reader.sequence<
         StdEnv<
-          "f" | "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
+          "f" | "t" | "tm" | "lc" | "lj" | "ibi" | "rso" | "ai",
           | RatedIdentifier["kind"]
           | MagicalActionIdentifier["kind"]
           | ActivatableIdentifier["kind"]
@@ -1409,7 +1412,8 @@ const renderProfessionVariantText = (
           | "SkillGroup"
           | "Blessing"
           | "Enhancement"
-          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">,
+          "SkillGroup"
         >,
         string[]
       >([
@@ -1503,8 +1507,24 @@ const renderProfessionVariantText = (
           (id, ratings) => strictNameR(id).map(name => `${name} ${ratings}`),
           COMBAT_TECHNIQUE_START_RATING,
         ),
-        renderRatedVariantChanges(base.skills, variant.skills, (id, ratings) =>
-          strictNameR("Skill", id).map(name => `${name} ${ratings}`),
+        Reader.asks(({ getAllInstances }: StdEnv<"ai", never, "SkillGroup">) =>
+          getAllInstances("SkillGroup"),
+        ).thenW(skillGroups =>
+          Reader.traverse(
+            skillGroups.toSorted(on(group => group.content.position, compareNumber)),
+            ({ id: groupId }) =>
+              renderRatedVariantChanges(base.skills, variant.skills, (id, ratings) =>
+                getInstanceByIdR("Skill", id).thenW(skill => {
+                  if (skill === undefined || skill.group !== groupId) {
+                    return Reader.of(undefined)
+                  }
+
+                  return attributedNameFromInstanceR(skill, "profession", "Skill", id).map(
+                    name => `${name ?? MISSING_VALUE} ${ratings}`,
+                  )
+                }),
+              ),
+          ).map(lists => lists.flat()),
         ),
         renderRatedVariantChanges(base.spells, variant.spells, renderSpellworkName),
         renderBlessingsForVariant(variant),
