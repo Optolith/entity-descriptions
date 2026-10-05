@@ -19,6 +19,7 @@ import type {
   Profession_ID,
   ProfessionConstraint,
   Rarity,
+  RequirableSelectOptionIdentifier,
   Skill_ID,
   Weighted,
 } from "@optolith/database-schema/gen"
@@ -429,6 +430,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
       | "ProfessionVariant"
       | "MagicalTradition"
       | "BlessedTradition"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

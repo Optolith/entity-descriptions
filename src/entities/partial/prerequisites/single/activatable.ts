@@ -9,7 +9,7 @@ import type {
   ActivatablePrerequisite,
   RequirableSelectOptionIdentifier,
 } from "@optolith/database-schema/gen"
-import type { StdEnv, StdReader } from "../../../../env.js"
+import type { StdEnv } from "../../../../env.js"
 import type { LocaleMap } from "../../../../helpers/translate.js"
 import { getNameComponents, type ActivatableNameComponents } from "../../activatableNameChunks.js"
 import { getInstanceByIdR, translateR } from "../../reader.js"
@@ -26,17 +26,23 @@ export type GetResolvedSelectOptionById = (
 ) => ResolvedSelectOption | undefined
 
 /**
+ * Needed environment for printing the name of an activatable.
+ */
+export type ActivatableNameEnv = StdEnv<
+  "t" | "rso" | "ibi" | "dip",
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+>
+
+/**
  * Get the name components of an activatable.
  */
 export const printActivatableName = (
   id: ActivatableIdentifier,
   options: RequirableSelectOptionIdentifier[] | undefined,
   level: number | undefined,
-): StdReader<
-  ActivatableNameComponents | undefined,
-  "t" | "rso" | "ibi" | "dip",
-  ActivatableIdentifier["kind"] | "Aspect"
-> =>
+): Reader<ActivatableNameEnv, ActivatableNameComponents | undefined> =>
   getInstanceByIdR(id).thenW(
     (
       entry:
@@ -49,7 +55,14 @@ export const printActivatableName = (
       entry === undefined
         ? Reader.of(undefined)
         : Reader.asks(
-            (env: StdEnv<"t" | "rso" | "ibi" | "dip", ActivatableIdentifier["kind"] | "Aspect">) =>
+            (
+              env: StdEnv<
+                "t" | "rso" | "ibi" | "dip",
+                | ActivatableIdentifier["kind"]
+                | "Aspect"
+                | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+              >,
+            ) =>
               getNameComponents(
                 env.translate,
                 id,
@@ -58,6 +71,7 @@ export const printActivatableName = (
                 entry.nameBuilderRules,
                 entry.translations,
                 t => t.name,
+                env.getInstanceById,
                 env.getResolvedSelectOptionById,
                 env.displayedInProfession,
               ),
@@ -69,11 +83,7 @@ export const printActivatableName = (
  */
 export const printActivatablePrerequisite = (
   prerequisite: ActivatablePrerequisite,
-): StdReader<
-  PrerequisitePart | undefined,
-  "t" | "tm" | "rso" | "ibi" | "dip",
-  ActivatableIdentifier["kind"] | "Aspect"
-> =>
+): Reader<ActivatableNameEnv & StdEnv<"tm">, PrerequisitePart | undefined> =>
   prerequisite.display_option !== undefined
     ? printDisplayOption(prerequisite.display_option)
     : printActivatableName(prerequisite.id, prerequisite.options, prerequisite.level).then(

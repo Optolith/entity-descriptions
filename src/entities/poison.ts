@@ -16,6 +16,7 @@ import type {
   PoisonSourceType,
   PoisonStart,
   RatedIdentifier,
+  RequirableSelectOptionIdentifier,
 } from "@optolith/database-schema/gen"
 import { combatDLItem, createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdReader } from "../env.js"
@@ -427,6 +428,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       | "PersonalityTrait"
       | "Blessing"
       | "Cantrip"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }

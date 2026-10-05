@@ -14,6 +14,7 @@ import type {
   Culture_ID,
   RaceVariant,
   RaceVariantTranslation,
+  RequirableSelectOptionIdentifier,
   Settings,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -217,7 +218,9 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
 ): StdReader<
   string | T,
   "t" | "tm" | "lc" | "ibi" | "rso",
-  ActivatableIdentifier["kind"] | "Aspect"
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > =>
   items === undefined || !isNotEmpty(items)
     ? Reader.of(emptyString)
@@ -228,7 +231,9 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
         ): StdReader<
           ActivatableNameComponents | undefined,
           "t" | "rso" | "ibi",
-          ActivatableIdentifier["kind"] | "Aspect"
+          | ActivatableIdentifier["kind"]
+          | "Aspect"
+          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
         > =>
           printActivatableName(Case(entity, item.id), item.options, item.level).with(env => ({
             ...env,
@@ -253,7 +258,9 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
 ): StdReader<
   string | T,
   "t" | "tm" | "lc" | "ibi" | "rso",
-  ActivatableIdentifier["kind"] | "Aspect"
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > =>
   Reader.traverse(
     [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const],
@@ -265,7 +272,9 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
         ): StdReader<
           ActivatableNameComponents | undefined,
           "t" | "rso" | "ibi",
-          ActivatableIdentifier["kind"] | "Aspect"
+          | ActivatableIdentifier["kind"]
+          | "Aspect"
+          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
         > =>
           printActivatableName(Case(entity, item.id), item.options, item.level).with(env => ({
             ...env,
@@ -312,6 +321,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
       | "Aspect"
       | "Culture"
       | "DerivedCharacteristic"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     countInstances: CountInstances<"Attribute">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"RaceVariant">
@@ -367,7 +377,11 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
             ...Reader.sequence<
               StdEnv<
                 "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
-                "Attribute" | "Culture" | ActivatableIdentifier["kind"] | "Aspect"
+                | "Attribute"
+                | "Culture"
+                | ActivatableIdentifier["kind"]
+                | "Aspect"
+                | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
               >,
               RawDefinitionListEntityDescriptionSectionItem | undefined
             >([

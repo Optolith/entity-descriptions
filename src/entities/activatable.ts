@@ -42,6 +42,7 @@ import type {
   PropertyDeclaration,
   PublicationRefs,
   RatedIdentifier,
+  RequirableSelectOptionIdentifier,
   RestrictedBlessings,
   SelectOptions,
   Skill_ID,
@@ -81,6 +82,7 @@ import {
 } from "./partial/prerequisites/index.js"
 import {
   printActivatableName,
+  type ActivatableNameEnv,
   type GetResolvedSelectOptionById,
 } from "./partial/prerequisites/single/activatable.js"
 import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
@@ -1035,7 +1037,7 @@ const normalizeId = (
 const renderAdvancedSpecialAbilityName = (
   translate: Translate,
   translateMap: TranslateMap,
-  getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
+  getInstanceById: ActivatableNameEnv["getInstanceById"],
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   entityName: StyleSpecialAbilityKind,
   id: AdvancedIdentifierSpecialAbility,
@@ -1061,7 +1063,7 @@ const renderAdvancedValue = (
   translateMap: TranslateMap,
   localeJoin: LocaleJoin,
   localeCompare: LocaleCompare,
-  getInstanceById: GetInstanceById<ActivatableIdentifier["kind"] | "Aspect">,
+  getInstanceById: ActivatableNameEnv["getInstanceById"],
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   entityName: StyleSpecialAbilityKind,
   advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
@@ -1248,7 +1250,7 @@ const renderDeriveFromExternalOptionTable = (
   translate: Translate,
   translateMap: TranslateMap,
   localeCompare: LocaleCompare,
-  getInstanceById: GetInstanceById<"Patron" | ActivatableIdentifier["kind"] | "Aspect">,
+  getInstanceById: ActivatableNameEnv["getInstanceById"] & GetInstanceById<"Patron">,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   entityName: ActivatableIdentifier["kind"],
   advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
@@ -1553,6 +1555,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Cantrip"
       | "FocusRule"
       | "CeremonialItemSpecialAbilityGroup"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     getAllInstances: GetAllInstances<"Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

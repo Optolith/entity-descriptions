@@ -1,4 +1,7 @@
-import type { ActivatableIdentifier } from "@optolith/database-schema/gen"
+import type {
+  ActivatableIdentifier,
+  RequirableSelectOptionIdentifier,
+} from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
@@ -12,7 +15,12 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
   "Influence",
   {
     getInstanceById: GetInstanceById<
-      "Publication" | "Influence" | "Race" | ActivatableIdentifier["kind"] | "Aspect"
+      | "Publication"
+      | "Influence"
+      | "Race"
+      | ActivatableIdentifier["kind"]
+      | "Aspect"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">

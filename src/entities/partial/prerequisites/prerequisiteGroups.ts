@@ -15,6 +15,7 @@ import type {
   ProfessionPrerequisiteGroup,
   PublicationPrerequisiteGroup,
   RatedIdentifier,
+  RequirableSelectOptionIdentifier,
   SpellworkPrerequisiteGroup,
 } from "@optolith/database-schema/gen"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
@@ -100,6 +101,7 @@ export const printGeneralPrerequisiteGroup = (
   | "PersonalityTrait"
   | "Blessing"
   | "Cantrip"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > => {
   switch (prerequisite.kind) {
     case "Sex":
@@ -158,7 +160,12 @@ export const printProfessionPrerequisiteGroup = (
 ): StdReader<
   PrerequisitePart | undefined,
   "t" | "tm" | "rso" | "ibi",
-  "Race" | "Culture" | ActivatableIdentifier["kind"] | RatedIdentifier["kind"] | "Aspect"
+  | "Race"
+  | "Culture"
+  | ActivatableIdentifier["kind"]
+  | RatedIdentifier["kind"]
+  | "Aspect"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > => {
   switch (prerequisite.kind) {
     case "Sex":
@@ -203,6 +210,7 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
   | "PersonalityTrait"
   | "Blessing"
   | "Cantrip"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > => {
   switch (prerequisite.kind) {
     case "CommonSuggestedByRCP":
@@ -312,7 +320,11 @@ export const printInfluencePrerequisiteGroup = (
 ): StdReader<
   PrerequisitePart | undefined,
   "t" | "tm" | "rso" | "ibi" | "acibp",
-  "Influence" | "Race" | ActivatableIdentifier["kind"] | "Aspect",
+  | "Influence"
+  | "Race"
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">,
   never,
   "ProfessionVersion"
 > => {
@@ -343,7 +355,10 @@ export const printLanguagePrerequisiteGroup = (
 ): StdReader<
   PrerequisitePart | undefined,
   "t" | "tm" | "rso" | "ibi",
-  "Race" | ActivatableIdentifier["kind"] | "Aspect"
+  | "Race"
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > => {
   switch (prerequisite.kind) {
     case "Race":
@@ -381,7 +396,10 @@ export const printGeodeRitualPrerequisiteGroup = (
 ): StdReader<
   PrerequisitePart | undefined,
   "t" | "tm" | "rso" | "ibi",
-  ActivatableIdentifier["kind"] | "Aspect" | "Influence"
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | "Influence"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
 > => {
   switch (prerequisite.kind) {
     case "Activatable":

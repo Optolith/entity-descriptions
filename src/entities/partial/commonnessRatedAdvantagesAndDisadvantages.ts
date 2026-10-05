@@ -6,6 +6,7 @@ import type {
   CommonnessRatedAdvantageDisadvantage,
   CommonnessRatedAdvantageDisadvantageLevel,
   CommonnessRatedAdvantageDisadvantageTranslation,
+  RequirableSelectOptionIdentifier,
   Settings,
 } from "@optolith/database-schema/gen"
 import { ensureNonEmpty } from "@optolith/helpers/array"
@@ -44,11 +45,18 @@ const renderOptions = (
 ) =>
   translation?.options === undefined
     ? Reader.asks(
-        (env: StdEnv<"rso">) =>
+        (
+          env: StdEnv<"rso" | "ibi", Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
+        ) =>
           item.options?.map(
             option =>
-              renderNameComponentsOptions(true, env.getResolvedSelectOptionById, id, [option]) ??
-              MISSING_VALUE,
+              renderNameComponentsOptions(
+                true,
+                env.getInstanceById,
+                env.getResolvedSelectOptionById,
+                id,
+                [option],
+              ) ?? MISSING_VALUE,
           ) ?? [],
       )
     : Reader.of([escapeBrackets(translation.options)])
@@ -56,9 +64,19 @@ const renderOptions = (
 const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
   entity: E,
   item: CommonnessRatedAdvantageDisadvantage<string>,
-): StdReader<string, "tm" | "lc" | "rso" | "ibi", E> =>
+): StdReader<
+  string,
+  "tm" | "lc" | "rso" | "ibi",
+  E | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+> =>
   translateMapR(item.translations).thenW(commonnessItemTranslation =>
-    customNameR<E, StdEnv<"tm" | "lc" | "rso">>(
+    customNameR<
+      E,
+      StdEnv<
+        "tm" | "lc" | "rso" | "ibi",
+        Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      >
+    >(
       (translation, instance) => {
         if (commonnessItemTranslation?.full !== undefined) {
           return Reader.of(
@@ -184,7 +202,11 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
   items: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   emptyString: T,
   appendedString?: string,
-): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", E> =>
+): StdReader<
+  string | T,
+  "tm" | "lc" | "ibi" | "rso",
+  E | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+> =>
   (items === undefined || !isNotEmpty(items)) && appendedString === undefined
     ? Reader.of(emptyString)
     : Reader.traverse(items ?? [], item =>
@@ -200,7 +222,11 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
   advantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   disadvantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   emptyString: T,
-): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", "Advantage" | "Disadvantage"> =>
+): StdReader<
+  string | T,
+  "tm" | "lc" | "ibi" | "rso",
+  "Advantage" | "Disadvantage" | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+> =>
   Reader.sequence(
     [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].map(
       ([entity, items]) =>

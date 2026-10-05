@@ -3,6 +3,7 @@ import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual } from "@elyukai/utils/equality"
 import { identity, on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
@@ -12,6 +13,7 @@ import { mapObject } from "@optolith/helpers/object"
 import { romanize } from "@optolith/helpers/roman"
 import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { fromUniformCase } from "tsondb/schema/gen"
+import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import { attributedInstance } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
@@ -495,13 +497,18 @@ export const renderActivatableNameComponentsCombinedIfPossible = (
  */
 export const renderNameComponentsOptions = (
   displayedInProfession: boolean,
+  getInstanceById: GetInstanceById<Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
   options: RequirableSelectOptionIdentifier[] | undefined,
 ): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
     options?.map(optionId => {
-      const optTranslations = getResolvedSelectOptionById(id, optionId)?.content.translations
+      const optTranslations: ResolvedSelectOption["content"]["translations"] | undefined = (
+        getResolvedSelectOptionById(id, optionId)?.content ??
+        (optionId.kind === "General" ? undefined : getInstanceById(optionId))
+      )?.translations
+
       return optTranslations === undefined
         ? MISSING_VALUE
         : mapObject(optTranslations, t10n =>
@@ -540,6 +547,7 @@ export const getNameComponents = <T>(
   nameBuilderRules: ActivatableNameBuilderRules | undefined,
   translations: LocaleMap<T>,
   getBaseName: (translation: T) => string,
+  getInstanceById: GetInstanceById<Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   displayedInProfession: boolean,
 ): ActivatableNameComponents => {
@@ -549,6 +557,7 @@ export const getNameComponents = <T>(
   const renderedBase = mapObject(translations, getBaseName)
   const renderedOptions = renderNameComponentsOptions(
     displayedInProfession,
+    getInstanceById,
     getResolvedSelectOptionById,
     id,
     options,

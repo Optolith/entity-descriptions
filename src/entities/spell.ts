@@ -27,6 +27,7 @@ import {
   type OldParameterBySpeed,
   type Property_ID,
   type RatedIdentifier,
+  type RequirableSelectOptionIdentifier,
   type SingleBannzeichenCost,
   type SpellworkTraditions,
   type Tribe_ID,
@@ -1182,6 +1183,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       | "Influence"
       | ActivatableIdentifier["kind"]
       | "Aspect"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }

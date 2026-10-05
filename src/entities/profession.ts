@@ -40,6 +40,7 @@ import type {
   ProfessionVariantPrerequisites,
   ProfessionVariantTranslation,
   RatedIdentifier,
+  RequirableSelectOptionIdentifier,
   RestrictedBlessings,
   Settings,
   SkillsOptions,
@@ -819,7 +820,9 @@ const renderCombinedEnhancementNameComponents = (chunk: CombinedEnhancementNameC
 
 const getSpecialAbilityNameComponents = (
   getInstanceById: GetInstanceById<
-    ProfessionSpecialAbilityIdentifier["kind"] | SkillWithEnhancementsIdentifier["kind"]
+    | ProfessionSpecialAbilityIdentifier["kind"]
+    | SkillWithEnhancementsIdentifier["kind"]
+    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   translate: Translate,
@@ -854,6 +857,7 @@ const getSpecialAbilityNameComponents = (
     "nameBuilderRules" in instance ? instance.nameBuilderRules : undefined,
     instance.translations,
     t => t.name,
+    getInstanceById,
     getResolvedSelectOptionById,
     true,
   )
@@ -887,7 +891,9 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
       getResolvedSelectOptionById,
     }: StdEnv<
       "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
-      ProfessionSpecialAbilityIdentifier["kind"] | SkillWithEnhancementsIdentifier["kind"]
+      | ProfessionSpecialAbilityIdentifier["kind"]
+      | SkillWithEnhancementsIdentifier["kind"]
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >) => {
       switch (specialAbility.kind) {
         case "Constant": {
@@ -952,6 +958,7 @@ const renderSpecialAbilities = (specialAbilities: SpecialAbilities) =>
       | "SkillGroup"
       | ProfessionSpecialAbilityIdentifier["kind"]
       | SkillWithEnhancementsIdentifier["kind"]
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >,
     string | NonEmptyArray<string> | undefined
   >([
@@ -1402,6 +1409,7 @@ const renderProfessionVariantText = (
           | "SkillGroup"
           | "Blessing"
           | "Enhancement"
+          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
         >,
         string[]
       >([
@@ -1631,6 +1639,7 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
       | "SkillGroup"
       | "Cantrip"
       | "Blessing"
+      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
     getAllInstances: GetAllInstances<"SkillGroup">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<
