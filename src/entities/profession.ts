@@ -1568,14 +1568,15 @@ const renderProfessionVariantText = (
           variant.liturgical_chants,
           renderLiturgicalChantName,
         ),
-      ]).map(lists => {
+      ]).thenW(lists => {
         const nonEmptyLists = lists.filter(isNotEmpty)
-        return (
+        const completeText =
           nonEmptyLists.map(list => list.join(", ")).join("; ") +
           (translation.concluding_text !== undefined
             ? `${nonEmptyLists.length > 0 ? ". " : ""}${translation.concluding_text}`
             : "")
-        )
+
+        return completeText === "" ? translateR("no changes") : Reader.of(completeText)
       })
 
 const renderProfessionVariant = (
