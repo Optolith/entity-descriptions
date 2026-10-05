@@ -117,6 +117,7 @@ import {
   getInstanceByIdR,
   localeCompareR,
   localeJoinR,
+  localeSortOnR,
   localeSortR,
   nameR,
   strictNameR,
@@ -126,13 +127,19 @@ import {
 } from "./partial/reader.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
 
-const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
+const joinNumericListPairs = (pairs: [id: unknown, text: string][]) =>
+  localeSortR(pairs.map(p => p[1])).map(list => ensureNonEmpty(list)?.join(", "))
+
+type NumericListGroup<T> = [name: string, items: [id: T, text: string][]]
+
+const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv, GroupEnv>(
   packages: PreparedProfessionPackage[],
   selector: (pkg: PreparedProfessionPackage) => Reader<SelectorEnv, [T, number][]>,
   equalityFn: Equality<T>,
   renderPair: (id: T, ratings: string) => Reader<RenderEnv, string>,
   defaultValue: number | undefined,
-): Reader<StdEnv<"lc"> & SelectorEnv & RenderEnv, string | undefined> =>
+  group?: (list: [id: T, text: string][]) => Reader<GroupEnv, NumericListGroup<T>[]>,
+): Reader<StdEnv<"lc"> & SelectorEnv & RenderEnv & GroupEnv, string | undefined> =>
   packages
     .reduce<Reader<SelectorEnv, [T, (number | undefined)[]][]>>(
       (accR, pkg, pkgIndex): Reader<SelectorEnv, [T, (number | undefined)[]][]> =>
@@ -166,11 +173,35 @@ const renderNumericListAcrossPackages = <T, SelectorEnv, RenderEnv>(
     )
     .thenW(list =>
       Reader.traverse(list, ([value, numbers]) =>
-        renderPair(value, numbers.map(number => (number === undefined ? "—" : number)).join("/")),
+        renderPair(
+          value,
+          numbers.map(number => (number === undefined ? "—" : number)).join("/"),
+        ).map((text): [T, string] => [value, text]),
       ),
     )
-    .thenW(list => localeSortR(list))
-    .map(list => ensureNonEmpty(list)?.join(", "))
+    .thenW(
+      pairs =>
+        group?.(pairs).thenW(grouped =>
+          Reader.traverse(grouped, groupedPart =>
+            joinNumericListPairs(groupedPart[1]).map((groupText): [string, string] | undefined =>
+              groupText === undefined ? undefined : [groupedPart[0], groupText],
+            ),
+          ).map(list => {
+            const filteredList = list.filter(isNotNullish)
+            if (isNotEmpty(filteredList)) {
+              if (filteredList.length === 1) {
+                return filteredList[0][1]
+              } else {
+                return filteredList
+                  .map(([groupName, groupText]) => `${groupName}: ${groupText}`)
+                  .join("; ")
+              }
+            } else {
+              return undefined
+            }
+          }),
+        ) ?? joinNumericListPairs(pairs),
+    )
 
 const renderSinglePackageValue = <
   T,
@@ -1052,6 +1083,39 @@ const renderSpellworkName = (spellworkIds: ProfessionMagicalSkillIdentifier[], r
     }
   }).thenW(list => localeJoinR(list, "disjunction"))
 
+const renderSpellGroupName = (group: MagicalActionIdentifier["kind"] | "Spellwork") => {
+  switch (group) {
+    case "AnimistPower":
+      return translateR("Animist Powers")
+    case "Bannzeichen":
+      return translateR("Bannzeichen")
+    case "Curse":
+      return translateR("Curses")
+    case "DominationRitual":
+      return translateR("Domination Rituals")
+    case "ElvenMagicalSong":
+      return translateR("Elven Magical Songs")
+    case "GeodeRitual":
+      return translateR("Geode Rituals")
+    case "GoblinRitual":
+      return translateR("Goblin Rituals")
+    case "JesterTrick":
+      return translateR("Jester Tricks")
+    case "MagicalDance":
+      return translateR("Magical Dances")
+    case "MagicalMelody":
+      return translateR("Magical Melodies")
+    case "MagicalRune":
+      return translateR("Magical Runes")
+    case "Spellwork":
+      return translateR("Spellworks")
+    case "ZibiljaRitual":
+      return translateR("Zibilja Rituals")
+    default:
+      return assertExhaustive(group)
+  }
+}
+
 const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPackage>) =>
   Reader.sequence<
     StdEnv<"t" | "tm" | "lc" | "lj" | "ibi", "Cantrip" | "Spell" | "Ritual" | "MagicalTradition">,
@@ -1065,6 +1129,41 @@ const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPa
       deepEqual,
       renderSpellworkName,
       undefined,
+      pairs => {
+        const { Spellwork, ...magicalActions } = Object.groupBy<
+          MagicalActionIdentifier["kind"] | "Spellwork",
+          (typeof pairs)[number]
+        >(pairs, ([[spellworkId]]) =>
+          spellworkId?.kind === "MagicalAction" ? spellworkId.MagicalAction.id.kind : "Spellwork",
+        )
+
+        const spellworks =
+          Spellwork === undefined
+            ? Reader.of([])
+            : renderSpellGroupName("Spellwork").map(
+                (groupName): NumericListGroup<ProfessionMagicalSkillIdentifier[]>[] => [
+                  [groupName, Spellwork],
+                ],
+              )
+
+        const sortedMagicalActions = Reader.traverse(
+          Object.entries(magicalActions) as [
+            keyof typeof magicalActions,
+            (typeof magicalActions)[keyof typeof magicalActions],
+          ][],
+          ([group, groupPairs]) =>
+            groupPairs === undefined
+              ? Reader.of(undefined)
+              : renderSpellGroupName(group).map(
+                  (groupName): NumericListGroup<ProfessionMagicalSkillIdentifier[]> => [
+                    groupName,
+                    groupPairs,
+                  ],
+                ),
+        ).thenW(groups => localeSortOnR(groups.filter(isNotNullish), ([groupName]) => groupName))
+
+        return Reader.sequence([spellworks, sortedMagicalActions]).map(lists => lists.flat())
+      },
     ),
     professionPackages.some(pkg => pkg.content.options?.spellworks !== undefined)
       ? renderBaseNumberOfSpellworksTotalingAdventurePoints(professionPackages)
