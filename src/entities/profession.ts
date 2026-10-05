@@ -36,6 +36,7 @@ import type {
   ProfessionPrerequisites,
   ProfessionSpecialAbility,
   ProfessionSpecialAbilityIdentifier,
+  ProfessionSpecialAbilitySelectionItem,
   ProfessionVariant,
   ProfessionVariantPrerequisites,
   ProfessionVariantTranslation,
@@ -252,19 +253,51 @@ const renderVariantLanguagesScriptsOption = (
 ) =>
   renderVariantOptionPaths(baseOptions, variantOptions, {
     remove: base =>
-      translateR("no Languages and Literacy totaling {$apValue} AP", {
-        apValue: base.ap_value.toFixed(),
-      }),
+      base.includeScripts
+        ? translateR("no Languages and Literacy totaling {$apValue} AP", {
+            apValue: base.ap_value.toFixed(),
+          })
+        : translateR("no Languages totaling {$apValue} AP", {
+            apValue: base.ap_value.toFixed(),
+          }),
     add: override =>
-      translateR("Languages and Literacy totaling {$apValue} AP", {
-        apValue: override.ap_value.toFixed(),
-      }),
+      override.includeScripts
+        ? translateR("Languages and Literacy totaling {$apValue} AP", {
+            apValue: override.ap_value.toFixed(),
+          })
+        : translateR("Languages totaling {$apValue} AP", {
+            apValue: override.ap_value.toFixed(),
+          }),
     update: (base, override) =>
-      insteadOfR(override.ap_value, base.ap_value).then(apValue =>
-        translateR("Languages and Literacy totaling {$apValue} AP", {
-          apValue,
-        }),
-      ),
+      override.includeScripts !== base.includeScripts
+        ? (override.includeScripts
+            ? translateR("Languages and Literacy totaling {$apValue} AP", {
+                apValue: override.ap_value.toFixed(),
+              })
+            : translateR("Languages totaling {$apValue} AP", {
+                apValue: override.ap_value.toFixed(),
+              })
+          ).then(overrideText =>
+            (override.includeScripts
+              ? translateR("Languages and Literacy totaling {$apValue} AP", {
+                  apValue: override.ap_value.toFixed(),
+                })
+              : translateR("Languages totaling {$apValue} AP", {
+                  apValue: override.ap_value.toFixed(),
+                })
+            ).then(baseText => insteadOfR(overrideText, baseText)),
+          )
+        : override.includeScripts
+          ? insteadOfR(override.ap_value, base.ap_value).then(apValue =>
+              translateR("Languages and Literacy totaling {$apValue} AP", {
+                apValue,
+              }),
+            )
+          : insteadOfR(override.ap_value, base.ap_value).then(apValue =>
+              translateR("Languages totaling {$apValue} AP", {
+                apValue,
+              }),
+            ),
   })
 
 const renderLanguagesScriptsOption = (
@@ -828,7 +861,7 @@ const getSpecialAbilityNameComponents = (
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   translate: Translate,
   translateMap: TranslateMap,
-  option: ConstantProfessionSpecialAbility,
+  option: ConstantProfessionSpecialAbility | ProfessionSpecialAbilitySelectionItem,
 ): ActivatableNameComponents | EnhancementNameComponents | undefined => {
   if (option.id.kind === "Enhancement") {
     return getEnhancementNameComponents(
@@ -853,7 +886,9 @@ const getSpecialAbilityNameComponents = (
   return getNameComponents(
     translate,
     option.id,
-    option.options,
+    option.options?.map(opt =>
+      opt.kind === "Select" ? "select" : opt.kind === "Identifier" ? opt.Identifier : opt,
+    ),
     option.level,
     "nameBuilderRules" in instance ? instance.nameBuilderRules : undefined,
     instance.translations,

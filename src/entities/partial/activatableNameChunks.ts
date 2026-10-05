@@ -500,21 +500,26 @@ export const renderNameComponentsOptions = (
   getInstanceById: GetInstanceById<Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
-  options: RequirableSelectOptionIdentifier[] | undefined,
+  options: (RequirableSelectOptionIdentifier | "select")[] | undefined,
 ): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
-    options?.map(optionId => {
-      const optTranslations: ResolvedSelectOption["content"]["translations"] | undefined = (
-        getResolvedSelectOptionById(id, optionId)?.content ??
-        (optionId.kind === "General" ? undefined : getInstanceById(optionId))
-      )?.translations
+    options
+      ?.map(optionId => {
+        if (optionId === "select") {
+          return undefined
+        }
+        const optTranslations: ResolvedSelectOption["content"]["translations"] | undefined = (
+          getResolvedSelectOptionById(id, optionId)?.content ??
+          (optionId.kind === "General" ? undefined : getInstanceById(optionId))
+        )?.translations
 
-      return optTranslations === undefined
-        ? MISSING_VALUE
-        : mapObject(optTranslations, t10n =>
-            displayedInProfession ? (t10n.name_in_profession ?? t10n.name) : t10n.name,
-          )
-    }) ?? []
+        return optTranslations === undefined
+          ? MISSING_VALUE
+          : mapObject(optTranslations, t10n =>
+              displayedInProfession ? (t10n.name_in_profession ?? t10n.name) : t10n.name,
+            )
+      })
+      .filter(isNotNullish) ?? []
 
   if (isNotEmpty(arr) && arr.length > 1) {
     const [first, ...rest] = arr
@@ -542,7 +547,7 @@ export const makeNameBuilderRulesWithDefaults = (
 export const getNameComponents = <T>(
   translate: Translate,
   id: ActivatableIdentifier,
-  options: RequirableSelectOptionIdentifier[] | undefined,
+  options: (RequirableSelectOptionIdentifier | "select")[] | undefined,
   level: number | undefined,
   nameBuilderRules: ActivatableNameBuilderRules | undefined,
   translations: LocaleMap<T>,
