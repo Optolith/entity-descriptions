@@ -1,6 +1,6 @@
 import type { CulturePrerequisite } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../../../env.js"
-import { attributedNameR, translateR } from "../../reader.js"
+import { attributedCustomNameR, translateR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { printDisplayOption } from "../displayOption.js"
 import type { PrerequisitePart } from "../part.js"
@@ -13,7 +13,12 @@ export const printCulturePrerequisite = (
 ): StdReader<PrerequisitePart | undefined, "t" | "tm" | "ibi", "Culture"> =>
   prerequisite.display_option !== undefined
     ? printDisplayOption(prerequisite.display_option)
-    : attributedNameR("prerequisite", "Culture", prerequisite.id).thenW(name =>
+    : attributedCustomNameR(
+        "prerequisite",
+        t => t.nameInPrerequisites ?? t.name,
+        "Culture",
+        prerequisite.id,
+      ).thenW(name =>
         translateR("Culture").map((label): PrerequisitePart | undefined => ({
           label: `${label} `,
           value: name ?? MISSING_VALUE,
