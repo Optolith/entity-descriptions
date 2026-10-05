@@ -23,7 +23,7 @@ import { getCurriculumEntityDescription } from "./entities/curriculum.js"
 import { getDerivedCharacteristicEntityDescription } from "./entities/derivedCharacteristic.js"
 import { getDiseaseEntityDescription } from "./entities/disease.js"
 import { getElixirEntityDescription } from "./entities/elixir.js"
-import { getEquipmentEntityDescription } from "./entities/equipment.js"
+import { getEquipmentEntityDescription, getItemEntityDescription } from "./entities/equipment.js"
 import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackage.js"
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
@@ -198,6 +198,7 @@ const registeredEntityDescriptionCreators = {
   // auxiliary special ability
   TradeSecret: getTradeSecretEntityDescription,
   // equipment
+  Item: getItemEntityDescription,
   Ammunition: getEquipmentEntityDescription,
   Animal: getEquipmentEntityDescription,
   AnimalCare: getEquipmentEntityDescription,

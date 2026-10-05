@@ -1,4 +1,5 @@
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { traceId } from "@elyukai/utils/debug"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { omitKeys, sortObjectKeysByIndex } from "@elyukai/utils/object"
@@ -24,7 +25,10 @@ import type {
   Complexity,
   Cost,
   CostRange,
+  DefaultEquipmentCategoryTypeRules,
   Encumbrance,
+  EquipmentCategory,
+  EquipmentCategoryTranslation,
   EquipmentIdentifier,
   Errata,
   GemOrPreciousStone,
@@ -34,6 +38,8 @@ import type {
   HasAdditionalPenalties,
   HitZone,
   ImprovisedWeaponTranslation,
+  Item,
+  ItemTranslation,
   JewelryMaterialDifference,
   Length,
   LocaleMeasurementAdjustments,
@@ -61,7 +67,7 @@ import type {
   Weight,
 } from "@optolith/database-schema/gen"
 import { mapNullable } from "@optolith/helpers/nullable"
-import { Case } from "tsondb/schema/gen"
+import type { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { StdEnv, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
@@ -952,10 +958,7 @@ const normalizeCombatValues = (
         case "Armor":
           return {
             type: "Armor",
-            values: {
-              ...omitKeys(baseItem.combat_use.Armor, "variantOf"),
-              armorType: Case("Variant", { variantOf: baseItem.combat_use.Armor.variantOf }),
-            },
+            values: baseItem.combat_use.Armor,
           }
         default:
           return assertExhaustive(baseItem.combat_use)
@@ -1140,7 +1143,7 @@ const renderStructurePoints = (structurePoints: StructurePoints | undefined) =>
         })
     : Reader.of("—")
 
-type EquipmentCategory =
+type EquipmentCategoryEntity =
   | Exclude<EquipmentIdentifier["kind"], "Weapon" | "Armor">
   | "MeleeWeapon"
   | "RangedWeapon"
@@ -1149,7 +1152,7 @@ type EquipmentCategory =
   | "Helmets"
   | "ArmorPieces"
 
-const orderOfEquipmentCategories: EquipmentCategory[] = [
+const orderOfEquipmentCategories: EquipmentCategoryEntity[] = [
   "MeleeWeapon",
   "RangedWeapon",
   "Ammunition",
@@ -1184,12 +1187,12 @@ const orderOfEquipmentCategories: EquipmentCategory[] = [
   "Vehicle",
 ]
 
-const prependOrderToLabel = (category: EquipmentCategory, label: string) =>
+const prependOrderToLabel = (category: EquipmentCategoryEntity, label: string) =>
   orderOfEquipmentCategories.includes(category)
     ? `${(orderOfEquipmentCategories.indexOf(category) + 1).toFixed()}-${label}`
     : label
 
-const categoryTranslation: Record<
+const categoryTranslationMap: Record<
   | EquipmentIdentifier["kind"]
   | "MeleeWeapon"
   | "RangedWeapon"
@@ -1305,6 +1308,7 @@ const createMeleeWeaponTableEntry = (
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
     structure_points?: StructurePoints
+    structurePoints?: StructurePoints
   },
   instanceTranslation: {
     secondary_name?: string
@@ -1390,7 +1394,7 @@ const createMeleeWeaponTableEntry = (
         id: "note",
         value: renderNote(
           use,
-          instance.structure_points,
+          instance.structure_points ?? instance.structurePoints,
           instance.restrictedTo,
           name,
           instanceTranslation.note,
@@ -1430,6 +1434,7 @@ const createRangedWeaponTableEntry = (
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
     structure_points?: StructurePoints
+    structurePoints?: StructurePoints
   },
   instanceTranslation: {
     secondary_name?: string
@@ -1506,7 +1511,7 @@ const createRangedWeaponTableEntry = (
         id: "note",
         value: renderNote(
           undefined,
-          instance.structure_points,
+          instance.structure_points ?? instance.structurePoints,
           instance.restrictedTo,
           name,
           instanceTranslation.note,
@@ -1589,8 +1594,8 @@ const createArmorTableEntry = (
   const categoryName = getArmorCategoryName(values)
   return {
     category: {
-      label: categoryTranslation[categoryName],
-      sortingValue: categoryTranslation[categoryName].map(label =>
+      label: categoryTranslationMap[categoryName],
+      sortingValue: categoryTranslationMap[categoryName].map(label =>
         prependOrderToLabel(categoryName, label),
       ),
       value: Reader.of(categoryName),
@@ -1669,8 +1674,8 @@ const createGemOrPreciousStoneTableEntry = (
   >
 > => ({
   category: {
-    label: categoryTranslation.GemOrPreciousStone,
-    sortingValue: categoryTranslation.GemOrPreciousStone.map(label =>
+    label: categoryTranslationMap.GemOrPreciousStone,
+    sortingValue: categoryTranslationMap.GemOrPreciousStone.map(label =>
       prependOrderToLabel("GemOrPreciousStone", label),
     ),
     value: Reader.of("GemOrPreciousStone"),
@@ -1721,8 +1726,8 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
   instanceTranslation: BaseItemTranslation | undefined,
 ): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
   category: {
-    label: categoryTranslation[entityName],
-    sortingValue: categoryTranslation[entityName].map(label =>
+    label: categoryTranslationMap[entityName],
+    sortingValue: categoryTranslationMap[entityName].map(label =>
       prependOrderToLabel(entityName, label),
     ),
     value: Reader.of(entityName),
@@ -1763,6 +1768,65 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
       label: translateR("Rules"),
       id: "rules",
       value: Reader.of(instanceTranslation?.rules),
+    },
+  ],
+})
+
+const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryColumns]?: null }>(
+  name: string,
+  categoryId: string,
+  category: Omit<EquipmentCategory, "type"> & {
+    type: Case<"Default", DefaultEquipmentCategoryTypeRules>
+  },
+  categoryTranslation: EquipmentCategoryTranslation,
+  instance: Item,
+  instanceTranslation: ItemTranslation,
+): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
+  category: {
+    label: Reader.of(categoryTranslation.name),
+    sortingValue: Reader.of(traceId(`${category.position.toFixed()}-${categoryTranslation.name}`)),
+    value: Reader.of(categoryId),
+  },
+  labels: omitKeys(
+    {
+      name: translateR("Name"),
+      weight: translateR("Weight"),
+      structurePoints: translateR("Structure Points"),
+      cost: translateR("Cost"),
+      complexity: translateR("Complexity"),
+    },
+    ...allSimpleKeys.filter(
+      key => key !== "name" && key !== "cost" && category.type.Default[key].kind === "Prohibited",
+    ),
+  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  values: omitKeys(
+    {
+      name: Reader.of(name + parensIf(instanceTranslation.secondaryName)),
+      structurePoints: renderStructurePoints(instance.structurePoints),
+      weight: renderWeightValue(instance.weight),
+      cost: renderCost(instance.cost),
+      complexity: renderComplexity(instance.complexity),
+    },
+    ...allSimpleKeys.filter(
+      key => key !== "name" && key !== "cost" && category.type.Default[key].kind === "Prohibited",
+    ),
+  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  additionalInformation: [
+    {
+      label: translateR("Note"),
+      id: "note",
+      value: renderNote(
+        undefined,
+        instance.structurePoints,
+        instance.restrictedTo,
+        name,
+        instanceTranslation.note,
+      ),
+    },
+    {
+      label: translateR("Rules"),
+      id: "rules",
+      value: Reader.of(instanceTranslation.rules),
     },
   ],
 })
@@ -2137,4 +2201,117 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
     //   references: entry.content.src,
     // },
   ]
+})
+
+/**
+ * Get a JSON representation of the rules text for equipment.
+ */
+export const getItemEntityDescription = createEntityDescriptionCreator<
+  "Item",
+  StdEnv<
+    "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "x" | "ibi" | "rts",
+    | "Publication"
+    | "Attribute"
+    | "Reach"
+    | "SocialStatus"
+    | "CloseCombatTechnique"
+    | "RangedCombatTechnique"
+    | "MagicalTradition"
+    | "BlessedTradition"
+    | "DerivedCharacteristic"
+    | AmmunitionishIdentifier["kind"]
+    | "Race"
+    | "Culture"
+    | "Profession"
+    | "Skill"
+    | "EquipmentCategory"
+  >
+>((env, locale, entry) => {
+  const { translateMap } = locale
+
+  const translation = translateMap(entry.content.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  const baseProperties = {
+    type: "tabular" as const,
+    title: translation.name,
+    className: "equipment",
+    errata: translation.errata,
+    references: entry.content.src,
+  }
+
+  return entry.content.categories.flatMap(categoryId => {
+    const category = env.getInstanceById("EquipmentCategory", categoryId)
+    const categoryTranslation = translateMap(category?.translations)
+
+    if (
+      category === undefined ||
+      categoryTranslation === undefined ||
+      category.type.kind === "Special"
+    ) {
+      return []
+    }
+
+    return [
+      ...(category.type.Default.combatValues.isWeaponAllowed
+        ? [
+            ...Object.entries(entry.content.meleeUses ?? {}).map(([combatTechniqueId, use]) => ({
+              ...baseProperties,
+              ...createMeleeWeaponTableEntry(
+                translation.name,
+                "Weapon",
+                entry.content,
+                translation,
+                combatTechniqueId,
+                use,
+              ),
+            })),
+            ...Object.entries(entry.content.rangedUses ?? {}).map(([combatTechniqueId, use]) => ({
+              ...baseProperties,
+              ...createRangedWeaponTableEntry(
+                translation.name,
+                "Weapon",
+                entry.content,
+                translation,
+                combatTechniqueId,
+                use,
+              ),
+            })),
+          ]
+        : []),
+      ...(category.type.Default.combatValues.isArmorAllowed && entry.content.armorUse
+        ? [
+            {
+              ...baseProperties,
+              ...createArmorTableEntry(
+                translation.name,
+                "Armor",
+                entry.content,
+                translation,
+                entry.content.armorUse,
+              ),
+            },
+          ]
+        : []),
+      ...(!category.type.Default.combatValues.isWeaponAllowed &&
+      !category.type.Default.combatValues.isArmorAllowed
+        ? [
+            {
+              ...baseProperties,
+              ...createSimpleTableEntryForCategory(
+                translation.name,
+                categoryId,
+                { ...category, type: category.type },
+                categoryTranslation,
+                entry.content,
+                translation,
+              ),
+            },
+          ]
+        : []),
+    ]
+  })
 })
