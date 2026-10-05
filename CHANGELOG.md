@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.23.4](https://github.com/Optolith/entity-descriptions/compare/v0.23.3...v0.23.4) (2026-10-05)
+
+### Features
+
+* separate spellworks and magical actions in professions ([636867b](https://github.com/Optolith/entity-descriptions/commit/636867b96fc27420cd6c5cae82c9e5852e4c52b4))
+* use different race or culture name in prerequisites if provided ([016b885](https://github.com/Optolith/entity-descriptions/commit/016b88575f9d3664c3d574fff16ea683f190676f))
+
+### Bug Fixes
+
+* display "no changes" in profession variant without changes ([2f0488e](https://github.com/Optolith/entity-descriptions/commit/2f0488e10368c3c122c747980f2d6e77d29e0df3))
+* group skill changes in profession variants by skill group ([0436554](https://github.com/Optolith/entity-descriptions/commit/0436554d38c5b968d7fee4e23e6c31ad481d2137))
+* render activatable options not present in the cache ([a6bcc66](https://github.com/Optolith/entity-descriptions/commit/a6bcc66c31cd589da3ec835468439e52724d217d))
 ## [0.23.3](https://github.com/Optolith/entity-descriptions/compare/v0.23.2...v0.23.3) (2026-10-04)
 
 ### Bug Fixes
