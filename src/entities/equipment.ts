@@ -1,5 +1,4 @@
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
-import { traceId } from "@elyukai/utils/debug"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import { omitKeys, sortObjectKeysByIndex } from "@elyukai/utils/object"
@@ -1784,7 +1783,7 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
 ): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
   category: {
     label: Reader.of(categoryTranslation.name),
-    sortingValue: Reader.of(traceId(`${category.position.toFixed()}-${categoryTranslation.name}`)),
+    sortingValue: Reader.of(`${category.position.toFixed()}-${categoryTranslation.name}`),
     value: Reader.of(categoryId),
   },
   labels: omitKeys(
