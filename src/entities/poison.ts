@@ -304,6 +304,8 @@ const renderStart = (start: PoisonStart): StdReader<string, "t" | "tm" | "f" | "
               return renderDiceR(value.Dice)
             case "CircleOfDamnation":
               return translateR("CoD")
+            case "QualityLevels":
+              return translateR("QL")
             default:
               return assertExhaustive(value)
           }
@@ -333,6 +335,8 @@ const renderDuration = (duration: PoisonDuration): StdReader<string, "t" | "tm" 
               return renderDiceR(value.Dice)
             case "CircleOfDamnation":
               return translateR("CoD")
+            case "QualityLevels":
+              return translateR("QL")
             default:
               return assertExhaustive(value)
           }
