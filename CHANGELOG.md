@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.25.0](https://github.com/Optolith/entity-descriptions/compare/v0.24.0...v0.25.0) (2026-10-06)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.83.0
+
+### build
+
+* **deps:** upgrade to schema 0.83.0 ([3171fe9](https://github.com/Optolith/entity-descriptions/commit/3171fe96157a3f5d1e460d8762f7924c198a2293))
+
+### Features
+
+* render additional text for reducable effect ([5ee653a](https://github.com/Optolith/entity-descriptions/commit/5ee653a6d333986e9dd8044222bcd9ad169a38f7))
+* render invaluable cost translation ([fb34d24](https://github.com/Optolith/entity-descriptions/commit/fb34d249dd9fd98aa38bba3a68d83dea6415e9a9))
+
 ## [0.24.0](https://github.com/Optolith/entity-descriptions/compare/v0.23.5...v0.24.0) (2026-10-06)
 
 ### ⚠ BREAKING CHANGES
