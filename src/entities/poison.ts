@@ -1,4 +1,5 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
+import { identity } from "@elyukai/utils/function"
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { sign } from "@elyukai/utils/string/number"
@@ -30,6 +31,7 @@ import {
   renderAlternativeNames,
   renderChance,
   renderLaboratoryLevel,
+  renderReduceable,
   renderResistance,
 } from "./partial/herbary.js"
 import { renderMathOperationR } from "./partial/mathOperation.js"
@@ -514,9 +516,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
               },
           {
             label: translate("Effect"),
-            value:
-              translation.effect.default +
-              (translation.effect.reduced === undefined ? "" : ` / ${translation.effect.reduced}`),
+            value: renderReduceable(translation.effect, identity),
           },
           sideEffect === undefined
             ? undefined
@@ -536,11 +536,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
           },
           {
             label: translate("Duration"),
-            value:
-              renderDuration(entry.duration.default).run(env) +
-              (entry.duration.reduced === undefined
-                ? ""
-                : ` / ${renderDuration(entry.duration.reduced).run(env)}`),
+            value: renderReduceable(entry.duration, duration => renderDuration(duration).run(env)),
           },
           legality === undefined
             ? undefined

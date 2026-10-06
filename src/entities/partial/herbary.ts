@@ -3,7 +3,12 @@ import { on } from "@elyukai/utils/function"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import type { AlternativeName, LaboratoryLevel, Resistance } from "@optolith/database-schema/gen"
+import type {
+  AlternativeName,
+  LaboratoryLevel,
+  Reduceable,
+  Resistance,
+} from "@optolith/database-schema/gen"
 import type { StdEnv, StdReader } from "../../env.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import { getDerivedCharacteristicPositionAndTranslation } from "./derivedCharacteristics.js"
@@ -99,3 +104,21 @@ export const renderAlternativeNames = (alternativeNames: AlternativeName[] | und
           alternativeNames.map(name => name.name + parensIf(name.region)).join(", "),
         ),
       }
+
+/**
+ * Renders a reduceable value into a localized string.
+ */
+export const renderReduceable = <T>(
+  reducable: Reduceable<T>,
+  renderValue: (value: T) => string,
+) => {
+  const defaultValue = renderValue(reducable.default)
+  const reducedValue = reducable.reduced === undefined ? undefined : renderValue(reducable.reduced)
+  const additionalText = reducable.additonal === undefined ? "" : `\n\n${reducable.additonal}`
+
+  if (reducedValue === undefined) {
+    return defaultValue + additionalText
+  }
+
+  return `${defaultValue} / ${reducedValue}${additionalText}`
+}

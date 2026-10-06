@@ -1,4 +1,5 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
+import { identity } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
 import type {
   AlternativeName,
@@ -13,7 +14,12 @@ import type { EnvMap } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
-import { renderAlternativeNames, renderChance, renderResistance } from "./partial/herbary.js"
+import {
+  renderAlternativeNames,
+  renderChance,
+  renderReduceable,
+  renderResistance,
+} from "./partial/herbary.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
@@ -118,17 +124,11 @@ export const getDiseaseEntityDescription = createEntityDescriptionCreator<
           },
           {
             label: translate("Damage"),
-            value:
-              translation.damage.default +
-              (translation.damage.reduced === undefined ? "" : ` / ${translation.damage.reduced}`),
+            value: renderReduceable(translation.damage, identity),
           },
           {
-            label: translate("Duration"),
-            value:
-              translation.duration.default +
-              (translation.duration.reduced === undefined
-                ? ""
-                : ` / ${translation.duration.reduced}`),
+            label: translate("Duration (Disease)"),
+            value: renderReduceable(translation.duration, identity),
           },
           {
             label: translate("Causes"),
