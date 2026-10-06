@@ -813,7 +813,11 @@ const renderCost = (
       case "Various":
         return translateR("various")
       case "Invaluable":
-        return translateR("invaluable")
+        return translateMapR(cost.Invaluable.translations).thenW(translation =>
+          translateR("invaluable").map(
+            main => translation?.wrap_in_text.replace("{0}", main) ?? main,
+          ),
+        )
       case "Fixed": {
         return translateMapR(cost.Fixed.translations).thenW(translation =>
           formatSilverthalers(cost.Fixed.value).map(
