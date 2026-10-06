@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.24.0](https://github.com/Optolith/entity-descriptions/compare/v0.23.5...v0.24.0) (2026-10-06)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.81.0 and all other dependencies
+
+### build
+
+* **deps:** upgrade to schema 0.81.0 and all other dependencies ([bdda732](https://github.com/Optolith/entity-descriptions/commit/bdda732cdf7902a84699252b79a83ad88160c879))
+
+### Features
+
+* generic item entity description ([03dda06](https://github.com/Optolith/entity-descriptions/commit/03dda06c6cce815d15d01a6dad4c8715b61c670b))
+
+### Bug Fixes
+
+* remove debug function ([0fcc637](https://github.com/Optolith/entity-descriptions/commit/0fcc6373ecbe3695b28703fd3c134946dafb746f))
+
 ## [0.23.5](https://github.com/Optolith/entity-descriptions/compare/v0.23.4...v0.23.5) (2026-10-05)
 ## [0.23.4](https://github.com/Optolith/entity-descriptions/compare/v0.23.3...v0.23.4) (2026-10-05)
 
