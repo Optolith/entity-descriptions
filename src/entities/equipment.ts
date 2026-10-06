@@ -414,7 +414,7 @@ const renderRangedDamage = (translate: Translate) => (damage: RangedDamage) => {
     case "NotApplicable":
       return "—"
     case "Special":
-      return translate("Special")
+      return translate("Special (Damage)")
     default:
       return assertExhaustive(damage)
   }

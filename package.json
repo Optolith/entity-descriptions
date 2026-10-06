@@ -35,27 +35,27 @@
   },
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
-    "@elyukai/markdown": "^0.3.2",
-    "@elyukai/utils": "^0.3.7",
+    "@elyukai/markdown": "^0.4.0",
+    "@elyukai/utils": "^0.3.8",
     "@optolith/adventure-points": "^0.1.1",
     "@optolith/helpers": "^0.2.2",
     "diff": "^9.0.0",
     "messageformat": "^4.0.0",
-    "tsondb": "^0.21.2"
+    "tsondb": "^0.21.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@optolith/database-schema": "^0.79.1",
-    "@types/node": "^26.5.0",
-    "commit-and-tag-version": "^13.1.2",
+    "@optolith/database-schema": "^0.81.0",
+    "@types/node": "^26.6.4",
+    "commit-and-tag-version": "^13.2.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^64.3.6",
-    "globals": "^17.12.0",
-    "prettier": "^3.9.6",
-    "tsx": "^4.23.13",
+    "eslint-plugin-jsdoc": "^65.1.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-7": "npm:typescript@^7.0.2",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.71.1"
   },
   "type": "module",
   "engines": {
