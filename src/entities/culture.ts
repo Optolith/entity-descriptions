@@ -26,7 +26,7 @@ import type {
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
-import type { TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
+import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
@@ -45,21 +45,31 @@ import {
 import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { translateR } from "./partial/reader.js"
+import { attributedCustomNameR, localeSortR, translateR } from "./partial/reader.js"
 import { MISSING_VALUE } from "./partial/unknown.js"
 
 const getAttributedProfessionName = (
-  translateMap: TranslateMap,
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   professionId: Profession_ID,
   context: string,
-): string | undefined => {
-  const baseName = getProfessionName(translateMap, getChildInstancesForInstanceId, professionId)
-  if (baseName === undefined) {
-    return undefined
-  }
-  return attributedNameFromSafeTranslation({ name: baseName }, context, "Profession", professionId)
-}
+): StdReader<string | undefined, "tm" | "acibp", never, never, "ProfessionVersion"> =>
+  Reader.asks(env => {
+    const baseName = getProfessionName(
+      env.translateMap,
+      env.getChildInstancesForInstanceId,
+      professionId,
+    )
+
+    if (baseName === undefined) {
+      return undefined
+    }
+
+    return attributedNameFromSafeTranslation(
+      { name: baseName },
+      context,
+      "Profession",
+      professionId,
+    )
+  })
 
 const renderListOperation = (
   operation: CommonProfessionConstraintsOperation,
@@ -77,19 +87,13 @@ const renderListOperation = (
   }
 }
 
-const renderCommonProfessionConstraints = <T>(
+const renderCommonProfessionConstraints = <T, E>(
   constraints: CommonProfessionConstraints<T>,
-  renderConstraint: (
-    constraint: T,
-  ) => StdReader<
-    string | undefined,
-    "t" | "tm" | "lc" | "ibi",
-    "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"
-  >,
-): StdReader<
-  string,
-  "t" | "tm" | "lc" | "ibi",
-  "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"
+  renderConstraint: (constraint: T) => Reader<E, string | undefined>,
+): Reader<
+  StdEnv<"t" | "tm" | "lc" | "ibi", "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"> &
+    E,
+  string
 > =>
   Reader.asks(({ localeCompare }: StdEnv<"lc">) =>
     Reader.sequence(constraints.constraints.map(renderConstraint)).thenW(constraintValues =>
@@ -100,16 +104,10 @@ const renderCommonProfessionConstraints = <T>(
     ),
   ).thenW(identity)
 
-const renderCommonProfessionGroup = <T>(
+const renderCommonProfessionGroup = <T, E>(
   label: TranslationKeysWithoutParams,
   constraints: CommonProfessionConstraints<T> | undefined,
-  renderConstraint: (
-    constraint: T,
-  ) => StdReader<
-    string | undefined,
-    "t" | "tm" | "lc" | "ibi",
-    "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"
-  >,
+  renderConstraint: (constraint: T) => Reader<E, string | undefined>,
 ) =>
   translateR(label).thenW(translatedLabel =>
     (constraints === undefined
@@ -136,73 +134,67 @@ const renderRarity = (rarity: Rarity | undefined): StdReader<string | undefined,
   }
 }
 
-const renderWeighted = <ID extends string>(
+const renderWeighted = <ID extends string, E>(
   weightedVariants: Weighted<ID> | undefined,
-  getName: (id: ID) => string | undefined,
-): StdReader<string | undefined, "t" | "lc" | "ibi"> => {
+  getName: (id: ID) => Reader<E, string | undefined>,
+): Reader<StdEnv<"t" | "lc" | "ibi"> & E, string | undefined> => {
   if (weightedVariants === undefined) {
     return Reader.of(undefined)
   }
 
-  return Reader.asks(({ translate, localeCompare }) => {
-    const variants = ensureNonEmpty(
-      weightedVariants.elements.map(getName).filter(isNotNullish).toSorted(localeCompare),
-    )
+  return Reader.traverse(weightedVariants.elements, getName)
+    .map(variantNames => variantNames.filter(isNotNullish))
+    .thenW(localeSortR)
+    .map(ensureNonEmpty)
+    .thenW(variants => {
+      if (variants === undefined) {
+        return Reader.of(undefined)
+      }
 
-    if (variants === undefined) {
-      return undefined
-    }
-
-    switch (weightedVariants.weight.kind) {
-      case "Mostly":
-        return translate("mostly {$variants :list type=conjunction}", {
-          variants,
-        })
-      case "Only":
-        return translate("only {$variants :list type=conjunction}", {
-          variants,
-        })
-      default:
-        return assertExhaustive(weightedVariants.weight)
-    }
-  })
+      switch (weightedVariants.weight.kind) {
+        case "Mostly":
+          return translateR("mostly {$variants :list type=conjunction}", {
+            variants,
+          })
+        case "Only":
+          return translateR("only {$variants :list type=conjunction}", {
+            variants,
+          })
+        default:
+          return assertExhaustive(weightedVariants.weight)
+      }
+    })
 }
 
-const renderProfessionConstraint = (
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
-  constraint: ProfessionConstraint,
-) =>
-  Reader.asks(({ translateMap }: StdEnv<"tm">) =>
-    getAttributedProfessionName(
-      translateMap,
-      getChildInstancesForInstanceId,
-      constraint.id,
-      "common-professions",
-    ),
-  ).thenW(baseName =>
+const renderProfessionConstraint = (constraint: ProfessionConstraint) =>
+  getAttributedProfessionName(constraint.id, "common-professions").thenW(baseName =>
     baseName === undefined
       ? Reader.of(undefined)
       : Reader.sequence<StdEnv<"t" | "tm" | "lc" | "ibi", "ProfessionVariant">, string | undefined>(
           [
             renderRarity(constraint.rarity),
-            Reader.asks(
-              ({ translateMap, getInstanceById }: StdEnv<"tm" | "ibi", "ProfessionVariant">) =>
-                renderWeighted(
-                  constraint.weighted_variants,
-                  variantId =>
-                    translateMap(getInstanceById("ProfessionVariant", variantId)?.translations)
-                      ?.name.default,
-                ),
-            ).thenW(identity),
+            renderWeighted(constraint.weighted_variants, variantId =>
+              attributedCustomNameR(
+                "common-professions",
+                t => t.name.default,
+                "ProfessionVariant",
+                variantId,
+              ),
+            ),
           ],
         ).map(notes => baseName + parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; "))),
   )
 
 const renderTraditionConstraint = <E extends "MagicalTradition" | "BlessedTradition">(
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   entity: E,
   constraint: MagicalTraditionConstraint | BlessedTraditionConstraint,
-): StdReader<string | undefined, "t" | "tm" | "lc" | "ibi", E> =>
+): StdReader<
+  string | undefined,
+  "t" | "tm" | "lc" | "ibi" | "acibp",
+  E,
+  never,
+  "ProfessionVersion"
+> =>
   Reader.asks(({ translateMap, getInstanceById }: StdEnv<"tm" | "ibi", E>) =>
     attributedCustomName(
       translateMap,
@@ -218,40 +210,27 @@ const renderTraditionConstraint = <E extends "MagicalTradition" | "BlessedTradit
       ? Reader.of(undefined)
       : Reader.sequence([
           renderRarity(constraint.rarity),
-          Reader.asks(({ translateMap }: StdEnv<"tm">) =>
-            renderWeighted(constraint.weighted_professions, profId =>
-              getAttributedProfessionName(
-                translateMap,
-                getChildInstancesForInstanceId,
-                profId,
-                "common-professions",
-              ),
-            ),
-          ).thenW(identity),
+          renderWeighted(constraint.weighted_professions, profId =>
+            getAttributedProfessionName(profId, "common-professions"),
+          ),
         ]).map(
           notes => baseName + parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; ")),
         ),
   )
 
 const renderCommonProfessions = (
-  getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">,
   commonProfessions: CommonProfessions,
 ): StdReader<
   string | [RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>],
-  "t" | "tm" | "lc" | "ibi",
-  "ProfessionVariant" | "BlessedTradition" | "MagicalTradition"
+  "t" | "tm" | "lc" | "ibi" | "acibp",
+  "ProfessionVariant" | "BlessedTradition" | "MagicalTradition",
+  never,
+  "ProfessionVersion"
 > => {
   switch (commonProfessions.kind) {
     case "Plain":
       return renderCommonProfessionConstraints(commonProfessions.Plain, profId =>
-        Reader.asks(({ translateMap }) =>
-          getAttributedProfessionName(
-            translateMap,
-            getChildInstancesForInstanceId,
-            profId,
-            "common-professions",
-          ),
-        ),
+        getAttributedProfessionName(profId, "common-professions"),
       )
     case "Grouped":
       return renderCommonProfessionGroup(
@@ -260,10 +239,7 @@ const renderCommonProfessions = (
         constraint => {
           switch (constraint.kind) {
             case "Profession":
-              return renderProfessionConstraint(
-                getChildInstancesForInstanceId,
-                constraint.Profession,
-              )
+              return renderProfessionConstraint(constraint.Profession)
             case "Group":
               switch (constraint.Group.kind) {
                 case "Profane":
@@ -283,19 +259,20 @@ const renderCommonProfessions = (
         renderCommonProfessionGroup(
           "Magic Professions",
           commonProfessions.Grouped.magic,
-          constraint => {
+          (
+            constraint,
+          ): StdReader<
+            string | undefined,
+            "t" | "tm" | "lc" | "ibi" | "acibp",
+            "ProfessionVariant" | "MagicalTradition",
+            never,
+            "ProfessionVersion"
+          > => {
             switch (constraint.kind) {
               case "Profession":
-                return renderProfessionConstraint(
-                  getChildInstancesForInstanceId,
-                  constraint.Profession,
-                )
+                return renderProfessionConstraint(constraint.Profession)
               case "Tradition":
-                return renderTraditionConstraint(
-                  getChildInstancesForInstanceId,
-                  "MagicalTradition",
-                  constraint.Tradition,
-                )
+                return renderTraditionConstraint("MagicalTradition", constraint.Tradition)
               case "MagicDilettante":
                 return translateR("Magic Dilettante")
               default:
@@ -306,19 +283,20 @@ const renderCommonProfessions = (
           renderCommonProfessionGroup(
             "Blessed Professions",
             commonProfessions.Grouped.blessed,
-            constraint => {
+            (
+              constraint,
+            ): StdReader<
+              string | undefined,
+              "t" | "tm" | "lc" | "ibi" | "acibp",
+              "ProfessionVariant" | "BlessedTradition",
+              never,
+              "ProfessionVersion"
+            > => {
               switch (constraint.kind) {
                 case "Profession":
-                  return renderProfessionConstraint(
-                    getChildInstancesForInstanceId,
-                    constraint.Profession,
-                  )
+                  return renderProfessionConstraint(constraint.Profession)
                 case "Tradition":
-                  return renderTraditionConstraint(
-                    getChildInstancesForInstanceId,
-                    "BlessedTradition",
-                    constraint.Tradition,
-                  )
+                  return renderTraditionConstraint("BlessedTradition", constraint.Tradition)
                 default:
                   return assertExhaustive(constraint)
               }
@@ -459,6 +437,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
       localeCompare,
       getInstanceById,
       getResolvedSelectOptionById,
+      getChildInstancesForInstanceId,
     } satisfies Partial<EnvMap>
 
     const { text: culturePackageText, apValue: culturalPackageApValue } = renderCulturalPackage(
@@ -593,10 +572,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
             },
             {
               label: translate("Common Professions"),
-              value: renderCommonProfessions(
-                getChildInstancesForInstanceId,
-                entry.common_professions,
-              ).run(env),
+              value: renderCommonProfessions(entry.common_professions).run(env),
             },
             renderValueWithPossibleTranslation(
               "Common Advantages",

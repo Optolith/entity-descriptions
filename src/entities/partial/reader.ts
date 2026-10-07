@@ -183,9 +183,7 @@ export const attributedNameFromInstanceR = (
  */
 export const attributedCustomNameR = <
   E extends {
-    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<{ name: string }> }
-      ? K
-      : never
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<unknown> } ? K : never
   }[keyof EntityMap],
 >(
   context: string,
