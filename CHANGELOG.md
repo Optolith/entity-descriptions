@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.27.0](https://github.com/Optolith/entity-descriptions/compare/v0.26.1...v0.27.0) (2026-10-07)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.87.0
+
+### build
+
+* **deps:** upgrade to schema 0.87.0 ([7b77842](https://github.com/Optolith/entity-descriptions/commit/7b778424d776b556e9eaa097d08a241a25810e55))
+
+### Features
+
+* talisman entity description ([3dac12d](https://github.com/Optolith/entity-descriptions/commit/3dac12da5e7b92ddeaea00f8a675dc78db02aa27))
+
 ## [0.26.1](https://github.com/Optolith/entity-descriptions/compare/v0.26.0...v0.26.1) (2026-10-07)
 
 ### Bug Fixes
