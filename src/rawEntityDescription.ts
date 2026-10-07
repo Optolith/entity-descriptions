@@ -1,37 +1,33 @@
-import type { AnyNonNullish } from "@elyukai/utils/nullable"
-import type { Reader } from "@elyukai/utils/reader"
 import type { Errata, PublicationRefs } from "@optolith/database-schema/gen"
 
 /**
  * A JSON representation of the rules text for a library entry that has not been
  * cleaned up.
  */
-export type RawEntityDescription<Cols extends string = string, E = AnyNonNullish> =
-  | RawTextEntityDescription<E>
-  | RawTabularEntityDescription<Cols, E>
-  | RawTabularEntityDescription<Cols, E>[]
+export type RawEntityDescription<Cols extends string = string> =
+  RawTextEntityDescription | RawTabularEntityDescription<Cols> | RawTabularEntityDescription<Cols>[]
 
 /**
  * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.
  */
-export type RawEntityDescriptionCategory<E> = {
-  label: Reader<E, string>
-  sortingValue: Reader<E, string>
-  value: Reader<E, string>
+export type RawEntityDescriptionCategory = {
+  label: string
+  sortingValue: string
+  value: string
 }
 
 /**
  * A JSON representation of the rules text for a library entry that has not been
  * cleaned up.
  */
-export type RawTextEntityDescription<E> = {
+export type RawTextEntityDescription = {
   type?: "text"
-  category?: RawEntityDescriptionCategory<E>
+  category?: RawEntityDescriptionCategory
   title: string
   subtitle?: string
   badge?: RawEntityDescriptionBadge
   className: string
-  body: (RawEntityDescriptionSection | RawEntityDescriptionSectionR<E> | undefined)[]
+  body: (RawEntityDescriptionSection | undefined)[]
   errata?: Errata
   references?: PublicationRefs
 }
@@ -40,15 +36,13 @@ export type RawTextEntityDescription<E> = {
  * A JSON representation of the table for a library entry that has not been
  * cleaned up.
  */
-export type RawTabularEntityDescription<Cols extends string, E> = {
+export type RawTabularEntityDescription<Cols extends string> = {
   type: "tabular"
-  category?: RawEntityDescriptionCategory<E>
+  category?: RawEntityDescriptionCategory
   title: string
-  labels: { [K in Cols]: Reader<E, string> }
-  values: { [K in Cols]: Reader<E, string> }
-  additionalInformation?: (
-    { label: Reader<E, string>; id: string; value: Reader<E, string | undefined> } | undefined
-  )[]
+  labels: { [K in Cols]: string }
+  values: { [K in Cols]: string }
+  additionalInformation?: ({ label: string; id: string; value: string | undefined } | undefined)[]
   errata?: Errata
   references?: PublicationRefs
 }
@@ -69,13 +63,6 @@ export type RawEntityDescriptionSection =
   | RawLabeledEntityDescriptionSection
 
 /**
- * A labeled or unlabeled section of a library entry text.
- */
-export type RawEntityDescriptionSectionR<E> =
-  | RawEntityDescriptionSectionContent<RawDefinitionListEntityDescriptionSectionR<E>>
-  | RawLabeledEntityDescriptionSectionR<E>
-
-/**
  * A slice of the content of a library entry text.
  */
 export type RawEntityDescriptionSectionContent<DL> =
@@ -88,15 +75,6 @@ export type RawLabeledEntityDescriptionSection = {
   type: "labeled"
   label: string
   value: RawEntityDescriptionSectionContent<RawDefinitionListEntityDescriptionSection>
-}
-
-/**
- * A labeled section of a library entry text.
- */
-export type RawLabeledEntityDescriptionSectionR<E> = {
-  type: "labeled"
-  label: string
-  value: RawEntityDescriptionSectionContent<RawDefinitionListEntityDescriptionSectionR<E>>
 }
 
 /**
@@ -113,14 +91,6 @@ export type RawPlainEntityDescriptionSection = {
 export type RawDefinitionListEntityDescriptionSection = {
   type: "definitionList"
   items: (RawDefinitionListEntityDescriptionSectionItem | undefined)[]
-}
-
-/**
- * A list of labeled values, such as prerequisites or quality levels.
- */
-export type RawDefinitionListEntityDescriptionSectionR<E> = {
-  type: "definitionList"
-  items: (RawDefinitionListEntityDescriptionSectionItemR<E> | undefined)[]
 }
 
 /**
@@ -150,21 +120,6 @@ export type RawDefinitionListEntityDescriptionSectionItem = {
         | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
         | undefined
       )[]
-}
-
-/**
- * A single labeled value in a definition list.
- */
-export type RawDefinitionListEntityDescriptionSectionItemR<E> = {
-  label: Reader<E, string>
-  value: Reader<
-    E,
-    | string
-    | (
-        | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
-        | undefined
-      )[]
-  >
 }
 
 /**

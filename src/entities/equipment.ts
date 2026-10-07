@@ -77,6 +77,7 @@ import {
   type Translate,
   type TranslateMap,
 } from "../helpers/translate.js"
+import type { WrapInNestedReaders } from "../nestedReaders.js"
 import {
   type RawEntityDescriptionSectionContent,
   type RawLabeledEntityDescriptionSection,
@@ -1286,10 +1287,18 @@ const armorColumns = {
 
 type ArmorColumns = keyof typeof armorColumns
 
-type GenEquipmentTableEntry<Cols extends string, E> = Pick<
-  RawTabularEntityDescription<Cols, E>,
-  "category" | "labels" | "values" | "additionalInformation"
+type GenEquipmentTableEntry<Cols extends string, E> = WrapInNestedReaders<
+  E,
+  RawTabularEntityDescription<Cols>
 >
+
+type BaseProperties = {
+  type: "tabular"
+  title: string
+  className: string
+  errata?: Errata
+  references: PublicationRefs
+}
 
 const renderMeleeWeaponTypesForName = (use: GenMeleeWeapon<MeleeDamage>) =>
   Reader.sequence([
@@ -1303,6 +1312,7 @@ const renderRangedWeaponTypesForName = (use: GenRangedWeapon<RangedDamage>) =>
   )
 
 const createMeleeWeaponTableEntry = (
+  baseProperties: BaseProperties,
   name: string,
   entityName: EquipmentIdentifier["kind"],
   instance: {
@@ -1350,6 +1360,7 @@ const createMeleeWeaponTableEntry = (
   )
 
   return {
+    ...baseProperties,
     category: {
       label: attributedCombatTechniqueName,
       sortingValue: combatTechniqueName.map(ctName =>
@@ -1429,6 +1440,7 @@ const createMeleeWeaponTableEntry = (
 }
 
 const createRangedWeaponTableEntry = (
+  baseProperties: BaseProperties,
   name: string,
   entityName: EquipmentIdentifier["kind"],
   instance: {
@@ -1476,6 +1488,7 @@ const createRangedWeaponTableEntry = (
   )
 
   return {
+    ...baseProperties,
     category: {
       label: attributedCombatTechniqueName,
       sortingValue: combatTechniqueName.map(ctName =>
@@ -1565,6 +1578,7 @@ const getArmorCategoryName = (
 }
 
 const createArmorTableEntry = (
+  baseProperties: BaseProperties,
   name: string,
   entityName: EquipmentIdentifier["kind"],
   instance: {
@@ -1596,6 +1610,7 @@ const createArmorTableEntry = (
 > => {
   const categoryName = getArmorCategoryName(values)
   return {
+    ...baseProperties,
     category: {
       label: categoryTranslationMap[categoryName],
       sortingValue: categoryTranslationMap[categoryName].map(label =>
@@ -1666,6 +1681,7 @@ const createArmorTableEntry = (
 }
 
 const createGemOrPreciousStoneTableEntry = (
+  baseProperties: BaseProperties,
   name: string,
   instance: GemOrPreciousStone,
   instanceTranslation: GemOrPreciousStoneTranslation | undefined,
@@ -1676,6 +1692,7 @@ const createGemOrPreciousStoneTableEntry = (
     "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
   >
 > => ({
+  ...baseProperties,
   category: {
     label: categoryTranslationMap.GemOrPreciousStone,
     sortingValue: categoryTranslationMap.GemOrPreciousStone.map(label =>
@@ -1716,6 +1733,7 @@ type SimpleTableEnv = StdEnv<
 >
 
 const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: null }>(
+  baseProperties: BaseProperties,
   name: string,
   entityName: Exclude<EquipmentIdentifier["kind"], "Weapon" | "Armor">,
   useKeys: R,
@@ -1728,6 +1746,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
   },
   instanceTranslation: BaseItemTranslation | undefined,
 ): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
+  ...baseProperties,
   category: {
     label: categoryTranslationMap[entityName],
     sortingValue: categoryTranslationMap[entityName].map(label =>
@@ -1744,7 +1763,10 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
       complexity: translateR("Complexity"),
     },
     ...allSimpleKeys.filter(key => !(key in useKeys)),
-  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  ) as WrapInNestedReaders<
+    SimpleTableEnv,
+    Record<Extract<keyof R, SimpleTableEntryColumns>, string>
+  >,
   values: omitKeys(
     {
       name: Reader.of(name + parensIf(instanceTranslation?.secondary_name)),
@@ -1754,7 +1776,10 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
       complexity: renderComplexity(instance.complexity),
     },
     ...allSimpleKeys.filter(key => !(key in useKeys)),
-  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  ) as WrapInNestedReaders<
+    SimpleTableEnv,
+    Record<Extract<keyof R, SimpleTableEntryColumns>, string>
+  >,
   additionalInformation: [
     {
       label: translateR("Note"),
@@ -1776,6 +1801,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
 })
 
 const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryColumns]?: null }>(
+  baseProperties: BaseProperties,
   name: string,
   categoryId: string,
   category: Omit<EquipmentCategory, "type"> & {
@@ -1785,6 +1811,7 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
   instance: Item,
   instanceTranslation: ItemTranslation,
 ): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
+  ...baseProperties,
   category: {
     label: Reader.of(categoryTranslation.name),
     sortingValue: Reader.of(`${category.position.toFixed()}-${categoryTranslation.name}`),
@@ -1801,7 +1828,10 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
     ...allSimpleKeys.filter(
       key => key !== "name" && key !== "cost" && category.type.Default[key].kind === "Prohibited",
     ),
-  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  ) as WrapInNestedReaders<
+    SimpleTableEnv,
+    Record<Extract<keyof R, SimpleTableEntryColumns>, string>
+  >,
   values: omitKeys(
     {
       name: Reader.of(name + parensIf(instanceTranslation.secondaryName)),
@@ -1813,7 +1843,10 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
     ...allSimpleKeys.filter(
       key => key !== "name" && key !== "cost" && category.type.Default[key].kind === "Prohibited",
     ),
-  ) as Record<Extract<keyof R, SimpleTableEntryColumns>, Reader<SimpleTableEnv, string>>,
+  ) as WrapInNestedReaders<
+    SimpleTableEnv,
+    Record<Extract<keyof R, SimpleTableEntryColumns>, string>
+  >,
   additionalInformation: [
     {
       label: translateR("Note"),
@@ -1986,9 +2019,9 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
 
   return [
     ...(baseItemTranslation !== undefined && combatValues?.type === "Weapon"
-      ? Object.entries(combatValues.values.melee_uses ?? {}).map(([combatTechniqueId, use]) => ({
-          ...baseProperties,
-          ...createMeleeWeaponTableEntry(
+      ? Object.entries(combatValues.values.melee_uses ?? {}).map(([combatTechniqueId, use]) =>
+          createMeleeWeaponTableEntry(
+            baseProperties,
             name,
             entry.entity,
             baseItem,
@@ -1996,12 +2029,12 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             combatTechniqueId,
             use,
           ),
-        }))
+        )
       : []),
     ...(baseItemTranslation !== undefined && combatValues?.type === "Weapon"
-      ? Object.entries(combatValues.values.ranged_uses ?? {}).map(([combatTechniqueId, use]) => ({
-          ...baseProperties,
-          ...createRangedWeaponTableEntry(
+      ? Object.entries(combatValues.values.ranged_uses ?? {}).map(([combatTechniqueId, use]) =>
+          createRangedWeaponTableEntry(
+            baseProperties,
             name,
             entry.entity,
             baseItem,
@@ -2009,72 +2042,64 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             combatTechniqueId,
             use,
           ),
-        }))
+        )
       : []),
     ...(baseItemTranslation !== undefined && combatValues?.type === "Armor"
       ? [
-          {
-            ...baseProperties,
-            ...createArmorTableEntry(
-              name,
-              entry.entity,
-              baseItem,
-              { ...combatTranslation, ...baseItemTranslation },
-              combatValues.values,
-            ),
-          },
+          createArmorTableEntry(
+            baseProperties,
+            name,
+            entry.entity,
+            baseItem,
+            { ...combatTranslation, ...baseItemTranslation },
+            combatValues.values,
+          ),
         ]
       : []),
     ...(entry.entity === "Weapon" || entry.entity === "Armor"
       ? []
       : entry.entity === "GemOrPreciousStone"
         ? [
-            {
-              ...baseProperties,
-              ...createGemOrPreciousStoneTableEntry(
-                name,
-                entry.content,
-                translateMap(entry.content.translations),
-              ),
-            },
+            createGemOrPreciousStoneTableEntry(
+              baseProperties,
+              name,
+              entry.content,
+              translateMap(entry.content.translations),
+            ),
           ]
         : entry.entity === "MusicalInstrument" ||
             entry.entity === "Animal" ||
             entry.entity === "AnimalCare" ||
             entry.entity === "Vehicle"
           ? [
-              {
-                ...baseProperties,
-                ...createSimpleTableEntry(
-                  name,
-                  entry.entity,
-                  {
-                    name: null,
-                    weight: null,
-                    cost: null,
-                  },
-                  baseItem,
-                  baseItemTranslation,
-                ),
-              },
+              createSimpleTableEntry(
+                baseProperties,
+                name,
+                entry.entity,
+                {
+                  name: null,
+                  weight: null,
+                  cost: null,
+                },
+                baseItem,
+                baseItemTranslation,
+              ),
             ]
           : [
-              {
-                ...baseProperties,
-                ...createSimpleTableEntry(
-                  name,
-                  entry.entity,
-                  {
-                    name: null,
-                    weight: null,
-                    structurePoints: null,
-                    cost: null,
-                    complexity: null,
-                  },
-                  baseItem,
-                  baseItemTranslation,
-                ),
-              },
+              createSimpleTableEntry(
+                baseProperties,
+                name,
+                entry.entity,
+                {
+                  name: null,
+                  weight: null,
+                  structurePoints: null,
+                  cost: null,
+                  complexity: null,
+                },
+                baseItem,
+                baseItemTranslation,
+              ),
             ]),
     // {
     //   title: name,
@@ -2261,9 +2286,9 @@ export const getItemEntityDescription = createEntityDescriptionCreator<
     return [
       ...(category.type.Default.combatValues.isWeaponAllowed
         ? [
-            ...Object.entries(entry.content.meleeUses ?? {}).map(([combatTechniqueId, use]) => ({
-              ...baseProperties,
-              ...createMeleeWeaponTableEntry(
+            ...Object.entries(entry.content.meleeUses ?? {}).map(([combatTechniqueId, use]) =>
+              createMeleeWeaponTableEntry(
+                baseProperties,
                 translation.name,
                 "Weapon",
                 entry.content,
@@ -2271,10 +2296,10 @@ export const getItemEntityDescription = createEntityDescriptionCreator<
                 combatTechniqueId,
                 use,
               ),
-            })),
-            ...Object.entries(entry.content.rangedUses ?? {}).map(([combatTechniqueId, use]) => ({
-              ...baseProperties,
-              ...createRangedWeaponTableEntry(
+            ),
+            ...Object.entries(entry.content.rangedUses ?? {}).map(([combatTechniqueId, use]) =>
+              createRangedWeaponTableEntry(
+                baseProperties,
                 translation.name,
                 "Weapon",
                 entry.content,
@@ -2282,37 +2307,33 @@ export const getItemEntityDescription = createEntityDescriptionCreator<
                 combatTechniqueId,
                 use,
               ),
-            })),
+            ),
           ]
         : []),
       ...(category.type.Default.combatValues.isArmorAllowed && entry.content.armorUse
         ? [
-            {
-              ...baseProperties,
-              ...createArmorTableEntry(
-                translation.name,
-                "Armor",
-                entry.content,
-                translation,
-                entry.content.armorUse,
-              ),
-            },
+            createArmorTableEntry(
+              baseProperties,
+              translation.name,
+              "Armor",
+              entry.content,
+              translation,
+              entry.content.armorUse,
+            ),
           ]
         : []),
       ...(!category.type.Default.combatValues.isWeaponAllowed &&
       !category.type.Default.combatValues.isArmorAllowed
         ? [
-            {
-              ...baseProperties,
-              ...createSimpleTableEntryForCategory(
-                translation.name,
-                categoryId,
-                { ...category, type: category.type },
-                categoryTranslation,
-                entry.content,
-                translation,
-              ),
-            },
+            createSimpleTableEntryForCategory(
+              baseProperties,
+              translation.name,
+              categoryId,
+              { ...category, type: category.type },
+              categoryTranslation,
+              entry.content,
+              translation,
+            ),
           ]
         : []),
     ]

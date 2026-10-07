@@ -1,29 +1,28 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { isNotNullish, type AnyNonNullish } from "@elyukai/utils/nullable"
-import { Reader } from "@elyukai/utils/reader"
+import type { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { EntityMap } from "@optolith/database-schema/gen"
 import type {
   DefinitionListEntityDescriptionSection,
   EntityDescription,
-  EntityDescriptionCategory,
   EntityDescriptionSection,
   EntityDescriptionSectionContent,
   NestedDefinitionListEntityDescriptionSection,
   TabularEntityDescription,
+  TextEntityDescription,
 } from "./entityDescription.js"
 import type { StdEnv } from "./env.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
+import { unwrapNestedReaders, type WrapInNestedReaders } from "./nestedReaders.js"
 import type {
   RawDefinitionListEntityDescriptionSection,
-  RawDefinitionListEntityDescriptionSectionR,
   RawEntityDescription,
-  RawEntityDescriptionCategory,
   RawEntityDescriptionSection,
   RawEntityDescriptionSectionContent,
-  RawEntityDescriptionSectionR,
   RawNestedDefinitionListEntityDescriptionSection,
   RawTabularEntityDescription,
+  RawTextEntityDescription,
 } from "./rawEntityDescription.js"
 import { getReferencesTranslation } from "./references/index.js"
 import {
@@ -38,33 +37,19 @@ export type TaggedEntity<ES extends keyof EntityMap> = {
   [E in ES]: { entity: E; content: EntityMap[E]; id: string }
 }[ES]
 
-const mapRawCategory = <E>(
-  category: RawEntityDescriptionCategory<E> | undefined,
-  env: E,
-): EntityDescriptionCategory | undefined =>
-  category === undefined
-    ? undefined
-    : {
-        label: category.label.run(env),
-        sortingValue: category.sortingValue.run(env),
-        value: category.value.run(env),
-      }
-
 const mapRawSectionContent = <
   RDL extends { type: "definitionList" },
   DL extends { type: "definitionList" },
-  E,
 >(
-  mapDefinitionList: (definitionList: RDL, env: E) => DL,
+  mapDefinitionList: (definitionList: RDL) => DL,
   section: RawEntityDescriptionSectionContent<RDL>,
-  env: E,
 ): EntityDescriptionSectionContent<DL> => {
   switch (section.type) {
     case "plain":
     case "table":
       return section
     case "definitionList":
-      return mapDefinitionList(section, env)
+      return mapDefinitionList(section)
     default:
       return assertExhaustive(section)
   }
@@ -81,66 +66,48 @@ const mapNestedDefinitionList = (
         ? item.value
         : item.value
             .filter(isNotNullish)
-            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection, null)),
+            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection)),
   })),
 })
 
-const mapDefinitionList = <E>(
-  section:
-    RawDefinitionListEntityDescriptionSection | RawDefinitionListEntityDescriptionSectionR<E>,
-  env: E,
+const mapDefinitionList = (
+  section: RawDefinitionListEntityDescriptionSection,
 ): DefinitionListEntityDescriptionSection => ({
   ...section,
-  items: section.items.filter(isNotNullish).map(item => {
-    const normalizedValue = item.value instanceof Reader ? item.value.run(env) : item.value
-    return {
-      ...item,
-      label: typeof item.label === "string" ? item.label : item.label.run(env),
-      value:
-        typeof normalizedValue === "string"
-          ? normalizedValue
-          : normalizedValue
-              .filter(isNotNullish)
-              .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection, env)),
-    }
-  }),
+  items: section.items.filter(isNotNullish).map(item => ({
+    ...item,
+    label: item.label,
+    value:
+      typeof item.value === "string"
+        ? item.value
+        : item.value
+            .filter(isNotNullish)
+            .map(subsection => mapRawSectionContent(mapNestedDefinitionList, subsection)),
+  })),
 })
 
-const mapRawSection = <E>(
-  section: RawEntityDescriptionSection | RawEntityDescriptionSectionR<E>,
-  env: E,
-): EntityDescriptionSection => {
+const mapRawSection = (section: RawEntityDescriptionSection): EntityDescriptionSection => {
   switch (section.type) {
     case "labeled":
       return {
         ...section,
-        value: mapRawSectionContent(mapDefinitionList, section.value, env),
+        value: mapRawSectionContent(mapDefinitionList, section.value),
       }
     case "plain":
     case "table":
     case "definitionList":
-      return mapRawSectionContent(mapDefinitionList, section, env)
+      return mapRawSectionContent(mapDefinitionList, section)
     default:
       return assertExhaustive(section)
   }
 }
 
-const mapRawTabular = <
-  Cols extends string,
-  E extends StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
->(
-  raw: RawTabularEntityDescription<Cols, E>,
-  env: E,
+const mapRawTabular = <Cols extends string>(
+  raw: RawTabularEntityDescription<Cols>,
+  env: StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
   options: { publications: PublicationOptions },
 ): TabularEntityDescription<Cols> => ({
   ...raw,
-  category: mapRawCategory(raw.category, env),
-  labels: Object.fromEntries(
-    Object.entries<Reader<E, string>>(raw.labels).map(([col, label]) => [col, label.run(env)]),
-  ) as { [K in Cols]: string },
-  values: Object.fromEntries(
-    Object.entries<Reader<E, string>>(raw.values).map(([col, value]) => [col, value.run(env)]),
-  ) as { [K in Cols]: string },
   additionalInformation:
     raw.additionalInformation === undefined
       ? undefined
@@ -149,18 +116,34 @@ const mapRawTabular = <
             if (info === undefined) {
               return undefined
             }
-            const { label: labelR, id, value: valueR } = info
-            const value = valueR.run(env)
+            const { label, id, value } = info
             if (value === undefined) {
               return undefined
             }
             return {
-              label: labelR.run(env),
+              label,
               id,
               value,
             }
           })
           .filter(isNotNullish),
+  errata: raw.errata?.map(({ date, description }) => ({
+    date: env.formatDate(new Date(date)),
+    description: description.trim(),
+  })),
+  references:
+    raw.references === undefined
+      ? undefined
+      : getReferencesTranslation(options.publications, raw.references).run(env),
+})
+
+const mapRawText = (
+  raw: RawTextEntityDescription,
+  env: StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
+  options: { publications: PublicationOptions },
+): TextEntityDescription => ({
+  ...raw,
+  body: raw.body.filter(isNotNullish).map(mapRawSection),
   errata: raw.errata?.map(({ date, description }) => ({
     date: env.formatDate(new Date(date)),
     description: description.trim(),
@@ -177,10 +160,17 @@ const mapRawTabular = <
  */
 export const createEntityDescriptionCreator =
   <ES extends keyof EntityMap, A = AnyNonNullish, Cols extends string = never>(
-    fn: EntityDescriptionCreator<ES, A, RawEntityDescription<Cols, A>>,
+    fn: EntityDescriptionCreator<
+      ES,
+      A,
+      WrapInNestedReaders<A, RawEntityDescription<Cols> | undefined>
+    >,
   ): EntityDescriptionCreator<ES, A & StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">> =>
   (databaseAccessors, locale, entry, options) => {
-    const rawEntry = fn(databaseAccessors, locale, entry, options)
+    const rawEntry = unwrapNestedReaders(
+      fn(databaseAccessors, locale, entry, options),
+      databaseAccessors,
+    )
 
     if (Array.isArray(rawEntry)) {
       const results = rawEntry
@@ -212,24 +202,7 @@ export const createEntityDescriptionCreator =
       return mapRawTabular(rawEntry, databaseAccessors, options)
     }
 
-    return {
-      ...rawEntry,
-      category: mapRawCategory(rawEntry.category, databaseAccessors),
-      body: rawEntry.body
-        .filter(isNotNullish)
-        .map(section => mapRawSection(section, databaseAccessors)),
-      errata: rawEntry.errata?.map(({ date, description }) => ({
-        date: locale.formatDate(new Date(date)),
-        description: description.trim(),
-      })),
-      references:
-        rawEntry.references === undefined
-          ? undefined
-          : getReferencesTranslation(options.publications, rawEntry.references).run({
-              ...databaseAccessors,
-              ...locale,
-            }),
-    }
+    return mapRawText(rawEntry, databaseAccessors, options)
   }
 
 /**
@@ -239,13 +212,13 @@ export const createEntityDescriptionCreator =
 export type EntityDescriptionCreator<
   ES extends keyof EntityMap = keyof EntityMap,
   A = AnyNonNullish,
-  R = EntityDescription<string>,
+  R = EntityDescription<string> | undefined,
 > = (
   databaseAccessors: A,
   locale: LocaleEnvironment,
   entry: TaggedEntity<ES>,
   options: { publications: PublicationOptions },
-) => R | undefined
+) => R
 
 /**
  * Bridge between Reader and plain string instances in a definition list item.
