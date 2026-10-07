@@ -1447,7 +1447,8 @@ const renderProfessionVariantText = (
           | "SkillGroup"
           | "Blessing"
           | "Enhancement"
-          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">,
+          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+          | "DerivedCharacteristic",
           "SkillGroup"
         >,
         string[]
@@ -1696,6 +1697,7 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
       | "Cantrip"
       | "Blessing"
       | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | "DerivedCharacteristic"
     >
     getAllInstances: GetAllInstances<"SkillGroup">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<

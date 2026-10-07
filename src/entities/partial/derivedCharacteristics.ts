@@ -1,6 +1,12 @@
 import { Reader } from "@elyukai/utils/reader"
+import type { DerivedCharacteristicTranslation } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../env.js"
-import { attributedCustomNameFromInstanceR, getInstanceByIdFnR, responsiveR } from "./reader.js"
+import {
+  attributedCustomNameFromInstanceR,
+  formatR,
+  getInstanceByIdFnR,
+  responsiveR,
+} from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**
@@ -27,3 +33,16 @@ export const getDerivedCharacteristicPositionAndTranslation = (
             id,
           ).map((translation): [number, string] => [dc.position, translation ?? MISSING_VALUE]),
     )
+
+/**
+ * Formats a derived characteristic’s energy unit according to the associated value.
+ */
+export const formatDerivedCharacteristicEnergyUnit = (
+  value: number,
+  translation: DerivedCharacteristicTranslation,
+) =>
+  translation.unitAbbreviationValueAware !== undefined
+    ? formatR(translation.unitAbbreviationValueAware, {
+        value,
+      })
+    : (translation.unitAbbreviation ?? translation.abbreviation)

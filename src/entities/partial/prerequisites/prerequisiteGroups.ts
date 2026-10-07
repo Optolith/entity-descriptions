@@ -27,6 +27,7 @@ import { printAnySpecialAbilityOfGroupPrerequisite } from "./single/anySpecialAb
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
 import { printCommonSuggestedByRCPPrerequisite } from "./single/commonSuggestedByRCP.js"
 import { printCulturePrerequisite } from "./single/culture.js"
+import { printEnergyPrerequisite } from "./single/energy.js"
 import { printEnhancementPrerequisite } from "./single/enhancement.js"
 import { printInfluencePrerequisite } from "./single/influence.js"
 import { printMagicalTraditionPrerequisite } from "./single/magicalTradition.js"
@@ -159,13 +160,14 @@ export const printProfessionPrerequisiteGroup = (
   prerequisite: ProfessionPrerequisiteGroup,
 ): StdReader<
   PrerequisitePart | undefined,
-  "t" | "tm" | "rso" | "ibi",
+  "f" | "t" | "tm" | "lc" | "lj" | "rso" | "ibi",
   | "Race"
   | "Culture"
   | ActivatableIdentifier["kind"]
   | RatedIdentifier["kind"]
   | "Aspect"
   | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  | "DerivedCharacteristic"
 > => {
   switch (prerequisite.kind) {
     case "Sex":
@@ -181,6 +183,10 @@ export const printProfessionPrerequisiteGroup = (
       }))
     case "Rated":
       return printRatedPrerequisite(prerequisite.Rated)
+    case "RatedMinimumNumber":
+      return printRatedMinimumNumberPrerequisite(prerequisite.RatedMinimumNumber)
+    case "Energy":
+      return printEnergyPrerequisite(prerequisite.Energy)
     default:
       return assertExhaustive(prerequisite)
   }

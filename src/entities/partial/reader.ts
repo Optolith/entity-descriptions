@@ -182,19 +182,32 @@ export const attributedNameFromInstanceR = (
  * Applies a function to the translation of the specified entry and renders it in an attributed string.
  */
 export const attributedCustomNameR = <
-  E extends {
+  T extends {
     [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<unknown> } ? K : never
   }[keyof EntityMap],
+  E,
 >(
   context: string,
-  fn: (translation: EntityMap[E]["translations"][string]) => string,
-  ...args: IdArgsVariant<EntityMap, E>
+  fn: (
+    translation: EntityMap[T]["translations"][string],
+    instance: EntityMap[T],
+  ) => string | Reader<E, string>,
+  ...args: IdArgsVariant<EntityMap, T>
 ): Reader<
-  { translateMap: TranslateMap; getInstanceById: GetInstanceById<E> },
+  { translateMap: TranslateMap; getInstanceById: GetInstanceById<T> } & E,
   string | undefined
 > =>
   Reader.asks(env =>
-    attributedCustomName(env.translateMap, env.getInstanceById, context, fn, ...args),
+    attributedCustomName(
+      env.translateMap,
+      env.getInstanceById,
+      context,
+      (...customArgs) => {
+        const result = fn(...customArgs)
+        return result instanceof Reader ? result.run(env) : result
+      },
+      ...args,
+    ),
   )
 
 /**
