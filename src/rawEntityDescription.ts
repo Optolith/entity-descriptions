@@ -5,7 +5,9 @@ import type { Errata, PublicationRefs } from "@optolith/database-schema/gen"
  * cleaned up.
  */
 export type RawEntityDescription<Cols extends string = string> =
-  RawTextEntityDescription | RawTabularEntityDescription<Cols> | RawTabularEntityDescription<Cols>[]
+  | RawTextEntityDescription
+  | RawTabularEntityDescription<Cols>
+  | (RawTextEntityDescription | RawTabularEntityDescription<Cols>)[]
 
 /**
  * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.

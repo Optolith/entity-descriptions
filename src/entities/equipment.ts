@@ -85,13 +85,12 @@ import {
   type RawTabularEntityDescription,
 } from "../rawEntityDescription.js"
 import { getDerivedCharacteristicPositionAndTranslation } from "./partial/derivedCharacteristics.js"
-import { renderDice, renderDiceAndFlat } from "./partial/dice.js"
+import { renderDiceAndFlatR } from "./partial/dice.js"
 import {
   attributedName,
   attributedNameFromInstance,
   attributedNameFromText,
 } from "./partial/markdown.js"
-import { additionFormatter, subtractionFormatter } from "./partial/mathOperation.js"
 import { parensIf, parensIfR } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedCustomNameR,
@@ -351,8 +350,7 @@ const renderAmmunition = (
     ? "—"
     : (attributedName(translateMap, getInstanceById, "equipment", ammunition) ?? MISSING_VALUE)
 
-const renderMeleeDamage = (translate: Translate) => (damage: MeleeDamage) =>
-  renderDiceAndFlat(translate, damage.dice, damage.flat)
+const renderMeleeDamage = (damage: MeleeDamage) => renderDiceAndFlatR(damage.dice, damage.flat)
 
 /**
  * Render combat values of a ranged weapon.
@@ -402,20 +400,14 @@ export const renderRangedWeapon = <Damage>(
   }
 }
 
-const renderRangedDamage = (translate: Translate) => (damage: RangedDamage) => {
+const renderRangedDamage = (damage: RangedDamage) => {
   switch (damage.kind) {
-    case "Default": {
-      const renderedDice = renderDice(translate, damage.Default.dice)
-      return damage.Default.flat === undefined || damage.Default.flat === 0
-        ? renderedDice
-        : damage.Default.flat > 0
-          ? additionFormatter(renderedDice, damage.Default.flat)
-          : subtractionFormatter(renderedDice, damage.Default.flat)
-    }
+    case "Default":
+      return renderDiceAndFlatR(damage.Default.dice, damage.Default.flat)
     case "NotApplicable":
-      return "—"
+      return Reader.of("—")
     case "Special":
-      return translate("Special (Damage)")
+      return translateR("Special (Damage)")
     default:
       return assertExhaustive(damage)
   }
@@ -654,7 +646,7 @@ const renderShieldSize = (size: ShieldSize, structurePoints: StructurePoints | u
 }
 
 const renderNote = (
-  meleeUse: MeleeWeaponUse | undefined,
+  meleeUse: GenMeleeWeapon<unknown> | undefined,
   structurePoints: StructurePoints | undefined,
   restrictedTo: RestrictedTo | undefined,
   name: string,
@@ -1259,7 +1251,10 @@ const meleeWeaponColumns = {
   complexity: translateR("Complexity"),
 } satisfies Record<string, StdReader<string, "t">>
 
-type MeleeWeaponColumns = keyof typeof meleeWeaponColumns
+/**
+ * Name of columns in melee weapon table.
+ */
+export type MeleeWeaponColumns = keyof typeof meleeWeaponColumns
 
 const rangedWeaponColumns = {
   name: translateR("Name"),
@@ -1273,7 +1268,10 @@ const rangedWeaponColumns = {
   complexity: translateR("Complexity"),
 } satisfies Record<string, StdReader<string, "t">>
 
-type RangedWeaponColumns = keyof typeof rangedWeaponColumns
+/**
+ * Name of columns in ranged weapon table.
+ */
+export type RangedWeaponColumns = keyof typeof rangedWeaponColumns
 
 const armorColumns = {
   name: translateR("Name"),
@@ -1300,18 +1298,21 @@ type BaseProperties = {
   references: PublicationRefs
 }
 
-const renderMeleeWeaponTypesForName = (use: GenMeleeWeapon<MeleeDamage>) =>
+const renderMeleeWeaponTypesForName = (use: GenMeleeWeapon<unknown>) =>
   Reader.sequence([
     use.is_two_handed_weapon ? translateR("2H") : Reader.of(undefined),
     use.is_improvised_weapon ? translateR("i") : Reader.of(undefined),
   ]).map(types => ensureNonEmpty(types.filter(isNotNullish))?.join(", "))
 
-const renderRangedWeaponTypesForName = (use: GenRangedWeapon<RangedDamage>) =>
+const renderRangedWeaponTypesForName = (use: GenRangedWeapon<unknown>) =>
   Reader.sequence([use.is_improvised_weapon ? translateR("i") : Reader.of(undefined)]).map(types =>
     ensureNonEmpty(types.filter(isNotNullish))?.join(", "),
   )
 
-const createMeleeWeaponTableEntry = (
+/**
+ * Renders a melee weapon table entry for the equipment table.
+ */
+export const createMeleeWeaponTableEntry = <D, E>(
   baseProperties: BaseProperties,
   name: string,
   entityName: EquipmentIdentifier["kind"],
@@ -1331,7 +1332,8 @@ const createMeleeWeaponTableEntry = (
     disadvantage?: string
   },
   combatTechniqueId: CloseCombatTechnique_ID,
-  use: GenMeleeWeapon<MeleeDamage>,
+  use: GenMeleeWeapon<D>,
+  renderDamage: (damage: D) => Reader<E, string>,
 ): GenEquipmentTableEntry<
   MeleeWeaponColumns,
   StdEnv<
@@ -1344,7 +1346,8 @@ const createMeleeWeaponTableEntry = (
     | "MagicalTradition"
     | "BlessedTradition"
     | "Profession"
-  >
+  > &
+    E
 > => {
   const combatTechnique = getInstanceByIdR("CloseCombatTechnique", combatTechniqueId)
   const combatTechniqueName = nameR("CloseCombatTechnique", combatTechniqueId)
@@ -1378,7 +1381,7 @@ const createMeleeWeaponTableEntry = (
     ),
     values: {
       name: sequence`${name}${parensIf(instanceTranslation.secondary_name)}${parensIfR(renderMeleeWeaponTypesForName(use))}`,
-      damagePoints: Reader.asks(env => renderMeleeDamage(env.translate)(use.damage)),
+      damagePoints: renderDamage(use.damage),
       primaryAttributeDamageThreshold: combatTechnique.thenW(ct =>
         Reader.asks(env =>
           renderPrimaryAttributeAndDamageThreshold(
@@ -1439,7 +1442,10 @@ const createMeleeWeaponTableEntry = (
   }
 }
 
-const createRangedWeaponTableEntry = (
+/**
+ * Renders a ranged weapon table entry for the equipment table.
+ */
+export const createRangedWeaponTableEntry = <D, E>(
   baseProperties: BaseProperties,
   name: string,
   entityName: EquipmentIdentifier["kind"],
@@ -1459,7 +1465,8 @@ const createRangedWeaponTableEntry = (
     disadvantage?: string
   },
   combatTechniqueId: RangedCombatTechnique_ID,
-  use: GenRangedWeapon<RangedDamage>,
+  use: GenRangedWeapon<D>,
+  renderDamage: (damage: D) => Reader<E, string>,
 ): GenEquipmentTableEntry<
   RangedWeaponColumns,
   StdEnv<
@@ -1473,7 +1480,8 @@ const createRangedWeaponTableEntry = (
     | "MagicalTradition"
     | "BlessedTradition"
     | "Profession"
-  >
+  > &
+    E
 > => {
   const combatTechniqueName = nameR("RangedCombatTechnique", combatTechniqueId)
   const attributedCombatTechniqueName = combatTechniqueName.map(ctName =>
@@ -1506,7 +1514,7 @@ const createRangedWeaponTableEntry = (
     ),
     values: {
       name: sequence`${name}${parensIf(instanceTranslation.secondary_name)}${parensIfR(renderRangedWeaponTypesForName(use))}`,
-      damagePoints: Reader.asks(env => renderRangedDamage(env.translate)(use.damage)),
+      damagePoints: renderDamage(use.damage),
       reloadTime: Reader.asks(env =>
         renderReloadTime(env.translate, env.translateMap, env.format, use.reload_time),
       ),
@@ -2028,6 +2036,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             { ...combatTranslation, ...baseItemTranslation },
             combatTechniqueId,
             use,
+            renderMeleeDamage,
           ),
         )
       : []),
@@ -2041,6 +2050,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             { ...combatTranslation, ...baseItemTranslation },
             combatTechniqueId,
             use,
+            renderRangedDamage,
           ),
         )
       : []),
@@ -2295,6 +2305,7 @@ export const getItemEntityDescription = createEntityDescriptionCreator<
                 translation,
                 combatTechniqueId,
                 use,
+                renderMeleeDamage,
               ),
             ),
             ...Object.entries(entry.content.rangedUses ?? {}).map(([combatTechniqueId, use]) =>
@@ -2306,6 +2317,7 @@ export const getItemEntityDescription = createEntityDescriptionCreator<
                 translation,
                 combatTechniqueId,
                 use,
+                renderRangedDamage,
               ),
             ),
           ]

@@ -2,7 +2,9 @@
  * A JSON representation of the rules text for a library entry.
  */
 export type EntityDescription<Cols extends string> =
-  TextEntityDescription | TabularEntityDescription<Cols> | TabularEntityDescription<Cols>[]
+  | TextEntityDescription
+  | TabularEntityDescription<Cols>
+  | (TextEntityDescription | TabularEntityDescription<Cols>)[]
 
 /**
  * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.

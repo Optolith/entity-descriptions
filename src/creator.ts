@@ -154,6 +154,22 @@ const mapRawText = (
       : getReferencesTranslation(options.publications, raw.references).run(env),
 })
 
+const mapRaw = <Cols extends string>(
+  raw: RawTabularEntityDescription<Cols> | RawTextEntityDescription,
+  env: StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
+  options: { publications: PublicationOptions },
+) => {
+  switch (raw.type) {
+    case "tabular":
+      return mapRawTabular(raw, env, options)
+    case "text":
+    case undefined:
+      return mapRawText(raw, env, options)
+    default:
+      return assertExhaustive(raw)
+  }
+}
+
 /**
  * Creates a function that creates the JSON representation of the rules text for
  * a library entry.
@@ -182,7 +198,7 @@ export const createEntityDescriptionCreator =
             options.publications,
           ),
         )
-        .map(e => mapRawTabular(e, databaseAccessors, options))
+        .map(e => mapRaw(e, databaseAccessors, options))
       return ensureNonEmpty(results)
     }
 
@@ -198,11 +214,7 @@ export const createEntityDescriptionCreator =
       return undefined
     }
 
-    if (rawEntry.type === "tabular") {
-      return mapRawTabular(rawEntry, databaseAccessors, options)
-    }
-
-    return mapRawText(rawEntry, databaseAccessors, options)
+    return mapRaw(rawEntry, databaseAccessors, options)
   }
 
 /**

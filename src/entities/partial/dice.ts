@@ -24,3 +24,13 @@ export const renderDiceAndFlat = (translate: Translate, dice: Dice, flat: number
     : flat > 0
       ? additionFormatter(renderDice(translate, dice), flat)
       : subtractionFormatter(renderDice(translate, dice), flat)
+
+/**
+ * Renders a dice expression with an additional flat modifier, like "2D6+3" or "2D6-1".
+ */
+export const renderDiceAndFlatR = (dice: Dice, flat: number | undefined) =>
+  flat === undefined || flat === 0
+    ? renderDiceR(dice)
+    : flat > 0
+      ? renderDiceR(dice).map(diceStr => additionFormatter(diceStr, flat))
+      : renderDiceR(dice).map(diceStr => subtractionFormatter(diceStr, flat))

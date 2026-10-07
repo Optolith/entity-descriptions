@@ -61,6 +61,7 @@ import {
   getZibiljaRitualEntityDescription,
 } from "./entities/spell.js"
 import { getStateEntityDescription } from "./entities/state.js"
+import { getTalismanEntityDescription } from "./entities/talisman.js"
 import { getTradeSecretEntityDescription } from "./entities/tradeSecret.js"
 import type { EntityDescription } from "./entityDescription.js"
 import type { StdEnv } from "./env.js"
@@ -225,6 +226,7 @@ const registeredEntityDescriptionCreators = {
   Poison: getPoisonEntityDescription,
   RopeOrChain: getEquipmentEntityDescription,
   Stationery: getEquipmentEntityDescription,
+  Talisman: getTalismanEntityDescription,
   ThievesTool: getEquipmentEntityDescription,
   ToolOfTheTrade: getEquipmentEntityDescription,
   TravelGearOrTool: getEquipmentEntityDescription,
