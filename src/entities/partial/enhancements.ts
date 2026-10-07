@@ -77,6 +77,7 @@ export const renderEnhancements = (
   RawEntityDescriptionSection | undefined,
   "t" | "tm" | "lc" | "lj" | "ibi" | "acibp" | "po",
   RatedIdentifier["kind"] | "Enhancement" | "Publication",
+  never,
   "Enhancement"
 > =>
   getChildInstancesForInstanceIdR("Enhancement", parentId).thenW(enhancements =>

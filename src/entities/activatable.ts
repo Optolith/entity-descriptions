@@ -1557,7 +1557,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "CeremonialItemSpecialAbilityGroup"
       | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
     >
-    getAllInstances: GetAllInstances<"Script">
+    getAllInstances: GetAllInstances<"AnimalShapeSize" | "Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     getAllResolvedSelectOptions: GetAllResolvedSelectOptions
     getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
