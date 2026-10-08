@@ -297,6 +297,8 @@ const renderCommonProfessions = (
                   return renderProfessionConstraint(constraint.Profession)
                 case "Tradition":
                   return renderTraditionConstraint("BlessedTradition", constraint.Tradition)
+                case "Group":
+                  return translateR("religious professions")
                 default:
                   return assertExhaustive(constraint)
               }
