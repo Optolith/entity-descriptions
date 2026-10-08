@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.28.0](https://github.com/Optolith/entity-descriptions/compare/v0.27.0...v0.28.0) (2026-10-08)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.88.0
+
+### build
+
+* **deps:** upgrade to schema 0.88.0 ([2951c30](https://github.com/Optolith/entity-descriptions/commit/2951c3045a08e891f43cf42d8ef4a7b4ecc15a20))
+
+### Bug Fixes
+
+* take item counts into account for equipment packages ([c0607d9](https://github.com/Optolith/entity-descriptions/commit/c0607d98088aade8e859aea3f0757a12978c52ac))
+
 ## [0.27.0](https://github.com/Optolith/entity-descriptions/compare/v0.26.1...v0.27.0) (2026-10-07)
 
 ### ⚠ BREAKING CHANGES
