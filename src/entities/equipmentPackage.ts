@@ -10,7 +10,7 @@ import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate } from "../helpers/translate.js"
 import { getEquipmentName } from "./equipment.js"
-import { attributedInstance } from "./partial/markdown.js"
+import { attributedNameFromText } from "./partial/markdown.js"
 
 type AtomicCost = number | "Various" | "Invaluable" | [from: number, to: number]
 
@@ -84,7 +84,10 @@ const getAtomicCost = (cost: Cost): AtomicCost => {
   }
 }
 
-const getAtomicEquipmentCost = (entry: TaggedEntity<EquipmentIdentifier["kind"]>): AtomicCost => {
+const getAtomicEquipmentCost = (
+  item: EquipmentPackageItem & { entry: TaggedEntity<EquipmentIdentifier["kind"]> },
+): AtomicCost => {
+  const { entry } = item
   switch (entry.entity) {
     case "AnimalCare":
       switch (entry.content.type.kind) {
@@ -195,8 +198,9 @@ const getAtomicEquipmentCost = (entry: TaggedEntity<EquipmentIdentifier["kind"]>
 type AtomicWeight = number | [from: number, to: number]
 
 const getAtomicEquipmentWeight = (
-  entry: TaggedEntity<EquipmentIdentifier["kind"]>,
+  item: EquipmentPackageItem & { entry: TaggedEntity<EquipmentIdentifier["kind"]> },
 ): AtomicWeight => {
+  const { entry } = item
   switch (entry.entity) {
     case "Ammunition":
     case "Animal":
@@ -292,6 +296,21 @@ const renderAtomicWeight = (
   }
 }
 
+const applyCountToAtomicValue = <T>(
+  value: number | [from: number, to: number] | T,
+  count: number | undefined,
+): number | [from: number, to: number] | T => {
+  if (count === undefined || count === 1) {
+    return value
+  } else if (typeof value === "number") {
+    return value * count
+  } else if (Array.isArray(value)) {
+    return [value[0] * count, value[1] * count]
+  } else {
+    return value
+  }
+}
+
 /**
  * Get a JSON representation of the rules text for an equipment package.
  */
@@ -312,14 +331,14 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
     content.items
       ?.map(item => ({
         ...item,
-        content: { entity: item.id.kind, content: getInstanceById(item.id) },
+        entry: { entity: item.id.kind, content: getInstanceById(item.id) },
       }))
       .filter(
         (
           item,
         ): item is EquipmentPackageItem & {
-          content: TaggedEntity<EquipmentIdentifier["kind"]>
-        } => item.content.content !== undefined,
+          entry: TaggedEntity<EquipmentIdentifier["kind"]>
+        } => item.entry.content !== undefined,
       ) ?? []
 
   return {
@@ -331,18 +350,18 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
         header: [translation.name, translate("Weight"), translate("Cost")],
         rows: actualItems
           .map((item): [string, string, string] => [
-            attributedInstance(
-              getEquipmentName(translate, translateMap, getInstanceById, item.content),
-              item.content.entity,
-              item.content.id,
-              { context: '"equipment-package"' },
+            attributedNameFromText(
+              getEquipmentName(translate, translateMap, getInstanceById, item.entry),
+              "equipment-package",
+              item.entry.entity,
+              item.entry.id,
             ),
             renderAtomicWeight(
               translate,
               locale.measurementAdjustments,
-              getAtomicEquipmentWeight(item.content),
+              applyCountToAtomicValue(getAtomicEquipmentWeight(item), item.number),
             ),
-            renderAtomicCost(translate, getAtomicEquipmentCost(item.content)),
+            renderAtomicCost(translate, getAtomicEquipmentCost(item)),
           ])
           .toSorted(on(item => item[0], locale.compare)),
         footer: [
@@ -351,13 +370,13 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
             translate,
             locale.measurementAdjustments,
             actualItems
-              .map(item => getAtomicEquipmentWeight(item.content))
+              .map(item => applyCountToAtomicValue(getAtomicEquipmentWeight(item), item.number))
               .reduce(sumAtomicEquipmentWeight, 0),
           ),
           renderAtomicCost(
             translate,
             actualItems
-              .map(item => getAtomicEquipmentCost(item.content))
+              .map(item => applyCountToAtomicValue(getAtomicEquipmentCost(item), item.number))
               .reduce(sumAtomicEquipmentCost, 0),
           ),
         ],
