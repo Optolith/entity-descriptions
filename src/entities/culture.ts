@@ -236,25 +236,16 @@ const renderCommonProfessions = (
       return renderCommonProfessionGroup(
         "Mundane Professions",
         commonProfessions.Grouped.mundane,
-        constraint => {
-          switch (constraint.kind) {
-            case "Profession":
-              return renderProfessionConstraint(constraint.Profession)
-            case "Group":
-              switch (constraint.Group.kind) {
-                case "Profane":
-                  return translateR("profane professions")
-                case "Fighter":
-                  return translateR("fighter professions")
-                case "Religious":
-                  return translateR("religious professions")
-                default:
-                  return assertExhaustive(constraint.Group)
-              }
-            default:
-              return assertExhaustive(constraint)
-          }
-        },
+        constraint =>
+          //{
+          //   switch (constraint.kind) {
+          //     case "Profession":
+          //       return
+          renderProfessionConstraint(constraint.Profession),
+        //     default:
+        //       return assertExhaustive(constraint)
+        //   }
+        // },
       ).then(mundane =>
         renderCommonProfessionGroup(
           "Magic Professions",
@@ -297,6 +288,8 @@ const renderCommonProfessions = (
                   return renderProfessionConstraint(constraint.Profession)
                 case "Tradition":
                   return renderTraditionConstraint("BlessedTradition", constraint.Tradition)
+                case "Religious":
+                  return translateR("religious professions")
                 default:
                   return assertExhaustive(constraint)
               }
