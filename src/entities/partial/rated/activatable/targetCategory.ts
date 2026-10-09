@@ -1,10 +1,10 @@
 import { Reader } from "@elyukai/utils/reader"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   AffectedTargetCategories,
   SpecificAffectedTargetCategoryIdentifier,
   TargetCategory_ID,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../../env.js"
 import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
 import { attributedNameR, translateMapR, translateR } from "../../reader.js"

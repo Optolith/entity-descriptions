@@ -1,6 +1,6 @@
+import { isNotNullish } from "@elyukai/utils/nullable"
+import { romanize } from "@elyukai/utils/roman"
 import type { AnimistPowerPrerequisite } from "@optolith/database-schema/gen"
-import { isNotNullish } from "@optolith/helpers/nullable"
-import { romanize } from "@optolith/helpers/roman"
 import type { StdReader } from "../../../../env.js"
 import { attributedNameR } from "../../reader.js"
 import { printDisplayOption } from "../displayOption.js"

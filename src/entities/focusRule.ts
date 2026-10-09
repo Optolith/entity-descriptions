@@ -1,4 +1,4 @@
-import { romanize } from "@optolith/helpers/roman"
+import { romanize } from "@elyukai/utils/roman"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 

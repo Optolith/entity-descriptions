@@ -1,6 +1,6 @@
 import { Reader } from "@elyukai/utils/reader"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { MathOperation } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 
 type UnaryFormatter = (value: string | number) => string
 type BinaryFormatter = (left: string | number, right: string | number) => string

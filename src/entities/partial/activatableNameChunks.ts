@@ -3,15 +3,15 @@ import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { deepEqual } from "@elyukai/utils/equality"
 import { identity, on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { mapObject } from "@elyukai/utils/object"
+import { romanize } from "@elyukai/utils/roman"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
   RequirableSelectOptionIdentifier,
 } from "@optolith/database-schema/gen"
-import { mapObject } from "@optolith/helpers/object"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { fromUniformCase } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"

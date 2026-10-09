@@ -1,4 +1,4 @@
-import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { nullableToArray } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
@@ -9,7 +9,6 @@ import type {
   RequirableSelectOptionIdentifier,
   Settings,
 } from "@optolith/database-schema/gen"
-import { ensureNonEmpty } from "@optolith/helpers/array"
 import { Case } from "tsondb/schema/gen"
 import type { StdEnv, StdReader } from "../../env.js"
 import type { TranslationKeysWithoutParams } from "../../helpers/translate.js"

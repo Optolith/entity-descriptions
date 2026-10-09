@@ -1,9 +1,9 @@
 import { Reader } from "@elyukai/utils/reader"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   EnhancementPrerequisite,
   SkillWithEnhancementsIdentifier,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { fromUniformCase } from "tsondb/schema/gen"
 import type { StdEnv, StdReader } from "../../../../env.js"
 import { attributedNameFromInstanceR, getInstanceByIdR, translateR } from "../../reader.js"

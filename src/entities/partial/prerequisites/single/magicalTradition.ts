@@ -1,8 +1,8 @@
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   MagicalTraditionPrerequisite,
   MagicalTraditionPrerequisiteRestriction,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../../env.js"
 import { translateR } from "../../reader.js"
 import { printDisplayOption } from "../displayOption.js"

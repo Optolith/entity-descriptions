@@ -1,5 +1,5 @@
+import type { Compare } from "@elyukai/utils/ordering"
 import type { LocaleMeasurementAdjustments } from "@optolith/database-schema/gen"
-import type { Compare } from "@optolith/helpers/compare"
 import type { Format, Translate, TranslateMap } from "./translate.js"
 
 /**

@@ -1,13 +1,13 @@
 import { on } from "@elyukai/utils/function"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   DerivedCharacteristicSkillCheckPenalty,
   SkillCheckPenalty as GeneralSkillCheckPenalty,
   MagicalRuneCombatTechniqueCheckPenalty,
   SkillCheck,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../env.js"
 import { getDerivedCharacteristicPositionAndTranslation } from "../derivedCharacteristics.js"
 import { responsiveTranslateR, translateR } from "../reader.js"

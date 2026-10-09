@@ -1,7 +1,10 @@
 import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
-import { mapNullable } from "@elyukai/utils/nullable"
+import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
+import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
+import { romanize } from "@elyukai/utils/roman"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ActivatableIdentifier,
   AdvantageDisadvantagePrerequisiteGroup,
@@ -31,10 +34,6 @@ import type {
   PublicationPrerequisites,
   SpellworkPrerequisites,
 } from "@optolith/database-schema/gen"
-import { numAsc } from "@optolith/helpers/compare"
-import { isNotNullish } from "@optolith/helpers/nullable"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdEnv, StdReader } from "../../../env.js"
 import type { RawEntityDescriptionBadge } from "../../../rawEntityDescription.js"
 import {
@@ -255,7 +254,7 @@ const printPrerequisitesForLevels = <T extends Prerequisite, SingleEnv>(
   const sortedByLevel = groupedByLevel
     .entries()
     .toArray()
-    .sort(on(item => item[0], numAsc))
+    .sort(on(item => item[0], compareNumber))
 
   const hasOnlyBasePrerequisites = groupedByLevel.size === 1 && hasBasePrerequisites
 

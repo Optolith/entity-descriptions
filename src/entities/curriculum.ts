@@ -4,6 +4,7 @@ import { sumWith } from "@elyukai/utils/array/reductions"
 import { Dictionary } from "@elyukai/utils/dictionary"
 import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
+import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import {
@@ -22,7 +23,6 @@ import type {
   SpellworkChange,
   SpellworkIdentifier,
 } from "@optolith/database-schema/gen"
-import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   GetAllChildInstancesForParent,

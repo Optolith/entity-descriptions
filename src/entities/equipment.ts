@@ -1,6 +1,6 @@
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
-import { isNotNullish } from "@elyukai/utils/nullable"
+import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { omitKeys, sortObjectKeysByIndex } from "@elyukai/utils/object"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
@@ -65,7 +65,6 @@ import type {
   StructurePoints,
   Weight,
 } from "@optolith/database-schema/gen"
-import { mapNullable } from "@optolith/helpers/nullable"
 import type { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { StdEnv, StdReader } from "../env.js"

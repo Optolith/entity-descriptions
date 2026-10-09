@@ -1,6 +1,11 @@
+import { unique } from "@elyukai/utils/array/filters"
+import { deepEqual } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
+import { romanize } from "@elyukai/utils/roman"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
@@ -10,10 +15,6 @@ import type {
   AdventurePointsValue,
   SelectOptionsAdventurePointsValue,
 } from "@optolith/database-schema/gen"
-import { unique } from "@optolith/helpers/array"
-import { deepEqual, numAsc } from "@optolith/helpers/compare"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { GetAllInstances } from "../../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../../helpers/locale.js"
 import type { BaseActivatable, BaseActivatableTranslation } from "../activatable.js"
@@ -51,7 +52,7 @@ const renderFixedSelectOptionsAdventurePointsValue = (
         typeof entry[0] === "number" && entry[1].length === 1,
     )
   ) {
-    const entriesSortedByApValue = entriesMap.toSorted(on(item => item[0], numAsc))
+    const entriesSortedByApValue = entriesMap.toSorted(on(item => item[0], compareNumber))
     return entriesSortedByApValue
       .map(entry => locale.translateMap(entry[1][0][1].content.translations)?.name ?? MISSING_VALUE)
       .join("/")
@@ -226,13 +227,13 @@ export const renderAdventurePointsValue = (
                 .map(script => script.content.ap_value)
                 .filter(isNotNullish),
             )
-              .toSorted(numAsc)
+              .toSorted(compareNumber)
               .map(applyNegative)
               .join("/"),
           })
         case "AnimalShapes": {
           const sizes = getAllInstances("AnimalShapeSize").toSorted(
-            on(x => x.content.ap_value, numAsc),
+            on(x => x.content.ap_value, compareNumber),
           )
           return translate("{$values} adventure points for a {$sized} animal shape", {
             values: sizes.map(size => applyNegative(size.content.ap_value)).join("/"),

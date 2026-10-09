@@ -1,8 +1,7 @@
 import { on } from "@elyukai/utils/function"
 import { mapNullable } from "@elyukai/utils/nullable"
-import { compareNullish } from "@elyukai/utils/ordering"
+import { compareNullish, compareNumber } from "@elyukai/utils/ordering"
 import { romanize } from "@elyukai/utils/roman"
-import { numAsc } from "@optolith/helpers/compare"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
@@ -62,7 +61,7 @@ export const getPersonalityTraitEntityDescription = createEntityDescriptionCreat
                 )
                   .entries()
                   .toArray()
-                  .toSorted(on(group => group[0], compareNullish(numAsc)))
+                  .toSorted(on(group => group[0], compareNullish(compareNumber)))
                   .map(([level, options]) =>
                     level === null
                       ? MISSING_VALUE

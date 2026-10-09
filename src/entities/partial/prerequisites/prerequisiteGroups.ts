@@ -1,3 +1,4 @@
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ActivatableIdentifier,
   AdvantageDisadvantagePrerequisiteGroup,
@@ -18,7 +19,6 @@ import type {
   RequirableSelectOptionIdentifier,
   SpellworkPrerequisiteGroup,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../env.js"
 import type { PrerequisitePart } from "./part.js"
 import { printActivatablePrerequisite } from "./single/activatable.js"

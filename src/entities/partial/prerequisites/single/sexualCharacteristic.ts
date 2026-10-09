@@ -1,8 +1,8 @@
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   SexualCharacteristic,
   SexualCharacteristicPrerequisite,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdReader } from "../../../../env.js"
 import { translateR } from "../../reader.js"
 import type { PrerequisitePart } from "../part.js"

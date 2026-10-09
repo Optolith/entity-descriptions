@@ -1,9 +1,12 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { Lazy } from "@elyukai/utils/lazy"
-import { compareNullish } from "@elyukai/utils/ordering"
+import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
+import type { Compare } from "@elyukai/utils/ordering"
+import { compareNullish, compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import {
   type ActivatableIdentifier,
   type ActivatableSkillEffect,
@@ -32,9 +35,6 @@ import {
   type SpellworkTraditions,
   type Tribe_ID,
 } from "@optolith/database-schema/gen"
-import { numAsc, type Compare } from "@optolith/helpers/compare"
-import { isNotNullish, mapNullable } from "@optolith/helpers/nullable"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
@@ -1593,7 +1593,7 @@ const renderOptionDerivedEnergyCost = <
   deriveValueGroupsFromNamedOptions(
     options,
     grouper,
-    compareNullish(numAsc),
+    compareNullish(compareNumber),
     num => num?.toFixed() ?? MISSING_VALUE,
   ).thenW(formatEnergyR)
 

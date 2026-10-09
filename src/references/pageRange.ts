@@ -1,6 +1,6 @@
+import { range } from "@elyukai/utils/range"
 import { Reader } from "@elyukai/utils/reader"
 import type { Page, PageRange as RawPageRange } from "@optolith/database-schema/gen"
-import { range } from "@optolith/helpers/array"
 import { sequence } from "../entities/partial/reader.js"
 import type { StdReader } from "../env.js"
 import { comparePage, equalsPage, printPage, succ } from "./page.js"

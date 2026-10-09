@@ -1,4 +1,4 @@
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { StdReader } from "../../../../env.js"
 import { translateR } from "../../reader.js"
 import type { PrerequisitePart } from "../part.js"

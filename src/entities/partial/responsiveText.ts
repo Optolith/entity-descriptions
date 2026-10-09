@@ -1,11 +1,11 @@
 import { identity } from "@elyukai/utils/function"
 import { Reader } from "@elyukai/utils/reader"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ResponsiveText,
   ResponsiveTextOptional,
   ResponsiveTextReplace,
 } from "@optolith/database-schema/gen"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import type { StdEnv } from "../../env.js"
 import { type LocaleMap } from "../../helpers/translate.js"
 import { appendInParensIfNotEmpty } from "./rated/activatable/parensIf.js"

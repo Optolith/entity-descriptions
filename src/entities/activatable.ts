@@ -3,9 +3,12 @@ import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
 import { constant, identity, on } from "@elyukai/utils/function"
-import { isNotNullish } from "@elyukai/utils/nullable"
-import { reduceCompare } from "@elyukai/utils/ordering"
+import { isNotNullish, mapNullable, mapNullableDefault } from "@elyukai/utils/nullable"
+import { compareNumber, reduceCompare } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
+import { romanize } from "@elyukai/utils/roman"
+import { sign } from "@elyukai/utils/string/number"
+import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
@@ -49,11 +52,6 @@ import type {
   SpecialRule,
   Volume,
 } from "@optolith/database-schema/gen"
-import { numAsc } from "@optolith/helpers/compare"
-import { sign } from "@optolith/helpers/math"
-import { mapNullable, mapNullableDefault } from "@optolith/helpers/nullable"
-import { romanize } from "@optolith/helpers/roman"
-import { assertExhaustive } from "@optolith/helpers/typeSafety"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
@@ -641,7 +639,7 @@ const renderVolumeValue = (
       )
         .entries()
         .toArray()
-        .toSorted(on(group => group[0], numAsc))
+        .toSorted(on(group => group[0], compareNumber))
 
       const separator = groups.some(group => group[1].length > 1) ? " / " : "/"
 
@@ -892,7 +890,7 @@ const renderBindingCost = (
       )
         .entries()
         .toArray()
-        .toSorted(on(group => group[0], numAsc))
+        .toSorted(on(group => group[0], compareNumber))
 
       const separator = groups.some(group => group[1].length > 1) ? " / " : "/"
 

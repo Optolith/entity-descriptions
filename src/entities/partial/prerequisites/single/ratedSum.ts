@@ -1,6 +1,6 @@
+import { isNotNullish } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import type { RatedSumPrerequisite } from "@optolith/database-schema/gen"
-import { isNotNullish } from "@optolith/helpers/nullable"
 import type { StdReader } from "../../../../env.js"
 import { attributedNameR, localeJoinR, localeSortR, translateR } from "../../reader.js"
 import { printDisplayOption } from "../displayOption.js"
