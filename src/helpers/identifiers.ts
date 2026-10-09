@@ -286,6 +286,7 @@ export enum MagicalTraditionIdentifier {
   BrobimGeoden = "40441cf9-e503-4895-a900-5a00fc2df8bc",
   Darna = "70f59d63-d862-47bc-bd07-c70c9e86d528",
   Runenschoepfer = "ca29d28a-425f-4f64-a601-1c911d4446cf",
+  Nachtalben = "0146682c-64a3-4d82-a0a8-881319e6e65e",
 }
 
 /**
