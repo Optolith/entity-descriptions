@@ -10,6 +10,7 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import { getAdventurePointsForRatingRange } from "@optolith/adventure-points/improvement-cost"
 import type {
   BlessedTraditionConstraint,
+  BlessedTraditionGroupConstraint,
   CommonNames,
   CommonProfessionConstraints,
   CommonProfessionConstraintsOperation,
@@ -160,6 +161,10 @@ const renderWeighted = <ID extends string, E>(
           return translateR("only {$variants :list type=conjunction}", {
             variants,
           })
+        case "ExceptFor":
+          return translateR("except for {$list :list type=conjunction}", {
+            list: variants,
+          })
         default:
           return assertExhaustive(weightedVariants.weight)
       }
@@ -212,6 +217,36 @@ const renderTraditionConstraint = <E extends "MagicalTradition" | "BlessedTradit
           renderRarity(constraint.rarity),
           renderWeighted(constraint.weighted_professions, profId =>
             getAttributedProfessionName(profId, "common-professions"),
+          ),
+        ]).map(
+          notes => baseName + parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; ")),
+        ),
+  )
+
+const renderBlessedTraditionGroupConstraint = (
+  constraint: BlessedTraditionGroupConstraint,
+): StdReader<
+  string | undefined,
+  "t" | "tm" | "lc" | "ibi",
+  "BlessedTradition" | "BlessedTraditionGroup"
+> =>
+  attributedCustomNameR(
+    "common-professions",
+    t => t.nameInCulture,
+    "BlessedTraditionGroup",
+    constraint.id,
+  ).thenW(baseName =>
+    baseName === undefined
+      ? Reader.of(undefined)
+      : Reader.sequence([
+          renderRarity(constraint.rarity),
+          renderWeighted(constraint.weighted_professions, tradId =>
+            attributedCustomNameR(
+              "common-professions",
+              t => t.nameOfGod ?? t.name,
+              "BlessedTradition",
+              tradId,
+            ),
           ),
         ]).map(
           notes => baseName + parensIf(ensureNonEmpty(notes.filter(isNotNullish))?.join("; ")),
@@ -279,7 +314,7 @@ const renderCommonProfessions = (
             ): StdReader<
               string | undefined,
               "t" | "tm" | "lc" | "ibi" | "acibp",
-              "ProfessionVariant" | "BlessedTradition",
+              "ProfessionVariant" | "BlessedTradition" | "BlessedTraditionGroup",
               never,
               "ProfessionVersion"
             > => {
@@ -288,6 +323,8 @@ const renderCommonProfessions = (
                   return renderProfessionConstraint(constraint.Profession)
                 case "Tradition":
                   return renderTraditionConstraint("BlessedTradition", constraint.Tradition)
+                case "Group":
+                  return renderBlessedTraditionGroupConstraint(constraint.Group)
                 case "Religious":
                   return translateR("religious professions")
                 default:
