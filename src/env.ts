@@ -10,7 +10,7 @@ import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisit
 import type { ModifiableParameter } from "./entities/partial/rated/activatable/nonModifiableSuffix.js"
 import type { Speed } from "./entities/partial/rated/activatable/speed.js"
 import type { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
-import { type EnergyUnit } from "./entities/partial/units/energy.js"
+import type { EnergyUnit } from "./entities/partial/units/energy.js"
 import type {
   GetAllChildInstancesForParent,
   GetAllInstances,

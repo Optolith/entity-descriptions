@@ -46,7 +46,9 @@ export type CombinedActivatableNameComponents = {
  * function returning a string.
  */
 export type ActivatableNameChunk =
-  LocaleMap<string> | string | ((translateMap: TranslateMap) => string)
+  | LocaleMap<string>
+  | string
+  | ((translateMap: TranslateMap) => string)
 
 const combineChunks = (
   a: ActivatableNameChunk,
@@ -572,7 +574,9 @@ export const getNameComponents = <T>(
 
   const actualBase = isTradition ? translate("Tradition") : renderedBase
   const actualOptions:
-    ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined = isTradition
+    | ActivatableNameChunk
+    | [ActivatableNameChunk, ActivatableNameChunk]
+    | undefined = isTradition
     ? renderedOptions === undefined
       ? renderedBase
       : [renderedBase, normalizeChunks(renderedOptions)]

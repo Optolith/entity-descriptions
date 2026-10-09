@@ -495,7 +495,9 @@ const getDerivedFocusRuleBadgeFromPrerequisite = (
  */
 export const getDerivedFocusRuleBadgeFromPrerequisites = (
   prerequisites:
-    AdvantageDisadvantagePrerequisites | GeneralPrerequisites | PlainGeneralPrerequisites,
+    | AdvantageDisadvantagePrerequisites
+    | GeneralPrerequisites
+    | PlainGeneralPrerequisites,
 ): StdReader<RawEntityDescriptionBadge | undefined, "ibi", "FocusRule"> =>
   Reader.asks(env => {
     for (const element of prerequisites) {

@@ -2,38 +2,37 @@ import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { Lazy } from "@elyukai/utils/lazy"
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
-import type { Compare } from "@elyukai/utils/ordering"
-import { compareNullish, compareNumber } from "@elyukai/utils/ordering"
+import { type Compare, compareNullish, compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import {
-  type ActivatableIdentifier,
-  type ActivatableSkillEffect,
-  type AnimistPowerImprovementCost,
-  type AnimistPowerPerformanceParameters,
-  type ArcaneBardTraditionReference,
-  type ArcaneDancerTraditionReference,
-  type BannzeichenCost,
-  type BannzeichenCraftingTime,
-  type BannzeichenDuration,
-  type BannzeichenImprovementCost,
-  type BannzeichenOption,
-  type FamiliarsTrickPerformanceParameters,
-  type FamiliarsTrickProperty,
-  type MagicalRuneCost,
-  type MagicalRuneCraftingTime,
-  type MagicalRuneDuration,
-  type MagicalRuneImprovementCost,
-  type MagicalRuneOption,
-  type MagicalTradition_ID,
-  type OldParameterBySpeed,
-  type Property_ID,
-  type RatedIdentifier,
-  type RequirableSelectOptionIdentifier,
-  type SingleBannzeichenCost,
-  type SpellworkTraditions,
-  type Tribe_ID,
+import type {
+  ActivatableIdentifier,
+  ActivatableSkillEffect,
+  AnimistPowerImprovementCost,
+  AnimistPowerPerformanceParameters,
+  ArcaneBardTraditionReference,
+  ArcaneDancerTraditionReference,
+  BannzeichenCost,
+  BannzeichenCraftingTime,
+  BannzeichenDuration,
+  BannzeichenImprovementCost,
+  BannzeichenOption,
+  FamiliarsTrickPerformanceParameters,
+  FamiliarsTrickProperty,
+  MagicalRuneCost,
+  MagicalRuneCraftingTime,
+  MagicalRuneDuration,
+  MagicalRuneImprovementCost,
+  MagicalRuneOption,
+  MagicalTradition_ID,
+  OldParameterBySpeed,
+  Property_ID,
+  RatedIdentifier,
+  RequirableSelectOptionIdentifier,
+  SingleBannzeichenCost,
+  SpellworkTraditions,
+  Tribe_ID,
 } from "@optolith/database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -42,7 +41,7 @@ import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/
 import { MagicalTraditionIdentifier } from "../helpers/identifiers.js"
 import type { LocaleCompare } from "../helpers/locale.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
-import { type RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
 import { renderAnimalTypesSection } from "./partial/animalTypes.js"
 import { renderEnhancements } from "./partial/enhancements.js"
 import { attributedCustomName, attributedName } from "./partial/markdown.js"

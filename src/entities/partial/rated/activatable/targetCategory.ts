@@ -6,7 +6,7 @@ import type {
   TargetCategory_ID,
 } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../../../env.js"
-import { type RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
+import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
 import { attributedNameR, translateMapR, translateR } from "../../reader.js"
 import { MISSING_VALUE } from "../../unknown.js"
 import { appendInParensIfNotEmpty } from "./parensIf.js"

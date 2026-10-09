@@ -4,7 +4,8 @@ import { Reader } from "@elyukai/utils/reader"
  * A type that recursively wraps all values in a nested object in a Reader, unless they are already wrapped in a Reader. This allows a Reader to be used at any level of a nested object.
  */
 export type WrapInNestedReaders<E, T> =
-  Reader<E, T> | (T extends object ? { [K in keyof T]: WrapInNestedReaders<E, T[K]> } : T)
+  | Reader<E, T>
+  | (T extends object ? { [K in keyof T]: WrapInNestedReaders<E, T[K]> } : T)
 
 /**
  * A type that recursively unwraps all values in a nested object from a Reader, unless they are already unwrapped. Opposite of `WrapInNestedReaders`.

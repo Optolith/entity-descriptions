@@ -63,7 +63,9 @@ export type EntityDescriptionSection =
  * A slice of the content of a library entry text.
  */
 export type EntityDescriptionSectionContent<DL> =
-  PlainEntityDescriptionSection | DL | TableEntityDescriptionSection
+  | PlainEntityDescriptionSection
+  | DL
+  | TableEntityDescriptionSection
 
 /**
  * A labeled section of a library entry text.

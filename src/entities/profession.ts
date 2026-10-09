@@ -88,7 +88,7 @@ import {
   printProfessionPrerequisites,
   printProfessionVariantPrerequisites,
 } from "./partial/prerequisites/index.js"
-import { type GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import {
   renderBaseCombatTechniquesForAdventurePointsOption,
   renderVariantCombatTechniquesForAdventurePointsOption,

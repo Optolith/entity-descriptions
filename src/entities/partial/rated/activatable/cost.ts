@@ -23,7 +23,7 @@ import type {
   SustainedCostMap,
 } from "@optolith/database-schema/gen"
 import type { StdEnv, StdReader } from "../../../../env.js"
-import { type LocaleMap } from "../../../../helpers/translate.js"
+import type { LocaleMap } from "../../../../helpers/translate.js"
 import { renderParameterMap } from "../../map.js"
 import {
   fixedNumberOrString,
