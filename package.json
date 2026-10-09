@@ -17,12 +17,12 @@
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc -b -w",
-    "format": "prettier \"src/{types/**/*.{ts,tsx},*.{ts,tsx}}\" --write",
-    "format:check": "prettier \"src/{types/**/*.{ts,tsx},*.{ts,tsx}}\" --check",
+    "format": "oxfmt \"{src,test}/**/*.{ts,tsx}\"",
+    "format:check": "oxfmt \"{src,test}/**/*.{ts,tsx}\" --check",
     "release": "commit-and-tag-version",
     "release:sign": "commit-and-tag-version --sign --signoff",
     "test": "node --import tsx --test",
-    "lint": "eslint"
+    "lint": "oxlint"
   },
   "repository": {
     "type": "git",
@@ -36,6 +36,7 @@
   "homepage": "https://github.com/Optolith/entity-descriptions#readme",
   "dependencies": {
     "@elyukai/markdown": "^0.4.0",
+    "@elyukai/oxc-config": "^0.1.0",
     "@elyukai/utils": "^0.3.8",
     "@optolith/adventure-points": "^0.1.1",
     "diff": "^9.0.0",
@@ -43,14 +44,13 @@
     "tsondb": "^0.21.5"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@optolith/database-schema": "^0.89.0",
     "@types/node": "^26.6.4",
     "commit-and-tag-version": "^13.2.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^65.1.0",
     "globals": "^17.13.0",
-    "prettier": "^3.9.9",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-7": "npm:typescript@^7.0.2",

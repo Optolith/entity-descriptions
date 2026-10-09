@@ -68,7 +68,9 @@ export type RawEntityDescriptionSection =
  * A slice of the content of a library entry text.
  */
 export type RawEntityDescriptionSectionContent<DL> =
-  RawPlainEntityDescriptionSection | DL | RawTableEntityDescriptionSection
+  | RawPlainEntityDescriptionSection
+  | DL
+  | RawTableEntityDescriptionSection
 
 /**
  * A labeled section of a library entry text.

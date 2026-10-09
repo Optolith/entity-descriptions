@@ -70,18 +70,13 @@ import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js
 import type { StdEnv, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
-import {
-  type Format,
-  type LocaleMap,
-  type Translate,
-  type TranslateMap,
-} from "../helpers/translate.js"
+import type { Format, LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import type { WrapInNestedReaders } from "../nestedReaders.js"
-import {
-  type RawEntityDescriptionSectionContent,
-  type RawLabeledEntityDescriptionSection,
-  type RawNestedDefinitionListEntityDescriptionSection,
-  type RawTabularEntityDescription,
+import type {
+  RawEntityDescriptionSectionContent,
+  RawLabeledEntityDescriptionSection,
+  RawNestedDefinitionListEntityDescriptionSection,
+  RawTabularEntityDescription,
 } from "../rawEntityDescription.js"
 import { getDerivedCharacteristicPositionAndTranslation } from "./partial/derivedCharacteristics.js"
 import { renderDiceAndFlatR } from "./partial/dice.js"

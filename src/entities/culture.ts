@@ -364,7 +364,8 @@ const renderCommonNames = (
   commonNames: CommonNames,
 ): StdReader<
   (
-    RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection> | undefined
+    | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
+    | undefined
   )[],
   "lc"
 > =>

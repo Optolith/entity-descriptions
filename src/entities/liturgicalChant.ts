@@ -1,11 +1,11 @@
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import type { Compare } from "@elyukai/utils/ordering"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import {
-  type BlessedTradition,
-  type Blessing_ID,
-  type LiturgyTradition,
-  type RatedIdentifier,
+import type {
+  BlessedTradition,
+  Blessing_ID,
+  LiturgyTradition,
+  RatedIdentifier,
 } from "@optolith/database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
