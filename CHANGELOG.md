@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.30.1](https://github.com/Optolith/entity-descriptions/compare/v0.30.0...v0.30.1) (2026-10-10)
+
+### Bug Fixes
+
+* remove unnecessary env requirement ([bf1fc62](https://github.com/Optolith/entity-descriptions/commit/bf1fc621de5f4beaa3ecae4b3bfb3371e170e82e))
+
 ## [0.30.0](https://github.com/Optolith/entity-descriptions/compare/v0.29.0...v0.30.0) (2026-10-10)
 
 ### ⚠ BREAKING CHANGES
