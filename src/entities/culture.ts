@@ -1,3 +1,4 @@
+import { stripInlineMarkdown } from "@elyukai/markdown/render/strip"
 import { allSame } from "@elyukai/utils/array/filters"
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { sumWith } from "@elyukai/utils/array/reductions"
@@ -100,7 +101,11 @@ const renderCommonProfessionConstraints = <T, E>(
     Reader.sequence(constraints.constraints.map(renderConstraint)).thenW(constraintValues =>
       renderListOperation(
         constraints.operation,
-        constraintValues.filter(isNotNullish).toSorted(localeCompare),
+        constraintValues
+          .filter(isNotNullish)
+          .map(text => [text, stripInlineMarkdown(text)] as const)
+          .toSorted(on(p => p[1], localeCompare))
+          .map(p => p[0]),
       ),
     ),
   ).thenW(identity)
