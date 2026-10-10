@@ -44,7 +44,7 @@
     "tsondb": "^0.21.5"
   },
   "devDependencies": {
-    "@optolith/database-schema": "^0.89.0",
+    "@optolith/database-schema": "^0.90.1",
     "@types/node": "^26.6.4",
     "commit-and-tag-version": "^13.2.1",
     "globals": "^17.13.0",

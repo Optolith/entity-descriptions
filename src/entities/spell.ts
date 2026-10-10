@@ -18,6 +18,7 @@ import type {
   BannzeichenDuration,
   BannzeichenImprovementCost,
   BannzeichenOption,
+  CommonnessSelectOptionIdentifier,
   FamiliarsTrickPerformanceParameters,
   FamiliarsTrickProperty,
   MagicalRuneCost,
@@ -29,7 +30,6 @@ import type {
   OldParameterBySpeed,
   Property_ID,
   RatedIdentifier,
-  RequirableSelectOptionIdentifier,
   SingleBannzeichenCost,
   SpellworkTraditions,
   Tribe_ID,
@@ -1182,7 +1182,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       | "Influence"
       | ActivatableIdentifier["kind"]
       | "Aspect"
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }

@@ -1,6 +1,6 @@
 import type {
   ActivatableIdentifier,
-  RequirableSelectOptionIdentifier,
+  CommonnessSelectOptionIdentifier,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap } from "../env.js"
@@ -20,7 +20,7 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
       | "Race"
       | ActivatableIdentifier["kind"]
       | "Aspect"
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">

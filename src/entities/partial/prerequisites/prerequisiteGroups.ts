@@ -1,6 +1,6 @@
+import type { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
-  ActivatableIdentifier,
   AdvantageDisadvantagePrerequisiteGroup,
   AnimistPowerPrerequisiteGroup,
   ArcaneTraditionPrerequisiteGroup,
@@ -16,12 +16,11 @@ import type {
   ProfessionPrerequisiteGroup,
   PublicationPrerequisiteGroup,
   RatedIdentifier,
-  RequirableSelectOptionIdentifier,
   SpellworkPrerequisiteGroup,
 } from "@optolith/database-schema/gen"
-import type { StdReader } from "../../../env.js"
+import type { StdEnv, StdReader } from "../../../env.js"
 import type { PrerequisitePart } from "./part.js"
-import { printActivatablePrerequisite } from "./single/activatable.js"
+import { printActivatablePrerequisite, type ActivatableNameEnv } from "./single/activatable.js"
 import { printAnimistPowerPrerequisite } from "./single/animistPower.js"
 import { printAnySpecialAbilityOfGroupPrerequisite } from "./single/anySpecialAbilityOfGroup.js"
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
@@ -85,24 +84,25 @@ export const printPublicationPrerequisiteGroup = (
  */
 export const printGeneralPrerequisiteGroup = (
   prerequisite: GeneralPrerequisiteGroup,
-): StdReader<
-  PrerequisitePart | undefined,
-  "t" | "tm" | "lj" | "lc" | "rso" | "ibi",
-  | "Race"
-  | "Culture"
-  | "PactCategory"
-  | "PactDomain"
-  | "SocialStatus"
-  | "State"
-  | ActivatableIdentifier["kind"]
-  | RatedIdentifier["kind"]
-  | "Property"
-  | "Aspect"
-  | "Enhancement"
-  | "PersonalityTrait"
-  | "Blessing"
-  | "Cantrip"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+): Reader<
+  StdEnv<
+    "f" | "t" | "tm" | "lc" | "lj" | "ibi",
+    | "Race"
+    | "Culture"
+    | "PactCategory"
+    | "PactDomain"
+    | "SocialStatus"
+    | "State"
+    | RatedIdentifier["kind"]
+    | "Property"
+    | "Aspect"
+    | "Enhancement"
+    | "PersonalityTrait"
+    | "Blessing"
+    | "Cantrip"
+  > &
+    Omit<ActivatableNameEnv, "displayedInProfession">,
+  PrerequisitePart | undefined
 > => {
   switch (prerequisite.kind) {
     case "Sex":
@@ -158,16 +158,13 @@ export const printGeneralPrerequisiteGroup = (
  */
 export const printProfessionPrerequisiteGroup = (
   prerequisite: ProfessionPrerequisiteGroup,
-): StdReader<
-  PrerequisitePart | undefined,
-  "f" | "t" | "tm" | "lc" | "lj" | "rso" | "ibi",
-  | "Race"
-  | "Culture"
-  | ActivatableIdentifier["kind"]
-  | RatedIdentifier["kind"]
-  | "Aspect"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
-  | "DerivedCharacteristic"
+): Reader<
+  StdEnv<
+    "f" | "t" | "tm" | "lc" | "lj" | "rso" | "ibi",
+    "Race" | "Culture" | RatedIdentifier["kind"] | "DerivedCharacteristic"
+  > &
+    Omit<ActivatableNameEnv, "displayedInProfession">,
+  PrerequisitePart | undefined
 > => {
   switch (prerequisite.kind) {
     case "Sex":
@@ -199,24 +196,25 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
   prerequisite: AdvantageDisadvantagePrerequisiteGroup,
   name: string,
   type: "Advantage" | "Disadvantage",
-): StdReader<
-  PrerequisitePart | undefined,
-  "t" | "tm" | "lj" | "lc" | "rso" | "ibi",
-  | "Race"
-  | "Culture"
-  | "PactCategory"
-  | "PactDomain"
-  | "SocialStatus"
-  | "State"
-  | ActivatableIdentifier["kind"]
-  | RatedIdentifier["kind"]
-  | "Property"
-  | "Aspect"
-  | "Enhancement"
-  | "PersonalityTrait"
-  | "Blessing"
-  | "Cantrip"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+): Reader<
+  StdEnv<
+    "f" | "t" | "tm" | "lc" | "lj" | "rso" | "ibi",
+    | "Race"
+    | "Culture"
+    | "PactCategory"
+    | "PactDomain"
+    | "SocialStatus"
+    | "State"
+    | RatedIdentifier["kind"]
+    | "Property"
+    | "Aspect"
+    | "Enhancement"
+    | "PersonalityTrait"
+    | "Blessing"
+    | "Cantrip"
+  > &
+    Omit<ActivatableNameEnv, "displayedInProfession">,
+  PrerequisitePart | undefined
 > => {
   switch (prerequisite.kind) {
     case "CommonSuggestedByRCP":
@@ -323,16 +321,10 @@ export const printLiturgyPrerequisiteGroup = (
  */
 export const printInfluencePrerequisiteGroup = (
   prerequisite: InfluencePrerequisiteGroup,
-): StdReader<
-  PrerequisitePart | undefined,
-  "t" | "tm" | "rso" | "ibi" | "acibp",
-  | "Influence"
-  | "Race"
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">,
-  never,
-  "ProfessionVersion"
+): Reader<
+  StdEnv<"t" | "tm" | "ibi" | "acibp", "Influence" | "Race", never, "ProfessionVersion"> &
+    Omit<ActivatableNameEnv, "displayedInProfession">,
+  PrerequisitePart | undefined
 > => {
   switch (prerequisite.kind) {
     case "Influence":
@@ -358,13 +350,9 @@ export const printInfluencePrerequisiteGroup = (
  */
 export const printLanguagePrerequisiteGroup = (
   prerequisite: LanguagePrerequisiteGroup,
-): StdReader<
-  PrerequisitePart | undefined,
-  "t" | "tm" | "rso" | "ibi",
-  | "Race"
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+): Reader<
+  StdEnv<"t" | "tm" | "ibi", "Race"> & Omit<ActivatableNameEnv, "displayedInProfession">,
+  PrerequisitePart | undefined
 > => {
   switch (prerequisite.kind) {
     case "Race":
@@ -399,13 +387,9 @@ export const printAnimistPowerPrerequisiteGroup = (
  */
 export const printGeodeRitualPrerequisiteGroup = (
   prerequisite: GeodeRitualPrerequisiteGroup,
-): StdReader<
-  PrerequisitePart | undefined,
-  "t" | "tm" | "rso" | "ibi",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | "Influence"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+): Reader<
+  StdEnv<"t" | "tm" | "ibi", "Influence"> & Omit<ActivatableNameEnv, "displayedInProfession">,
+  PrerequisitePart | undefined
 > => {
   switch (prerequisite.kind) {
     case "Activatable":

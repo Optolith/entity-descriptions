@@ -6,7 +6,7 @@ import type {
   CommonnessRatedAdvantageDisadvantage,
   CommonnessRatedAdvantageDisadvantageLevel,
   CommonnessRatedAdvantageDisadvantageTranslation,
-  RequirableSelectOptionIdentifier,
+  CommonnessSelectOptionIdentifier,
   Settings,
 } from "@optolith/database-schema/gen"
 import { Case } from "tsondb/schema/gen"
@@ -45,7 +45,7 @@ const renderOptions = (
   translation?.options === undefined
     ? Reader.asks(
         (
-          env: StdEnv<"rso" | "ibi", Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
+          env: StdEnv<"rso" | "ibi", Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
         ) =>
           item.options?.map(
             option =>
@@ -66,14 +66,14 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
 ): StdReader<
   string,
   "tm" | "lc" | "rso" | "ibi",
-  E | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  E | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
 > =>
   translateMapR(item.translations).thenW(commonnessItemTranslation =>
     customNameR<
       E,
       StdEnv<
         "tm" | "lc" | "rso" | "ibi",
-        Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+        Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
       >
     >(
       (translation, instance) => {
@@ -204,7 +204,7 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
 ): StdReader<
   string | T,
   "tm" | "lc" | "ibi" | "rso",
-  E | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  E | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
 > =>
   (items === undefined || !isNotEmpty(items)) && appendedString === undefined
     ? Reader.of(emptyString)
@@ -224,7 +224,7 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
 ): StdReader<
   string | T,
   "tm" | "lc" | "ibi" | "rso",
-  "Advantage" | "Disadvantage" | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  "Advantage" | "Disadvantage" | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
 > =>
   Reader.sequence(
     [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].map(

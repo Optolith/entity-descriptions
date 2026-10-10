@@ -11,10 +11,10 @@ import type {
   AttributeAdjustments,
   AutomaticAdvantageDisadvantage,
   BaseValues,
+  CommonnessSelectOptionIdentifier,
   Culture_ID,
   RaceVariant,
   RaceVariantTranslation,
-  RequirableSelectOptionIdentifier,
   Settings,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -37,6 +37,7 @@ import {
 import { joinPrerequisiteParts } from "./partial/prerequisites/part.js"
 import {
   printActivatableName,
+  type ActivatableNameEnv,
   type GetResolvedSelectOptionById,
 } from "./partial/prerequisites/single/activatable.js"
 import {
@@ -220,7 +221,7 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
   "t" | "tm" | "lc" | "ibi" | "rso",
   | ActivatableIdentifier["kind"]
   | "Aspect"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
 > =>
   items === undefined || !isNotEmpty(items)
     ? Reader.of(emptyString)
@@ -228,12 +229,9 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
         items,
         (
           item,
-        ): StdReader<
-          ActivatableNameComponents | undefined,
-          "t" | "rso" | "ibi",
-          | ActivatableIdentifier["kind"]
-          | "Aspect"
-          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+        ): Reader<
+          Omit<ActivatableNameEnv, "displayedInProfession">,
+          ActivatableNameComponents | undefined
         > =>
           printActivatableName(Case(entity, item.id), item.options, item.level).with(env => ({
             ...env,
@@ -260,7 +258,7 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
   "t" | "tm" | "lc" | "ibi" | "rso",
   | ActivatableIdentifier["kind"]
   | "Aspect"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
 > =>
   Reader.traverse(
     [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const],
@@ -269,12 +267,9 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
         items ?? [],
         (
           item,
-        ): StdReader<
-          ActivatableNameComponents | undefined,
-          "t" | "rso" | "ibi",
-          | ActivatableIdentifier["kind"]
-          | "Aspect"
-          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+        ): Reader<
+          Omit<ActivatableNameEnv, "displayedInProfession">,
+          ActivatableNameComponents | undefined
         > =>
           printActivatableName(Case(entity, item.id), item.options, item.level).with(env => ({
             ...env,
@@ -321,7 +316,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
       | "Aspect"
       | "Culture"
       | "DerivedCharacteristic"
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
     >
     countInstances: CountInstances<"Attribute">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"RaceVariant">
@@ -381,7 +376,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
                 | "Culture"
                 | ActivatableIdentifier["kind"]
                 | "Aspect"
-                | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+                | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
               >,
               RawDefinitionListEntityDescriptionSectionItem | undefined
             >([

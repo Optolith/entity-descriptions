@@ -10,7 +10,8 @@ import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
-  RequirableSelectOptionIdentifier,
+  CommonnessSelectOptionIdentifier,
+  SkillGroupTranslation,
 } from "@optolith/database-schema/gen"
 import { fromUniformCase } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
@@ -499,10 +500,10 @@ export const renderActivatableNameComponentsCombinedIfPossible = (
  */
 export const renderNameComponentsOptions = (
   displayedInProfession: boolean,
-  getInstanceById: GetInstanceById<Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
+  getInstanceById: GetInstanceById<Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
-  options: (RequirableSelectOptionIdentifier | "select")[] | undefined,
+  options: (CommonnessSelectOptionIdentifier | "select")[] | undefined,
 ): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
     options
@@ -511,14 +512,20 @@ export const renderNameComponentsOptions = (
           return undefined
         }
         const optTranslations: ResolvedSelectOption["content"]["translations"] | undefined = (
-          getResolvedSelectOptionById(id, optionId)?.content ??
-          (optionId.kind === "General" ? undefined : getInstanceById(optionId))
+          optionId.kind === "SkillGroup"
+            ? getInstanceById(optionId)
+            : (getResolvedSelectOptionById(id, optionId)?.content ??
+              (optionId.kind === "General" ? undefined : getInstanceById(optionId)))
         )?.translations
 
         return optTranslations === undefined
           ? MISSING_VALUE
           : mapObject(optTranslations, t10n =>
-              displayedInProfession ? (t10n.name_in_profession ?? t10n.name) : t10n.name,
+              optionId.kind === "SkillGroup"
+                ? (t10n as SkillGroupTranslation).longName
+                : displayedInProfession
+                  ? (t10n.name_in_profession ?? t10n.name)
+                  : t10n.name,
             )
       })
       .filter(isNotNullish) ?? []
@@ -549,12 +556,12 @@ export const makeNameBuilderRulesWithDefaults = (
 export const getNameComponents = <T>(
   translate: Translate,
   id: ActivatableIdentifier,
-  options: (RequirableSelectOptionIdentifier | "select")[] | undefined,
+  options: (CommonnessSelectOptionIdentifier | "select")[] | undefined,
   level: number | undefined,
   nameBuilderRules: ActivatableNameBuilderRules | undefined,
   translations: LocaleMap<T>,
   getBaseName: (translation: T) => string,
-  getInstanceById: GetInstanceById<Exclude<RequirableSelectOptionIdentifier["kind"], "General">>,
+  getInstanceById: GetInstanceById<Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   displayedInProfession: boolean,
 ): ActivatableNameComponents => {

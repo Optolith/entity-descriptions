@@ -30,6 +30,7 @@ import type {
   Brew_ID,
   CombatRelatedSpecialAbilityIdentifier,
   CombatTechniqueIdentifier,
+  CommonnessSelectOptionIdentifier,
   DaggerRitualCost,
   EnchantmentCost,
   Errata,
@@ -45,7 +46,6 @@ import type {
   PropertyDeclaration,
   PublicationRefs,
   RatedIdentifier,
-  RequirableSelectOptionIdentifier,
   RestrictedBlessings,
   SelectOptions,
   Skill_ID,
@@ -1553,7 +1553,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Cantrip"
       | "FocusRule"
       | "CeremonialItemSpecialAbilityGroup"
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
     >
     getAllInstances: GetAllInstances<"AnimalShapeSize" | "Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

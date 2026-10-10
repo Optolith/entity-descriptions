@@ -21,6 +21,7 @@ import type {
   CantripsOptions,
   CombatTechniqueIdentifier,
   CombatTechniquesOptions,
+  CommonnessSelectOptionIdentifier,
   ConstantProfessionSpecialAbility,
   CursesOptions,
   Enhancement,
@@ -852,7 +853,7 @@ const getSpecialAbilityNameComponents = (
   getInstanceById: GetInstanceById<
     | ProfessionSpecialAbilityIdentifier["kind"]
     | SkillWithEnhancementsIdentifier["kind"]
-    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+    | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   translate: Translate,
@@ -925,7 +926,7 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
       "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
       | ProfessionSpecialAbilityIdentifier["kind"]
       | SkillWithEnhancementsIdentifier["kind"]
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
     >) => {
       switch (specialAbility.kind) {
         case "Constant": {

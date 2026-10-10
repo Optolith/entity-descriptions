@@ -7,6 +7,7 @@ import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
   ActivatablePrerequisite,
+  CommonnessSelectOptionIdentifier,
   RequirableSelectOptionIdentifier,
 } from "@optolith/database-schema/gen"
 import type { StdEnv } from "../../../../env.js"
@@ -32,7 +33,7 @@ export type ActivatableNameEnv = StdEnv<
   "t" | "rso" | "ibi" | "dip",
   | ActivatableIdentifier["kind"]
   | "Aspect"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
 >
 
 /**
@@ -54,27 +55,19 @@ export const printActivatableName = (
     ) =>
       entry === undefined
         ? Reader.of(undefined)
-        : Reader.asks(
-            (
-              env: StdEnv<
-                "t" | "rso" | "ibi" | "dip",
-                | ActivatableIdentifier["kind"]
-                | "Aspect"
-                | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
-              >,
-            ) =>
-              getNameComponents(
-                env.translate,
-                id,
-                options,
-                level,
-                entry.nameBuilderRules,
-                entry.translations,
-                t => t.name,
-                env.getInstanceById,
-                env.getResolvedSelectOptionById,
-                env.displayedInProfession,
-              ),
+        : Reader.asks((env: ActivatableNameEnv) =>
+            getNameComponents(
+              env.translate,
+              id,
+              options,
+              level,
+              entry.nameBuilderRules,
+              entry.translations,
+              t => t.name,
+              env.getInstanceById,
+              env.getResolvedSelectOptionById,
+              env.displayedInProfession,
+            ),
           ),
   )
 
