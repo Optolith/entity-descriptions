@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.31.0](https://github.com/Optolith/entity-descriptions/compare/v0.30.1...v0.31.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.91.0
+
+### build
+
+* **deps:** upgrade to schema 0.91.0 ([31a1f09](https://github.com/Optolith/entity-descriptions/commit/31a1f09c9d969e59df6ce39c37de95b6ccf5f760))
+
+### Bug Fixes
+
+* display slash between advantages and disadvantages in common list ([056f862](https://github.com/Optolith/entity-descriptions/commit/056f862e5384b5f73fb3c238f5fa6f37f32c3739))
+
 ## [0.30.1](https://github.com/Optolith/entity-descriptions/compare/v0.30.0...v0.30.1) (2026-10-10)
 
 ### Bug Fixes
