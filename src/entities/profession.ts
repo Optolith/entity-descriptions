@@ -43,7 +43,6 @@ import type {
   RatedIdentifier,
   RequirableSelectOptionIdentifier,
   RestrictedBlessings,
-  Settings,
   SkillsOptions,
   SkillSpecializationOptions,
   SkillWithEnhancementsIdentifier,
@@ -51,18 +50,15 @@ import type {
   VariantOptionAction,
 } from "@optolith/database-schema/gen"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
-import { createEntityDescriptionCreator } from "../creator.js"
+import { createEntityDescriptionCreator, type EntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
-import type {
-  GetAllChildInstancesForParent,
-  GetAllInstances,
-  GetInstanceById,
-} from "../helpers/getTypes.js"
+import { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
   RawNestedDefinitionListEntityDescriptionSection,
+  RawTextEntityDescription,
 } from "../rawEntityDescription.js"
 import {
   combineNameComponents,
@@ -88,7 +84,7 @@ import {
   printProfessionPrerequisites,
   printProfessionVariantPrerequisites,
 } from "./partial/prerequisites/index.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
 import {
   renderBaseCombatTechniquesForAdventurePointsOption,
   renderVariantCombatTechniquesForAdventurePointsOption,
@@ -1676,255 +1672,312 @@ const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProf
           ),
       )
 
+const getRawProfessionVersionEntityDescription: EntityDescriptionCreator<
+  "ProfessionVersion",
+  StdEnv<
+    "ibi" | "rso" | "ai" | "acibp" | "x",
+    | "Publication"
+    | "ExperienceLevel"
+    | "Advantage"
+    | "Disadvantage"
+    | ProfessionSpecialAbilityIdentifier["kind"]
+    | "Aspect"
+    | RatedIdentifier["kind"]
+    | "Race"
+    | "Culture"
+    | MagicalActionIdentifier["kind"]
+    | "SkillGroup"
+    | "Cantrip"
+    | "Blessing"
+    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+    | "DerivedCharacteristic",
+    "SkillGroup",
+    "ProfessionPackage" | "ProfessionVariant"
+  >,
+  RawTextEntityDescription | undefined
+> = (
+  {
+    getInstanceById,
+    getAllInstances,
+    getChildInstancesForInstanceId,
+    getResolvedSelectOptionById,
+    settings,
+  },
+  locale,
+  { id, content: entry },
+): RawTextEntityDescription | undefined => {
+  const {
+    format,
+    formatNumber,
+    translate,
+    translateMap,
+    compare: localeCompare,
+    join: localeJoin,
+  } = locale
+
+  const translation = translateMap(entry.translations)
+
+  const env = {
+    format,
+    formatNumber,
+    translate,
+    translateMap,
+    localeCompare,
+    localeJoin,
+    getInstanceById,
+    getAllInstances,
+    getChildInstancesForInstanceId,
+    getResolvedSelectOptionById,
+  } satisfies Partial<EnvMap>
+
+  const professionPackages = prepareProfessionPackages(id).run(env)
+
+  if (translation === undefined || !isNotEmpty(professionPackages)) {
+    return undefined
+  }
+
+  return {
+    title:
+      translation.name.default +
+      parensIf(
+        ensureNonEmpty(
+          [
+            translation.specification?.default,
+            professionPackages.length > 1
+              ? professionPackages
+                  .map(pkg => translateMap(pkg.experienceLevel.translations)?.name)
+                  .join("/")
+              : undefined,
+          ].filter(isNotNullish),
+        )?.join(", "),
+      ),
+    className: "profession",
+    body: [
+      {
+        type: "definitionList",
+        items: [
+          {
+            label: translate("AP Value"),
+            value: renderSinglePackageValue(
+              professionPackages,
+              pkg => Reader.of(pkg.content.ap_value),
+              equal,
+              apValues =>
+                apValues.length === 1
+                  ? translateR(".input {$value :number} {{{$value} Adventure Points}}", {
+                      value: apValues[0],
+                    })
+                  : translateR("{$value} Adventure Points", {
+                      value: apValues.join("/"),
+                    }),
+            ).run(env),
+          },
+          {
+            label: translate("Prerequisites"),
+            value: renderSinglePackageValue(
+              professionPackages,
+              pkg => Reader.of(pkg.content.prerequisites),
+              deepEqual,
+              prerequisitesLists =>
+                Reader.traverse(prerequisitesLists, prerequisites =>
+                  prerequisites === undefined
+                    ? translateR("none")
+                    : printProfessionPrerequisites(prerequisites),
+                ).map(list => list.join(" / ")),
+            ).run(env),
+          },
+          {
+            label: translate("Special Abilities"),
+            value: renderSinglePackageValue(
+              professionPackages,
+              pkg =>
+                Reader.of({
+                  skillSpecialization: pkg.content.options?.skill_specialization,
+                  languagesScripts: pkg.content.options?.languages_scripts,
+                  curses: pkg.content.options?.curses,
+                  list: pkg.content.special_abilities,
+                }),
+              deepEqual,
+              specialAbilityLists =>
+                Reader.of(
+                  specialAbilityLists
+                    .map(specialAbilities =>
+                      Object.values(specialAbilities).every(list => list === undefined)
+                        ? translate("none")
+                        : renderSpecialAbilities(specialAbilities).run(env),
+                    )
+                    .join(" / "),
+                ),
+            ).run(env),
+          },
+          {
+            label: translate("Combat Techniques"),
+            value: renderCombatTechniques(professionPackages).run(env),
+          },
+          {
+            label: translate("Skills"),
+            value: [
+              {
+                type: "definitionList",
+                style: "nested",
+                items: renderSkills(professionPackages).run(env),
+              },
+            ],
+          },
+          renderSpellworks(professionPackages)
+            .map(value =>
+              value === undefined
+                ? undefined
+                : {
+                    label: translate("Spellworks"),
+                    value,
+                  },
+            )
+            .run(env),
+          renderLiturgicalChants(professionPackages)
+            .map(value =>
+              value === undefined
+                ? undefined
+                : {
+                    label: translate("Liturgical Chants"),
+                    value,
+                  },
+            )
+            .run(env),
+          renderValueWithPossibleTranslation(
+            "Suggested Advantages",
+            entry.suggested_advantages,
+            values =>
+              renderCommonnessRatedAdvantagesOrDisadvantages(
+                "Advantage",
+                values,
+                translate("none"),
+              ).run(env),
+            translation.suggested_advantages,
+          ).run(env),
+          renderValueWithPossibleTranslation(
+            "Suggested Disadvantages",
+            entry.suggested_disadvantages,
+            values =>
+              renderCommonnessRatedAdvantagesOrDisadvantages(
+                "Disadvantage",
+                values,
+                translate("none"),
+              ).run(env),
+            translation.suggested_disadvantages,
+          ).run(env),
+          renderValueWithPossibleTranslation(
+            "Unsuitable Advantages",
+            entry.unsuitable_advantages,
+            values =>
+              renderCommonnessRatedAdvantagesOrDisadvantages(
+                "Advantage",
+                excludeNegativeSupernaturalFromList(settings, values),
+                translate("none"),
+                appendNegativeSupernaturalWithGeneralNegative(
+                  "Advantage",
+                  settings,
+                  entry.unsuitable_advantages,
+                ).run(env),
+              ).run(env),
+            translation.unsuitable_advantages,
+          ).run(env),
+          renderValueWithPossibleTranslation(
+            "Unsuitable Disadvantages",
+            entry.unsuitable_disadvantages,
+            values =>
+              renderCommonnessRatedAdvantagesOrDisadvantages(
+                "Disadvantage",
+                values,
+                translate("none"),
+                appendNegativeSupernaturalWithGeneralNegative(
+                  "Disadvantage",
+                  settings,
+                  entry.unsuitable_advantages,
+                ).run(env),
+              ).run(env),
+            translation.unsuitable_disadvantages,
+          ).run(env),
+          renderProfessionVariants(professionPackages)
+            .map(value =>
+              value === undefined
+                ? undefined
+                : {
+                    label: translate("Variants"),
+                    value,
+                  },
+            )
+            .run(env),
+        ],
+      },
+    ],
+    errata: translation.errata,
+    references: entry.src,
+  }
+}
+
 /**
  * Get a JSON representation of the rules text for a profession version.
  */
 export const getProfessionVersionEntityDescription = createEntityDescriptionCreator<
   "ProfessionVersion",
-  {
-    getInstanceById: GetInstanceById<
-      | "Publication"
-      | "ExperienceLevel"
-      | "Advantage"
-      | "Disadvantage"
-      | ProfessionSpecialAbilityIdentifier["kind"]
-      | "Aspect"
-      | RatedIdentifier["kind"]
-      | "Race"
-      | "Culture"
-      | MagicalActionIdentifier["kind"]
-      | "SkillGroup"
-      | "Cantrip"
-      | "Blessing"
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
-      | "DerivedCharacteristic"
-    >
-    getAllInstances: GetAllInstances<"SkillGroup">
-    getChildInstancesForInstanceId: GetAllChildInstancesForParent<
-      "ProfessionPackage" | "ProfessionVariant"
-    >
-    getResolvedSelectOptionById: GetResolvedSelectOptionById
-    settings: Settings
-  }
->(
-  (
-    {
-      getInstanceById,
-      getAllInstances,
-      getChildInstancesForInstanceId,
-      getResolvedSelectOptionById,
-      settings,
-    },
-    locale,
-    { id, content: entry },
-  ): RawEntityDescription | undefined => {
-    const {
-      format,
-      formatNumber,
-      translate,
-      translateMap,
-      compare: localeCompare,
-      join: localeJoin,
-    } = locale
+  StdEnv<
+    "ibi" | "rso" | "ai" | "acibp" | "x",
+    | "Publication"
+    | "ExperienceLevel"
+    | "Advantage"
+    | "Disadvantage"
+    | ProfessionSpecialAbilityIdentifier["kind"]
+    | "Aspect"
+    | RatedIdentifier["kind"]
+    | "Race"
+    | "Culture"
+    | MagicalActionIdentifier["kind"]
+    | "SkillGroup"
+    | "Cantrip"
+    | "Blessing"
+    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+    | "DerivedCharacteristic",
+    "SkillGroup",
+    "ProfessionPackage" | "ProfessionVariant"
+  >
+>(getRawProfessionVersionEntityDescription)
 
-    const translation = translateMap(entry.translations)
-
-    const env = {
-      format,
-      formatNumber,
-      translate,
-      translateMap,
-      localeCompare,
-      localeJoin,
-      getInstanceById,
-      getAllInstances,
-      getChildInstancesForInstanceId,
-      getResolvedSelectOptionById,
-    } satisfies Partial<EnvMap>
-
-    const professionPackages = prepareProfessionPackages(id).run(env)
-
-    if (translation === undefined || !isNotEmpty(professionPackages)) {
-      return undefined
-    }
-
-    return {
-      title:
-        translation.name.default +
-        parensIf(
-          ensureNonEmpty(
-            [
-              translation.specification?.default,
-              professionPackages.length > 1
-                ? professionPackages
-                    .map(pkg => translateMap(pkg.experienceLevel.translations)?.name)
-                    .join("/")
-                : undefined,
-            ].filter(isNotNullish),
-          )?.join(", "),
-        ),
-      className: "profession",
-      body: [
-        {
-          type: "definitionList",
-          items: [
-            {
-              label: translate("AP Value"),
-              value: renderSinglePackageValue(
-                professionPackages,
-                pkg => Reader.of(pkg.content.ap_value),
-                equal,
-                apValues =>
-                  apValues.length === 1
-                    ? translateR(".input {$value :number} {{{$value} Adventure Points}}", {
-                        value: apValues[0],
-                      })
-                    : translateR("{$value} Adventure Points", {
-                        value: apValues.join("/"),
-                      }),
-              ).run(env),
-            },
-            {
-              label: translate("Prerequisites"),
-              value: renderSinglePackageValue(
-                professionPackages,
-                pkg => Reader.of(pkg.content.prerequisites),
-                deepEqual,
-                prerequisitesLists =>
-                  Reader.traverse(prerequisitesLists, prerequisites =>
-                    prerequisites === undefined
-                      ? translateR("none")
-                      : printProfessionPrerequisites(prerequisites),
-                  ).map(list => list.join(" / ")),
-              ).run(env),
-            },
-            {
-              label: translate("Special Abilities"),
-              value: renderSinglePackageValue(
-                professionPackages,
-                pkg =>
-                  Reader.of({
-                    skillSpecialization: pkg.content.options?.skill_specialization,
-                    languagesScripts: pkg.content.options?.languages_scripts,
-                    curses: pkg.content.options?.curses,
-                    list: pkg.content.special_abilities,
-                  }),
-                deepEqual,
-                specialAbilityLists =>
-                  Reader.of(
-                    specialAbilityLists
-                      .map(specialAbilities =>
-                        Object.values(specialAbilities).every(list => list === undefined)
-                          ? translate("none")
-                          : renderSpecialAbilities(specialAbilities).run(env),
-                      )
-                      .join(" / "),
-                  ),
-              ).run(env),
-            },
-            {
-              label: translate("Combat Techniques"),
-              value: renderCombatTechniques(professionPackages).run(env),
-            },
-            {
-              label: translate("Skills"),
-              value: [
-                {
-                  type: "definitionList",
-                  style: "nested",
-                  items: renderSkills(professionPackages).run(env),
-                },
-              ],
-            },
-            renderSpellworks(professionPackages)
-              .map(value =>
-                value === undefined
-                  ? undefined
-                  : {
-                      label: translate("Spellworks"),
-                      value,
-                    },
-              )
-              .run(env),
-            renderLiturgicalChants(professionPackages)
-              .map(value =>
-                value === undefined
-                  ? undefined
-                  : {
-                      label: translate("Liturgical Chants"),
-                      value,
-                    },
-              )
-              .run(env),
-            renderValueWithPossibleTranslation(
-              "Suggested Advantages",
-              entry.suggested_advantages,
-              values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Advantage",
-                  values,
-                  translate("none"),
-                ).run(env),
-              translation.suggested_advantages,
-            ).run(env),
-            renderValueWithPossibleTranslation(
-              "Suggested Disadvantages",
-              entry.suggested_disadvantages,
-              values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Disadvantage",
-                  values,
-                  translate("none"),
-                ).run(env),
-              translation.suggested_disadvantages,
-            ).run(env),
-            renderValueWithPossibleTranslation(
-              "Unsuitable Advantages",
-              entry.unsuitable_advantages,
-              values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Advantage",
-                  excludeNegativeSupernaturalFromList(settings, values),
-                  translate("none"),
-                  appendNegativeSupernaturalWithGeneralNegative(
-                    "Advantage",
-                    settings,
-                    entry.unsuitable_advantages,
-                  ).run(env),
-                ).run(env),
-              translation.unsuitable_advantages,
-            ).run(env),
-            renderValueWithPossibleTranslation(
-              "Unsuitable Disadvantages",
-              entry.unsuitable_disadvantages,
-              values =>
-                renderCommonnessRatedAdvantagesOrDisadvantages(
-                  "Disadvantage",
-                  values,
-                  translate("none"),
-                  appendNegativeSupernaturalWithGeneralNegative(
-                    "Disadvantage",
-                    settings,
-                    entry.unsuitable_advantages,
-                  ).run(env),
-                ).run(env),
-              translation.unsuitable_disadvantages,
-            ).run(env),
-            renderProfessionVariants(professionPackages)
-              .map(value =>
-                value === undefined
-                  ? undefined
-                  : {
-                      label: translate("Variants"),
-                      value,
-                    },
-              )
-              .run(env),
-          ],
-        },
-      ],
-      errata: translation.errata,
-      references: entry.src,
-    }
-  },
+/**
+ * Get a JSON representation of the rules text for a profession.
+ */
+export const getProfessionEntityDescription = createEntityDescriptionCreator<
+  "Profession",
+  StdEnv<
+    "ibi" | "rso" | "ai" | "acibp" | "x",
+    | "Publication"
+    | "ExperienceLevel"
+    | "Advantage"
+    | "Disadvantage"
+    | ProfessionSpecialAbilityIdentifier["kind"]
+    | "Aspect"
+    | RatedIdentifier["kind"]
+    | "Race"
+    | "Culture"
+    | MagicalActionIdentifier["kind"]
+    | "SkillGroup"
+    | "Cantrip"
+    | "Blessing"
+    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+    | "DerivedCharacteristic",
+    "SkillGroup",
+    "ProfessionPackage" | "ProfessionVariant" | "ProfessionVersion"
+  >
+>((env, locale, { id }, options): RawEntityDescription =>
+  env
+    .getChildInstancesForInstanceId("ProfessionVersion", id)
+    .map(version =>
+      getRawProfessionVersionEntityDescription(
+        env,
+        locale,
+        { entity: "ProfessionVersion", ...version },
+        options,
+      ),
+    )
+    .filter(isNotNullish),
 )

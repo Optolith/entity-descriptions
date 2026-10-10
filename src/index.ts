@@ -38,7 +38,10 @@ import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisit
 import { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
-import { getProfessionVersionEntityDescription } from "./entities/profession.js"
+import {
+  getProfessionEntityDescription,
+  getProfessionVersionEntityDescription,
+} from "./entities/profession.js"
 import { getRaceEntityDescription } from "./entities/race.js"
 import { getSexPracticeEntityDescription } from "./entities/sexPractice.js"
 import { getSkillEntityDescription } from "./entities/skill.js"
@@ -109,6 +112,7 @@ const registeredEntityDescriptionCreators = {
   DerivedCharacteristic: getDerivedCharacteristicEntityDescription,
   Race: getRaceEntityDescription,
   Culture: getCultureEntityDescription,
+  Profession: getProfessionEntityDescription,
   ProfessionVersion: getProfessionVersionEntityDescription,
   Advantage: getActivatableEntityDescription,
   Disadvantage: getActivatableEntityDescription,
