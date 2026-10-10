@@ -9,6 +9,7 @@ import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   AmmunitionishIdentifier,
+  AnimalFeedCost,
   ArmorComplexity,
   ArmorType,
   AttackModifier,
@@ -30,6 +31,7 @@ import type {
   EquipmentCategoryTranslation,
   EquipmentIdentifier,
   Errata,
+  FixedCost,
   GemOrPreciousStone,
   GemOrPreciousStoneTranslation,
   GenMeleeWeapon,
@@ -105,7 +107,7 @@ import {
   formatArbitraryWeight,
   formatSilverthalers,
 } from "./partial/units/simple.js"
-import { formatTimeSpan } from "./partial/units/timeSpan.js"
+import { formatTimeSpan, formatTimeSpanR } from "./partial/units/timeSpan.js"
 import { MISSING_VALUE, UNHANDLED_VALUE } from "./partial/unknown.js"
 
 /**
@@ -761,16 +763,23 @@ export const renderCostRange = (range: CostRange): StdReader<string, "t" | "tm">
     ).map(main => translation?.wrap_in_text.replace("{0}", main) ?? main)
   })
 
+const renderFixedCost = (cost: FixedCost) =>
+  translateMapR(cost.translations).thenW(translation =>
+    formatSilverthalers(cost.value).map(
+      main => translation?.wrap_in_text.replace("{0}", main) ?? main,
+    ),
+  )
+
 const renderCost = (
-  cost: Cost | BookCost | JewelryMaterialDifference<number> | undefined,
-): StdReader<string, "fn" | "t" | "tm" | "rts"> => {
+  cost: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost | undefined,
+): StdReader<string, "f" | "fn" | "t" | "tm" | "rts"> => {
   if (cost === undefined) {
     return Reader.of("—")
   }
 
   const renderBookCostVariant = (
     bookCostVariant: BookCostVariant,
-  ): StdReader<string, "fn" | "t" | "tm" | "rts"> => {
+  ): StdReader<string, "f" | "fn" | "t" | "tm" | "rts"> => {
     switch (bookCostVariant.kind) {
       case "Definite":
         return translateMapR(bookCostVariant.Definite.translations).thenW(translation =>
@@ -806,11 +815,7 @@ const renderCost = (
           ),
         )
       case "Fixed": {
-        return translateMapR(cost.Fixed.translations).thenW(translation =>
-          formatSilverthalers(cost.Fixed.value).map(
-            main => translation?.wrap_in_text.replace("{0}", main) ?? main,
-          ),
-        )
+        return renderFixedCost(cost.Fixed)
       }
       case "Range":
         return renderCostRange(cost.Range)
@@ -818,6 +823,12 @@ const renderCost = (
         return renderBookCostVariant(cost.Single)
       case "Multiple":
         return Reader.traverse(cost.Multiple, renderBookCostVariant).map(list => list.join(", "))
+      case "PerWeek":
+        return formatTimeSpanR("Weeks", 1, true).thenW(interval =>
+          renderFixedCost(cost.PerWeek).thenW(costPerWeek =>
+            translateR("{$cost} per {$interval}", { cost: costPerWeek, interval }),
+          ),
+        )
       default:
         return assertExhaustive(cost)
     }
@@ -825,7 +836,7 @@ const renderCost = (
 }
 
 type BaseItem = {
-  cost?: Cost | BookCost | JewelryMaterialDifference<number>
+  cost?: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost
   weight?: Weight | JewelryMaterialDifference<Weight>
   complexity?: ArmorComplexity | Complexity
   structure_points?: StructurePoints
@@ -1312,7 +1323,7 @@ export const createMeleeWeaponTableEntry = <D, E>(
   entityName: EquipmentIdentifier["kind"],
   instance: {
     weight?: Weight | JewelryMaterialDifference<Weight>
-    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
     structure_points?: StructurePoints
@@ -1331,7 +1342,7 @@ export const createMeleeWeaponTableEntry = <D, E>(
 ): GenEquipmentTableEntry<
   MeleeWeaponColumns,
   StdEnv<
-    "fn" | "t" | "tm" | "ibi" | "lj" | "ma" | "rts",
+    "f" | "fn" | "t" | "tm" | "ibi" | "lj" | "ma" | "rts",
     | "Attribute"
     | "Reach"
     | "CloseCombatTechnique"
@@ -1445,7 +1456,7 @@ export const createRangedWeaponTableEntry = <D, E>(
   entityName: EquipmentIdentifier["kind"],
   instance: {
     weight?: Weight | JewelryMaterialDifference<Weight>
-    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
     structure_points?: StructurePoints
@@ -1585,7 +1596,7 @@ const createArmorTableEntry = (
   entityName: EquipmentIdentifier["kind"],
   instance: {
     weight?: Weight | JewelryMaterialDifference<Weight>
-    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
     structure_points?: StructurePoints
@@ -1601,7 +1612,7 @@ const createArmorTableEntry = (
 ): GenEquipmentTableEntry<
   ArmorColumns,
   StdEnv<
-    "fn" | "t" | "tm" | "ibi" | "lj" | "lc" | "ma" | "x" | "rts",
+    "f" | "fn" | "t" | "tm" | "ibi" | "lj" | "lc" | "ma" | "x" | "rts",
     | "Race"
     | "Culture"
     | "MagicalTradition"
@@ -1690,7 +1701,7 @@ const createGemOrPreciousStoneTableEntry = (
 ): GenEquipmentTableEntry<
   "name" | "color" | "cost",
   StdEnv<
-    "fn" | "t" | "tm" | "lj" | "ma" | "ibi" | "rts",
+    "f" | "fn" | "t" | "tm" | "lj" | "ma" | "ibi" | "rts",
     "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
   >
 > => ({
@@ -1742,7 +1753,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
   instance: {
     weight?: Weight | JewelryMaterialDifference<Weight>
     structure_points?: StructurePoints
-    cost?: Cost | BookCost | JewelryMaterialDifference<number>
+    cost?: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
   },
@@ -2006,7 +2017,12 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
     return undefined
   }
 
-  const baseItem: BaseItem = entry.content
+  const baseItem: BaseItem =
+    entry.entity === "AnimalCare"
+      ? entry.content.type.kind === "General"
+        ? { ...entry.content, ...entry.content.type.General }
+        : { ...entry.content, ...entry.content.type.Feed }
+      : entry.content
   const baseItemTranslation: BaseItemTranslation | undefined = translation
   const combatValues = normalizeCombatValues(entry)
   const combatTranslation = translateMap(combatValues?.values.translations)
