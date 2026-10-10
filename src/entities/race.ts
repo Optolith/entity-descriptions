@@ -276,19 +276,19 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
             displayedInProfession: true,
           })),
       )
-
-        .map(renderedItems => renderedItems.filter(isNotNullish)),
-  ).thenW(
-    (items): StdReader<string | T, "t" | "tm" | "lc"> =>
-      mapNullable(ensureNonEmpty(items.flat()), safeItems =>
-        joinPrerequisiteParts(
-          safeItems.map(nameComponents => ({
-            type: "activatable",
-            part: { value: nameComponents, sentenceType: undefined, isMeta: false },
-          })),
+        .map(renderedItems => renderedItems.filter(isNotNullish))
+        .map(ensureNonEmpty)
+        .thenW(names =>
+          names === undefined
+            ? Reader.of(undefined)
+            : joinPrerequisiteParts(
+                names.map(nameComponents => ({
+                  type: "activatable",
+                  part: { value: nameComponents, sentenceType: undefined, isMeta: false },
+                })),
+              ),
         ),
-      ) ?? Reader.of(emptyString),
-  )
+  ).map(names => ensureNonEmpty(names.filter(isNotNullish))?.join(" / ") ?? emptyString)
 
 const renderCommonCultures = (
   items: Culture_ID[] | undefined,

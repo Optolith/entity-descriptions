@@ -1,5 +1,5 @@
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
-import { nullableToArray } from "@elyukai/utils/nullable"
+import { isNotNullish, nullableToArray } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
@@ -231,15 +231,15 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
       ([entity, items]) =>
         Reader.traverse(items ?? [], item =>
           renderCommonnessRatedAdvantageOrDisadvantageName(entity, item),
-        ),
+        )
+          .map(ensureNonEmpty)
+          .thenW(names =>
+            names === undefined
+              ? Reader.of(undefined)
+              : localeSortR(names).map(sortedNames => sortedNames.join(", ")),
+          ),
     ),
-  )
-    .map(items => ensureNonEmpty(items.flat()))
-    .thenW((renderedItems): StdReader<string | T, "lc"> =>
-      renderedItems === undefined
-        ? Reader.of(emptyString)
-        : localeSortR(renderedItems).map(sortedItems => sortedItems.join(", ")),
-    )
+  ).map(names => ensureNonEmpty(names.filter(isNotNullish))?.join(" / ") ?? emptyString)
 
 /**
  * Render a value with a possible translation, falling back to explicity rendering the value if no translation is available.
