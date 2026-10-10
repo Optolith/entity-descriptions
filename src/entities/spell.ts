@@ -38,6 +38,7 @@ import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
+import { MagicalTraditionIdentifier } from "../helpers/identifiers.js"
 import type { LocaleCompare } from "../helpers/locale.js"
 import type { Translate, TranslateMap, TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../rawEntityDescription.js"
@@ -558,6 +559,25 @@ const renderMagicalActionSkill = (
     ),
   }))
 
+const renderElvenMagicalSongTraditions = (
+  translate: Translate,
+  translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<"MagicalTradition">,
+  isDistorted: boolean,
+): RawDefinitionListEntityDescriptionSectionItem => ({
+  label: translate("Traditions"),
+  value:
+    attributedName(
+      translateMap,
+      getInstanceById,
+      "traditions",
+      "MagicalTradition",
+      isDistorted
+        ? MagicalTraditionIdentifier.Nachtalben
+        : MagicalTraditionIdentifier.Elves,
+    ) ?? MISSING_VALUE,
+})
+
 /**
  * Get a JSON representation of the rules text for an Elven magical song.
  */
@@ -565,7 +585,12 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
   "ElvenMagicalSong",
   {
     getInstanceById: GetInstanceById<
-      "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "Skill"
+      | "Publication"
+      | "Attribute"
+      | "Property"
+      | "DerivedCharacteristic"
+      | "Skill"
+      | "MagicalTradition"
     >
   }
 >(({ getInstanceById }, locale, { content: entry }) => {
@@ -601,6 +626,12 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
           renderMagicalActionSkill(entry.skill).run(env),
           combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
           renderProperty(entry.property).run(env),
+          renderElvenMagicalSongTraditions(
+            translate,
+            translateMap,
+            getInstanceById,
+            entry.is_distorted,
+          ),
           renderImprovementCost(entry.improvement_cost).run(env),
         ],
       },
