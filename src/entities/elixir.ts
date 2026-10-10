@@ -87,22 +87,24 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
             label: `${translate("Prerequisites")} (${translate("Brewing Process")})`,
             value: translation.brewing_process_prerequisites ?? translate("none"),
           },
-          {
-            label: `${translate("AP Value")} (${translate("Trade Secret")})`,
-            value:
-              translate("{$value} AP", {
-                value: entry.trade_secret.ap_value.toFixed(),
-              }) +
-              parensIf(
-                mapNullable(
-                  entry.trade_secret.prerequisites,
-                  prerequisites =>
-                    `${translate("Prerequisites")}: ${printPlainGeneralPrerequisites(
-                      prerequisites,
-                    ).run(env)}`,
-                ),
-              ),
-          },
+          entry.trade_secret === undefined
+            ? undefined
+            : {
+                label: `${translate("AP Value")} (${translate("Trade Secret")})`,
+                value:
+                  translate("{$value} AP", {
+                    value: entry.trade_secret.ap_value.toFixed(),
+                  }) +
+                  parensIf(
+                    mapNullable(
+                      entry.trade_secret.prerequisites,
+                      prerequisites =>
+                        `${translate("Prerequisites")}: ${printPlainGeneralPrerequisites(
+                          prerequisites,
+                        ).run(env)}`,
+                    ),
+                  ),
+              },
           translation.special === undefined
             ? undefined
             : {
