@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.30.0](https://github.com/Optolith/entity-descriptions/compare/v0.29.0...v0.30.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.90.1
+
+### build
+
+* **deps:** upgrade to schema 0.90.1 ([4dab8ee](https://github.com/Optolith/entity-descriptions/commit/4dab8ee1c776b2d932f554684f1a7d066165bc04))
+
+### Features
+
+* entity descriptions for professions ([1e2db96](https://github.com/Optolith/entity-descriptions/commit/1e2db9662c86a0144321a5e7ec535f80fcc1d17a))
+
+### Bug Fixes
+
+* ignore markdown syntax when sorting common professions ([d8bacca](https://github.com/Optolith/entity-descriptions/commit/d8baccacbe0f980837d6b06d35c487f25c6408f6))
+
 ## [0.29.0](https://github.com/Optolith/entity-descriptions/compare/v0.28.0...v0.29.0) (2026-10-09)
 
 ### ⚠ BREAKING CHANGES
