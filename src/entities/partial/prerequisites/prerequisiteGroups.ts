@@ -86,7 +86,7 @@ export const printGeneralPrerequisiteGroup = (
   prerequisite: GeneralPrerequisiteGroup,
 ): Reader<
   StdEnv<
-    "f" | "t" | "tm" | "lc" | "lj" | "ibi",
+    "t" | "tm" | "lc" | "lj" | "ibi",
     | "Race"
     | "Culture"
     | "PactCategory"
@@ -198,7 +198,7 @@ export const printAdvantageDisadvantagePrerequisiteGroup = (
   type: "Advantage" | "Disadvantage",
 ): Reader<
   StdEnv<
-    "f" | "t" | "tm" | "lc" | "lj" | "rso" | "ibi",
+    "t" | "tm" | "lc" | "lj" | "rso" | "ibi",
     | "Race"
     | "Culture"
     | "PactCategory"
