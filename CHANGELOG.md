@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.32.0](https://github.com/Optolith/entity-descriptions/compare/v0.31.0...v0.32.0) (2026-10-12)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.93.0
+
+### build
+
+* **deps:** upgrade to schema 0.93.0 ([8c4cbe7](https://github.com/Optolith/entity-descriptions/commit/8c4cbe7417cc6fa9b9398965bae9d966d70d18d5))
+
+### Bug Fixes
+
+* cost and weight display for animal care ([4f70e40](https://github.com/Optolith/entity-descriptions/commit/4f70e409abab95b9f2cd98eafba37b7e9155d4ae))
+
 ## [0.31.0](https://github.com/Optolith/entity-descriptions/compare/v0.30.1...v0.31.0) (2026-10-10)
 
 ### ⚠ BREAKING CHANGES
