@@ -144,6 +144,7 @@ const getAtomicEquipmentCost = (
     case "Ammunition":
     case "Animal":
     case "Armor":
+    case "ArmorAccessory":
     case "BandageOrRemedy":
     case "CeremonialItem":
     case "Clothes":
@@ -227,6 +228,7 @@ const getAtomicEquipmentWeight = (
       return [Math.min(...values), Math.max(...values)]
     }
     case "Armor":
+    case "ArmorAccessory":
     case "BandageOrRemedy":
     case "Book":
     case "CeremonialItem":

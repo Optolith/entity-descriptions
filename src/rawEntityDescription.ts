@@ -124,6 +124,7 @@ export type RawDefinitionListEntityDescriptionSectionItem = {
         | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
         | undefined
       )[]
+    | undefined
 }
 
 /**

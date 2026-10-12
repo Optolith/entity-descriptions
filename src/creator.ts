@@ -17,6 +17,7 @@ import type { LocaleEnvironment } from "./helpers/locale.js"
 import { unwrapNestedReaders, type WrapInNestedReaders } from "./nestedReaders.js"
 import type {
   RawDefinitionListEntityDescriptionSection,
+  RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
   RawEntityDescriptionSection,
   RawEntityDescriptionSectionContent,
@@ -55,11 +56,17 @@ const mapRawSectionContent = <
   }
 }
 
+const isSectionItemWithValue = (
+  item: RawDefinitionListEntityDescriptionSectionItem | undefined,
+): item is RawDefinitionListEntityDescriptionSectionItem & {
+  value: NonNullable<RawDefinitionListEntityDescriptionSectionItem["value"]>
+} => item !== undefined && item.value !== undefined
+
 const mapNestedDefinitionList = (
   definitionListSection: RawNestedDefinitionListEntityDescriptionSection,
 ): NestedDefinitionListEntityDescriptionSection => ({
   ...definitionListSection,
-  items: definitionListSection.items.filter(isNotNullish).map(item => ({
+  items: definitionListSection.items.filter(isSectionItemWithValue).map(item => ({
     ...item,
     value:
       typeof item.value === "string"
@@ -74,7 +81,7 @@ const mapDefinitionList = (
   section: RawDefinitionListEntityDescriptionSection,
 ): DefinitionListEntityDescriptionSection => ({
   ...section,
-  items: section.items.filter(isNotNullish).map(item => ({
+  items: section.items.filter(isSectionItemWithValue).map(item => ({
     ...item,
     label: item.label,
     value:

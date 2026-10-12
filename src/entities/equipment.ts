@@ -1,3 +1,4 @@
+import { partition } from "@elyukai/utils/array/groups"
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
@@ -47,6 +48,7 @@ import type {
   MeleeDamage,
   MeleeWeaponUse,
   ParryModifier,
+  PlainBookRulesTranslation,
   PrimaryAttributeDamageThreshold,
   Protection,
   PublicationRefs,
@@ -72,13 +74,21 @@ import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js
 import type { StdEnv, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleJoin } from "../helpers/locale.js"
-import type { Format, LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
+import type {
+  Format,
+  LocaleMap,
+  Translate,
+  TranslateMap,
+  TranslationKeysWithoutParams,
+} from "../helpers/translate.js"
 import type { WrapInNestedReaders } from "../nestedReaders.js"
 import type {
-  RawEntityDescriptionSectionContent,
+  RawDefinitionListEntityDescriptionSectionItem,
   RawLabeledEntityDescriptionSection,
   RawNestedDefinitionListEntityDescriptionSection,
+  RawPlainEntityDescriptionSection,
   RawTabularEntityDescription,
+  RawTextEntityDescription,
 } from "../rawEntityDescription.js"
 import { getDerivedCharacteristicPositionAndTranslation } from "./partial/derivedCharacteristics.js"
 import { renderDiceAndFlatR } from "./partial/dice.js"
@@ -135,6 +145,7 @@ export const getEquipmentName = (
     case "Animal":
     case "AnimalCare":
     case "Armor":
+    case "ArmorAccessory":
     case "BandageOrRemedy":
     case "CeremonialItem":
     case "Clothes":
@@ -919,6 +930,7 @@ const normalizeCombatValues = (
     case "Ammunition":
     case "Animal":
     case "AnimalCare":
+    case "ArmorAccessory":
     case "BandageOrRemedy":
     case "CeremonialItem":
     case "Clothes":
@@ -1026,108 +1038,118 @@ const renderBookTypes = (
     )
     .join(", ")
 
-const renderBookRules = (
-  translate: Translate,
-  rules: BookRules,
-):
+type RenderedBookRules =
   | string
   | (
-      | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
+      | RawPlainEntityDescriptionSection
+      | RawNestedDefinitionListEntityDescriptionSection
       | undefined
-    )[] => {
+    )[]
+
+const renderDLItemIfNotUndefined = (
+  labelKey: TranslationKeysWithoutParams,
+  value: string | undefined,
+): StdReader<RawDefinitionListEntityDescriptionSectionItem | undefined, "t"> =>
+  value === undefined ? Reader.of(undefined) : translateR(labelKey).map(label => ({ label, value }))
+
+const renderPlainBookRules = (
+  translation: PlainBookRulesTranslation,
+): StdReader<RenderedBookRules, "t" | "tm"> => {
+  if (
+    translation.reconstruction === undefined &&
+    translation.references === undefined &&
+    translation.textAfter === undefined
+  ) {
+    return Reader.of(translation.text)
+  }
+
+  return Reader.traverse(
+    [
+      ["Reconstruction" as const, translation.reconstruction],
+      ["References" as const, translation.references],
+    ] as const,
+    ([labelKey, value]) => renderDLItemIfNotUndefined(labelKey, value),
+  ).map(nestedItem => [
+    {
+      type: "plain",
+      text: translation.text,
+    },
+    {
+      type: "definitionList",
+      style: "nested",
+      items: nestedItem.filter(isNotNullish),
+    },
+    mapNullable(translation.textAfter, textAfter => ({
+      type: "plain",
+      text: textAfter,
+    })),
+  ])
+}
+
+const renderBookRules = (
+  rules: BookRules,
+): WrapInNestedReaders<StdEnv<"t" | "tm">, RenderedBookRules | undefined> => {
   switch (rules.kind) {
     case "Plain":
-      if (
-        rules.Plain.reconstruction === undefined &&
-        rules.Plain.references === undefined &&
-        rules.Plain.textAfter === undefined
-      ) {
-        return rules.Plain.text
-      }
-
-      return [
-        {
-          type: "plain",
-          text: rules.Plain.text,
-        },
-        {
-          type: "definitionList",
-          style: "nested",
-          items: [
-            mapNullable(rules.Plain.reconstruction, reconstruction => ({
-              label: translate("Reconstruction"),
-              value: reconstruction,
-            })),
-            mapNullable(rules.Plain.references, references => ({
-              label: translate("References"),
-              value: references,
-            })),
-          ],
-        },
-        mapNullable(rules.Plain.textAfter, textAfter => ({
-          type: "plain",
-          text: textAfter,
-        })),
-      ]
+      return translateMapR(rules.Plain.translations).thenWOrElse(renderPlainBookRules)
     case "Entertainment":
-      return translate("Entertainment")
+      return translateR("Entertainment")
     case "ByEdition":
       return [
         {
           type: "definitionList",
           style: "nested",
-          items: [
-            ...rules.ByEdition.editions.map(
-              (
-                edition,
-              ): {
-                label: string
-                value:
-                  | string
-                  | (
-                      | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>
-                      | undefined
-                    )[]
-              } => {
-                if (edition.reconstruction === undefined && edition.references === undefined) {
-                  return {
-                    label: edition.label,
-                    value: edition.text,
-                  }
+          items: rules.ByEdition.editions.map(
+            (
+              edition,
+            ): StdReader<
+              | {
+                  label: string
+                  value: RenderedBookRules
                 }
-
-                return {
-                  label: edition.label,
-                  value: [
-                    {
-                      type: "plain",
-                      text: edition.text,
-                    },
-                    {
-                      type: "definitionList",
-                      style: "nested",
-                      items: [
-                        mapNullable(edition.reconstruction, reconstruction => ({
-                          label: translate("Reconstruction"),
-                          value: reconstruction,
-                        })),
-                        mapNullable(edition.references, references => ({
-                          label: translate("References"),
-                          value: references,
-                        })),
-                      ],
-                    },
-                  ],
-                }
-              },
-            ),
-          ],
+              | undefined,
+              "t" | "tm"
+            > =>
+              translateMapR(edition.translations).thenWOrElse(translation =>
+                renderPlainBookRules(translation).map(value => ({
+                  label: translation.label,
+                  value,
+                })),
+              ),
+          ),
         },
-        mapNullable(rules.ByEdition.textAfter, textAfter => ({
-          type: "plain",
-          text: textAfter,
-        })),
+        translateMapR(rules.ByEdition.translations).mapOrElse(translation =>
+          mapNullable(translation.textAfter, textAfter => ({
+            type: "plain",
+            text: textAfter,
+          })),
+        ),
       ]
+    default:
+      return assertExhaustive(rules)
+  }
+}
+
+const renderSimpleBookRules = (
+  rules: BookRules,
+): WrapInNestedReaders<StdEnv<"t" | "tm">, string | undefined> => {
+  switch (rules.kind) {
+    case "Plain":
+      return translateMapR(rules.Plain.translations).mapOrElse(t => t.text)
+    case "Entertainment":
+      return translateR("Entertainment")
+    case "ByEdition":
+      return Reader.traverse(rules.ByEdition.editions, edition =>
+        translateMapR(edition.translations).mapOrElse(translation => ({
+          label: translation.label,
+          value: translation.text,
+        })),
+      ).map(list =>
+        list
+          .filter(isNotNullish)
+          .map(e => `${e.label}: ${e.value}`)
+          .join("; "),
+      )
     default:
       return assertExhaustive(rules)
   }
@@ -1213,6 +1235,7 @@ const categoryTranslationMap: Record<
   Helmets: translateR("Helmets"),
   ArmorPieces: translateR("Pieces of Armor"),
   WeaponAccessory: translateR("Weapon Accessories"),
+  ArmorAccessory: translateR("Armor Accessories"),
   Clothes: translateR("Clothes"),
   ClothingPackage: translateR("Clothing Packages for Social Status"),
   TravelGearOrTool: translateR("Travel Gear and Tools"),
@@ -1880,28 +1903,30 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
   ],
 })
 
+type EquipmentEnv = StdEnv<
+  "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "x" | "ibi" | "rts",
+  | "Publication"
+  | "Attribute"
+  | "Reach"
+  | "SocialStatus"
+  | "CloseCombatTechnique"
+  | "RangedCombatTechnique"
+  | "MagicalTradition"
+  | "BlessedTradition"
+  | "DerivedCharacteristic"
+  | AmmunitionishIdentifier["kind"]
+  | "Race"
+  | "Culture"
+  | "Profession"
+  | "Skill"
+>
+
 /**
  * Get a JSON representation of the rules text for equipment.
  */
 export const getEquipmentEntityDescription = createEntityDescriptionCreator<
   Exclude<EquipmentIdentifier["kind"], "Elixir" | "Poison">,
-  StdEnv<
-    "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "x" | "ibi" | "rts",
-    | "Publication"
-    | "Attribute"
-    | "Reach"
-    | "SocialStatus"
-    | "CloseCombatTechnique"
-    | "RangedCombatTechnique"
-    | "MagicalTradition"
-    | "BlessedTradition"
-    | "DerivedCharacteristic"
-    | AmmunitionishIdentifier["kind"]
-    | "Race"
-    | "Culture"
-    | "Profession"
-    | "Skill"
-  >
+  EquipmentEnv
 >((env, locale, entry) => {
   const { translate, translateMap } = locale
 
@@ -1914,100 +1939,159 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
       return undefined
     }
 
-    return {
-      title: name,
-      className: "equipment",
-      body: [
-        {
-          type: "definitionList",
-          items: [
+    const [library, other] = partition(
+      entry.content.src,
+      ref => ref.id === env.settings.extendedBookDescriptionPublication,
+    )
+
+    return [
+      mapNullable(
+        ensureNonEmpty(other),
+        (): WrapInNestedReaders<EquipmentEnv, RawTabularEntityDescription<string>> => ({
+          type: "tabular",
+          category: {
+            label: categoryTranslationMap.Book,
+            sortingValue: categoryTranslationMap.Book.map(label =>
+              prependOrderToLabel("Book", label),
+            ),
+            value: Reader.of("Book"),
+          },
+          title: name,
+          labels: {
+            name: translate("Name"),
+            weight: translate("Weight"),
+            structurePoints: translate("Structure Points"),
+            cost: translate("Cost"),
+            complexity: translate("Complexity"),
+          },
+          values: {
+            name: Reader.of(name),
+            weight: renderWeightValue(entry.content.weight),
+            structurePoints: renderStructurePoints(entry.content.structure_points),
+            cost: renderCost(entry.content.cost),
+            complexity: renderComplexity(entry.content.complexity),
+          },
+          additionalInformation: [
             {
-              label: translate("Name"),
-              value: name,
+              label: translate("Language/Script"),
+              id: "languageAndScript",
+              value: Reader.of(translation.languageAndScript),
             },
-            {
-              label: translate("Type"),
-              value: renderBookTypes(
-                translate,
-                translateMap,
-                locale.join,
-                locale.compare,
-                env.getInstanceById,
-                entry.content.types,
-              ),
-            },
-            translation.language !== undefined || translation.script !== undefined
-              ? {
-                  label: translate("Language/Script"),
-                  value: [translation.language, translation.script]
-                    .map(value => value ?? "—")
-                    .join(" / "),
-                }
-              : undefined,
-            entry.content.contentQuality === undefined
-              ? undefined
-              : {
-                  label: translate("Content Quality"),
-                  value: (() => {
-                    switch (entry.content.contentQuality.kind) {
-                      case "Modest":
-                        return translate("Modest")
-                      case "Average":
-                        return translate("Average")
-                      case "Demanding":
-                        return (
-                          translate("Demanding") +
-                          parensIf(
-                            translate("CL {$level}", {
-                              level: romanize(entry.content.contentQuality.Demanding),
-                            }),
-                          )
-                        )
-                      default:
-                        return assertExhaustive(entry.content.contentQuality)
-                    }
-                  })(),
-                },
-            mapNullable(entry.content.cost, cost => ({
-              label: translate("Cost"),
-              value: renderCost(cost).run(env),
-            })),
             translation.note === undefined
               ? undefined
               : {
                   label: translate("Note"),
+                  id: "note",
                   value: translation.note,
                 },
-            translation.rules === undefined
+            entry.content.rules === undefined
               ? undefined
               : {
                   label: translate("Rules"),
-                  value: renderBookRules(translate, translation.rules),
-                },
-            translation.legality === undefined
-              ? undefined
-              : {
-                  label: translate("Legality"),
-                  value: translation.legality,
-                },
-            translation.availability === undefined
-              ? undefined
-              : {
-                  label: translate("Availability"),
-                  value: translation.availability,
-                },
-            translation.special === undefined
-              ? undefined
-              : {
-                  label: translate("Special"),
-                  value: translation.special,
+                  id: "rules",
+                  value: renderSimpleBookRules(entry.content.rules),
                 },
           ],
-        },
-      ],
-      errata: translation.errata,
-      references: entry.content.src,
-    }
+          errata: translation.errata,
+          references: entry.content.src,
+        }),
+      ),
+      mapNullable(
+        ensureNonEmpty(library),
+        (references): WrapInNestedReaders<EquipmentEnv, RawTextEntityDescription> => ({
+          title: name,
+          className: "equipment",
+          body: [
+            {
+              type: "definitionList",
+              items: [
+                {
+                  label: translate("Name"),
+                  value: name,
+                },
+                {
+                  label: translate("Type"),
+                  value: renderBookTypes(
+                    translate,
+                    translateMap,
+                    locale.join,
+                    locale.compare,
+                    env.getInstanceById,
+                    entry.content.types,
+                  ),
+                },
+                translation.languageAndScript !== undefined
+                  ? {
+                      label: translate("Language/Script"),
+                      value: translation.languageAndScript,
+                    }
+                  : undefined,
+                entry.content.contentQuality === undefined
+                  ? undefined
+                  : {
+                      label: translate("Content Quality"),
+                      value: (() => {
+                        switch (entry.content.contentQuality.kind) {
+                          case "Modest":
+                            return translate("Modest")
+                          case "Average":
+                            return translate("Average")
+                          case "Demanding":
+                            return (
+                              translate("Demanding") +
+                              parensIf(
+                                translate("CL {$level}", {
+                                  level: romanize(entry.content.contentQuality.Demanding),
+                                }),
+                              )
+                            )
+                          default:
+                            return assertExhaustive(entry.content.contentQuality)
+                        }
+                      })(),
+                    },
+                mapNullable(entry.content.cost, cost => ({
+                  label: translate("Cost"),
+                  value: renderCost(cost).run(env),
+                })),
+                translation.note === undefined
+                  ? undefined
+                  : {
+                      label: translate("Note"),
+                      value: translation.note,
+                    },
+                entry.content.rules === undefined
+                  ? undefined
+                  : {
+                      label: translate("Rules"),
+                      value: renderBookRules(entry.content.rules),
+                    },
+                translation.legality === undefined
+                  ? undefined
+                  : {
+                      label: translate("Legality"),
+                      value: translation.legality,
+                    },
+                translation.availability === undefined
+                  ? undefined
+                  : {
+                      label: translate("Availability"),
+                      value: translation.availability,
+                    },
+                translation.special === undefined
+                  ? undefined
+                  : {
+                      label: translate("Special"),
+                      value: translation.special,
+                    },
+              ],
+            },
+          ],
+          errata: translation.errata,
+          references,
+        }),
+      ),
+    ].filter(isNotNullish)
   }
 
   const translation =
