@@ -13,7 +13,7 @@ import type {
   CommonnessSelectOptionIdentifier,
   SkillGroupTranslation,
 } from "@optolith/database-schema/gen"
-import { fromUniformCase } from "tsondb/schema/gen"
+import { fromUniformCase, type Case } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import { attributedInstance } from "./markdown.js"
@@ -503,13 +503,18 @@ export const renderNameComponentsOptions = (
   getInstanceById: GetInstanceById<Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
-  options: (CommonnessSelectOptionIdentifier | "select")[] | undefined,
+  options:
+    | (CommonnessSelectOptionIdentifier | Case<"Text", LocaleMap<string>> | Case<"Select">)[]
+    | undefined,
 ): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
     options
       ?.map(optionId => {
-        if (optionId === "select") {
+        if (optionId.kind === "Select") {
           return undefined
+        }
+        if (optionId.kind === "Text") {
+          return optionId.Text
         }
         const optTranslations: ResolvedSelectOption["content"]["translations"] | undefined = (
           optionId.kind === "SkillGroup"
@@ -556,7 +561,9 @@ export const makeNameBuilderRulesWithDefaults = (
 export const getNameComponents = <T>(
   translate: Translate,
   id: ActivatableIdentifier,
-  options: (CommonnessSelectOptionIdentifier | "select")[] | undefined,
+  options:
+    | (CommonnessSelectOptionIdentifier | Case<"Text", LocaleMap<string>> | Case<"Select">)[]
+    | undefined,
   level: number | undefined,
   nameBuilderRules: ActivatableNameBuilderRules | undefined,
   translations: LocaleMap<T>,

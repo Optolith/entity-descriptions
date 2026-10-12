@@ -8,7 +8,7 @@ import {
 import { deepEqual, equal, type Equality } from "@elyukai/utils/equality"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish, isNullish, mapNullable } from "@elyukai/utils/nullable"
-import { omitKeys } from "@elyukai/utils/object"
+import { mapObject, omitKeys } from "@elyukai/utils/object"
 import { compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
@@ -22,7 +22,6 @@ import type {
   CombatTechniqueIdentifier,
   CombatTechniquesOptions,
   CommonnessSelectOptionIdentifier,
-  ConstantProfessionSpecialAbility,
   CursesOptions,
   Enhancement,
   Enhancement_ID,
@@ -37,13 +36,13 @@ import type {
   ProfessionPrerequisites,
   ProfessionSpecialAbility,
   ProfessionSpecialAbilityIdentifier,
-  ProfessionSpecialAbilitySelectionItem,
   ProfessionVariant,
   ProfessionVariantPrerequisites,
   ProfessionVariantTranslation,
   RatedIdentifier,
   RequirableSelectOptionIdentifier,
   RestrictedBlessings,
+  SingleProfessionSpecialAbility,
   SkillsOptions,
   SkillSpecializationOptions,
   SkillWithEnhancementsIdentifier,
@@ -858,7 +857,7 @@ const getSpecialAbilityNameComponents = (
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   translate: Translate,
   translateMap: TranslateMap,
-  option: ConstantProfessionSpecialAbility | ProfessionSpecialAbilitySelectionItem,
+  option: SingleProfessionSpecialAbility,
 ): ActivatableNameComponents | EnhancementNameComponents | undefined => {
   if (option.id.kind === "Enhancement") {
     return getEnhancementNameComponents(
@@ -883,9 +882,21 @@ const getSpecialAbilityNameComponents = (
   return getNameComponents(
     translate,
     option.id,
-    option.options?.map(opt =>
-      opt.kind === "Select" ? "select" : opt.kind === "Identifier" ? opt.Identifier : opt,
-    ),
+    option.options?.map(opt => {
+      switch (opt.kind) {
+        case "Identifier":
+          return opt.Identifier
+        case "Select":
+          return opt
+        case "Text":
+          return Case(
+            "Text",
+            mapObject(opt.Text.translations, t => t.text),
+          )
+        default:
+          return assertExhaustive(opt)
+      }
+    }),
     option.level,
     "nameBuilderRules" in instance ? instance.nameBuilderRules : undefined,
     instance.translations,
@@ -1414,14 +1425,14 @@ const styleSpecialAbilityKinds: (SpecialAbilityIdentifier["kind"] | "Enhancement
 
 const isStyleSpecialAbility = (
   specialAbility: ProfessionSpecialAbility,
-): specialAbility is Case<"Constant", ConstantProfessionSpecialAbility> =>
+): specialAbility is Case<"Constant", SingleProfessionSpecialAbility> =>
   specialAbility.kind === "Constant" &&
   styleSpecialAbilityKinds.includes(specialAbility.Constant.id.kind)
 
 const isStyleSpecialAbilityOfType = (
   specialAbility: ProfessionSpecialAbility,
   type: (typeof styleSpecialAbilityKinds)[number],
-): specialAbility is Case<"Constant", ConstantProfessionSpecialAbility> =>
+): specialAbility is Case<"Constant", SingleProfessionSpecialAbility> =>
   specialAbility.kind === "Constant" && type === specialAbility.Constant.id.kind
 
 const renderProfessionVariantText = (

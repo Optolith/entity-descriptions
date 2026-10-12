@@ -335,6 +335,8 @@ export const renderAdventurePointsValue = (
           )
         case "TargetCategories":
           return MISSING_VALUE
+        case "Advantages":
+          return translate("Variable")
         default:
           return assertExhaustive(derivedSelectOptions)
       }

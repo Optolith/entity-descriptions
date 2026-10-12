@@ -7,6 +7,7 @@ import type {
   LocaleMeasurementAdjustments,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
+import { Case } from "../helpers/enums.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate } from "../helpers/translate.js"
 import { getEquipmentName } from "./equipment.js"
@@ -168,7 +169,7 @@ const getAtomicEquipmentCost = (
     case "Weapon":
     case "WeaponAccessory":
     case "WorkingSupernaturalCreature":
-      return getAtomicCost(entry.content.cost)
+      return getAtomicCost(entry.content.cost ?? Case("Free"))
     case "Elixir":
       return [entry.content.cost_per_ingredient_level, entry.content.cost_per_ingredient_level * 6]
     case "Poison":

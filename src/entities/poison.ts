@@ -203,7 +203,6 @@ const renderSourceTypeBasedValues = (
     apValue: number
     prerequisites?: PlainGeneralPrerequisites
   }
-  note?: string
 } => {
   switch (sourceType.kind) {
     case "AnimalVenom":
@@ -278,14 +277,11 @@ const renderSourceTypeBasedValues = (
               sourceType.PlantPoison.intoxicant,
             )),
       }
-    case "DemonicPoison": {
-      const translation = translateMap(sourceType.DemonicPoison.translations)
+    case "DemonicPoison":
       return {
         level: renderLevel(translate, translateMap, sourceType.DemonicPoison.level),
         sourceType: translate("demonic poison"),
-        note: translation?.note,
       }
-    }
     default:
       return assertExhaustive(sourceType)
   }
@@ -479,7 +475,6 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
     brewingDifficulty,
     prerequisitesBrewingProcess,
     tradeSecret,
-    note,
   } = renderSourceTypeBasedValues(
     translate,
     translateMap,
@@ -617,12 +612,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
                 label: translate("Note"),
                 value: translation.notes,
               }
-            : note === undefined
-              ? undefined
-              : {
-                  label: translate("Note"),
-                  value: note,
-                },
+            : undefined,
         ],
       },
     ],
