@@ -273,7 +273,7 @@ export const getBookRawEntityDescription: EntityDescriptionCreator<
   const definitionListItems: (RawDefinitionListEntityDescriptionSectionItem | undefined)[] = [
     {
       label: translate("Name"),
-      value: name,
+      value: secondary_name !== undefined ? `${name}, ${secondary_name}` : name,
     },
     {
       label: translate("Type"),
