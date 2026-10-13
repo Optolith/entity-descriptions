@@ -1965,7 +1965,11 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
             complexity: translate("Complexity"),
           },
           values: {
-            name: Reader.of(name),
+            name: Reader.of(
+              translation.secondary_name !== undefined
+                ? `${name}, ${translation.secondary_name}`
+                : name,
+            ),
             weight: renderWeightValue(entry.content.weight),
             structurePoints: renderStructurePoints(entry.content.structure_points),
             cost: renderCost(entry.content.cost),
@@ -2007,7 +2011,10 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
               items: [
                 {
                   label: translate("Name"),
-                  value: name,
+                  value:
+                    translation.secondary_name !== undefined
+                      ? `${name}, ${translation.secondary_name}`
+                      : name,
                 },
                 {
                   label: translate("Type"),
