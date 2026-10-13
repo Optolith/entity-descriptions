@@ -11,8 +11,10 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   AmmunitionishIdentifier,
   AnimalFeedCost,
+  Armor_ID,
   ArmorComplexity,
   ArmorType,
+  AssociatedTradition,
   AttackModifier,
   BookCost,
   BookCostVariant,
@@ -60,16 +62,19 @@ import type {
   ReloadTime,
   RestrictedTo,
   RestrictedToBlessedTraditions,
+  RestrictedToBlessedTraditionsTranslation,
   RestrictedToCultures,
   RestrictedToMagicalTraditions,
   RestrictedToProfessions,
   RestrictedToRaces,
   SecondaryArmorTranslation,
   ShieldSize,
+  StandardArmorType,
   StructurePoints,
+  VariantArmorTypeTranslation,
   Weight,
 } from "@optolith/database-schema/gen"
-import type { Case } from "tsondb/schema/gen"
+import { type Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
 import type { StdEnv, StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
@@ -103,7 +108,9 @@ import {
 } from "./partial/markdown.js"
 import { parensIf, parensIfR } from "./partial/rated/activatable/parensIf.js"
 import {
+  attributedCustomNameFromInstanceR,
   attributedCustomNameR,
+  attributedNameFromInstanceR,
   attributedNameR,
   formatNumber,
   getInstanceByIdR,
@@ -476,6 +483,23 @@ const renderRestrictionTextWithPossiblyUnknownItemName = <T1 extends keyof Trans
   }
 }
 
+const renderSanctifiedPrefix = (
+  translation: RestrictedToBlessedTraditionsTranslation | undefined,
+  traditions: string,
+) =>
+  translation?.sanctified === undefined
+    ? translateR("Sanctified ({$traditions})", { traditions })
+    : Reader.of(translation.sanctified)
+
+const renderSanctified = (
+  translation: RestrictedToBlessedTraditionsTranslation | undefined,
+  traditions: string,
+  renderPart2: StdReader<string, "t">,
+) =>
+  renderSanctifiedPrefix(translation, traditions).then(part1 =>
+    renderPart2.map(part2 => [part1, part2].join("; ")),
+  )
+
 const renderBlessedTraditionRestriction = (
   restriction: RestrictedToBlessedTraditions,
 ): StdReader<string, "t" | "tm" | "lj" | "ibi", "BlessedTradition"> => {
@@ -483,9 +507,15 @@ const renderBlessedTraditionRestriction = (
     switch (restriction.scope.kind) {
       case "Specific":
         if (!isNotEmpty(restriction.scope.Specific)) {
-          return translateR(
-            "Sanctified ({$tradition}); only {$blessedOnes} may purchase weapons sanctified by {$god}.",
-            { tradition: MISSING_VALUE, blessedOnes: MISSING_VALUE, god: MISSING_VALUE },
+          return translateMapR(restriction.translations).thenW(translation =>
+            renderSanctified(
+              translation,
+              MISSING_VALUE,
+              translateR("only {$blessedOnes} may purchase weapons sanctified by {$god}.", {
+                blessedOnes: MISSING_VALUE,
+                god: MISSING_VALUE,
+              }),
+            ),
           )
         } else if (restriction.scope.Specific.length > 1) {
           return Reader.traverse(restriction.scope.Specific, restrictionId =>
@@ -511,13 +541,18 @@ const renderBlessedTraditionRestriction = (
               localeJoinR(list.map(e => e[1]).filter(isNotNullish), "disjunction").thenW(gods =>
                 localeJoinR(list.map(e => e[0]).filter(isNotNullish), "disjunction").thenW(
                   blessedOnes =>
-                    translateR(
-                      "Sanctified ({$traditions}); only {$blessedOnes} may purchase weapons sanctified by {$gods}, respectively.",
-                      {
+                    translateMapR(restriction.translations).thenW(translation =>
+                      renderSanctified(
+                        translation,
                         traditions,
-                        blessedOnes,
-                        gods,
-                      },
+                        translateR(
+                          "only {$blessedOnes} may purchase weapons sanctified by {$gods}, respectively.",
+                          {
+                            blessedOnes: translation?.blessedOnes ?? blessedOnes,
+                            gods,
+                          },
+                        ),
+                      ),
                     ),
                 ),
               ),
@@ -541,13 +576,15 @@ const renderBlessedTraditionRestriction = (
               )
                 .map(restrictionName => restrictionName ?? MISSING_VALUE)
                 .thenW(god =>
-                  translateR(
-                    "Sanctified ({$tradition}); only {$blessedOnes} may purchase weapons sanctified by {$god}.",
-                    {
-                      tradition: god,
-                      blessedOnes,
+                  translateMapR(restriction.translations).thenW(translation =>
+                    renderSanctified(
+                      translation,
                       god,
-                    },
+                      translateR("only {$blessedOnes} may purchase weapons sanctified by {$god}.", {
+                        blessedOnes: translation?.blessedOnes ?? blessedOnes,
+                        god,
+                      }),
+                    ),
                   ),
                 ),
             )
@@ -632,11 +669,11 @@ const renderRaceRestriction = (
     .thenW(races =>
       translateMapR(restriction.translations).thenW(translation =>
         renderRestrictionTextWithPossiblyUnknownItemName(
-          "To buy this item during hero creation, the character must be from {$groupOfCultures}.",
-          "To buy {$itemName} during hero creation, the character must be from {$groupOfCultures}.",
+          "To buy this item during hero creation, the character must be from {$cultures}.",
+          "To buy {$itemName} during hero creation, the character must be from {$cultures}.",
           {
             itemName: translation?.item,
-            groupOfCultures: translation?.groupOfCultures ?? races,
+            cultures: translation?.groupOfCultures ?? races,
           },
         ),
       ),
@@ -700,15 +737,80 @@ const renderShieldSize = (size: ShieldSize, structurePoints: StructurePoints | u
   }
 }
 
+const renderHitZone = (hitZone: HitZone) => {
+  switch (hitZone.kind) {
+    case "Arms":
+      return translateR("Arms")
+    case "Head":
+      return translateR("Head")
+    case "Legs":
+      return translateR("Legs")
+    case "Torso":
+      return translateR("Torso")
+    default:
+      return assertExhaustive(hitZone)
+  }
+}
+
+const renderArmorVariant = (armor: {
+  armorType: ArmorType
+  hitZone?: HitZone
+  hit_zone?: HitZone
+}) => {
+  const { armorType, hitZone = armor.hit_zone } = armor
+
+  if (armorType.kind === "Standard") {
+    return Reader.of(undefined)
+  }
+
+  const variantArmorType = fromUniformCase<
+    "StandardVariant" | "Variant",
+    { variantOf: Armor_ID; translations: LocaleMap<VariantArmorTypeTranslation> }
+  >(armorType)
+
+  return getInstanceByIdR("Armor", variantArmorType.variantOf).thenWOrElse(armorInstance =>
+    translateMapR(variantArmorType.translations).thenW(variantTranslation =>
+      hitZone === undefined
+        ? attributedCustomNameFromInstanceR(
+            (armorInstance.armorType as Case<"Standard", StandardArmorType>).Standard,
+            "note",
+            t => t.nameInNote,
+            "Armor",
+            variantArmorType.variantOf,
+          ).thenW(baseTranslation =>
+            translateR("{$variantArmor} is a type of {$baseArmor}.", {
+              baseArmor: baseTranslation ?? MISSING_VALUE,
+              variantArmor: variantTranslation?.nameInNote ?? MISSING_VALUE,
+            }),
+          )
+        : attributedNameFromInstanceR(
+            armorInstance,
+            "note",
+            "Armor",
+            variantArmorType.variantOf,
+          ).thenW(baseTranslation =>
+            renderHitZone(hitZone).thenW(hitZoneName =>
+              translateR("{$variantHitZoneArmor} counts as {$baseArmor} for hit zone {$hitZone}.", {
+                baseArmor: baseTranslation ?? MISSING_VALUE,
+                variantHitZoneArmor: variantTranslation?.nameInNote ?? MISSING_VALUE,
+                hitZone: hitZoneName,
+              }),
+            ),
+          ),
+    ),
+  )
+}
+
 const renderNote = (
   meleeUse: GenMeleeWeapon<unknown> | undefined,
+  armor: { armorType: ArmorType; hitZone?: HitZone } | undefined,
   structurePoints: StructurePoints | undefined,
   restrictedTo: RestrictedTo | undefined,
   note: string | undefined,
 ): StdReader<
   string | undefined,
   "t" | "tm" | "lj" | "ibi" | "fn",
-  "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+  "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition" | "Armor"
 > => {
   const {
     blessedTraditions: restrictedToBlessedTraditions,
@@ -721,7 +823,7 @@ const renderNote = (
   return Reader.sequence<
     StdEnv<
       "t" | "tm" | "lj" | "ibi" | "fn",
-      "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+      "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition" | "Armor"
     >,
     string | undefined
   >([
@@ -737,6 +839,7 @@ const renderNote = (
       .thenW(list =>
         list === undefined ? Reader.of(undefined) : localeJoinR(list, "disjunction"),
       ),
+    armor === undefined ? Reader.of(undefined) : renderArmorVariant(armor),
     restrictedToBlessedTraditions === undefined
       ? Reader.of(undefined)
       : renderBlessedTraditionRestriction(restrictedToBlessedTraditions),
@@ -767,6 +870,29 @@ const renderNote = (
     ),
   )
 }
+
+const renderAssociatedTradition = (
+  tradition: AssociatedTradition,
+): StdReader<string, "t" | "tm" | "ibi", "BlessedTradition"> => {
+  switch (tradition.kind) {
+    case "ManyShamans":
+      return translateR("many shamans")
+    case "Specific":
+      return attributedCustomNameR(
+        "equipment",
+        t => t.nameOfGod ?? t.name,
+        "BlessedTradition",
+        tradition.Specific,
+      ).map(restrictionName => restrictionName ?? MISSING_VALUE)
+    default:
+      return assertExhaustive(tradition)
+  }
+}
+
+const renderAssociatedTraditions = (traditions: AssociatedTradition[] | undefined) =>
+  traditions === undefined || traditions.length === 0
+    ? Reader.of(undefined)
+    : Reader.traverse(traditions, renderAssociatedTradition).map(list => list.join(", "))
 
 const renderWeightLabel = (entityName: EquipmentIdentifier["kind"]) => {
   if (entityName === "Jewelry") {
@@ -907,6 +1033,7 @@ type BaseItem = {
   }
   combat_use?: CombatUse
   restrictedTo?: RestrictedTo
+  associatedTraditions?: AssociatedTradition[]
   src: PublicationRefs
   translations?: LocaleMap<BaseItemTranslation>
 }
@@ -1425,6 +1552,7 @@ export const createMeleeWeaponTableEntry = <D, E>(
     | "MagicalTradition"
     | "BlessedTradition"
     | "Profession"
+    | "Armor"
   > &
     E
 > => {
@@ -1490,6 +1618,7 @@ export const createMeleeWeaponTableEntry = <D, E>(
         id: "note",
         value: renderNote(
           use,
+          undefined,
           instance.structure_points ?? instance.structurePoints,
           instance.restrictedTo,
           instanceTranslation.note,
@@ -1558,6 +1687,7 @@ export const createRangedWeaponTableEntry = <D, E>(
     | "MagicalTradition"
     | "BlessedTradition"
     | "Profession"
+    | "Armor"
   > &
     E
 > => {
@@ -1612,6 +1742,7 @@ export const createRangedWeaponTableEntry = <D, E>(
         label: translateR("Note"),
         id: "note",
         value: renderNote(
+          undefined,
           undefined,
           instance.structure_points ?? instance.structurePoints,
           instance.restrictedTo,
@@ -1691,6 +1822,7 @@ const createArmorTableEntry = (
     | "BlessedTradition"
     | "Profession"
     | "DerivedCharacteristic"
+    | "Armor"
   >
 > => {
   const categoryName = getArmorCategoryName(values)
@@ -1740,6 +1872,7 @@ const createArmorTableEntry = (
         id: "note",
         value: renderNote(
           undefined,
+          values,
           instance.structure_points,
           instance.restrictedTo,
           instanceTranslation.note,
@@ -1773,7 +1906,7 @@ const createGemOrPreciousStoneTableEntry = (
   "name" | "color" | "cost",
   StdEnv<
     "f" | "fn" | "t" | "tm" | "lj" | "ma" | "ibi" | "rts",
-    "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+    "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition" | "Armor"
   >
 > => ({
   ...baseProperties,
@@ -1798,7 +1931,7 @@ const createGemOrPreciousStoneTableEntry = (
     {
       label: translateR("Note"),
       id: "note",
-      value: renderNote(undefined, undefined, undefined, instanceTranslation?.note),
+      value: renderNote(undefined, undefined, undefined, undefined, instanceTranslation?.note),
     },
     {
       label: translateR("Rules"),
@@ -1813,7 +1946,7 @@ const allSimpleKeys = ["name", "weight", "structurePoints", "cost", "complexity"
 
 type SimpleTableEnv = StdEnv<
   "fn" | "t" | "tm" | "lj" | "ma" | "ibi" | "rts",
-  "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition"
+  "Race" | "Culture" | "Profession" | "BlessedTradition" | "MagicalTradition" | "Armor"
 >
 
 const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: null }>(
@@ -1827,6 +1960,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
     cost?: Cost | BookCost | JewelryMaterialDifference<number> | AnimalFeedCost
     restrictedTo?: RestrictedTo
     complexity?: ArmorComplexity | Complexity
+    associatedTraditions?: AssociatedTradition[]
   },
   instanceTranslation: BaseItemTranslation | undefined,
 ): GenEquipmentTableEntry<Extract<keyof R, SimpleTableEntryColumns>, SimpleTableEnv> => ({
@@ -1853,7 +1987,12 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
   >,
   values: omitKeys(
     {
-      name: Reader.of(name + parensIf(instanceTranslation?.secondary_name)),
+      name: Reader.sequence([
+        Reader.of(instanceTranslation?.secondary_name),
+        entityName === "EquipmentOfBlessedOnes"
+          ? renderAssociatedTraditions(instance.associatedTraditions)
+          : Reader.of(undefined),
+      ]).map(list => name + parensIf(ensureNonEmpty(list.filter(isNotNullish))?.join("; "))),
       structurePoints: renderStructurePoints(instance.structure_points),
       weight: renderWeightValue(instance.weight),
       cost: renderCost(instance.cost),
@@ -1869,6 +2008,7 @@ const createSimpleTableEntry = <R extends { [K in SimpleTableEntryColumns]?: nul
       label: translateR("Note"),
       id: "note",
       value: renderNote(
+        undefined,
         undefined,
         instance.structure_points,
         instance.restrictedTo,
@@ -1936,6 +2076,7 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
       id: "note",
       value: renderNote(
         undefined,
+        undefined,
         instance.structurePoints,
         instance.restrictedTo,
         instanceTranslation.note,
@@ -1965,6 +2106,7 @@ type EquipmentEnv = StdEnv<
   | "Culture"
   | "Profession"
   | "Skill"
+  | "Armor"
 >
 
 /**
@@ -2410,6 +2552,7 @@ export const getItemEntityDescription = createEntityDescriptionCreator<
     | "Profession"
     | "Skill"
     | "EquipmentCategory"
+    | "Armor"
   >
 >((env, locale, entry) => {
   const { translateMap } = locale

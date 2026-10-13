@@ -213,13 +213,10 @@ export const attributedCustomNameR = <
 /**
  * Applies a function to the translation of the specified entry and renders it in an attributed string.
  */
-export const attributedCustomNameFromInstanceR = <
-  T extends { translations: LocaleMap<{ name: string }> },
-  E,
->(
+export const attributedCustomNameFromInstanceR = <T extends { translations: LocaleMap<object> }, E>(
   instance: T | undefined,
   context: string,
-  fn: (translation: T["translations"][string], instance: T) => Reader<E, string>,
+  fn: (translation: T["translations"][string], instance: T) => Reader<E, string> | string,
   ...args: IdArgsVariant<EntityMap, keyof EntityMap>
 ): Reader<E & { translateMap: TranslateMap }, string | undefined> =>
   Reader.asks(env =>
@@ -227,7 +224,10 @@ export const attributedCustomNameFromInstanceR = <
       env.translateMap,
       instance,
       context,
-      (...customArgs) => fn(...customArgs).run(env),
+      (...customArgs) => {
+        const result = fn(...customArgs)
+        return result instanceof Reader ? result.run(env) : result
+      },
       ...args,
     ),
   )

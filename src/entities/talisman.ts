@@ -72,6 +72,7 @@ const renderTalismanCombatUse = (
     | "RangedCombatTechnique"
     | "Reach"
     | "Weapon"
+    | "Armor"
   >,
   RawTabularEntityDescription<string>
 >[] => {
@@ -137,6 +138,7 @@ export const getTalismanEntityDescription = createEntityDescriptionCreator<
     | "RangedCombatTechnique"
     | "Reach"
     | "Weapon"
+    | "Armor"
   >
 >((_, { translateMap }, { content: entry }) => {
   const translation = translateMap(entry.translations)
