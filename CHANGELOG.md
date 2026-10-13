@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.34.0](https://github.com/Optolith/entity-descriptions/compare/v0.33.0...v0.34.0) (2026-10-13)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.97.0
+
+### build
+
+* **deps:** upgrade to schema 0.97.0 ([7c5b99b](https://github.com/Optolith/entity-descriptions/commit/7c5b99b5aa408c0a90bdf466d77980e4c266648f))
+
+### Features
+
+* use attribute name for associated profession publication skill ([99c69b5](https://github.com/Optolith/entity-descriptions/commit/99c69b5e4b5cdbe5dfe3f44ef8ec9d6f68fcc7ad))
+
+### Bug Fixes
+
+* add magical actions to spellworks label if present ([1a42b33](https://github.com/Optolith/entity-descriptions/commit/1a42b3330d699a8e069ec25bda31aa71bcf08772))
+* print secondary name for books if defined ([94f21b8](https://github.com/Optolith/entity-descriptions/commit/94f21b88e802db3af770e5bce759525bcc0849fa))
+* use value instead of cost for book prices ([89045a1](https://github.com/Optolith/entity-descriptions/commit/89045a1c14d530643d8ab99fbc713c66e04ba5f0))
+
 ## [0.33.0](https://github.com/Optolith/entity-descriptions/compare/v0.32.0...v0.33.0) (2026-10-12)
 
 ### ⚠ BREAKING CHANGES
