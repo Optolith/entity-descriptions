@@ -1010,9 +1010,13 @@ const renderBookTypes = (
             case "ProfessionalPublication":
               return [
                 translate("Professional Publication"),
-                translateMap(
-                  getInstanceById("Skill", type.Mundane.ProfessionalPublication)?.translations,
-                )?.name ?? MISSING_VALUE,
+                attributedName(
+                  translateMap,
+                  getInstanceById,
+                  "book-type",
+                  "Skill",
+                  type.Mundane.ProfessionalPublication,
+                ) ?? MISSING_VALUE,
               ]
             default:
               return assertExhaustive(type.Mundane)
