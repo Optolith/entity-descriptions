@@ -2062,7 +2062,7 @@ export const getEquipmentEntityDescription = createEntityDescriptionCreator<
                       })(),
                     },
                 mapNullable(entry.content.cost, cost => ({
-                  label: translate("Cost"),
+                  label: translate("Value"),
                   value: renderCost(cost).run(env),
                 })),
                 translation.note === undefined
