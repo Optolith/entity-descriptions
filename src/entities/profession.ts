@@ -1219,7 +1219,12 @@ const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPa
     professionPackages.some(pkg => pkg.content.options?.spellworks !== undefined)
       ? renderBaseNumberOfSpellworksTotalingAdventurePoints(professionPackages)
       : Reader.of(undefined),
-  ]).map(list => ensureNonEmpty(list.filter(isNotNullish))?.join("; "))
+  ]).map((list): [text: string | undefined, includesMagicalActions: boolean | undefined] => [
+    ensureNonEmpty(list.filter(isNotNullish))?.join("; "),
+    professionPackages.some(pkg =>
+      pkg.content.spells?.some(spell => spell.id.some(id => id.kind === "MagicalAction")),
+    ),
+  ])
 
 const retrieveBlessedTraditionIdentifierFromPrerequisiteGroup = (
   prerequisite: ProfessionPrerequisiteGroup,
@@ -1837,11 +1842,13 @@ const getRawProfessionVersionEntityDescription: EntityDescriptionCreator<
             ],
           },
           renderSpellworks(professionPackages)
-            .map(value =>
+            .map(([value, includesMagicalActions]) =>
               value === undefined
                 ? undefined
                 : {
-                    label: translate("Spellworks"),
+                    label: includesMagicalActions
+                      ? translate("Spellworks/Magical Actions")
+                      : translate("Spellworks"),
                     value,
                   },
             )
