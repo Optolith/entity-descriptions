@@ -95,7 +95,8 @@ export type TypedCreatorData = {
 
 type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> = EntityDescriptionCreator<
   E,
-  TypedCreatorData
+  TypedCreatorData,
+  string
 >
 
 const registeredEntityDescriptionCreators = {
@@ -294,7 +295,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   instance: string | { id: string; content: TSONDBTypes["entityMap"][E] },
   publicationOptions: PublicationOptions,
   responsiveTextSize: "Compressed" | "Full" = "Full",
-): EntityDescription<string> | undefined => {
+): EntityDescription<E, string> | undefined => {
   const creator = registeredEntityDescriptionCreators[entityName] as TypedCreator<E>
 
   const { id: instanceId, content: instanceContent } =

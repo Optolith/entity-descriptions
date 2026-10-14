@@ -50,13 +50,12 @@ import type {
   VariantOptionAction,
 } from "@optolith/database-schema/gen"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
-import { createEntityDescriptionCreator, type EntityDescriptionCreator } from "../creator.js"
+import { createEntityDescriptionCreator, type FlatRawEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
 import { GetInstanceById } from "../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
-  RawEntityDescription,
   RawNestedDefinitionListEntityDescriptionSection,
   RawTextEntityDescription,
 } from "../rawEntityDescription.js"
@@ -1689,29 +1688,30 @@ const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProf
           ),
       )
 
-const getRawProfessionVersionEntityDescription: EntityDescriptionCreator<
+type ProfessionEnv = StdEnv<
+  "ibi" | "rso" | "ai" | "acibp" | "x",
+  | "Publication"
+  | "ExperienceLevel"
+  | "Advantage"
+  | "Disadvantage"
+  | ProfessionSpecialAbilityIdentifier["kind"]
+  | "Aspect"
+  | RatedIdentifier["kind"]
+  | "Race"
+  | "Culture"
+  | MagicalActionIdentifier["kind"]
+  | "SkillGroup"
+  | "Cantrip"
+  | "Blessing"
+  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  | "DerivedCharacteristic",
+  "SkillGroup",
+  "ProfessionPackage" | "ProfessionVariant" | "ProfessionVersion"
+>
+
+const getRawProfessionVersionEntityDescription: FlatRawEntityDescriptionCreator<
   "ProfessionVersion",
-  StdEnv<
-    "ibi" | "rso" | "ai" | "acibp" | "x",
-    | "Publication"
-    | "ExperienceLevel"
-    | "Advantage"
-    | "Disadvantage"
-    | ProfessionSpecialAbilityIdentifier["kind"]
-    | "Aspect"
-    | RatedIdentifier["kind"]
-    | "Race"
-    | "Culture"
-    | MagicalActionIdentifier["kind"]
-    | "SkillGroup"
-    | "Cantrip"
-    | "Blessing"
-    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
-    | "DerivedCharacteristic",
-    "SkillGroup",
-    "ProfessionPackage" | "ProfessionVariant"
-  >,
-  RawTextEntityDescription | undefined
+  ProfessionEnv
 > = (
   {
     getInstanceById,
@@ -1940,26 +1940,7 @@ const getRawProfessionVersionEntityDescription: EntityDescriptionCreator<
  */
 export const getProfessionVersionEntityDescription = createEntityDescriptionCreator<
   "ProfessionVersion",
-  StdEnv<
-    "ibi" | "rso" | "ai" | "acibp" | "x",
-    | "Publication"
-    | "ExperienceLevel"
-    | "Advantage"
-    | "Disadvantage"
-    | ProfessionSpecialAbilityIdentifier["kind"]
-    | "Aspect"
-    | RatedIdentifier["kind"]
-    | "Race"
-    | "Culture"
-    | MagicalActionIdentifier["kind"]
-    | "SkillGroup"
-    | "Cantrip"
-    | "Blessing"
-    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
-    | "DerivedCharacteristic",
-    "SkillGroup",
-    "ProfessionPackage" | "ProfessionVariant"
-  >
+  ProfessionEnv
 >(getRawProfessionVersionEntityDescription)
 
 /**
@@ -1967,27 +1948,8 @@ export const getProfessionVersionEntityDescription = createEntityDescriptionCrea
  */
 export const getProfessionEntityDescription = createEntityDescriptionCreator<
   "Profession",
-  StdEnv<
-    "ibi" | "rso" | "ai" | "acibp" | "x",
-    | "Publication"
-    | "ExperienceLevel"
-    | "Advantage"
-    | "Disadvantage"
-    | ProfessionSpecialAbilityIdentifier["kind"]
-    | "Aspect"
-    | RatedIdentifier["kind"]
-    | "Race"
-    | "Culture"
-    | MagicalActionIdentifier["kind"]
-    | "SkillGroup"
-    | "Cantrip"
-    | "Blessing"
-    | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
-    | "DerivedCharacteristic",
-    "SkillGroup",
-    "ProfessionPackage" | "ProfessionVariant" | "ProfessionVersion"
-  >
->((env, locale, { id }, options): RawEntityDescription =>
+  ProfessionEnv
+>((env, locale, { id }, options) =>
   env
     .getChildInstancesForInstanceId("ProfessionVersion", id)
     .map(version =>
@@ -1997,6 +1959,5 @@ export const getProfessionEntityDescription = createEntityDescriptionCreator<
         { entity: "ProfessionVersion", ...version },
         options,
       ),
-    )
-    .filter(isNotNullish),
+    ),
 )

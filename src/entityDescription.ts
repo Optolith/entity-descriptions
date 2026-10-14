@@ -1,10 +1,10 @@
 /**
  * A JSON representation of the rules text for a library entry.
  */
-export type EntityDescription<Cols extends string> =
-  | TextEntityDescription
-  | TabularEntityDescription<Cols>
-  | (TextEntityDescription | TabularEntityDescription<Cols>)[]
+export type EntityDescription<EntityName extends string, Cols extends string> =
+  | TextEntityDescription<EntityName>
+  | TabularEntityDescription<EntityName, Cols>
+  | (TextEntityDescription<EntityName> | TabularEntityDescription<EntityName, Cols>)[]
 
 /**
  * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.
@@ -18,7 +18,9 @@ export type EntityDescriptionCategory = {
 /**
  * A JSON representation of the rules text for a library entry.
  */
-export type TextEntityDescription = {
+export type TextEntityDescription<EntityName extends string> = {
+  entityName: EntityName
+  instanceId: string
   type?: "text"
   category?: EntityDescriptionCategory
   title: string
@@ -33,7 +35,9 @@ export type TextEntityDescription = {
 /**
  * A JSON representation of the rules text for a library entry.
  */
-export type TabularEntityDescription<Cols extends string> = {
+export type TabularEntityDescription<EntityName extends string, Cols extends string> = {
+  entityName: EntityName
+  instanceId: string
   type: "tabular"
   category?: EntityDescriptionCategory
   title: string

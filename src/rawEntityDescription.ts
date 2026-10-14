@@ -5,9 +5,17 @@ import type { Errata, PublicationRefs } from "@optolith/database-schema/gen"
  * cleaned up.
  */
 export type RawEntityDescription<Cols extends string = string> =
+  | FlatRawEntityDescription<Cols>
+  | FlatRawEntityDescription<Cols>[]
+
+/**
+ * A JSON representation of the rules text for a library entry that has not been
+ * cleaned up.
+ */
+export type FlatRawEntityDescription<Cols extends string = string> =
   | RawTextEntityDescription
   | RawTabularEntityDescription<Cols>
-  | (RawTextEntityDescription | RawTabularEntityDescription<Cols>)[]
+  | undefined
 
 /**
  * The category the entry is part of. Next to a display label, it includes a sorting value that can be used to sort multiple categories in a specific order, and a value that can be used to filter entries by category.

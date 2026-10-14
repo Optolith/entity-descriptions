@@ -16,6 +16,7 @@ import type { StdEnv } from "./env.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
 import { unwrapNestedReaders, type WrapInNestedReaders } from "./nestedReaders.js"
 import type {
+  FlatRawEntityDescription,
   RawDefinitionListEntityDescriptionSection,
   RawDefinitionListEntityDescriptionSectionItem,
   RawEntityDescription,
@@ -109,11 +110,13 @@ const mapRawSection = (section: RawEntityDescriptionSection): EntityDescriptionS
   }
 }
 
-const mapRawTabular = <Cols extends string>(
+const mapRawTabular = <EntityName extends string, Cols extends string>(
+  taggedId: { entityName: EntityName; instanceId: string },
   raw: RawTabularEntityDescription<Cols>,
   env: StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
   options: { publications: PublicationOptions },
-): TabularEntityDescription<Cols> => ({
+): TabularEntityDescription<EntityName, Cols> => ({
+  ...taggedId,
   ...raw,
   additionalInformation:
     raw.additionalInformation === undefined
@@ -144,11 +147,13 @@ const mapRawTabular = <Cols extends string>(
       : getReferencesTranslation(options.publications, raw.references).run(env),
 })
 
-const mapRawText = (
+const mapRawText = <EntityName extends string>(
+  taggedId: { entityName: EntityName; instanceId: string },
   raw: RawTextEntityDescription,
   env: StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
   options: { publications: PublicationOptions },
-): TextEntityDescription => ({
+): TextEntityDescription<EntityName> => ({
+  ...taggedId,
   ...raw,
   body: raw.body.filter(isNotNullish).map(mapRawSection),
   errata: raw.errata?.map(({ date, description }) => ({
@@ -161,17 +166,18 @@ const mapRawText = (
       : getReferencesTranslation(options.publications, raw.references).run(env),
 })
 
-const mapRaw = <Cols extends string>(
+const mapRaw = <EntityName extends string, Cols extends string>(
+  taggedId: { entityName: EntityName; instanceId: string },
   raw: RawTabularEntityDescription<Cols> | RawTextEntityDescription,
   env: StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">,
   options: { publications: PublicationOptions },
 ) => {
   switch (raw.type) {
     case "tabular":
-      return mapRawTabular(raw, env, options)
+      return mapRawTabular(taggedId, raw, env, options)
     case "text":
     case undefined:
-      return mapRawText(raw, env, options)
+      return mapRawText(taggedId, raw, env, options)
     default:
       return assertExhaustive(raw)
   }
@@ -183,20 +189,19 @@ const mapRaw = <Cols extends string>(
  */
 export const createEntityDescriptionCreator =
   <ES extends keyof EntityMap, A = AnyNonNullish, Cols extends string = never>(
-    fn: EntityDescriptionCreator<
-      ES,
-      A,
-      WrapInNestedReaders<A, RawEntityDescription<Cols> | undefined>
-    >,
-  ): EntityDescriptionCreator<ES, A & StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">> =>
+    fn: RawEntityDescriptionCreator<ES, A, Cols>,
+  ): EntityDescriptionCreator<ES, A & StdEnv<"fd" | "t" | "tm" | "ibi", "Publication">, Cols> =>
   (databaseAccessors, locale, entry, options) => {
     const rawEntry = unwrapNestedReaders(
       fn(databaseAccessors, locale, entry, options),
       databaseAccessors,
     )
 
+    const taggedId = { entityName: entry.entity, instanceId: entry.id }
+
     if (Array.isArray(rawEntry)) {
       const results = rawEntry
+        .filter(isNotNullish)
         .filter(e =>
           isEntryFromIncludedPublication(
             { src: e.references },
@@ -205,7 +210,7 @@ export const createEntityDescriptionCreator =
             options.publications,
           ),
         )
-        .map(e => mapRaw(e, databaseAccessors, options))
+        .map(e => mapRaw(taggedId, e, databaseAccessors, options))
       return ensureNonEmpty(results)
     }
 
@@ -221,7 +226,7 @@ export const createEntityDescriptionCreator =
       return undefined
     }
 
-    return mapRaw(rawEntry, databaseAccessors, options)
+    return mapRaw(taggedId, rawEntry, databaseAccessors, options)
   }
 
 /**
@@ -229,15 +234,45 @@ export const createEntityDescriptionCreator =
  * library entry.
  */
 export type EntityDescriptionCreator<
-  ES extends keyof EntityMap = keyof EntityMap,
-  A = AnyNonNullish,
-  R = EntityDescription<string> | undefined,
+  ES extends keyof EntityMap,
+  A,
+  Cols extends string = string,
+> = <ES1 extends ES>(
+  databaseAccessors: A,
+  locale: LocaleEnvironment,
+  entry: TaggedEntity<ES1>,
+  options: { publications: PublicationOptions },
+) => EntityDescription<ES1, Cols> | undefined
+
+/**
+ * A function that creates the JSON representation of the rules text for a
+ * library entry.
+ */
+export type RawEntityDescriptionCreator<
+  ES extends keyof EntityMap,
+  A,
+  Cols extends string = string,
 > = (
   databaseAccessors: A,
   locale: LocaleEnvironment,
   entry: TaggedEntity<ES>,
   options: { publications: PublicationOptions },
-) => R
+) => WrapInNestedReaders<A, RawEntityDescription<Cols>>
+
+/**
+ * A function that creates the JSON representation of the rules text for a
+ * library entry.
+ */
+export type FlatRawEntityDescriptionCreator<
+  ES extends keyof EntityMap,
+  A,
+  Cols extends string = string,
+> = (
+  databaseAccessors: A,
+  locale: LocaleEnvironment,
+  entry: TaggedEntity<ES>,
+  options: { publications: PublicationOptions },
+) => WrapInNestedReaders<A, FlatRawEntityDescription<Cols>>
 
 /**
  * Bridge between Reader and plain string instances in a definition list item.
