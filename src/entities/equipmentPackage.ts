@@ -7,11 +7,12 @@ import type {
   LocaleMeasurementAdjustments,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator, type TaggedEntity } from "../creator.js"
+import type { StdEnv, StdReader } from "../env.js"
 import { Case } from "../helpers/enums.js"
-import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { Translate } from "../helpers/translate.js"
 import { getEquipmentName } from "./equipment.js"
 import { attributedNameFromText } from "./partial/markdown.js"
+import { getChildInstancesForInstanceIdR, runIf } from "./partial/reader.js"
 
 type AtomicCost = number | "Various" | "Invaluable" | [from: number, to: number]
 
@@ -87,7 +88,7 @@ const getAtomicCost = (cost: Cost): AtomicCost => {
 
 const getAtomicEquipmentCost = (
   item: EquipmentPackageItem & { entry: TaggedEntity<EquipmentIdentifier["kind"]> },
-): AtomicCost => {
+): StdReader<AtomicCost, "acibp", never, never, "ItemComponentOption"> | AtomicCost => {
   const { entry } = item
   switch (entry.entity) {
     case "AnimalCare":
@@ -140,6 +141,38 @@ const getAtomicEquipmentCost = (
         entry.content.cost.gold,
       ]
       return costs.reduce(rangeAtomicEquipmentCost)
+    }
+    case "ItemComponent": {
+      switch (entry.content.cost.kind) {
+        case "ByCombatTechnique":
+          return (
+            Object.entries({
+              ...entry.content.cost.ByCombatTechnique.close,
+              ...entry.content.cost.ByCombatTechnique.ranged,
+            }).reduce<AtomicCost | null>(
+              (acc, current) =>
+                acc === null ? current[1].value : rangeAtomicEquipmentCost(acc, current[1].value),
+              null,
+            ) ?? 0
+          )
+        case "DerivedFromOption":
+          return getChildInstancesForInstanceIdR("ItemComponentOption", entry.id).map(
+            options =>
+              options.reduce<AtomicCost | null>(
+                (acc, current) =>
+                  acc === null
+                    ? current.content.cost
+                    : rangeAtomicEquipmentCost(acc, current.content.cost),
+                null,
+              ) ?? 0,
+          )
+        case "Factor":
+          return 0
+        case "Fixed":
+          return entry.content.cost.Fixed.value
+        default:
+          return assertExhaustive(entry.content.cost)
+      }
     }
     case "Ammunition":
     case "Animal":
@@ -237,6 +270,7 @@ const getAtomicEquipmentWeight = (
     case "GemOrPreciousStone":
     case "IlluminationLightSource":
     case "IlluminationRefillOrSupply":
+    case "ItemComponent":
     case "Laboratory":
     case "Liebesspielzeug":
     case "LuxuryGood":
@@ -319,16 +353,21 @@ const applyCountToAtomicValue = <T>(
  */
 export const getEquipmentPackageEntityDescription = createEntityDescriptionCreator<
   "EquipmentPackage",
-  {
-    getInstanceById: GetInstanceById<"Publication" | EquipmentIdentifier["kind"] | "SocialStatus">
-  }
->(({ getInstanceById }, locale, { content }) => {
+  StdEnv<
+    "ibi" | "acibp",
+    "Publication" | EquipmentIdentifier["kind"] | "SocialStatus",
+    never,
+    "ItemComponentOption"
+  >
+>((env, locale, { content }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(content.translations)
 
   if (translation === undefined) {
     return undefined
   }
+
+  const { getInstanceById } = env
 
   const actualItems =
     content.items
@@ -364,7 +403,7 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
               locale.measurementAdjustments,
               applyCountToAtomicValue(getAtomicEquipmentWeight(item), item.number),
             ),
-            renderAtomicCost(translate, getAtomicEquipmentCost(item)),
+            renderAtomicCost(translate, runIf(getAtomicEquipmentCost(item), env)),
           ])
           .toSorted(on(item => item[0], locale.compare)),
         footer: [
@@ -379,7 +418,9 @@ export const getEquipmentPackageEntityDescription = createEntityDescriptionCreat
           renderAtomicCost(
             translate,
             actualItems
-              .map(item => applyCountToAtomicValue(getAtomicEquipmentCost(item), item.number))
+              .map(item =>
+                applyCountToAtomicValue(runIf(getAtomicEquipmentCost(item), env), item.number),
+              )
               .reduce(sumAtomicEquipmentCost, 0),
           ),
         ],

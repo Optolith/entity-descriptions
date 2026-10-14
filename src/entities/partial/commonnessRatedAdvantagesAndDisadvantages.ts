@@ -5,9 +5,10 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   CommonnessRatedAdvantageDisadvantage,
   CommonnessRatedAdvantageDisadvantageLevel,
-  CommonnessRatedAdvantageDisadvantageTranslation,
   CommonnessSelectOptionIdentifier,
   Settings,
+  SingleCommonnessRatedAdvantageDisadvantage,
+  SingleCommonnessRatedAdvantageDisadvantageTranslation,
 } from "@optolith/database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import type { StdEnv, StdReader } from "../../env.js"
@@ -38,9 +39,9 @@ const convertCommonnessRatedAdvantageOrDisadvantageLevel = (
 const escapeBrackets = (text: string) => text.replace(/(?<!\\)(?<brace>[[\]])/gu, "\\$1")
 
 const renderOptions = (
-  item: CommonnessRatedAdvantageDisadvantage<string>,
+  item: SingleCommonnessRatedAdvantageDisadvantage<string>,
   id: Case<"Advantage" | "Disadvantage", string>,
-  translation: CommonnessRatedAdvantageDisadvantageTranslation | undefined,
+  translation: SingleCommonnessRatedAdvantageDisadvantageTranslation | undefined,
 ) =>
   translation?.options === undefined
     ? Reader.asks(
@@ -60,9 +61,11 @@ const renderOptions = (
       )
     : Reader.of([escapeBrackets(translation.options)])
 
-const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
+const renderSingleCommonnessRatedAdvantageOrDisadvantageName = <
+  E extends "Advantage" | "Disadvantage",
+>(
   entity: E,
-  item: CommonnessRatedAdvantageDisadvantage<string>,
+  item: SingleCommonnessRatedAdvantageDisadvantage<string>,
 ): StdReader<
   string,
   "tm" | "lc" | "rso" | "ibi",
@@ -127,6 +130,24 @@ const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" 
     ).map(name => name ?? MISSING_VALUE),
   )
 
+const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
+  entity: E,
+  item: CommonnessRatedAdvantageDisadvantage<string>,
+): StdReader<
+  string,
+  "tm" | "lc" | "rso" | "ibi",
+  E | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+> => {
+  switch (item.kind) {
+    case "Single":
+      return renderSingleCommonnessRatedAdvantageOrDisadvantageName(entity, item.Single)
+    case "Group":
+      return translateMapR(item.Group.translations).map(t => t?.text ?? MISSING_VALUE)
+    default:
+      return assertExhaustive(item)
+  }
+}
+
 /**
  * Exclude supernatural base advantages from the negative commonness-rated list.
  */
@@ -136,9 +157,21 @@ export const excludeNegativeSupernaturalFromList = (
 ): CommonnessRatedAdvantageDisadvantage<string>[] | undefined =>
   negativeAdvantages?.filter(
     adv =>
-      adv.id !== settings.supernaturalBaseAdvantages.blessed &&
-      adv.id !== settings.supernaturalBaseAdvantages.spellcasters,
+      adv.kind !== "Single" ||
+      (adv.Single.id !== settings.supernaturalBaseAdvantages.blessed &&
+        adv.Single.id !== settings.supernaturalBaseAdvantages.spellcasters),
   )
+
+const hasId = (entry: CommonnessRatedAdvantageDisadvantage<string>, id: string) => {
+  switch (entry.kind) {
+    case "Single":
+      return entry.Single.id === id
+    case "Group":
+      return entry.Group.list.some(item => item.id === id)
+    default:
+      return assertExhaustive(entry)
+  }
+}
 
 /**
  * Get a description for the general negative commonness of supernatural advantages and disadvantages if its base advantages also have a negative commonness rating.
@@ -149,9 +182,10 @@ export const appendNegativeSupernaturalWithGeneralNegative = (
   negativeAdvantages: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
 ): StdReader<string | undefined, "t"> => {
   const hasBlessed =
-    negativeAdvantages?.some(adv => adv.id === settings.supernaturalBaseAdvantages.blessed) ?? false
+    negativeAdvantages?.some(adv => hasId(adv, settings.supernaturalBaseAdvantages.blessed)) ??
+    false
   const hasSpellcaster =
-    negativeAdvantages?.some(adv => adv.id === settings.supernaturalBaseAdvantages.spellcasters) ??
+    negativeAdvantages?.some(adv => hasId(adv, settings.supernaturalBaseAdvantages.spellcasters)) ??
     false
 
   if (hasBlessed && hasSpellcaster) {

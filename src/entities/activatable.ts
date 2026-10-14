@@ -1,5 +1,5 @@
 import { stripInlineMarkdown } from "@elyukai/markdown/render/strip"
-import { isNotEmpty } from "@elyukai/utils/array/nonEmpty"
+import { isNotEmpty, type NonEmptyArray } from "@elyukai/utils/array/nonEmpty"
 import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
 import { constant, identity, on } from "@elyukai/utils/function"
@@ -14,15 +14,13 @@ import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
   AdvancedSpecialAbility,
+  AdvancedSpecialAbilityByOption,
   AdvancedSpecialAbilityRestrictedOptionIdentifier,
   AdvantageDisadvantagePrerequisites,
   AdvantageDisadvantageSubtype,
   AdventurePointsValue,
-  ApplicableAllCombatTechniquesRestriction,
-  ApplicableCloseCombatTechniquesRestriction,
   ApplicableCombatTechniques,
-  ApplicableRangedCombatTechniquesRestriction,
-  ApplicableSpecificCombatTechniquesRestriction,
+  ApplicableCombatTechniquesNegativeCombatTechniquesRestriction,
   ArcaneEnergyCost,
   Aspect_ID,
   BindingCost,
@@ -40,22 +38,30 @@ import type {
   LifePointsCost,
   MagicalSignCost,
   MagicalTraditionTranslation,
+  MeleeWeaponClass,
+  OneOfAdvancedSpecialAbilityOptions,
   Penalty,
   PenaltyByAttackReplacement,
   PrimaryAttribute,
   PropertyDeclaration,
   PublicationRefs,
+  Race_ID,
   RatedIdentifier,
   RestrictedBlessings,
   SelectOptions,
   Skill_ID,
   SpecialRule,
   Volume,
+  Weapon_ID,
 } from "@optolith/database-schema/gen"
 import { Case, fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap, StdEnv, StdReader } from "../env.js"
-import type { GetAllInstances, GetInstanceById } from "../helpers/getTypes.js"
+import type {
+  GetAllChildInstancesForParent,
+  GetAllInstances,
+  GetInstanceById,
+} from "../helpers/getTypes.js"
 import type { LocaleCompare, LocaleEnvironment, LocaleJoin } from "../helpers/locale.js"
 import type { Format, Translate, TranslateMap } from "../helpers/translate.js"
 import type {
@@ -71,7 +77,7 @@ import type {
 import { renderActivatableNameComponents } from "./partial/activatableNameChunks.js"
 import { renderAdventurePointsValue } from "./partial/adventurePointsValue.js"
 import { renderParameterMap } from "./partial/map.js"
-import { attributedName } from "./partial/markdown.js"
+import { attributedName, attributedNameFromText } from "./partial/markdown.js"
 import { additionFormatter } from "./partial/mathOperation.js"
 import {
   getDerivedFocusRuleBadgeFromPrerequisites,
@@ -85,7 +91,17 @@ import {
 } from "./partial/prerequisites/single/activatable.js"
 import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
-import { attributedNameR, customNameR, localeSortR, nameR, translateR } from "./partial/reader.js"
+import {
+  attributedNameR,
+  customNameR,
+  getChildInstancesForInstanceIdR,
+  localeCompareR,
+  localeJoinR,
+  localeSortR,
+  nameR,
+  translateMapR,
+  translateR,
+} from "./partial/reader.js"
 import {
   getResponsiveText,
   getResponsiveTextOptional,
@@ -365,107 +381,151 @@ const wrapInParens = (args: (string | undefined)[], append = ""): string => {
 
 const addSpaceIfNoCommaAtStart = (str: string): string => (str.startsWith(",") ? str : ` ${str}`)
 
-const renderApplicableCombatTechniquesRestriction = <
-  T extends
-    | ApplicableAllCombatTechniquesRestriction
-    | ApplicableCloseCombatTechniquesRestriction
-    | ApplicableRangedCombatTechniquesRestriction
-    | ApplicableSpecificCombatTechniquesRestriction,
->(
-  getInstanceById: GetInstanceById<"CloseCombatTechnique" | "RangedCombatTechnique" | "Race">,
+type GeneralRestrictions = {
+  isImprovised?: boolean
+  hasPointedBlade?: boolean
+  whileMounted?: boolean
+  hasParry?: boolean
+  isOneHanded?: boolean
+  isTwoHanded?: boolean
+  isParryingWeapon?: boolean
+  race?: Race_ID
+  weaponClass?: MeleeWeaponClass
+  level?: number
+  hasOneBluntSide?: boolean
+  excludeCombatTechniques?: ApplicableCombatTechniquesNegativeCombatTechniquesRestriction<unknown>
+  weapons?: Weapon_ID[]
+}
+
+const renderApplicableCombatTechniquesRestriction = <T extends GeneralRestrictions>(
+  getInstanceById: GetInstanceById<
+    "CloseCombatTechnique" | "RangedCombatTechnique" | "Race" | "Weapon"
+  >,
   locale: LocaleEnvironment,
   main: string,
-  restriction: T,
+  restrictions: T,
   translation: BaseActivatableTranslation,
-  weapons: string | undefined,
-  normalizeExcludedId: T extends { kind: "ExcludeCombatTechniques" }
-    ? (id: T["ExcludeCombatTechniques"]["list"][number]) => CombatTechniqueIdentifier
+  normalizeExcludedId: T extends {
+    excludeCombatTechniques?: ApplicableCombatTechniquesNegativeCombatTechniquesRestriction<unknown>
+  }
+    ? (id: NonNullable<T["excludeCombatTechniques"]>["list"][number]) => CombatTechniqueIdentifier
     : undefined,
 ): string => {
-  switch (restriction.kind) {
-    case "Improvised":
-      return main + wrapInParens([locale.translate("only improvised weapons"), weapons])
-    case "PointedBlade":
-      return main + wrapInParens([locale.translate("weapon must have a pointed blade"), weapons])
-    case "Mount":
-      if (weapons === undefined) {
-        return `${main} ${locale.translate("while mounted")}`
-      } else {
-        return main + wrapInParens([weapons, locale.translate("while mounted")])
+  // main + wrapInParens([restriction, weapons])
+  const simpleRestrictionsInParensBeforeWeapons: (() => string | undefined)[] = [
+    () =>
+      restrictions.isImprovised === true ? locale.translate("only improvised weapons") : undefined,
+    () =>
+      restrictions.isImprovised === true ? locale.translate("only improvised weapons") : undefined,
+    () =>
+      restrictions.hasOneBluntSide === true
+        ? locale.translate("only those with at least one blunt side")
+        : undefined,
+    () => {
+      if (restrictions.race === undefined) {
+        return undefined
       }
-    case "Race": {
+
       const raceName = attributedName(
         locale.translateMap,
         getInstanceById,
         "applicable-combat-technique",
         "Race",
-        restriction.Race,
+        restrictions.race,
       )
 
-      return (
-        main +
-        wrapInParens([
-          // originally "while {$racial} weapon", but different to parameterize without inflection support
-          locale.translate("while weapon of race {$race}", {
-            race: raceName ?? MISSING_VALUE,
-          }),
-          weapons,
-        ])
-      )
+      // originally "while {$racial} weapon", but different to parameterize without inflection support
+      return locale.translate("while weapon of race {$race}", {
+        race: raceName ?? MISSING_VALUE,
+      })
+    },
+    () => {
+      if (restrictions.excludeCombatTechniques === undefined) {
+        return undefined
+      }
+
+      return locale.translate("except {$list}", {
+        list: locale.join(
+          restrictions.excludeCombatTechniques.list
+            .map(id => {
+              const normalizedId = normalizeExcludedId?.(id)
+              return normalizedId !== undefined
+                ? (attributedName(
+                    locale.translateMap,
+                    getInstanceById,
+                    "applicable-combat-technique",
+                    normalizedId,
+                  ) ?? MISSING_VALUE)
+                : MISSING_VALUE
+            })
+            .toSorted(locale.compare),
+          "conjunction",
+        ),
+      })
+    },
+    () => {
+      if (restrictions.level === undefined) {
+        return undefined
+      }
+      const nameWithLevel = `${translation.name_in_library ?? translation.name} ${romanize(restrictions.level)}`
+      return locale.translate("only {$nameWithLevel}", { nameWithLevel })
+    },
+  ]
+
+  const weapons =
+    restrictions.weapons === undefined
+      ? undefined
+      : locale.translate("only {$weapons}", {
+          weapons: locale.join(
+            restrictions.weapons
+              .map(
+                weapon =>
+                  attributedName(
+                    locale.translateMap,
+                    getInstanceById,
+                    "applicable-combat-technique",
+                    "Weapon",
+                    weapon,
+                  ) ?? MISSING_VALUE,
+              )
+              .toSorted(locale.compare),
+            "conjunction",
+          ),
+        })
+
+  const appendingRestrictions: (() => string | undefined)[] = [
+    () => (restrictions.hasParry === true ? ` ${locale.translate("with parry")}` : undefined),
+    () =>
+      restrictions.isOneHanded === true
+        ? addSpaceIfNoCommaAtStart(
+            locale.translate("that may be performed with one-handed weapons"),
+          )
+        : undefined,
+  ]
+
+  const mainReplacements: (() => string | undefined)[] = [
+    () =>
+      restrictions.isTwoHanded === true ? locale.translate("All Two-Handed Weapons") : undefined,
+    () =>
+      restrictions.isParryingWeapon === true ? locale.translate("All Parrying Weapons") : undefined,
+  ]
+
+  const beforeParens =
+    (mainReplacements.reduce((acc: string | null | undefined, fn) => acc ?? fn(), null) ?? main) +
+    appendingRestrictions.reduce((acc, fn) => acc + (fn() ?? ""), "")
+
+  const inParens = [...simpleRestrictionsInParensBeforeWeapons.map(fn => fn()), weapons].filter(
+    isNotNullish,
+  )
+
+  if (restrictions.whileMounted === true) {
+    if (inParens.length === 0) {
+      return `${beforeParens} ${locale.translate("while mounted")}`
+    } else {
+      return beforeParens + wrapInParens([...inParens, locale.translate("while mounted")])
     }
-    case "ExcludeCombatTechniques":
-      return (
-        main +
-        wrapInParens([
-          locale.translate("except {$list}", {
-            list: locale.join(
-              restriction.ExcludeCombatTechniques.list
-                .map(id => {
-                  const normalizedId = normalizeExcludedId?.(
-                    id as CombatTechniqueIdentifier & string,
-                  )
-                  return normalizedId !== undefined
-                    ? (attributedName(
-                        locale.translateMap,
-                        getInstanceById,
-                        "applicable-combat-technique",
-                        normalizedId,
-                      ) ?? MISSING_VALUE)
-                    : MISSING_VALUE
-                })
-                .toSorted(locale.compare),
-              "conjunction",
-            ),
-          }),
-          weapons,
-        ])
-      )
-    case "HasParry":
-      return `${main} ${locale.translate("with parry") + wrapInParens([weapons])}`
-    case "OneHanded":
-      return (
-        main +
-        addSpaceIfNoCommaAtStart(
-          locale.translate("that may be performed with one-handed weapons"),
-        ) +
-        wrapInParens([weapons])
-      )
-    case "TwoHanded":
-      return locale.translate("All Two-Handed Weapons") + wrapInParens([weapons])
-    case "ParryingWeapon":
-      return locale.translate("All Parrying Weapons") + wrapInParens([weapons])
-    case "Level": {
-      const nameWithLevel = `${translation.name_in_library ?? translation.name} ${romanize(restriction.Level.level)}`
-      return (
-        main + wrapInParens([locale.translate("only {$nameWithLevel}", { nameWithLevel }), weapons])
-      )
-    }
-    case "OneBluntSide":
-      return (
-        main + wrapInParens([locale.translate("only those with at least one blunt side"), weapons])
-      )
-    default:
-      return assertExhaustive(restriction)
+  } else {
+    return beforeParens + wrapInParens(inParens)
   }
 }
 
@@ -487,15 +547,14 @@ const renderApplicableCombatTechniquesValue = (
     case "All": {
       const main = locale.translate("All")
       const mainWithRestriction =
-        applicableCombatTechniques.All.restriction === undefined
+        applicableCombatTechniques.All.restrictions === undefined
           ? main
           : renderApplicableCombatTechniquesRestriction(
               getInstanceById,
               locale,
               main,
-              applicableCombatTechniques.All.restriction,
+              applicableCombatTechniques.All.restrictions,
               translation,
-              undefined,
               id => id,
             )
       return mainWithRestriction
@@ -503,15 +562,14 @@ const renderApplicableCombatTechniquesValue = (
     case "AllClose": {
       const main = locale.translate("All Close Combat Techniques")
       const mainWithRestriction =
-        applicableCombatTechniques.AllClose.restriction === undefined
+        applicableCombatTechniques.AllClose.restrictions === undefined
           ? main
           : renderApplicableCombatTechniquesRestriction(
               getInstanceById,
               locale,
               main,
-              applicableCombatTechniques.AllClose.restriction,
+              applicableCombatTechniques.AllClose.restrictions,
               translation,
-              undefined,
               id => Case("CloseCombatTechnique", id),
             )
       return mainWithRestriction
@@ -519,15 +577,14 @@ const renderApplicableCombatTechniquesValue = (
     case "AllRanged": {
       const main = locale.translate("All Ranged Combat Techniques")
       const mainWithRestriction =
-        applicableCombatTechniques.AllRanged.restriction === undefined
+        applicableCombatTechniques.AllRanged.restrictions === undefined
           ? main
           : renderApplicableCombatTechniquesRestriction(
               getInstanceById,
               locale,
               main,
-              applicableCombatTechniques.AllRanged.restriction,
+              applicableCombatTechniques.AllRanged.restrictions,
               translation,
-              undefined,
               id => Case("RangedCombatTechnique", id),
             )
       return mainWithRestriction
@@ -543,44 +600,22 @@ const renderApplicableCombatTechniquesValue = (
               specific.id,
             ) ?? MISSING_VALUE
 
-          if (specific.translation !== undefined) {
-            const specificTranslation = locale.translateMap(specific.translation)
+          if (specific.translations !== undefined) {
+            const specificTranslation = locale.translateMap(specific.translations)
             if (specificTranslation) {
-              return main + wrapInParens([specificTranslation.restriction])
+              return main + wrapInParens([specificTranslation.restrictions])
             }
           }
 
-          const weapons =
-            specific.weapons === undefined
-              ? undefined
-              : locale.translate("only {$weapons}", {
-                  weapons: locale.join(
-                    specific.weapons
-                      .map(
-                        weapon =>
-                          attributedName(
-                            locale.translateMap,
-                            getInstanceById,
-                            "applicable-combat-technique",
-                            "Weapon",
-                            weapon,
-                          ) ?? MISSING_VALUE,
-                      )
-                      .toSorted(locale.compare),
-                    "conjunction",
-                  ),
-                })
-
           const mainWithRestriction =
-            specific.restriction === undefined
-              ? main + wrapInParens([weapons])
+            specific.restrictions === undefined
+              ? main
               : renderApplicableCombatTechniquesRestriction(
                   getInstanceById,
                   locale,
                   main,
-                  specific.restriction,
+                  specific.restrictions,
                   translation,
-                  weapons,
                   undefined,
                 )
 
@@ -1033,39 +1068,179 @@ const normalizeId = (
 }
 
 const renderAdvancedSpecialAbilityName = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  getInstanceById: ActivatableNameEnv["getInstanceById"],
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
   entityName: StyleSpecialAbilityKind,
   id: AdvancedIdentifierSpecialAbility,
   option?: AdvancedSpecialAbilityRestrictedOptionIdentifier[],
-) => {
+): StdReader<
+  string,
+  "t" | "tm" | "ibi" | "rso",
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+> => {
   const normalizedId = normalizeId(entityName, id)
-
-  return `^[${
-    mapNullable(
-      printActivatableName(normalizedId, option, undefined).run({
-        getInstanceById,
-        translate,
-        getResolvedSelectOptionById,
-        displayedInProfession: false,
-      }),
-      name => renderActivatableNameComponents(translateMap, name, false),
-    ) ?? MISSING_VALUE
-  }](entity: "${normalizedId.kind}", instance: "${fromUniformCase(normalizedId)}", style: "normal")`
+  return printActivatableName(normalizedId, option, undefined)
+    .with((env: Omit<ActivatableNameEnv, "displayedInProfession">) => ({
+      ...env,
+      displayedInProfession: false,
+    }))
+    .thenWOrElse(name =>
+      Reader.asks((env: StdEnv<"tm">) =>
+        renderActivatableNameComponents(env.translateMap, name, false),
+      ),
+    )
+    .mapOrElse(name => attributedNameFromText(name, "advanced", normalizedId), MISSING_VALUE)
 }
 
-const renderAdvancedValue = (
-  translate: Translate,
-  translateMap: TranslateMap,
-  localeJoin: LocaleJoin,
-  localeCompare: LocaleCompare,
-  getInstanceById: ActivatableNameEnv["getInstanceById"],
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
+const prefixReaderStyle = <S extends "general" | "special", E, T>(
+  prefix: S,
+  reader: Reader<E, T>,
+): Reader<E, [S, T]> => reader.map(value => [prefix, value])
+
+const renderOneOfAdvancedSpecialAbilities = (
   entityName: StyleSpecialAbilityKind,
-  advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
+  entry: OneOfAdvancedSpecialAbilityOptions<AdvancedIdentifierSpecialAbility>,
 ) => {
+  if (entry.display_option !== undefined) {
+    switch (entry.display_option.kind) {
+      case "Hide":
+        return Reader.of(undefined)
+      case "ReplaceWith":
+        return prefixReaderStyle(
+          "special",
+          translateMapR(entry.display_option.ReplaceWith.translations).map(
+            translation => translation?.replacement ?? MISSING_VALUE,
+          ),
+        )
+      default:
+        return assertExhaustive(entry.display_option)
+    }
+  }
+
+  return prefixReaderStyle(
+    "general",
+    Reader.traverse(entry.options, option =>
+      renderAdvancedSpecialAbilityName(entityName, option),
+    ).thenW(names => localeJoinR(names, "disjunction")),
+  )
+}
+
+const joinAdvancedStringParts = (parts: string[]): string =>
+  parts.some(item => stripInlineMarkdown(item).includes(",")) ? parts.join("; ") : parts.join(", ")
+
+const renderAdvancedValueByOption = (
+  parentEntityName: StyleSpecialAbilityKind,
+  parentId: string,
+  previousList: string,
+  byOptionEntriesToGenerate: NonEmptyArray<{
+    kind: "ByOption"
+    ByOption: AdvancedSpecialAbilityByOption<AdvancedIdentifierSpecialAbility>
+  }>,
+): StdReader<
+  [string, definitionList: RawDefinitionListEntityDescriptionSectionItem[]],
+  "t" | "tm" | "acibp" | "ibi" | "rso" | "lj" | "lc",
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">,
+  never,
+  "GeneralSelectOption"
+> =>
+  translateMapR(byOptionEntriesToGenerate[0].ByOption.translations)
+    .thenW(configTranslation =>
+      configTranslation === undefined
+        ? translateR(
+            ".input {$count :number} {{{$previousList} as well as {$count} advanced special abilities}}",
+            {
+              count: byOptionEntriesToGenerate.length,
+              previousList,
+            },
+          )
+        : translateR(
+            ".input {$count :number} {{{$previousList} as well as {$count} advanced special abilities depending on {$option}}}",
+            {
+              count: byOptionEntriesToGenerate.length,
+              previousList,
+              option: configTranslation.label,
+            },
+          ),
+    )
+    .thenW(mainText =>
+      getChildInstancesForInstanceIdR("GeneralSelectOption", Case(parentEntityName, parentId))
+        .thenW(childInstances =>
+          Reader.traverse(childInstances, childInstance =>
+            translateMapR(childInstance.content.translations).map(
+              (optionTranslation): [primarySortOrder: number, id: string, name: string] => [
+                byOptionEntriesToGenerate[0].ByOption.fallbackOption === childInstance.id ? 1 : 0,
+                childInstance.id,
+                optionTranslation?.name ?? MISSING_VALUE,
+              ],
+            ),
+          ).thenW(childNames =>
+            Reader.traverse(childNames, ([primarySortOrder, id, name]) =>
+              Reader.traverse(
+                byOptionEntriesToGenerate
+                  .map(
+                    byOptionEntry =>
+                      byOptionEntry.ByOption.map.find(mapping => mapping.option === id)
+                        ?.associatedAdvanced,
+                  )
+                  .filter(isNotNullish),
+                entry => {
+                  switch (entry.kind) {
+                    case "General":
+                      return renderAdvancedSpecialAbilityName(parentEntityName, entry.General)
+                    case "OneOf":
+                      return renderOneOfAdvancedSpecialAbilities(parentEntityName, entry.OneOf).map(
+                        result => result?.[1],
+                      )
+                    default:
+                      return assertExhaustive(entry)
+                  }
+                },
+              ).map(descriptions => ({
+                primarySortOrder,
+                id,
+                name,
+                description: joinAdvancedStringParts(descriptions.filter(isNotNullish)),
+              })),
+            ),
+          ),
+        )
+        .thenW(definitions =>
+          localeCompareR.map(
+            (
+              localeCompare,
+            ): [string, definitionList: RawDefinitionListEntityDescriptionSectionItem[]] => [
+              mainText,
+              definitions
+                .sort(
+                  reduceCompare(
+                    on(def => def.primarySortOrder, compareNumber),
+                    on(def => def.name, localeCompare),
+                  ),
+                )
+                .map(def => ({
+                  label: def.name,
+                  value: def.description,
+                })),
+            ],
+          ),
+        ),
+    )
+
+const renderAdvancedValue = (
+  entityName: StyleSpecialAbilityKind,
+  id: string,
+  advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
+): StdReader<
+  RawDefinitionListEntityDescriptionSectionItem["value"],
+  "t" | "tm" | "lj" | "lc" | "ibi" | "rso" | "acibp",
+  | ActivatableIdentifier["kind"]
+  | "Aspect"
+  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">,
+  never,
+  "GeneralSelectOption"
+> => {
   if (
     advanced.every(entry => entry.kind === "OneOf") &&
     isNotEmpty(advanced) &&
@@ -1087,35 +1262,22 @@ const renderAdvancedValue = (
         .filter(isNotNullish) // should not do anything, just for type narrowing
 
       if (uniqueOptions.length === advanced.length) {
-        const [first, second] = optionsInAllEntries.map(option =>
-          renderAdvancedSpecialAbilityName(
-            translate,
-            translateMap,
-            getInstanceById,
-            getResolvedSelectOptionById,
-            entityName,
-            option,
-          ),
-        ) as [string, string]
+        return Reader.traverse(optionsInAllEntries, option =>
+          renderAdvancedSpecialAbilityName(entityName, option),
+        ).thenW(names => {
+          const [first, second] = names as [string, string]
 
-        return [
-          ...uniqueOptions
-            .map(option =>
-              renderAdvancedSpecialAbilityName(
-                translate,
-                translateMap,
-                getInstanceById,
-                getResolvedSelectOptionById,
-                entityName,
-                option,
-              ),
+          return Reader.traverse(uniqueOptions, option =>
+            renderAdvancedSpecialAbilityName(entityName, option),
+          )
+            .thenW(localeSortR)
+            .thenW(uniqueOptionNames =>
+              translateR(
+                "one or two of these special abilities can alternatively be replaced by advanced special abilities {$first} and/or {$second}",
+                { first, second },
+              ).map(rest => [...uniqueOptionNames, rest].join(", ")),
             )
-            .toSorted(localeCompare),
-          translate(
-            "one or two of these special abilities can alternatively be replaced by advanced special abilities {$first} and/or {$second}",
-            { first, second },
-          ),
-        ].join(", ")
+        })
       }
     }
   }
@@ -1128,120 +1290,116 @@ const renderAdvancedValue = (
   )
 
   const anyEntriesToGenerate = count(advanced, entry => entry.kind === "Any")
+  const byOptionEntriesToGenerate = advanced.filter(entry => entry.kind === "ByOption")
 
-  const arr = [
-    ...advanced
-      .map((entry): ["general" | "special", string | undefined] | undefined => {
-        switch (entry.kind) {
-          case "General":
-            return [
-              "general",
-              renderAdvancedSpecialAbilityName(
-                translate,
-                translateMap,
-                getInstanceById,
-                getResolvedSelectOptionById,
-                entityName,
-                entry.General,
-              ),
-            ]
-          case "RestrictOptions":
-            return [
-              "general",
-              renderAdvancedSpecialAbilityName(
-                translate,
-                translateMap,
-                getInstanceById,
-                getResolvedSelectOptionById,
-                entityName,
-                entry.RestrictOptions.id,
-                entry.RestrictOptions.option,
-              ),
-            ]
-          case "OneOf": {
-            if (entry.OneOf.display_option !== undefined) {
-              switch (entry.OneOf.display_option.kind) {
-                case "Hide":
-                  return undefined
-                case "ReplaceWith":
-                  return [
-                    "special",
-                    translateMap(entry.OneOf.display_option.ReplaceWith.translations)
-                      ?.replacement ?? MISSING_VALUE,
-                  ]
-                default:
-                  return assertExhaustive(entry.OneOf.display_option)
-              }
+  return Reader.traverse(
+    advanced,
+    (
+      entry,
+    ): StdReader<
+      | [
+          "general" | "special",
+
+          string | undefined,
+        ]
+      | undefined,
+      "t" | "tm" | "lj" | "ibi" | "rso",
+      | ActivatableIdentifier["kind"]
+      | "Aspect"
+      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+    > => {
+      switch (entry.kind) {
+        case "General":
+          return prefixReaderStyle(
+            "general",
+            renderAdvancedSpecialAbilityName(entityName, entry.General),
+          )
+        case "RestrictOptions":
+          return prefixReaderStyle(
+            "general",
+            renderAdvancedSpecialAbilityName(
+              entityName,
+              entry.RestrictOptions.id,
+              entry.RestrictOptions.option,
+            ),
+          )
+        case "OneOf":
+          return renderOneOfAdvancedSpecialAbilities(entityName, entry.OneOf)
+        case "DeriveFromExternalOption":
+          if (entry.DeriveFromExternalOption.display_option !== undefined) {
+            switch (entry.DeriveFromExternalOption.display_option.kind) {
+              case "Hide":
+                return Reader.of(undefined)
+              case "ReplaceWith":
+                return prefixReaderStyle(
+                  "special",
+                  translateMapR(
+                    entry.DeriveFromExternalOption.display_option.ReplaceWith.translations,
+                  ).map(translation => translation?.replacement ?? MISSING_VALUE),
+                )
+              default:
+                return assertExhaustive(entry.DeriveFromExternalOption.display_option)
             }
-
-            return [
-              "general",
-              localeJoin(
-                entry.OneOf.options.map(option =>
-                  renderAdvancedSpecialAbilityName(
-                    translate,
-                    translateMap,
-                    getInstanceById,
-                    getResolvedSelectOptionById,
-                    entityName,
-                    option,
-                  ),
-                ),
-                "disjunction",
-              ),
-            ]
           }
-          case "DeriveFromExternalOption":
-            if (entry.DeriveFromExternalOption.display_option !== undefined) {
-              switch (entry.DeriveFromExternalOption.display_option.kind) {
-                case "Hide":
-                  return undefined
-                case "ReplaceWith":
-                  return [
-                    "special",
-                    translateMap(
-                      entry.DeriveFromExternalOption.display_option.ReplaceWith.translations,
-                    )?.replacement ?? MISSING_VALUE,
-                  ]
-                default:
-                  return assertExhaustive(entry.DeriveFromExternalOption.display_option)
-              }
-            }
 
-            return undefined
-          case "Any":
-            return undefined
-          default:
-            return assertExhaustive(entry)
-        }
-      })
-      .filter(
-        (item): item is ["general" | "special", string] =>
-          isNotNullish(item) && item[1] !== undefined,
-      )
-      .toSorted(
-        reduceCompare(
-          on(([type]) => type, localeCompare),
-          on(([, value]) => value, localeCompare),
-        ),
-      )
-      .map(value => value[1]),
-    derivedFromExternalOptionEntriesToGenerate === 0
-      ? undefined
-      : translate(".input {$count :number} {{{$count} more by primary patron}}", {
-          count: derivedFromExternalOptionEntriesToGenerate,
-        }),
-    anyEntriesToGenerate === 0
-      ? undefined
-      : translate(
-          ".input {$count :number} {{Here you can select {$count} fitting special abilities.}}",
-          {
-            count: anyEntriesToGenerate,
-          },
-        ),
-  ].filter(isNotNullish)
+          return Reader.of(undefined)
+        case "ByOption":
+        case "Any":
+          return Reader.of(undefined)
+        default:
+          return assertExhaustive(entry)
+      }
+    },
+  )
+    .thenW(items =>
+      localeCompareR.map(localeCompare =>
+        items
+          .filter(
+            (item): item is ["general" | "special", string] =>
+              isNotNullish(item) && item[1] !== undefined,
+          )
+          .toSorted(
+            reduceCompare(
+              on(([type]) => type, localeCompare),
+              on(([, value]) => value, localeCompare),
+            ),
+          )
+          .map(value => value[1]),
+      ),
+    )
+    .then(baseArr =>
+      Reader.sequence([
+        derivedFromExternalOptionEntriesToGenerate === 0
+          ? Reader.of(undefined)
+          : translateR(".input {$count :number} {{{$count} more by primary patron}}", {
+              count: derivedFromExternalOptionEntriesToGenerate,
+            }),
+        anyEntriesToGenerate === 0
+          ? Reader.of(undefined)
+          : translateR(
+              ".input {$count :number} {{Here you can select {$count} fitting special abilities.}}",
+              {
+                count: anyEntriesToGenerate,
+              },
+            ),
+      ]).map(extraArr => baseArr.concat(extraArr.filter(isNotNullish))),
+    )
+    .thenW(arr => {
+      const stringSoFar = joinAdvancedStringParts(arr)
 
-  return arr.some(item => stripInlineMarkdown(item).includes(",")) ? arr.join("; ") : arr.join(", ")
+      return (
+        isNotEmpty(byOptionEntriesToGenerate)
+          ? renderAdvancedValueByOption(entityName, id, stringSoFar, byOptionEntriesToGenerate)
+          : Reader.of(undefined)
+      ).map(byOptionApplyToBefore =>
+        byOptionApplyToBefore === undefined
+          ? stringSoFar
+          : [
+              { type: "plain", text: byOptionApplyToBefore[0] },
+              { type: "definitionList", style: "nested", items: byOptionApplyToBefore[1] },
+            ],
+      )
+    })
 }
 
 const renderDeriveFromExternalOptionTable = (
@@ -1288,14 +1446,12 @@ const renderDeriveFromExternalOptionTable = (
       translateMap(getInstanceById("Patron", option)?.translations)?.name ?? MISSING_VALUE,
       list
         .map(([, toAdvanced]) =>
-          renderAdvancedSpecialAbilityName(
+          renderAdvancedSpecialAbilityName(entityName, toAdvanced).run({
             translate,
             translateMap,
             getInstanceById,
             getResolvedSelectOptionById,
-            entityName,
-            toAdvanced,
-          ),
+          }),
         )
         .toSorted(localeCompare)
         .join(", "),
@@ -1560,11 +1716,18 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
     getAllResolvedSelectOptions: GetAllResolvedSelectOptions
     getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
     getAllResolvedSkillUses: GetAllResolvedSkillUses
+    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"GeneralSelectOption">
     translateMap: TranslateMap
   }
 >(
   (
-    { getInstanceById, getAllInstances, getResolvedSelectOptionById, getAllResolvedSelectOptions },
+    {
+      getInstanceById,
+      getAllInstances,
+      getResolvedSelectOptionById,
+      getAllResolvedSelectOptions,
+      getChildInstancesForInstanceId,
+    },
     locale,
     { entity: entityName, content: entry, id },
   ) => {
@@ -1583,6 +1746,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       localeCompare: locale.compare,
       localeJoin: locale.join,
       getResolvedSelectOptionById,
+      getChildInstancesForInstanceId,
     } satisfies Partial<EnvMap>
 
     const baseEntry: BaseActivatable = entry
@@ -1728,16 +1892,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
               isStyleSpecialAbilityKind(entityName)
                 ? {
                     label: renderAdvancedLabel(translate, entityName),
-                    value: renderAdvancedValue(
-                      translate,
-                      translateMap,
-                      locale.join,
-                      locale.compare,
-                      getInstanceById,
-                      getResolvedSelectOptionById,
-                      entityName,
-                      advanced,
-                    ),
+                    value: renderAdvancedValue(entityName, id, advanced).run(env),
                   }
                 : undefined,
             ),

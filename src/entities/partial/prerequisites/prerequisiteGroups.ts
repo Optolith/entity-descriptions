@@ -38,7 +38,10 @@ import { printProfessionPrerequisite } from "./single/profession.js"
 import { printPublicationPrerequisite } from "./single/publication.js"
 import { printRacePrerequisite } from "./single/race.js"
 import { printRatedPrerequisite } from "./single/rated.js"
-import { printRatedMinimumNumberPrerequisite } from "./single/ratedMinimumNumber.js"
+import {
+  printRatedMinimumNumberPrerequisite,
+  printRatedMinimumNumberPrerequisiteForProfession,
+} from "./single/ratedMinimumNumber.js"
 import { printRatedSumPrerequisite } from "./single/ratedSum.js"
 import { printRulePrerequisite } from "./single/rule.js"
 import { printBinarySexPrerequisite } from "./single/sex.js"
@@ -173,6 +176,8 @@ export const printProfessionPrerequisiteGroup = (
       return printRacePrerequisite(prerequisite.Race)
     case "Culture":
       return printCulturePrerequisite(prerequisite.Culture)
+    case "Rule":
+      return printRulePrerequisite(prerequisite.Rule)
     case "Activatable":
       return printActivatablePrerequisite(prerequisite.Activatable).with(env => ({
         ...env,
@@ -181,7 +186,7 @@ export const printProfessionPrerequisiteGroup = (
     case "Rated":
       return printRatedPrerequisite(prerequisite.Rated)
     case "RatedMinimumNumber":
-      return printRatedMinimumNumberPrerequisite(prerequisite.RatedMinimumNumber)
+      return printRatedMinimumNumberPrerequisiteForProfession(prerequisite.RatedMinimumNumber)
     case "Energy":
       return printEnergyPrerequisite(prerequisite.Energy)
     default:

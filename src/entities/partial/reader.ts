@@ -593,3 +593,6 @@ export const formatNumberOrString = (value: number | string): StdReader<string, 
  */
 export const fixedNumberOrString = (value: number | string, fractionDigits?: number): string =>
   typeof value === "number" ? value.toFixed(fractionDigits) : value
+
+export const runIf = <E, T>(readerOrValue: Reader<E, T> | T, env: E): T =>
+  readerOrValue instanceof Reader ? readerOrValue.run(env) : readerOrValue

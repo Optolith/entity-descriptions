@@ -166,6 +166,7 @@ export const getEquipmentName = (
     case "GemOrPreciousStone":
     case "IlluminationLightSource":
     case "IlluminationRefillOrSupply":
+    case "ItemComponent":
     case "Jewelry":
     case "Laboratory":
     case "Liebesspielzeug":
@@ -1101,6 +1102,8 @@ const normalizeCombatValues = (
         type: "Armor",
         values: entity.content,
       }
+    case "ItemComponent":
+      return undefined
     case "Ammunition":
     case "Animal":
     case "AnimalCare":
@@ -1414,6 +1417,7 @@ const categoryTranslationMap: Record<
   ArmorPieces: translateR("Pieces of Armor"),
   WeaponAccessory: translateR("Weapon Accessories"),
   ArmorAccessory: translateR("Armor Accessories"),
+  ItemComponent: translateR("Item Components"),
   Clothes: translateR("Clothes"),
   ClothingPackage: translateR("Clothing Packages for Social Status"),
   TravelGearOrTool: translateR("Travel Gear and Tools"),
@@ -2113,7 +2117,7 @@ type EquipmentEnv = StdEnv<
  * Get a JSON representation of the rules text for equipment.
  */
 export const getEquipmentEntityDescription = createEntityDescriptionCreator<
-  Exclude<EquipmentIdentifier["kind"], "Elixir" | "Poison">,
+  Exclude<EquipmentIdentifier["kind"], "Elixir" | "Poison" | "ItemComponent">,
   EquipmentEnv
 >((env, locale, entry) => {
   const { translate, translateMap } = locale
