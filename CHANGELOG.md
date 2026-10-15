@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.37.0](https://github.com/Optolith/entity-descriptions/compare/v0.36.0...v0.37.0) (2026-10-15)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.101.0
+* **deps:** upgrade to schema 0.102.0
+
+### build
+
+* **deps:** upgrade to schema 0.101.0 ([e36649a](https://github.com/Optolith/entity-descriptions/commit/e36649a6e7f14aa042181494bbc6ed2392b1c859))
+* **deps:** upgrade to schema 0.102.0 ([815968c](https://github.com/Optolith/entity-descriptions/commit/815968c4437d557d83108972dd56816ff9cbdba0))
+
+### Features
+
+* add entity description for item components ([be12cdf](https://github.com/Optolith/entity-descriptions/commit/be12cdf69c37941a12c55341c5a6721066fbc565))
+* attach entity name and instance id to entity description ([1efbb45](https://github.com/Optolith/entity-descriptions/commit/1efbb45fdefdb16139becfc9bc50041d2bc67b05))
+
 ## [0.36.0](https://github.com/Optolith/entity-descriptions/compare/v0.35.0...v0.36.0) (2026-10-13)
 
 ### ⚠ BREAKING CHANGES
