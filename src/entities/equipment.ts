@@ -285,6 +285,7 @@ export const renderMeleeWeapon = <Damage>(
   const combatTechnique = getInstanceById("CloseCombatTechnique", closeCombatTechniqueId)
 
   const fields: CloseCombatTechniqueSpecialRules = combatTechnique?.special ?? {
+    hasAttackModifier: { kind: "Prohibited" },
     can_parry: { kind: "Prohibited" },
     has_damage_threshold: { kind: "Prohibited" },
     has_reach: { kind: "Prohibited" },
@@ -715,9 +716,11 @@ const renderAnyShieldSize = (
     translateR(baseText),
     structurePoints === undefined
       ? Reader.of(undefined)
-      : translateR("{$value} structure points", {
-          value: structurePoints.map(spc => spc.points).join("/"),
-        }),
+      : structurePoints.kind === "Unbreakable"
+        ? translateR("unbreakable")
+        : translateR("{$value} structure points", {
+            value: structurePoints.Points.map(spc => spc.points).join("/"),
+          }),
     attackPenalty === undefined
       ? Reader.of(undefined)
       : formatNumber(attackPenalty).thenW(value =>
@@ -1336,14 +1339,18 @@ const renderSimpleBookRules = (
 }
 
 const renderStructurePoints = (structurePoints: StructurePoints | undefined) =>
-  structurePoints !== undefined && isNotEmpty(structurePoints)
-    ? structurePoints.length === 1
-      ? translateR(".input {$value :number} {{{$value} Structure Points}}", {
-          value: structurePoints[0].points,
-        })
-      : translateR("{$value} Structure Points", {
-          value: structurePoints.map(elem => elem.points).join("/"),
-        })
+  structurePoints !== undefined
+    ? structurePoints.kind === "Unbreakable"
+      ? translateR("unbreakable")
+      : isNotEmpty(structurePoints.Points)
+        ? structurePoints.Points.length === 1
+          ? translateR(".input {$value :number} {{{$value} Structure Points}}", {
+              value: structurePoints.Points[0].points,
+            })
+          : translateR("{$value} Structure Points", {
+              value: structurePoints.Points.map(elem => elem.points).join("/"),
+            })
+        : Reader.of("—")
     : Reader.of("—")
 
 type EquipmentCategoryEntity =
