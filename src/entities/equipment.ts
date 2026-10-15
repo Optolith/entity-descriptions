@@ -948,7 +948,7 @@ export const renderCostRange = (range: CostRange): StdReader<string, "t" | "tm">
     ).map(main => translation?.wrap_in_text.replace("{0}", main) ?? main)
   })
 
-const renderFixedCost = (cost: FixedCost) =>
+export const renderFixedItemCost = (cost: FixedCost) =>
   translateMapR(cost.translations).thenW(translation =>
     formatSilverthalers(cost.value).map(
       main => translation?.wrap_in_text.replace("{0}", main) ?? main,
@@ -999,9 +999,8 @@ const renderCost = (
             main => translation?.wrap_in_text.replace("{0}", main) ?? main,
           ),
         )
-      case "Fixed": {
-        return renderFixedCost(cost.Fixed)
-      }
+      case "Fixed":
+        return renderFixedItemCost(cost.Fixed)
       case "Range":
         return renderCostRange(cost.Range)
       case "Single":
@@ -1010,7 +1009,7 @@ const renderCost = (
         return Reader.traverse(cost.Multiple, renderBookCostVariant).map(list => list.join(", "))
       case "PerWeek":
         return formatTimeSpanR("Weeks", 1, true).thenW(interval =>
-          renderFixedCost(cost.PerWeek).thenW(costPerWeek =>
+          renderFixedItemCost(cost.PerWeek).thenW(costPerWeek =>
             translateR("{$cost} per {$interval}", { cost: costPerWeek, interval }),
           ),
         )
