@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.37.1](https://github.com/Optolith/entity-descriptions/compare/v0.37.0...v0.37.1) (2026-10-15)
+
 ## [0.37.0](https://github.com/Optolith/entity-descriptions/compare/v0.36.0...v0.37.0) (2026-10-15)
 
 ### ⚠ BREAKING CHANGES
