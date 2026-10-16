@@ -345,13 +345,91 @@ const renderSkillSpecializationOption = (
 const COMBAT_TECHNIQUE_START_RATING = 6
 
 const renderCombatTechniquesOption = (
-  option: CombatTechniquesOptions,
+  option: CombatTechniquesOptions | (CombatTechniquesOptions | undefined)[],
 ): StdReader<
   string,
   "t" | "tm" | "lc" | "lj" | "ibi",
   "CloseCombatTechnique" | "RangedCombatTechnique"
 > => {
-  if (isNotEmpty(option.fixed)) {
+  if (Array.isArray(option)) {
+    const actualOptions = option.filter(isNotNullish)
+    if (isNotEmpty(actualOptions) && isNotEmpty(actualOptions[0].fixed)) {
+      if (
+        allSame(
+          actualOptions,
+          on(
+            o => [
+              o.options,
+              o.rest_rating_modifier,
+              o.fixed.map(f => omitKeys(f, "rating_modifier")),
+            ],
+            deepEqual,
+          ),
+        )
+      ) {
+        const [
+          {
+            fixed: [first, ...others],
+            rest_rating_modifier,
+            options,
+          },
+        ] = actualOptions
+
+        const firstTextR = translateR(
+          ".input {$count :number} {{{$count} of the following combat techniques {$rating}}}",
+          {
+            count: first.number,
+            rating: option
+              .map(o => {
+                const mod = o?.fixed[0]?.rating_modifier
+                return mod === undefined ? "—" : (mod + COMBAT_TECHNIQUE_START_RATING).toFixed()
+              })
+              .join("/"),
+          },
+        )
+
+        const fixedTextR = others.reduce(
+          (accTextR, other, otherIndex) =>
+            accTextR.then(accText =>
+              translateR(".input {$count :number} {{{$previous}, {$count} others {$rating}}}", {
+                count: other.number,
+                previous: accText,
+                rating: option
+                  .map(o => {
+                    const mod = o?.fixed[otherIndex + 1]?.rating_modifier
+                    return mod === undefined ? "—" : (mod + COMBAT_TECHNIQUE_START_RATING).toFixed()
+                  })
+                  .join("/"),
+              }),
+            ),
+          firstTextR,
+        )
+
+        const completeTextR = fixedTextR.then(fixedText =>
+          rest_rating_modifier === undefined
+            ? Reader.of(fixedText)
+            : translateR("{$previous}, the others {$rating}", {
+                previous: fixedText,
+                rating: (rest_rating_modifier + COMBAT_TECHNIQUE_START_RATING).toFixed(),
+              }),
+        )
+
+        const listR = Reader.traverse(options, id =>
+          attributedNameR("profession", id).map(name => name ?? MISSING_VALUE),
+        )
+          .thenW(list => localeSortR(list))
+          .map(list => list.join(", "))
+
+        return completeTextR.thenW(completeText => listR.map(list => `${completeText}: ${list}`))
+      } else {
+        return Reader.traverse(option, o =>
+          o === undefined ? Reader.of("—") : renderCombatTechniquesOption(o),
+        ).map(renderedOptions => renderedOptions.join(" / "))
+      }
+    } else {
+      return Reader.of(MISSING_VALUE)
+    }
+  } else if (isNotEmpty(option.fixed)) {
     const [first, ...others] = option.fixed
 
     if (option.fixed.length === 1 && option.options.length === 2) {
@@ -1045,10 +1123,8 @@ const renderCombatTechniques = (professionPackages: NonEmptyArray<PreparedProfes
           professionPackages,
           pkg => Reader.of(pkg.content.options?.combat_techniques),
           deepEqual,
-          options =>
-            Reader.traverse(options, option =>
-              option === undefined ? Reader.of("—") : renderCombatTechniquesOption(option),
-            ).map(renderedOptions => renderedOptions.join(" / ")),
+
+          renderCombatTechniquesOption,
         )
       : Reader.of(undefined),
     professionPackages.some(
