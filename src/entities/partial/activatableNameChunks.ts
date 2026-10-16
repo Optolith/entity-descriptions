@@ -16,7 +16,7 @@ import type {
 import { fromUniformCase, type Case } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
-import { attributedInstance } from "./markdown.js"
+import { attributedInstance, attributedNameFromText } from "./markdown.js"
 import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"
 
@@ -222,27 +222,44 @@ export const renderCombinedActivatableNameComponents = (
   join: (list: string[]) => string = list => list.join(", "),
   context = "prerequisite",
 ): string =>
-  attributedInstance(
-    renderActivatableNameComponents(
-      translateMap,
-      {
-        ...components,
-        nameBuilderRules: {
-          ...components.nameBuilderRules,
-          useParenthesis: true,
-        },
-        options: join(
-          components.options.map(chunk =>
-            renderActivatableNameChunk(translateMap, normalizeChunks(chunk)),
-          ),
+  isNotEmpty(components.options) && components.options.length === 1
+    ? attributedNameFromText(
+        renderActivatableNameComponents(
+          translateMap,
+          {
+            ...components,
+            options: renderActivatableNameChunk(
+              translateMap,
+              normalizeChunks(components.options[0]),
+            ),
+          },
+          formatAsPrerequisite,
         ),
-      },
-      formatAsPrerequisite,
-    ),
-    components.id.kind,
-    fromUniformCase(components.id),
-    { context: `"${context}"` },
-  )
+        context,
+        components.id.kind,
+        fromUniformCase(components.id),
+      )
+    : attributedNameFromText(
+        renderActivatableNameComponents(
+          translateMap,
+          {
+            ...components,
+            nameBuilderRules: {
+              ...components.nameBuilderRules,
+              useParenthesis: true,
+            },
+            options: join(
+              components.options.map(chunk =>
+                renderActivatableNameChunk(translateMap, normalizeChunks(chunk)),
+              ),
+            ),
+          },
+          formatAsPrerequisite,
+        ),
+        context,
+        components.id.kind,
+        fromUniformCase(components.id),
+      )
 
 /**
  * Renders the name components of multiple activatable entries.
