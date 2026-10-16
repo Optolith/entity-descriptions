@@ -1,3 +1,4 @@
+import { stripInlineMarkdown } from "@elyukai/markdown/render/strip"
 import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { isNotNullish, nullableToArray } from "@elyukai/utils/nullable"
 import { Reader } from "@elyukai/utils/reader"
@@ -20,7 +21,7 @@ import {
   renderNameComponentsOptions,
 } from "./activatableNameChunks.js"
 import { attributedNameFromText } from "./markdown.js"
-import { customNameR, localeSortR, translateMapR, translateR } from "./reader.js"
+import { customNameR, localeSortOnR, localeSortR, translateMapR, translateR } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 const convertCommonnessRatedAdvantageOrDisadvantageLevel = (
@@ -245,7 +246,7 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
     : Reader.traverse(items ?? [], item =>
         renderCommonnessRatedAdvantageOrDisadvantageName(entity, item),
       )
-        .thenW(localeSortR)
+        .thenW(names => localeSortOnR(names, stripInlineMarkdown))
         .map(names => [...names, ...nullableToArray(appendedString)].join(", "))
 
 /**

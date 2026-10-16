@@ -360,7 +360,12 @@ export const localeSortOnR = <T>(
   arr: T[],
   acc: (value: T) => string,
 ): Reader<{ localeCompare: LocaleCompare }, T[]> =>
-  Reader.asks(({ localeCompare }) => arr.toSorted(on(acc, localeCompare)))
+  Reader.asks(({ localeCompare }) =>
+    arr
+      .map((item): [T, string] => [item, acc(item)])
+      .toSorted(on(p => p[1], localeCompare))
+      .map(p => p[0]),
+  )
 
 /**
  * Creates a responsive value from two functions that return the value for the full and compressed version, respectively.
