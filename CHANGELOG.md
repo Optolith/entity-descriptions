@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.39.0](https://github.com/Optolith/entity-descriptions/compare/v0.38.0...v0.39.0) (2026-10-16)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.105.0
+
+### build
+
+* **deps:** upgrade to schema 0.105.0 ([c38c944](https://github.com/Optolith/entity-descriptions/commit/c38c94444633178a46a7e40c4a7cfe4b426c08e9))
+
+### Bug Fixes
+
+* alphabetical sorting of commonness entry groups ([f831e60](https://github.com/Optolith/entity-descriptions/commit/f831e6087c749c435eea7c15c6cb07d2e0f4528e))
+* more compact combat techniques option if only rating modifier changes ([508f444](https://github.com/Optolith/entity-descriptions/commit/508f444b80e8d09bcc0c5697f36f85e5452ce48f))
+
 ## [0.38.0](https://github.com/Optolith/entity-descriptions/compare/v0.37.1...v0.38.0) (2026-10-15)
 
 ### ⚠ BREAKING CHANGES
