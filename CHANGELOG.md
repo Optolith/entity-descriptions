@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.40.0](https://github.com/Optolith/entity-descriptions/compare/v0.39.0...v0.40.0) (2026-10-16)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.107.0
+
+### build
+
+* **deps:** upgrade to schema 0.107.0 ([7dab426](https://github.com/Optolith/entity-descriptions/commit/7dab4265b84669d34faa3dee354ab6e147a753e4))
+
+### Bug Fixes
+
+* render combined activatable instances normally if it represents only a single instance ([d369da2](https://github.com/Optolith/entity-descriptions/commit/d369da250a97a88b5f7e19957e66cbb469df3dec))
+
 ## [0.39.0](https://github.com/Optolith/entity-descriptions/compare/v0.38.0...v0.39.0) (2026-10-16)
 
 ### ⚠ BREAKING CHANGES
