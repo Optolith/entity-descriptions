@@ -26,6 +26,7 @@ import type {
   BindingCost,
   BlessedTraditionTranslation,
   Brew_ID,
+  CeremonialItemSpecialAbilityAspect,
   CombatRelatedSpecialAbilityIdentifier,
   CombatTechniqueIdentifier,
   CommonnessSelectOptionIdentifier,
@@ -99,6 +100,7 @@ import {
   localeJoinR,
   localeSortR,
   nameR,
+  sequence,
   translateMapR,
   translateR,
 } from "./partial/reader.js"
@@ -155,7 +157,7 @@ export type BaseActivatable = {
   brew?: Brew_ID
   cost?: EnchantmentCost | DaggerRitualCost | MagicalSignCost | number
   property?: PropertyDeclaration
-  aspect?: Aspect_ID
+  aspect?: Aspect_ID | CeremonialItemSpecialAbilityAspect
   prerequisites?: AdvantageDisadvantagePrerequisites | GeneralPrerequisites
   ap_value: AdventurePointsValue | number
   translations: {
@@ -1680,6 +1682,34 @@ const renderAdditionalSpecialRules = (
     ),
   ]).map(specialRules => specialRules.filter(isNotNullish))
 
+const renderSingleAspect = (aspect: Aspect_ID): StdReader<string, "tm" | "ibi", "Aspect"> =>
+  attributedNameR("aspect", "Aspect", aspect).map(name => name ?? MISSING_VALUE)
+
+const renderAspect = (
+  aspect: Aspect_ID | CeremonialItemSpecialAbilityAspect,
+): StdReader<string, "t" | "tm" | "ibi" | "lc", "Aspect" | "BlessedTradition"> => {
+  if (typeof aspect === "string") {
+    return renderSingleAspect(aspect)
+  }
+
+  switch (aspect.kind) {
+    case "Single":
+      return renderSingleAspect(aspect.Single)
+    case "ByTradition":
+      return Reader.traverse(
+        Object.entries(aspect.ByTradition),
+        ([traditionId, config]) =>
+          sequence<
+            StdEnv<"tm" | "ibi", "Aspect" | "BlessedTradition">
+          >`${attributedNameR("aspect", "BlessedTradition", traditionId).map(name => name ?? MISSING_VALUE)}: ${renderSingleAspect(config.aspect)}`,
+      )
+        .thenW(localeSortR)
+        .map(entries => entries.join(", "))
+    default:
+      return assertExhaustive(aspect)
+  }
+}
+
 /**
  * Get a JSON representation of the rules text for a special ability.
  */
@@ -1718,7 +1748,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
     getAllResolvedSkillUses: GetAllResolvedSkillUses
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"GeneralSelectOption">
     translateMap: TranslateMap
-  }
+  } & StdEnv<"t" | "lc">
 >(
   (
     {
@@ -1880,9 +1910,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             })),
             mapNullable(baseEntry.aspect, aspect => ({
               label: translate("Aspect"),
-              value:
-                translateMap(getInstanceById("Aspect", aspect)?.translations)?.name ??
-                MISSING_VALUE,
+              value: renderAspect(aspect),
             })),
             mapNullable(translation.range, range => ({
               label: translate("Range"),

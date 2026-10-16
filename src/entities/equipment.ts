@@ -716,8 +716,8 @@ const renderAnyShieldSize = (
     translateR(baseText),
     structurePoints === undefined
       ? Reader.of(undefined)
-      : structurePoints.kind === "Unbreakable"
-        ? translateR("unbreakable")
+      : structurePoints.kind === "Indestructible"
+        ? translateR("indestructible")
         : translateR("{$value} structure points", {
             value: structurePoints.Points.map(spc => spc.points).join("/"),
           }),
@@ -1340,8 +1340,8 @@ const renderSimpleBookRules = (
 
 const renderStructurePoints = (structurePoints: StructurePoints | undefined) =>
   structurePoints !== undefined
-    ? structurePoints.kind === "Unbreakable"
-      ? translateR("unbreakable")
+    ? structurePoints.kind === "Indestructible"
+      ? translateR("indestructible")
       : isNotEmpty(structurePoints.Points)
         ? structurePoints.Points.length === 1
           ? translateR(".input {$value :number} {{{$value} Structure Points}}", {
