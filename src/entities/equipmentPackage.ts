@@ -249,7 +249,7 @@ const getAtomicEquipmentWeight = (
     case "AnimalCare":
       switch (entry.content.type.kind) {
         case "General":
-          return entry.content.type.General.weight
+          return entry.content.type.General.weight ?? 0
         case "Feed":
           return 0
         default:
