@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.41.1](https://github.com/Optolith/entity-descriptions/compare/v0.41.0...v0.41.1) (2026-10-17)
+
+### Features
+
+* support armor accessory ([7e19ebf](https://github.com/Optolith/entity-descriptions/commit/7e19ebfc362277de139e781395ab59790ec4d848))
+
 ## [0.41.0](https://github.com/Optolith/entity-descriptions/compare/v0.40.0...v0.41.0) (2026-10-17)
 
 ### ⚠ BREAKING CHANGES
