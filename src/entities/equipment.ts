@@ -3,7 +3,7 @@ import { ensureNonEmpty, isNotEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
 import { omitKeys, sortObjectKeysByIndex } from "@elyukai/utils/object"
-import { compareNumber } from "@elyukai/utils/ordering"
+import { compareNumber, reduceCompare } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
 import { sign } from "@elyukai/utils/string/number"
@@ -109,6 +109,7 @@ import {
 import { parensIf, parensIfR } from "./partial/rated/activatable/parensIf.js"
 import {
   attributedCustomNameFromInstanceR,
+  attributedCustomNamePairR,
   attributedCustomNameR,
   attributedNameFromInstanceR,
   attributedNameR,
@@ -117,6 +118,7 @@ import {
   localeJoinR,
   nameR,
   sequence,
+  sortWithLocale,
   translateMapR,
   translateR,
 } from "./partial/reader.js"
@@ -877,17 +879,23 @@ const renderNote = (
 
 const renderAssociatedTradition = (
   tradition: AssociatedTradition,
-): StdReader<string, "t" | "tm" | "ibi", "BlessedTradition"> => {
+): StdReader<[number, string, string], "t" | "tm" | "ibi", "BlessedTradition"> => {
   switch (tradition.kind) {
     case "ManyShamans":
-      return translateR("many shamans")
+      return translateR("many shamans").map(t => [1, t, t])
     case "Specific":
-      return attributedCustomNameR(
+      return attributedCustomNamePairR(
         "equipment",
         t => t.nameOfGod ?? t.name,
         "BlessedTradition",
         tradition.Specific,
-      ).map(restrictionName => restrictionName ?? MISSING_VALUE)
+      ).map(
+        ({ attributed, standalone } = { attributed: MISSING_VALUE, standalone: MISSING_VALUE }) => [
+          0,
+          standalone,
+          attributed,
+        ],
+      )
     default:
       return assertExhaustive(tradition)
   }
@@ -896,7 +904,16 @@ const renderAssociatedTradition = (
 const renderAssociatedTraditions = (traditions: AssociatedTradition[] | undefined) =>
   traditions === undefined || traditions.length === 0
     ? Reader.of(undefined)
-    : Reader.traverse(traditions, renderAssociatedTradition).map(list => list.join(", "))
+    : Reader.traverse(traditions, renderAssociatedTradition)
+        .thenW(list =>
+          sortWithLocale(list, lc =>
+            reduceCompare(
+              on(e => e[0], compareNumber),
+              on(e => e[1], lc),
+            ),
+          ),
+        )
+        .map(list => list.join(", "))
 
 const renderWeightLabel = (entityName: EquipmentIdentifier["kind"]) => {
   if (entityName === "Jewelry") {

@@ -103,6 +103,32 @@ export const attributedCustomName = <
 }
 
 /**
+ * Renders the name of an instance according to a custom function in an attributed string and standalone.
+ */
+export const attributedCustomNamePair = <
+  E extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<object> } ? K : never
+  }[keyof EntityMap],
+>(
+  translateMap: TranslateMap,
+  getInstanceById: GetInstanceById<E>,
+  context: string,
+  fn: (translation: EntityMap[E]["translations"][string], instance: EntityMap[E]) => string,
+  ...args: IdArgsVariant<EntityMap, E>
+): { attributed: string; standalone: string } | undefined => {
+  const id = normalizedIdArgs(args)
+  const instance = getInstanceById(...args)
+  return mapNullable(translateMap<object>(instance?.translations), translation => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- instance must be non-nullish if translation is non-nullish
+    const name = fn(translation as EntityMap[E]["translations"][string], instance!)
+    return {
+      attributed: attributedInstance(name, id.entityName, id.id, { context: `"${context}"` }),
+      standalone: name,
+    }
+  })
+}
+
+/**
  * Renders the name of an instance in an attributed string.
  */
 export const attributedNameFromInstance = (

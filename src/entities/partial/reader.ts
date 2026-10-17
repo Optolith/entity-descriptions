@@ -1,5 +1,6 @@
 import { on } from "@elyukai/utils/function"
 import { isNotNullish } from "@elyukai/utils/nullable"
+import type { Compare } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
@@ -31,6 +32,7 @@ import type {
 import {
   attributedCustomName,
   attributedCustomNameFromInstance,
+  attributedCustomNamePair,
   attributedName,
   attributedNameFromInstance,
   customName,
@@ -211,6 +213,38 @@ export const attributedCustomNameR = <
   )
 
 /**
+ * Applies a function to the translation of the specified entry and renders it in an attributed string and standalone.
+ */
+export const attributedCustomNamePairR = <
+  T extends {
+    [K in keyof EntityMap]: EntityMap[K] extends { translations: LocaleMap<unknown> } ? K : never
+  }[keyof EntityMap],
+  E,
+>(
+  context: string,
+  fn: (
+    translation: EntityMap[T]["translations"][string],
+    instance: EntityMap[T],
+  ) => string | Reader<E, string>,
+  ...args: IdArgsVariant<EntityMap, T>
+): Reader<
+  { translateMap: TranslateMap; getInstanceById: GetInstanceById<T> } & E,
+  { attributed: string; standalone: string } | undefined
+> =>
+  Reader.asks(env =>
+    attributedCustomNamePair(
+      env.translateMap,
+      env.getInstanceById,
+      context,
+      (...customArgs) => {
+        const result = fn(...customArgs)
+        return result instanceof Reader ? result.run(env) : result
+      },
+      ...args,
+    ),
+  )
+
+/**
  * Applies a function to the translation of the specified entry and renders it in an attributed string.
  */
 export const attributedCustomNameFromInstanceR = <T extends { translations: LocaleMap<object> }, E>(
@@ -366,6 +400,11 @@ export const localeSortOnR = <T>(
       .toSorted(on(p => p[1], localeCompare))
       .map(p => p[0]),
   )
+
+export const sortWithLocale = <T>(
+  arr: T[],
+  sort: (localeCompare: LocaleCompare) => Compare<T>,
+): StdReader<T[], "lc"> => Reader.asks(({ localeCompare }) => arr.toSorted(sort(localeCompare)))
 
 /**
  * Creates a responsive value from two functions that return the value for the full and compressed version, respectively.
