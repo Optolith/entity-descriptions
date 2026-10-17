@@ -160,7 +160,7 @@ const renderMeleeWeaponCategory = (
   }
 }
 
-const renderApplicableWeapons = <E extends "Weapon" | "Ammunition">(
+const renderApplicableWeapons = <E extends "Weapon" | "SpecialAmmunition">(
   entity: E,
   armor: Weapon_ID[] | undefined,
 ): StdReader<string[] | undefined, "tm" | "lc" | "ibi", E> => {
@@ -258,7 +258,7 @@ const renderApplicableItems = (
 ): StdReader<
   string,
   "t" | "tm" | "lc" | "lj" | "f" | "rts" | "ibi",
-  "Armor" | "CloseCombatTechnique" | "RangedCombatTechnique" | "Weapon" | "Ammunition"
+  "Armor" | "CloseCombatTechnique" | "RangedCombatTechnique" | "Weapon" | "SpecialAmmunition"
 > => {
   switch (applicableItems.kind) {
     case "MeleeWeapon": {
@@ -296,7 +296,7 @@ const renderApplicableItems = (
     }
     case "Ammunition":
       return renderApplicableAmmunitionBase(applicableItems.Ammunition.category).thenW(base =>
-        renderApplicableWeapons("Ammunition", applicableItems.Ammunition.ammunition).thenW(
+        renderApplicableWeapons("SpecialAmmunition", applicableItems.Ammunition.ammunition).thenW(
           ammunition =>
             applicableItems.Ammunition.category === undefined && ammunition
               ? Reader.of(ammunition.join(", "))
@@ -359,7 +359,7 @@ export const getItemComponentEntityDescription = createEntityDescriptionCreator<
     | "RangedCombatTechnique"
     | "Weapon"
     | "ItemComponent"
-    | "Ammunition",
+    | "SpecialAmmunition",
     never,
     "ItemComponentOption"
   >
