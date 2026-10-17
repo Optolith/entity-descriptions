@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.41.0](https://github.com/Optolith/entity-descriptions/compare/v0.40.0...v0.41.0) (2026-10-17)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.109.0
+
+### build
+
+* **deps:** upgrade to schema 0.109.0 ([889e5f0](https://github.com/Optolith/entity-descriptions/commit/889e5f02a3549cf023dbb4bf4f663871d7222f4b))
+
+### Bug Fixes
+
+* number-aware elixir trade secret prerequisites label ([1f02ada](https://github.com/Optolith/entity-descriptions/commit/1f02ada9d3bde0a721d24c89614965c60d8a81ad))
+* sort equipment of blessed ones traditions alphabetically ([b515a24](https://github.com/Optolith/entity-descriptions/commit/b515a242873ba086eb695370400cbb5ff8684d47))
+
 ## [0.40.0](https://github.com/Optolith/entity-descriptions/compare/v0.39.0...v0.40.0) (2026-10-16)
 
 ### ⚠ BREAKING CHANGES
