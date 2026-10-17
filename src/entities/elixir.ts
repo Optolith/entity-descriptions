@@ -99,7 +99,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
                     mapNullable(
                       entry.trade_secret.prerequisites,
                       prerequisites =>
-                        `${translate("Prerequisites")}: ${printPlainGeneralPrerequisites(
+                        `${translate(".input {$hiddenCount :number} {{Prerequisites}}", { hiddenCount: prerequisites.length })}: ${printPlainGeneralPrerequisites(
                           prerequisites,
                         ).run(env)}`,
                     ),
