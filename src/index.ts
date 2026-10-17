@@ -209,6 +209,7 @@ const registeredEntityDescriptionCreators = {
   Animal: getEquipmentEntityDescription,
   AnimalCare: getEquipmentEntityDescription,
   Armor: getEquipmentEntityDescription,
+  ArmorAccessory: getEquipmentEntityDescription,
   BandageOrRemedy: getEquipmentEntityDescription,
   Book: getEquipmentEntityDescription,
   CeremonialItem: getEquipmentEntityDescription,
