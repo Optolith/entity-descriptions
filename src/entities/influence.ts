@@ -1,3 +1,5 @@
+import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
+import { mapNullable } from "@elyukai/utils/nullable"
 import type {
   ActivatableIdentifier,
   CommonnessSelectOptionIdentifier,
@@ -58,23 +60,24 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
               type: "plain",
               text: translation.rules,
             },
-        translation.effects === undefined || translation.effects.length === 0
-          ? undefined
-          : {
-              type: "definitionList",
-              items: [
-                ...translation.effects.map(effect => ({
-                  label: effect.label,
-                  value: effect.text,
-                })),
-                entry.prerequisites === undefined
-                  ? undefined
-                  : {
-                      label: translate("Prerequisites"),
-                      value: printInfluencePrerequisites(entry.prerequisites).run(env),
-                    },
-              ],
-            },
+        mapNullable(
+          ensureNonEmpty([
+            ...(translation.effects?.map(effect => ({
+              label: effect.label,
+              value: effect.text,
+            })) ?? []),
+            entry.prerequisites === undefined
+              ? undefined
+              : {
+                  label: translate("Prerequisites"),
+                  value: printInfluencePrerequisites(entry.prerequisites).run(env),
+                },
+          ]),
+          items => ({
+            type: "definitionList",
+            items,
+          }),
+        ),
       ],
       errata: translation.errata,
       references: entry.src,
