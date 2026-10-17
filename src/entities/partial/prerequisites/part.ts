@@ -98,9 +98,11 @@ const appendBySentenceType = (
   switch (sentenceType?.kind) {
     case "Standalone":
       return `${
-        /[.;]$/u.test(previouslyRendered)
-          ? `${previouslyRendered.slice(0, -1)}. `
-          : `${previouslyRendered}. `
+        previouslyRendered.length === 0
+          ? ""
+          : /[.;]$/u.test(previouslyRendered)
+            ? `${previouslyRendered.slice(0, -1)}. `
+            : `${previouslyRendered}.${isLast ? "" : " "}`
       }${currentRendered}${currentRendered.endsWith(".") ? "" : "."}`
     case "Connected":
       return `${previouslyRendered === "" ? "" : /[.;]$/u.test(previouslyRendered) ? `${previouslyRendered} ` : `${previouslyRendered}; `}${currentRendered}${
