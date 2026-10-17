@@ -102,7 +102,7 @@ const appendBySentenceType = (
           ? ""
           : /[.;]$/u.test(previouslyRendered)
             ? `${previouslyRendered.slice(0, -1)}. `
-            : `${previouslyRendered}.${isLast ? "" : " "}`
+            : `${previouslyRendered}. `
       }${currentRendered}${currentRendered.endsWith(".") ? "" : "."}`
     case "Connected":
       return `${previouslyRendered === "" ? "" : /[.;]$/u.test(previouslyRendered) ? `${previouslyRendered} ` : `${previouslyRendered}; `}${currentRendered}${
