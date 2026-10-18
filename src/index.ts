@@ -28,6 +28,7 @@ import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackag
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
 import { getInfluenceEntityDescription } from "./entities/influence.js"
+import { getItemComponentEntityDescription } from "./entities/itemComponent.js"
 import {
   getBlessingEntityDescription,
   getCeremonyEntityDescription,
@@ -221,6 +222,7 @@ const registeredEntityDescriptionCreators = {
   GemOrPreciousStone: getEquipmentEntityDescription,
   IlluminationLightSource: getEquipmentEntityDescription,
   IlluminationRefillOrSupply: getEquipmentEntityDescription,
+  ItemComponent: getItemComponentEntityDescription,
   Jewelry: getEquipmentEntityDescription,
   Laboratory: getEquipmentEntityDescription,
   Liebesspielzeug: getEquipmentEntityDescription,
