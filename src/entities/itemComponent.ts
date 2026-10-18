@@ -209,7 +209,7 @@ const renderUsesBullets = (
   weapons: string,
   usesBullets: boolean | undefined,
 ): StdReader<string, "t"> =>
-  usesBullets !== true
+  usesBullets === true
     ? translateR("{$weapons} that use bullets as ammunition", { weapons })
     : Reader.of(weapons)
 
