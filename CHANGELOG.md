@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.42.0](https://github.com/Optolith/entity-descriptions/compare/v0.41.1...v0.42.0) (2026-10-18)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.111.0
+
+### build
+
+* **deps:** upgrade to schema 0.111.0 ([cb44534](https://github.com/Optolith/entity-descriptions/commit/cb445343093215f707d95d0048c679d2e7ff0ae9))
+
+### Bug Fixes
+
+* display influence prerequisites if it has no effects ([3629f9b](https://github.com/Optolith/entity-descriptions/commit/3629f9b29cb9e61c479bf2e0c09c93a4bf9494c4))
+* invert usesBullets rendering logic for item components ([9855424](https://github.com/Optolith/entity-descriptions/commit/98554246609fdd2433ac0c12c6dbe10df83f74af))
+* item components available in index ([db3c060](https://github.com/Optolith/entity-descriptions/commit/db3c060f5a8b97d8c912e7665dbebb4a6e872109))
+* no leading period with standalone text prerequisites in first position ([7215718](https://github.com/Optolith/entity-descriptions/commit/72157188f315e96e6c0ed15c802bec4d361d2af1))
+* render cantrips in professions ([05b5a1a](https://github.com/Optolith/entity-descriptions/commit/05b5a1abc8d02773ae7d5cc7092e8f850a650325))
+* space between previous text and standalone prerequisite ([1ca0adf](https://github.com/Optolith/entity-descriptions/commit/1ca0adfb0cd89f5a62474eadc4cf5f98dac9b967))
+
 ## [0.41.1](https://github.com/Optolith/entity-descriptions/compare/v0.41.0...v0.41.1) (2026-10-17)
 
 ### Features
