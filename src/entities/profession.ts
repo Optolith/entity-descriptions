@@ -618,6 +618,34 @@ const renderVariantCantripsOption = (
             ),
   })
 
+const renderCantripsList = (
+  cantripIds: Cantrip_ID[],
+): StdReader<string, "tm" | "lc" | "ibi", "Cantrip"> =>
+  Reader.traverse(cantripIds, id =>
+    attributedNameR("profession", "Cantrip", id).map(name => name ?? MISSING_VALUE),
+  )
+    .thenW(localeSortR)
+    .map(list => list.join(", "))
+
+const renderCantrips = (
+  professionPackages: NonEmptyArray<PreparedProfessionPackage>,
+): StdReader<string | undefined, "t" | "tm" | "lc" | "ibi", "Cantrip"> => {
+  const cantrips = professionPackages.map(pkg => pkg.content.cantrips)
+
+  if (!isNotEmpty(cantrips) || cantrips.every(isNullish)) {
+    return Reader.of(undefined)
+  }
+
+  if (allSame(cantrips, deepEqual)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- not all are nullish and because all are the same, none is nullish
+    return renderCantripsList(cantrips[0]!)
+  } else {
+    return Reader.traverse(cantrips, option =>
+      option === undefined ? Reader.of("—") : renderCantripsList(option),
+    ).map(list => list.join(" / "))
+  }
+}
+
 const renderSingleCantripsOption = (
   option: CantripsOptions,
 ): StdReader<string, "t" | "tm" | "lc" | "lj" | "ibi", "Cantrip"> =>
@@ -1247,6 +1275,7 @@ const renderSpellworks = (professionPackages: NonEmptyArray<PreparedProfessionPa
     StdEnv<"t" | "tm" | "lc" | "lj" | "ibi", "Cantrip" | "Spell" | "Ritual" | "MagicalTradition">,
     string | undefined
   >([
+    renderCantrips(professionPackages),
     renderCantripsOption(professionPackages),
     renderNumericListAcrossPackages(
       professionPackages,
