@@ -167,7 +167,7 @@ const renderIntoxicantValues = (
 ) => {
   const translation = translateMap(intoxicant.translations)
   return {
-    ingestion: translation?.ingestion ?? MISSING_VALUE,
+    ingestion: translation?.ingestion,
     sideEffect: translation?.side_effect,
     overdose: translation?.overdose ?? MISSING_VALUE,
     legality: intoxicant.legality.is_legal ? translate("legal") : translate("illegal"),
