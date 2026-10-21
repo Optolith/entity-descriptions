@@ -5,7 +5,7 @@ import type {
   ResolvedSkillUse,
 } from "@optolith/database-schema/cache"
 import type { ActivatableIdentifier, Settings, Skill_ID } from "@optolith/database-schema/gen"
-import type { TSONDB } from "tsondb"
+import type { ReadonlyTSONDB } from "tsondb/readonly"
 import type { EntityDescriptionCreator } from "./creator.js"
 import { getActivatableEntityDescription } from "./entities/activatable.js"
 import { getAlternativeRuleEntityDescription } from "./entities/alternativeRule.js"
@@ -287,7 +287,7 @@ export type GetAllResolvedSkillUses = (id: Skill_ID) => ResolvedSkillUse[]
  * Get a JSON representation of the rules text for an entry in the database.
  */
 export const getEntityDescription = <E extends AvailableCreatorEntity>(
-  database: TSONDB<TSONDBTypes>,
+  database: ReadonlyTSONDB<TSONDBTypes>,
   localeEnv: LocaleEnvironment,
   settings: Settings,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,

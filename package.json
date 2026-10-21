@@ -41,7 +41,7 @@
     "@optolith/adventure-points": "^0.1.1",
     "diff": "^9.0.0",
     "messageformat": "^4.0.0",
-    "tsondb": "^0.23.0"
+    "tsondb": "^0.23.3"
   },
   "devDependencies": {
     "@optolith/database-schema": "^0.111.0",
