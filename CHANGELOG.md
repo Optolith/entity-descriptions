@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.42.1](https://github.com/Optolith/entity-descriptions/compare/v0.42.0...v0.42.1) (2026-10-23)
+
+### Features
+
+* export derived characteristics base calculation renderer ([94ffc40](https://github.com/Optolith/entity-descriptions/commit/94ffc40357a1ea13b0e94c7b9c860e2318a53e10))
+
+### Bug Fixes
+
+* add adoruzepterzauber as already supported entity ([92a5547](https://github.com/Optolith/entity-descriptions/commit/92a5547539c2ea55b954d8945c01ffcc42d0a4ae))
+* respect missing implementation flag when filtering by publication ([bbcd15f](https://github.com/Optolith/entity-descriptions/commit/bbcd15f223c49bea7c2e4357b1664a9f8c2c5813))
+
 ## [0.42.0](https://github.com/Optolith/entity-descriptions/compare/v0.41.1...v0.42.0) (2026-10-18)
 
 ### ⚠ BREAKING CHANGES
