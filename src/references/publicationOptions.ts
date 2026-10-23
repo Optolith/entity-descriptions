@@ -6,10 +6,19 @@ import type {
   Publication,
   Publication_ID,
   PublicationRefs,
+  PublicationTranslation,
 } from "@optolith/database-schema/gen"
 import type { StdReader } from "../env.js"
 import type { GetInstanceById } from "../helpers/getTypes.js"
 import type { TranslateMap } from "../helpers/translate.js"
+
+export type PublicationGroup =
+  | "none"
+  | "core"
+  | "playerOriented"
+  | "playerOrientedWithAdult"
+  | "playerOrientedWithAdventures"
+  | "all"
 
 /**
  * Options for how to render information from different publications in entity descriptions.
@@ -30,13 +39,7 @@ export type PublicationOptions = {
    * - `"playerOrientedWithAdventures"`: Core rules and player-oriented supplements, including adventure books but excluding books with adult content.
    * - `"all"`: All groups, including books with adult content and adventure books. Any explicit publication references will have no effect as all publications are included anyway.
    */
-  showPublicationGroups:
-    | "none"
-    | "core"
-    | "playerOriented"
-    | "playerOrientedWithAdult"
-    | "playerOrientedWithAdventures"
-    | "all"
+  showPublicationGroups: PublicationGroup
 
   /**
    * How to handle added and removed entries for publications.
@@ -58,11 +61,11 @@ export type PublicationOptions = {
   onlyCompletePublications: boolean
 }
 
-const isPublicationIncludedInGroup = (
+export const isPublicationIncludedInGroup = (
   publication: Pick<Publication, "category" | "containsAdultContent">,
-  publicationOptions: PublicationOptions,
+  group: PublicationGroup,
 ): boolean => {
-  switch (publicationOptions.showPublicationGroups) {
+  switch (group) {
     case "none":
       return false
     case "core":
@@ -106,7 +109,7 @@ const isPublicationIncludedInGroup = (
     case "all":
       return true
     default:
-      return assertExhaustive(publicationOptions.showPublicationGroups)
+      return assertExhaustive(group)
   }
 }
 
@@ -114,17 +117,27 @@ const isPublicationIncludedInGroup = (
  * Checks if a publication is included based on the publication options.
  */
 export const isPublicationIncluded = (
+  publicationTranslationOrFunctionToRetrieveIt: TranslateMap | PublicationTranslation,
   publicationOptions: PublicationOptions,
   publicationId: Publication_ID,
   publication: Publication,
 ): boolean =>
-  publicationOptions.publications.includes(publicationId) ||
-  isPublicationIncludedInGroup(publication, publicationOptions)
+  (publicationOptions.onlyCompletePublications === false ||
+    (!publication.isMissingImplementation &&
+      !(
+        (typeof publicationTranslationOrFunctionToRetrieveIt === "function"
+          ? publicationTranslationOrFunctionToRetrieveIt(publication.translations)
+          : publicationTranslationOrFunctionToRetrieveIt
+        )?.isMissingImplementation ?? true
+      ))) &&
+  (publicationOptions.publications.includes(publicationId) ||
+    isPublicationIncludedInGroup(publication, publicationOptions.showPublicationGroups))
 
 /**
  * Checks if a publication is included based on the publication options.
  */
 export const isPublicationIncludedById = (
+  translateMap: TranslateMap,
   getInstanceById: GetInstanceById<"Publication">,
   publicationOptions: PublicationOptions,
   publicationId: Publication_ID,
@@ -135,7 +148,7 @@ export const isPublicationIncludedById = (
     return false
   }
 
-  return isPublicationIncluded(publicationOptions, publicationId, publication)
+  return isPublicationIncluded(translateMap, publicationOptions, publicationId, publication)
 }
 
 const isEntryRemovedInInitialPublicationOccurrence = (
@@ -204,7 +217,7 @@ export const isEntryFromIncludedPublication = (
       const localeOccurrences = translateMap(ref.occurrences)
       return localeOccurrences === undefined
         ? false
-        : isPublicationIncludedById(getInstanceById, publicationOptions, ref.id) &&
+        : isPublicationIncludedById(translateMap, getInstanceById, publicationOptions, ref.id) &&
             isEntryRemovedInPublication(publicationOptions, ref.id, localeOccurrences)
     })
   ) {
@@ -213,7 +226,7 @@ export const isEntryFromIncludedPublication = (
 
   // otherwise, it is included if at least one publication includes it
   return entry.src.some(ref =>
-    isPublicationIncludedById(getInstanceById, publicationOptions, ref.id),
+    isPublicationIncludedById(translateMap, getInstanceById, publicationOptions, ref.id),
   )
 }
 

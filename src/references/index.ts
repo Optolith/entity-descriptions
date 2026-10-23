@@ -28,7 +28,12 @@ export const getReferencesTranslation = (
             publicationTranslation === undefined ||
             occurrences === undefined ||
             (publicationOptions.onlyShowReferencesToIncludedPublications &&
-              !isPublicationIncluded(publicationOptions, ref.id, publication))
+              !isPublicationIncluded(
+                publicationTranslation,
+                publicationOptions,
+                ref.id,
+                publication,
+              ))
           ) {
             return Reader.of(undefined)
           }
