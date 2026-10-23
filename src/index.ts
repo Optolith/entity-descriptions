@@ -147,6 +147,7 @@ const registeredEntityDescriptionCreators = {
   LiturgicalChant: getLiturgicalChantEntityDescription,
   Ceremony: getCeremonyEntityDescription,
   // special abilities and enchantments
+  Adoruzepterzauber: getActivatableEntityDescription,
   AdvancedCombatSpecialAbility: getActivatableEntityDescription,
   AdvancedKarmaSpecialAbility: getActivatableEntityDescription,
   AdvancedMagicalSpecialAbility: getActivatableEntityDescription,
