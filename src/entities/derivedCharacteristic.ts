@@ -55,7 +55,7 @@ const getRaceBaseValue = (
   }
 }
 
-const renderBaseCalculation = (
+export const renderBaseCalculation = (
   getInstanceById: GetInstanceById<"Attribute">,
   translate: Translate,
   translateMap: TranslateMap,
