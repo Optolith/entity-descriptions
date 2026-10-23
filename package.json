@@ -40,17 +40,17 @@
     "@elyukai/utils": "^0.3.10",
     "@optolith/adventure-points": "^0.1.1",
     "diff": "^9.0.0",
-    "messageformat": "^4.0.0",
+    "messageformat": "^4.1.0",
     "tsondb": "^0.23.3"
   },
   "devDependencies": {
-    "@optolith/database-schema": "^0.111.0",
-    "@types/node": "^26.6.4",
-    "commit-and-tag-version": "^13.2.1",
+    "@optolith/database-schema": "^0.111.1",
+    "@types/node": "^26.6.5",
+    "commit-and-tag-version": "^13.3.0",
     "globals": "^17.13.0",
     "oxfmt": "^0.72.0",
-    "oxlint": "^1.87.0",
-    "oxlint-tsgolint": "^7.0.2003",
+    "oxlint": "^1.89.0",
+    "oxlint-tsgolint": "^7.0.2005",
     "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-7": "npm:typescript@^7.0.2"
