@@ -7,7 +7,6 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ActivatableIdentifier,
   AnimalVenomLevel,
-  CommonnessSelectOptionIdentifier,
   DemonicPoisonLevel,
   Intoxicant,
   IntoxicantAddiction,
@@ -36,7 +35,10 @@ import {
 } from "./partial/herbary.js"
 import { renderMathOperationR } from "./partial/mathOperation.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  RenderedDerivedSelectOptionIdentifier,
+} from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { sequence, translateMapR, translateR } from "./partial/reader.js"
 import { ResponsiveTextSize } from "./partial/responsiveText.js"
@@ -430,7 +432,7 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
       | "PersonalityTrait"
       | "Blessing"
       | "Cantrip"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }

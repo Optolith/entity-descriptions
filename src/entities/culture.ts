@@ -13,7 +13,6 @@ import type {
   BlessedTraditionConstraint,
   BlessedTraditionGroupConstraint,
   CommonNames,
-  CommonnessSelectOptionIdentifier,
   CommonProfessionConstraints,
   CommonProfessionConstraintsOperation,
   CommonProfessions,
@@ -44,7 +43,10 @@ import {
   attributedName,
   attributedNameFromSafeTranslation,
 } from "./partial/markdown.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  RenderedDerivedSelectOptionIdentifier,
+} from "./partial/prerequisites/single/activatable.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { attributedCustomNameR, localeSortR, translateR } from "./partial/reader.js"
@@ -450,7 +452,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
       | "ProfessionVariant"
       | "MagicalTradition"
       | "BlessedTradition"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

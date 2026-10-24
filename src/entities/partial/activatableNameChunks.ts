@@ -6,7 +6,10 @@ import { isNotNullish } from "@elyukai/utils/nullable"
 import { mapObject } from "@elyukai/utils/object"
 import { romanize } from "@elyukai/utils/roman"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
-import type { ResolvedSelectOption } from "@optolith/database-schema/cache"
+import type {
+  ResolvedSelectOption,
+  ResolvedSelectOptionIdentifier,
+} from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
   ActivatableNameBuilderRules,
@@ -17,7 +20,10 @@ import { fromUniformCase, type Case } from "tsondb/schema/gen"
 import type { GetInstanceById } from "../../helpers/getTypes.js"
 import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate.js"
 import { attributedInstance, attributedNameFromText } from "./markdown.js"
-import type { GetResolvedSelectOptionById } from "./prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  RenderedDerivedSelectOptionIdentifier,
+} from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"
 
 /**
@@ -127,7 +133,7 @@ const renderLevel = (
 /**
  * Converts a name chunk to a displayable string.
  */
-const renderActivatableNameChunk = (
+export const renderActivatableNameChunk = (
   translateMap: TranslateMap,
   chunk: ActivatableNameChunk,
 ): string => {
@@ -517,11 +523,16 @@ export const renderActivatableNameComponentsCombinedIfPossible = (
  */
 export const renderNameComponentsOptions = (
   displayedInProfession: boolean,
-  getInstanceById: GetInstanceById<Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
+  getInstanceById: GetInstanceById<RenderedDerivedSelectOptionIdentifier>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   id: ActivatableIdentifier,
   options:
-    | (CommonnessSelectOptionIdentifier | Case<"Text", LocaleMap<string>> | Case<"Select">)[]
+    | (
+        | ResolvedSelectOptionIdentifier
+        | CommonnessSelectOptionIdentifier
+        | Case<"Text", LocaleMap<string> | string>
+        | Case<"Select">
+      )[]
     | undefined,
 ): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
@@ -579,13 +590,18 @@ export const getNameComponents = <T>(
   translate: Translate,
   id: ActivatableIdentifier,
   options:
-    | (CommonnessSelectOptionIdentifier | Case<"Text", LocaleMap<string>> | Case<"Select">)[]
+    | (
+        | ResolvedSelectOptionIdentifier
+        | CommonnessSelectOptionIdentifier
+        | Case<"Text", LocaleMap<string> | string>
+        | Case<"Select">
+      )[]
     | undefined,
   level: number | undefined,
   nameBuilderRules: ActivatableNameBuilderRules | undefined,
   translations: LocaleMap<T>,
   getBaseName: (translation: T) => string,
-  getInstanceById: GetInstanceById<Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
+  getInstanceById: GetInstanceById<RenderedDerivedSelectOptionIdentifier>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   displayedInProfession: boolean,
 ): ActivatableNameComponents => {

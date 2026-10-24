@@ -1,14 +1,14 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { mapNullable } from "@elyukai/utils/nullable"
-import type {
-  ActivatableIdentifier,
-  CommonnessSelectOptionIdentifier,
-} from "@optolith/database-schema/gen"
+import type { ActivatableIdentifier } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { EnvMap } from "../env.js"
 import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
 import { printInfluencePrerequisites } from "./partial/prerequisites/index.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  RenderedDerivedSelectOptionIdentifier,
+} from "./partial/prerequisites/single/activatable.js"
 
 /**
  * Get a JSON representation of the rules text for an influence.
@@ -22,7 +22,7 @@ export const getInfluenceEntityDescription = createEntityDescriptionCreator<
       | "Race"
       | ActivatableIdentifier["kind"]
       | "Aspect"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">

@@ -18,7 +18,6 @@ import type {
   BannzeichenDuration,
   BannzeichenImprovementCost,
   BannzeichenOption,
-  CommonnessSelectOptionIdentifier,
   FamiliarsTrickPerformanceParameters,
   FamiliarsTrickProperty,
   MagicalRuneCost,
@@ -49,7 +48,10 @@ import {
   printAnimistPowerPrerequisites,
   printGeodeRitualPrerequisites,
 } from "./partial/prerequisites/index.js"
-import type { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  RenderedDerivedSelectOptionIdentifier,
+} from "./partial/prerequisites/single/activatable.js"
 import {
   renderCastingTime,
   renderFastSkillNonModifiableCastingTime,
@@ -1182,7 +1184,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       | "Influence"
       | ActivatableIdentifier["kind"]
       | "Aspect"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }

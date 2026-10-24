@@ -11,7 +11,6 @@ import type {
   AttributeAdjustments,
   AutomaticAdvantageDisadvantage,
   BaseValues,
-  CommonnessSelectOptionIdentifier,
   Culture_ID,
   RaceVariant,
   RaceVariantTranslation,
@@ -39,6 +38,7 @@ import {
   printActivatableName,
   type ActivatableNameEnv,
   type GetResolvedSelectOptionById,
+  type RenderedDerivedSelectOptionIdentifier,
 } from "./partial/prerequisites/single/activatable.js"
 import {
   getInstanceByIdR,
@@ -219,9 +219,7 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
 ): StdReader<
   string | T,
   "t" | "tm" | "lc" | "ibi" | "rso",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+  ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 > =>
   items === undefined || !isNotEmpty(items)
     ? Reader.of(emptyString)
@@ -256,9 +254,7 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
 ): StdReader<
   string | T,
   "t" | "tm" | "lc" | "ibi" | "rso",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+  ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 > =>
   Reader.traverse(
     [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const],
@@ -316,7 +312,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
       | "Aspect"
       | "Culture"
       | "DerivedCharacteristic"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >
     countInstances: CountInstances<"Attribute">
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"RaceVariant">
@@ -376,7 +372,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
                 | "Culture"
                 | ActivatableIdentifier["kind"]
                 | "Aspect"
-                | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+                | RenderedDerivedSelectOptionIdentifier
               >,
               RawDefinitionListEntityDescriptionSectionItem | undefined
             >([

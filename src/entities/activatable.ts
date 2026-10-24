@@ -29,7 +29,6 @@ import type {
   CeremonialItemSpecialAbilityAspect,
   CombatRelatedSpecialAbilityIdentifier,
   CombatTechniqueIdentifier,
-  CommonnessSelectOptionIdentifier,
   DaggerRitualCost,
   EnchantmentCost,
   Errata,
@@ -89,6 +88,7 @@ import {
   printActivatableName,
   type ActivatableNameEnv,
   type GetResolvedSelectOptionById,
+  type RenderedDerivedSelectOptionIdentifier,
 } from "./partial/prerequisites/single/activatable.js"
 import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
@@ -1076,9 +1076,7 @@ const renderAdvancedSpecialAbilityName = (
 ): StdReader<
   string,
   "t" | "tm" | "ibi" | "rso",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+  ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 > => {
   const normalizedId = normalizeId(entityName, id)
   return printActivatableName(normalizedId, option, undefined)
@@ -1141,9 +1139,7 @@ const renderAdvancedValueByOption = (
 ): StdReader<
   [string, definitionList: RawDefinitionListEntityDescriptionSectionItem[]],
   "t" | "tm" | "acibp" | "ibi" | "rso" | "lj" | "lc",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">,
+  ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier,
   never,
   "GeneralSelectOption"
 > =>
@@ -1237,9 +1233,7 @@ const renderAdvancedValue = (
 ): StdReader<
   RawDefinitionListEntityDescriptionSectionItem["value"],
   "t" | "tm" | "lj" | "lc" | "ibi" | "rso" | "acibp",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">,
+  ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier,
   never,
   "GeneralSelectOption"
 > => {
@@ -1306,9 +1300,7 @@ const renderAdvancedValue = (
         ]
       | undefined,
       "t" | "tm" | "lj" | "ibi" | "rso",
-      | ActivatableIdentifier["kind"]
-      | "Aspect"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
     > => {
       switch (entry.kind) {
         case "General":
@@ -1739,7 +1731,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       | "Cantrip"
       | "FocusRule"
       | "CeremonialItemSpecialAbilityGroup"
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >
     getAllInstances: GetAllInstances<"AnimalShapeSize" | "Script">
     getResolvedSelectOptionById: GetResolvedSelectOptionById

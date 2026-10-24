@@ -6,7 +6,6 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   CommonnessRatedAdvantageDisadvantage,
   CommonnessRatedAdvantageDisadvantageLevel,
-  CommonnessSelectOptionIdentifier,
   Settings,
   SingleCommonnessRatedAdvantageDisadvantage,
   SingleCommonnessRatedAdvantageDisadvantageTranslation,
@@ -21,6 +20,7 @@ import {
   renderNameComponentsOptions,
 } from "./activatableNameChunks.js"
 import { attributedNameFromText } from "./markdown.js"
+import type { RenderedDerivedSelectOptionIdentifier } from "./prerequisites/single/activatable.js"
 import { customNameR, localeSortOnR, localeSortR, translateMapR, translateR } from "./reader.js"
 import { MISSING_VALUE } from "./unknown.js"
 
@@ -46,9 +46,7 @@ const renderOptions = (
 ) =>
   translation?.options === undefined
     ? Reader.asks(
-        (
-          env: StdEnv<"rso" | "ibi", Exclude<CommonnessSelectOptionIdentifier["kind"], "General">>,
-        ) =>
+        (env: StdEnv<"rso" | "ibi", RenderedDerivedSelectOptionIdentifier>) =>
           item.options?.map(
             option =>
               renderNameComponentsOptions(
@@ -67,19 +65,9 @@ const renderSingleCommonnessRatedAdvantageOrDisadvantageName = <
 >(
   entity: E,
   item: SingleCommonnessRatedAdvantageDisadvantage<string>,
-): StdReader<
-  string,
-  "tm" | "lc" | "rso" | "ibi",
-  E | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
-> =>
+): StdReader<string, "tm" | "lc" | "rso" | "ibi", E | RenderedDerivedSelectOptionIdentifier> =>
   translateMapR(item.translations).thenW(commonnessItemTranslation =>
-    customNameR<
-      E,
-      StdEnv<
-        "tm" | "lc" | "rso" | "ibi",
-        Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
-      >
-    >(
+    customNameR<E, StdEnv<"tm" | "lc" | "rso" | "ibi", RenderedDerivedSelectOptionIdentifier>>(
       (translation, instance) => {
         if (commonnessItemTranslation?.full !== undefined) {
           return Reader.of(
@@ -134,11 +122,7 @@ const renderSingleCommonnessRatedAdvantageOrDisadvantageName = <
 const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
   entity: E,
   item: CommonnessRatedAdvantageDisadvantage<string>,
-): StdReader<
-  string,
-  "tm" | "lc" | "rso" | "ibi",
-  E | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
-> => {
+): StdReader<string, "tm" | "lc" | "rso" | "ibi", E | RenderedDerivedSelectOptionIdentifier> => {
   switch (item.kind) {
     case "Single":
       return renderSingleCommonnessRatedAdvantageOrDisadvantageName(entity, item.Single)
@@ -236,11 +220,7 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
   items: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   emptyString: T,
   appendedString?: string,
-): StdReader<
-  string | T,
-  "tm" | "lc" | "ibi" | "rso",
-  E | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
-> =>
+): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", E | RenderedDerivedSelectOptionIdentifier> =>
   (items === undefined || !isNotEmpty(items)) && appendedString === undefined
     ? Reader.of(emptyString)
     : Reader.traverse(items ?? [], item =>
@@ -259,7 +239,7 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
 ): StdReader<
   string | T,
   "tm" | "lc" | "ibi" | "rso",
-  "Advantage" | "Disadvantage" | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+  "Advantage" | "Disadvantage" | RenderedDerivedSelectOptionIdentifier
 > =>
   Reader.sequence(
     [["Advantage", advantages] as const, ["Disadvantage", disadvantages] as const].map(

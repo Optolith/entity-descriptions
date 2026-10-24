@@ -21,7 +21,6 @@ import type {
   CantripsOptions,
   CombatTechniqueIdentifier,
   CombatTechniquesOptions,
-  CommonnessSelectOptionIdentifier,
   CursesOptions,
   Enhancement,
   Enhancement_ID,
@@ -40,7 +39,6 @@ import type {
   ProfessionVariantPrerequisites,
   ProfessionVariantTranslation,
   RatedIdentifier,
-  RequirableSelectOptionIdentifier,
   RestrictedBlessings,
   SingleProfessionSpecialAbility,
   SkillsOptions,
@@ -83,7 +81,10 @@ import {
   printProfessionPrerequisites,
   printProfessionVariantPrerequisites,
 } from "./partial/prerequisites/index.js"
-import { GetResolvedSelectOptionById } from "./partial/prerequisites/single/activatable.js"
+import {
+  GetResolvedSelectOptionById,
+  type RenderedDerivedSelectOptionIdentifier,
+} from "./partial/prerequisites/single/activatable.js"
 import {
   renderBaseCombatTechniquesForAdventurePointsOption,
   renderVariantCombatTechniquesForAdventurePointsOption,
@@ -957,7 +958,7 @@ const getSpecialAbilityNameComponents = (
   getInstanceById: GetInstanceById<
     | ProfessionSpecialAbilityIdentifier["kind"]
     | SkillWithEnhancementsIdentifier["kind"]
-    | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+    | RenderedDerivedSelectOptionIdentifier
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
   translate: Translate,
@@ -1042,7 +1043,7 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
       "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
       | ProfessionSpecialAbilityIdentifier["kind"]
       | SkillWithEnhancementsIdentifier["kind"]
-      | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >) => {
       switch (specialAbility.kind) {
         case "Constant": {
@@ -1107,7 +1108,7 @@ const renderSpecialAbilities = (specialAbilities: SpecialAbilities) =>
       | "SkillGroup"
       | ProfessionSpecialAbilityIdentifier["kind"]
       | SkillWithEnhancementsIdentifier["kind"]
-      | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+      | RenderedDerivedSelectOptionIdentifier
     >,
     string | NonEmptyArray<string> | undefined
   >([
@@ -1564,7 +1565,7 @@ const renderProfessionVariantText = (
           | "SkillGroup"
           | "Blessing"
           | "Enhancement"
-          | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+          | RenderedDerivedSelectOptionIdentifier
           | "DerivedCharacteristic",
           "SkillGroup"
         >,
@@ -1808,7 +1809,7 @@ type ProfessionEnv = StdEnv<
   | "SkillGroup"
   | "Cantrip"
   | "Blessing"
-  | Exclude<RequirableSelectOptionIdentifier["kind"], "General">
+  | RenderedDerivedSelectOptionIdentifier
   | "DerivedCharacteristic",
   "SkillGroup",
   "ProfessionPackage" | "ProfessionVariant" | "ProfessionVersion"

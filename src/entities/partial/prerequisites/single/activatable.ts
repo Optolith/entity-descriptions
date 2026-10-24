@@ -26,14 +26,17 @@ export type GetResolvedSelectOptionById = (
   selectOptionId: ResolvedSelectOptionIdentifier,
 ) => ResolvedSelectOption | undefined
 
+export type RenderedDerivedSelectOptionIdentifier = Exclude<
+  (ResolvedSelectOptionIdentifier | CommonnessSelectOptionIdentifier)["kind"],
+  "General"
+>
+
 /**
  * Needed environment for printing the name of an activatable.
  */
 export type ActivatableNameEnv = StdEnv<
   "t" | "rso" | "ibi" | "dip",
-  | ActivatableIdentifier["kind"]
-  | "Aspect"
-  | Exclude<CommonnessSelectOptionIdentifier["kind"], "General">
+  ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 >
 
 /**
