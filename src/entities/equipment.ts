@@ -1820,6 +1820,49 @@ const getArmorCategoryName = (
   }
 }
 
+const renderAdditionalPenalties = (
+  additionalPenalties: HasAdditionalPenalties,
+): StdReader<string, "tm" | "x" | "ibi", "DerivedCharacteristic"> => {
+  switch (additionalPenalties.kind) {
+    case "Standard":
+      return additionalPenalties.Standard
+        ? Reader.asks((env: StdEnv<"x">) => env.settings.additionalArmorPenalties)
+            .thenW(dcIds =>
+              Reader.traverse(dcIds, id =>
+                getDerivedCharacteristicPositionAndTranslation(id, "equipment-table")
+                  .with((env: StdEnv<"tm" | "ibi", "DerivedCharacteristic">) => ({
+                    ...env,
+                    responsiveTextSize: ResponsiveTextSize.Compressed,
+                  }))
+                  .map(dcName => [dcName[0], `${sign(-1)} ${dcName[1]}`] as const),
+              ),
+            )
+            .map(names =>
+              names
+                .toSorted(on(p => p[0], compareNumber))
+                .map(p => p[1])
+                .join(", "),
+            )
+        : Reader.of("—")
+    case "Custom":
+      return Reader.traverse(Object.entries(additionalPenalties.Custom), ([id, { value }]) =>
+        getDerivedCharacteristicPositionAndTranslation(id, "equipment-table")
+          .with((env: StdEnv<"tm" | "ibi", "DerivedCharacteristic">) => ({
+            ...env,
+            responsiveTextSize: ResponsiveTextSize.Compressed,
+          }))
+          .map(dcName => [dcName[0], `${sign(value)} ${dcName[1]}`] as const),
+      ).map(names =>
+        names
+          .toSorted(on(p => p[0], compareNumber))
+          .map(p => p[1])
+          .join(", "),
+      )
+    default:
+      return assertExhaustive(additionalPenalties)
+  }
+}
+
 const createArmorTableEntry = (
   baseProperties: BaseProperties,
   name: string,
@@ -1870,25 +1913,7 @@ const createArmorTableEntry = (
       name: Reader.of(name + parensIf(instanceTranslation.secondary_name)),
       protection: Reader.of(values.protection.toFixed()),
       encumbrance: Reader.of(values.encumbrance.toFixed()),
-      additionalPenalties: values.has_additional_penalties
-        ? Reader.asks((env: StdEnv<"x">) => env.settings.additionalArmorPenalties)
-            .thenW(dcIds =>
-              Reader.traverse(dcIds, id =>
-                getDerivedCharacteristicPositionAndTranslation(id, "equipment-table")
-                  .with((env: StdEnv<"tm" | "ibi", "DerivedCharacteristic">) => ({
-                    ...env,
-                    responsiveTextSize: ResponsiveTextSize.Compressed,
-                  }))
-                  .map(dcName => [dcName[0], `${sign(-1)} ${dcName[1]}`] as const),
-              ),
-            )
-            .map(names =>
-              names
-                .toSorted(on(p => p[0], compareNumber))
-                .map(p => p[1])
-                .join(", "),
-            )
-        : Reader.of("—"),
+      additionalPenalties: renderAdditionalPenalties(values.has_additional_penalties),
       weight: renderWeightValue(instance.weight),
       cost: renderCost(instance.cost),
       complexity: renderComplexity(instance.complexity),
