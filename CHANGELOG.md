@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.42.2](https://github.com/Optolith/entity-descriptions/compare/v0.42.1...v0.42.2) (2026-10-24)
+
+### Features
+
+* render any possible activatable name option ([8e11dba](https://github.com/Optolith/entity-descriptions/commit/8e11dbaaad4ae027e7879d905347ef5ee78223c4))
+
 ## [0.42.1](https://github.com/Optolith/entity-descriptions/compare/v0.42.0...v0.42.1) (2026-10-23)
 
 ### Features
