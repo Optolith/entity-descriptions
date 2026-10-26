@@ -2,7 +2,6 @@ import { isNotNullish } from "@elyukai/utils/nullable"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type { ResolvedNewSkillApplication, ResolvedSkillUse } from "@optolith/database-schema/cache"
 import type { ActivatableIdentifier } from "@optolith/database-schema/gen"
-import { fromUniformCase } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
 import type {
   GetAllChildInstancesForParent,
@@ -11,28 +10,55 @@ import type {
 } from "../helpers/getTypes.js"
 import type { LocaleEnvironment } from "../helpers/locale.js"
 import type { GetAllResolvedNewSkillApplications, GetAllResolvedSkillUses } from "../index.js"
-import type { BaseActivatableTranslation } from "./activatable.js"
+import {
+  isEntryFromIncludedPublication,
+  type PublicationOptions,
+} from "../references/publicationOptions.js"
+import { attributedNameFromInstance, attributedNameFromText } from "./partial/markdown.js"
 import { renderImprovementCost } from "./partial/rated/improvementCost.js"
 import { renderSkillCheck } from "./partial/rated/skillCheck.js"
 
 const getUsesOrNewApplications = (
-  getInstanceById: GetInstanceById<"Aspect" | ActivatableIdentifier["kind"]>,
+  getInstanceById: GetInstanceById<
+    "Aspect" | "GeneralSelectOption" | ActivatableIdentifier["kind"] | "Publication"
+  >,
   locale: LocaleEnvironment,
   items: (ResolvedNewSkillApplication | ResolvedSkillUse)[],
+  publicationOptions: PublicationOptions,
 ) =>
   items
+    .filter(instance =>
+      isEntryFromIncludedPublication(
+        instance.content,
+        getInstanceById,
+        locale.translateMap,
+        publicationOptions,
+      ),
+    )
     .map(x => {
-      const name = locale.translateMap(x.content.translations)?.name
-      if (name !== undefined) {
-        return name
-      }
       const { parent: parentId } = x.content
-      if (parentId.kind === "GeneralSelectOption") {
-        return undefined
+      const name = locale.translateMap(x.content.translations)?.name
+
+      const linkableParentId =
+        parentId.kind === "GeneralSelectOption"
+          ? (getInstanceById(parentId)?.parent ?? parentId)
+          : parentId
+
+      if (linkableParentId.kind === "GeneralSelectOption") {
+        return name !== undefined
+          ? name
+          : locale.translateMap(getInstanceById(linkableParentId)?.translations)?.name
       }
-      return locale.translateMap<BaseActivatableTranslation>(
-        getInstanceById(parentId.kind, fromUniformCase(parentId))?.translations,
-      )?.name
+
+      return name !== undefined
+        ? attributedNameFromText(name, "new-applications-uses", linkableParentId)
+        : attributedNameFromInstance(
+            locale.translateMap,
+            getInstanceById(parentId),
+            "new-applications-uses",
+            parentId,
+          )
+
       // if (parentTranslations === undefined) {
       //   return undefined
       // }
@@ -61,7 +87,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
   "Skill",
   {
     getInstanceById: GetInstanceById<
-      "Publication" | "Attribute" | ActivatableIdentifier["kind"] | "Aspect"
+      "Publication" | "Attribute" | ActivatableIdentifier["kind"] | "Aspect" | "GeneralSelectOption"
     >
     getAllInstances: GetAllInstances<
       "BlessedTradition" | "Disease" | "Region" | "SkillUse" | "NewSkillApplication"
@@ -81,6 +107,7 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
     },
     locale,
     { content: entry, id },
+    { publications: publicationOptions },
   ) => {
     const { translate, translateMap, compare: localeCompare } = locale
     const translation = translateMap(entry.translations)
@@ -93,9 +120,15 @@ export const getSkillEntityDescription = createEntityDescriptionCreator<
       getInstanceById,
       locale,
       getAllResolvedNewSkillApplications(id),
+      publicationOptions,
     )
 
-    const uses = getUsesOrNewApplications(getInstanceById, locale, getAllResolvedSkillUses(id))
+    const uses = getUsesOrNewApplications(
+      getInstanceById,
+      locale,
+      getAllResolvedSkillUses(id),
+      publicationOptions,
+    )
 
     const applications = [
       ...getChildInstancesForInstanceId("SkillApplication", id)
