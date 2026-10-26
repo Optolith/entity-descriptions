@@ -395,6 +395,7 @@ const renderAbilityAdjustment = (
     | "MagicalTradition"
   >,
   baseProfessionPackage: ProfessionPackage | undefined,
+  renderDiffs: boolean,
 ): ((abilityAdjustment: AbilityAdjustment) => string) =>
   baseProfessionPackage === undefined
     ? abilityAdjustment =>
@@ -417,7 +418,7 @@ const renderAbilityAdjustment = (
 
         return translate("{$replacement} instead of {$base}", {
           base:
-            printedBaseValue === basePoints
+            printedBaseValue === basePoints || !renderDiffs
               ? basePoints.toFixed()
               : `<ins>${basePoints.toFixed()}</ins><del>${printedBaseValue?.toFixed() ?? "n/a"}</del>`,
           replacement: `${renderAbilityAdjustmentName(
@@ -442,10 +443,19 @@ const renderAbilityAdjustments = (
   >,
   baseProfessionPackage: ProfessionPackage | undefined,
   list: AbilityAdjustment[],
+  renderDiffs: boolean,
 ) =>
   ensureNonEmpty(
     list
-      .map(renderAbilityAdjustment(translate, translateMap, getInstanceById, baseProfessionPackage))
+      .map(
+        renderAbilityAdjustment(
+          translate,
+          translateMap,
+          getInstanceById,
+          baseProfessionPackage,
+          renderDiffs,
+        ),
+      )
       .toSorted(localeCompare),
   )?.join(", ") ?? "—"
 
@@ -564,6 +574,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
     { getInstanceById, getAllInstances, getChildInstancesForInstanceId, settings },
     { translate, translateMap, compare: localeCompare, join: localeJoin },
     { content: entry, id },
+    { rendering: { renderDiffs } },
   ) => {
     const translation = translateMap(entry.translations)
 
@@ -661,10 +672,12 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                 const totalApValue =
                   (apValueBase ?? 0) + apValueForSpellworkChanges + apValueForBoni + apValueForMali
 
-                const derivedApValueText = `^[${totalApValue.toFixed()}](base: ${baseProfessionPackage?.ap_value.toFixed() ?? '"n/a"'}, changes: ${calculateApForSpellworkChanges(
-                  getInstanceById,
-                  lessonPackage.content.spellwork_changes,
-                ).toFixed()}, boni: ${calculateApForAbilityAdjustments(getInstanceById, baseProfessionPackage, boni).toFixed()}, mali: ${calculateApForAbilityAdjustments(getInstanceById, baseProfessionPackage, mali).toFixed()})`
+                const derivedApValueText = renderDiffs
+                  ? `^[${totalApValue.toFixed()}](base: ${baseProfessionPackage?.ap_value.toFixed() ?? '"n/a"'}, changes: ${calculateApForSpellworkChanges(
+                      getInstanceById,
+                      lessonPackage.content.spellwork_changes,
+                    ).toFixed()}, boni: ${calculateApForAbilityAdjustments(getInstanceById, baseProfessionPackage, boni).toFixed()}, mali: ${calculateApForAbilityAdjustments(getInstanceById, baseProfessionPackage, mali).toFixed()})`
+                  : totalApValue.toFixed()
 
                 return {
                   type: "labeled",
@@ -673,7 +686,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                     parensIf(
                       translate("{$value} AP", {
                         value:
-                          lessonPackage.content.apValue === totalApValue
+                          lessonPackage.content.apValue === totalApValue || !renderDiffs
                             ? derivedApValueText
                             : `<ins>${derivedApValueText}</ins><del>${lessonPackage.content.apValue?.toFixed() ?? "n/a"}</del>`,
                       }),
@@ -701,7 +714,9 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                                     points:
                                       baseValueFromProfession === change.base.points
                                         ? change.base.points
-                                        : `<ins>${baseValueFromProfession?.toFixed() ?? "n/a"}</ins><del>${change.base.points.toFixed()}</del>`,
+                                        : renderDiffs
+                                          ? `<ins>${baseValueFromProfession?.toFixed() ?? "n/a"}</ins><del>${change.base.points.toFixed()}</del>`
+                                          : (baseValueFromProfession ?? change.base.points),
                                   }),
                                   replacement: renderSpellworkAdjustment(
                                     translateMap,
@@ -721,6 +736,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                                     translateMap,
                                     getInstanceById,
                                     baseProfessionPackage,
+                                    renderDiffs,
                                   ),
                                 )
                                 .toSorted(localeCompare) ?? [],
@@ -737,6 +753,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                           getInstanceById,
                           baseProfessionPackage,
                           boni.filter(abilityAdjustment => abilityAdjustment.kind !== "Spellwork"),
+                          renderDiffs,
                         ),
                       },
                       {
@@ -748,6 +765,7 @@ export const getCurriculumEntityDescription = createEntityDescriptionCreator<
                           getInstanceById,
                           baseProfessionPackage,
                           mali.filter(abilityAdjustment => abilityAdjustment.kind !== "Spellwork"),
+                          renderDiffs,
                         ),
                       },
                     ],

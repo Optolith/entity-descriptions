@@ -9,6 +9,7 @@ import type {
 } from "@optolith/database-schema/gen"
 import { diffWordsWithSpace } from "diff"
 import type { StdReader } from "../../../../env.js"
+import type { RenderingOptions } from "../../../../index.js"
 import type { RawDefinitionListEntityDescriptionSectionItem } from "../../../../rawEntityDescription.js"
 import { renderFastCastingTime, renderSlowCastingTime } from "./castingTime.js"
 import { renderOneTimeCost, renderSustainedCost } from "./cost.js"
@@ -177,6 +178,7 @@ export const combineGeneratedTextWithStaticTranslation = (
   label: string,
   generatedText: string | undefined,
   staticText: ResponsiveTextOptional | string | undefined,
+  renderingOptions: RenderingOptions,
 ): RawDefinitionListEntityDescriptionSectionItem | undefined => {
   if (generatedText === undefined) {
     return undefined
@@ -184,7 +186,7 @@ export const combineGeneratedTextWithStaticTranslation = (
 
   const normalizedStaticText = typeof staticText === "string" ? staticText : staticText?.full
   const diff =
-    normalizedStaticText === undefined
+    !renderingOptions.renderDiffs || normalizedStaticText === undefined
       ? undefined
       : diffWordsWithSpace(normalizedStaticText, generatedText)
 

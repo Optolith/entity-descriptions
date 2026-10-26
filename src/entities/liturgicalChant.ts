@@ -169,7 +169,7 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
     getInstanceById: GetInstanceById<"Publication" | "TargetCategory">
     getAllInstances: GetAllInstances<"BlessedTradition">
   }
->(({ getInstanceById, getAllInstances }, locale, { id, content: entry }) => {
+>(({ getInstanceById, getAllInstances }, locale, { id, content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -201,11 +201,17 @@ export const getBlessingEntityDescription = createEntityDescriptionCreator<
             label: translate("Effect"),
             value: translation.effect,
           },
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Range"),
+            range,
+            translation.range,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderTargetCategory(entry.target).run(env),
           getTextForBlessingTraditions(env, id),
@@ -294,13 +300,25 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
               translate("Liturgical Time"),
               castingTime,
               translation.casting_time,
+              options.rendering,
             ),
-            combineGeneratedTextWithStaticTranslation(translate("KP Cost"), cost, translation.cost),
-            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("KP Cost"),
+              cost,
+              translation.cost,
+              options.rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Range"),
+              range,
+              translation.range,
+              options.rendering,
+            ),
             combineGeneratedTextWithStaticTranslation(
               translate("Duration"),
               duration,
               translation.duration,
+              options.rendering,
             ),
             renderTargetCategory(entry.target).run(env),
             getTextForTraditions(
@@ -316,7 +334,9 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
             renderImprovementCost(entry.improvement_cost).run(env),
           ],
         },
-        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+        options.rendering.renderLiturgicalChantEnhancements
+          ? renderEnhancements(Case(entity, id), entry.improvement_cost).run(env)
+          : undefined,
       ],
       errata: translation.errata,
       references: entry.src,
@@ -401,13 +421,25 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
               translate("Ceremonial Time"),
               castingTime,
               translation.casting_time,
+              options.rendering,
             ),
-            combineGeneratedTextWithStaticTranslation(translate("KP Cost"), cost, translation.cost),
-            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("KP Cost"),
+              cost,
+              translation.cost,
+              options.rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Range"),
+              range,
+              translation.range,
+              options.rendering,
+            ),
             combineGeneratedTextWithStaticTranslation(
               translate("Duration"),
               duration,
               translation.duration,
+              options.rendering,
             ),
             renderTargetCategory(entry.target).run(env),
             getTextForTraditions(
@@ -423,7 +455,9 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
             renderImprovementCost(entry.improvement_cost).run(env),
           ],
         },
-        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+        options.rendering.renderLiturgicalChantEnhancements
+          ? renderEnhancements(Case(entity, id), entry.improvement_cost).run(env)
+          : undefined,
       ],
       errata: translation.errata,
       references: entry.src,

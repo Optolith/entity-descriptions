@@ -14,6 +14,7 @@ import type {
 } from "./entityDescription.js"
 import type { StdEnv } from "./env.js"
 import type { LocaleEnvironment } from "./helpers/locale.js"
+import type { RenderingOptions } from "./index.js"
 import { unwrapNestedReaders, type WrapInNestedReaders } from "./nestedReaders.js"
 import type {
   FlatRawEntityDescription,
@@ -229,6 +230,11 @@ export const createEntityDescriptionCreator =
     return mapRaw(taggedId, rawEntry, databaseAccessors, options)
   }
 
+export type CreatorOptions = {
+  publications: PublicationOptions
+  rendering: RenderingOptions
+}
+
 /**
  * A function that creates the JSON representation of the rules text for a
  * library entry.
@@ -241,7 +247,7 @@ export type EntityDescriptionCreator<
   databaseAccessors: A,
   locale: LocaleEnvironment,
   entry: TaggedEntity<ES1>,
-  options: { publications: PublicationOptions },
+  options: CreatorOptions,
 ) => EntityDescription<ES1, Cols> | undefined
 
 /**
@@ -256,7 +262,7 @@ export type RawEntityDescriptionCreator<
   databaseAccessors: A,
   locale: LocaleEnvironment,
   entry: TaggedEntity<ES>,
-  options: { publications: PublicationOptions },
+  options: CreatorOptions,
 ) => WrapInNestedReaders<A, RawEntityDescription<Cols>>
 
 /**
@@ -271,7 +277,7 @@ export type FlatRawEntityDescriptionCreator<
   databaseAccessors: A,
   locale: LocaleEnvironment,
   entry: TaggedEntity<ES>,
-  options: { publications: PublicationOptions },
+  options: CreatorOptions,
 ) => WrapInNestedReaders<A, FlatRawEntityDescription<Cols>>
 
 /**

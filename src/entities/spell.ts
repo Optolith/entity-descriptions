@@ -174,7 +174,7 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
       "Publication" | "TargetCategory" | "Property" | "MagicalTradition" | "Curriculum"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format, compare: localeCompare } = locale
   const translation = translateMap(entry.translations)
 
@@ -204,11 +204,17 @@ export const getCantripEntityDescription = createEntityDescriptionCreator<
             label: translate("Effect"),
             value: translation.effect,
           },
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Range"),
+            range,
+            translation.range,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderTargetCategory(entry.target).run(env),
           renderProperty(entry.property).run(env),
@@ -353,13 +359,25 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
               translate("Casting Time"),
               castingTime,
               translation.casting_time,
+              options.rendering,
             ),
-            combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("AE Cost"),
+              cost,
+              translation.cost,
+              options.rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Range"),
+              range,
+              translation.range,
+              options.rendering,
+            ),
             combineGeneratedTextWithStaticTranslation(
               translate("Duration"),
               duration,
               translation.duration,
+              options.rendering,
             ),
             renderTargetCategory(entry.target).run(env),
             renderProperty(entry.property).run(env),
@@ -370,7 +388,9 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
             renderImprovementCost(entry.improvement_cost).run(env),
           ],
         },
-        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+        options.rendering.renderSpellEnhancements
+          ? renderEnhancements(Case(entity, id), entry.improvement_cost).run(env)
+          : undefined,
       ],
       errata: translation.errata,
       references: entry.src,
@@ -455,13 +475,25 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
               translate("Ritual Time"),
               castingTime,
               translation.casting_time,
+              options.rendering,
             ),
-            combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-            combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+            combineGeneratedTextWithStaticTranslation(
+              translate("AE Cost"),
+              cost,
+              translation.cost,
+              options.rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Range"),
+              range,
+              translation.range,
+              options.rendering,
+            ),
             combineGeneratedTextWithStaticTranslation(
               translate("Duration"),
               duration,
               translation.duration,
+              options.rendering,
             ),
             renderTargetCategory(entry.target).run(env),
             renderProperty(entry.property).run(env),
@@ -472,7 +504,9 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
             renderImprovementCost(entry.improvement_cost).run(env),
           ],
         },
-        renderEnhancements(Case(entity, id), entry.improvement_cost).run(env),
+        options.rendering.renderSpellEnhancements
+          ? renderEnhancements(Case(entity, id), entry.improvement_cost).run(env)
+          : undefined,
       ],
       errata: translation.errata,
       references: entry.src,
@@ -490,7 +524,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -520,11 +554,17 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
         items: [
           renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderProperty(entry.property).run(env),
           {
@@ -570,7 +610,7 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "Skill"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -601,7 +641,12 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
           renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
           renderMagicalActionSkill(entry.skill).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           renderProperty(entry.property).run(env),
           renderImprovementCost(entry.improvement_cost).run(env),
         ],
@@ -622,7 +667,7 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "SkillModificationLevel"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -652,11 +697,17 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
         items: [
           renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderProperty(entry.property).run(env),
           {
@@ -706,7 +757,7 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
       | "ArcaneDancerTradition"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -740,8 +791,14 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           renderProperty(entry.property).run(env),
           renderMusicTradition(
             translate,
@@ -776,7 +833,7 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
       | "ArcaneDancerTradition"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -811,9 +868,15 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderMagicalActionSkill(entry.skill).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           renderProperty(entry.property).run(env),
           renderMusicTradition(
             translate,
@@ -900,7 +963,7 @@ export const getFamiliarsTrickEntityDescription = createEntityDescriptionCreator
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "AnimalType"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -938,11 +1001,17 @@ export const getFamiliarsTrickEntityDescription = createEntityDescriptionCreator
             getInstanceById,
             entry.animal_types,
           ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           {
             label: translate("Property"),
@@ -1054,7 +1123,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
       | "Tribe"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1135,11 +1204,17 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
         items: [
           renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
           renderEffect(mergedEffect).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           entry.target ? renderTargetCategory(entry.target).run(env) : undefined,
           renderProperty(entry.property).run(env),
@@ -1158,6 +1233,7 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
             translate("Prerequisites"),
             prerequisites,
             translation.prerequisites,
+            rendering,
           ),
         ],
       },
@@ -1188,7 +1264,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
   }
->(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }) => {
+>(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1239,13 +1315,25 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
             translate("Ritual Time"),
             castingTime,
             translation.casting_time,
+            rendering,
           ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Range"),
+            range,
+            translation.range,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderTargetCategory(entry.target).run(env),
           entry.prerequisites === undefined
@@ -1283,7 +1371,7 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1334,13 +1422,25 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
             translate("Casting Time"),
             castingTime,
             translation.casting_time,
+            rendering,
           ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Range"),
+            range,
+            translation.range,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderTargetCategory(entry.target).run(env),
           renderProperty(entry.property).run(env),
@@ -1369,7 +1469,7 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1438,13 +1538,25 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
             translate("Ritual Time"),
             castingTime,
             translation.casting_time,
+            rendering,
           ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Range"),
+            range,
+            translation.range,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderTargetCategory(entry.target).run(env),
           renderProperty(entry.property).run(env),
@@ -1473,7 +1585,7 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
       | "DerivedCharacteristic"
     >
   }
->(({ getInstanceById }, locale, { content: entry }) => {
+>(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -1525,13 +1637,25 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
             translate("Ritual Time"),
             castingTime,
             translation.casting_time,
+            rendering,
           ),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(translate("Range"), range, translation.range),
+          combineGeneratedTextWithStaticTranslation(
+            translate("AE Cost"),
+            cost,
+            translation.cost,
+            rendering,
+          ),
+          combineGeneratedTextWithStaticTranslation(
+            translate("Range"),
+            range,
+            translation.range,
+            rendering,
+          ),
           combineGeneratedTextWithStaticTranslation(
             translate("Duration"),
             duration,
             translation.duration,
+            rendering,
           ),
           renderTargetCategory(entry.target).run(env),
           renderProperty(entry.property).run(env),
@@ -1718,62 +1842,76 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"BannzeichenOption">
   }
->(({ getInstanceById, getChildInstancesForInstanceId }, locale, { id, content: entry }) => {
-  const { translate, translateMap, format } = locale
-  const translation = translateMap(entry.translations)
+>(
+  (
+    { getInstanceById, getChildInstancesForInstanceId },
+    locale,
+    { id, content: entry },
+    { rendering },
+  ) => {
+    const { translate, translateMap, format } = locale
+    const translation = translateMap(entry.translations)
 
-  if (translation === undefined) {
-    return undefined
-  }
+    if (translation === undefined) {
+      return undefined
+    }
 
-  const env = {
-    translate,
-    translateMap,
-    format,
-    getInstanceById,
-    localeCompare: locale.compare,
-    localeJoin: locale.join,
-    energyUnit: "ArcaneEnergy",
-    responsiveTextSize: ResponsiveTextSize.Full,
-  } satisfies Partial<EnvMap>
+    const env = {
+      translate,
+      translateMap,
+      format,
+      getInstanceById,
+      localeCompare: locale.compare,
+      localeJoin: locale.join,
+      energyUnit: "ArcaneEnergy",
+      responsiveTextSize: ResponsiveTextSize.Full,
+    } satisfies Partial<EnvMap>
 
-  const options = Lazy.of(() =>
-    getChildInstancesForInstanceId("BannzeichenOption", id).map(item => item.content),
-  )
+    const options = Lazy.of(() =>
+      getChildInstancesForInstanceId("BannzeichenOption", id).map(item => item.content),
+    )
 
-  const cost = renderBannzeichenCost(options, entry.parameters.cost).run(env)
-  const craftingTime = renderBannzeichenCraftingTime(entry.parameters.crafting_time).run(env)
-  const duration = renderSlowFastCheckResultBasedDuration(entry.parameters.duration).run(env)
+    const cost = renderBannzeichenCost(options, entry.parameters.cost).run(env)
+    const craftingTime = renderBannzeichenCraftingTime(entry.parameters.crafting_time).run(env)
+    const duration = renderSlowFastCheckResultBasedDuration(entry.parameters.duration).run(env)
 
-  return {
-    title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
-    className: "bannzeichen",
-    body: [
-      {
-        type: "definitionList",
-        items: [
-          renderSkillCheck(entry.check).run(env),
-          renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Crafting Time (slow / fast)"),
-            craftingTime,
-            translation.crafting_time,
-          ),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Duration (slow / fast)"),
-            duration,
-            translation.duration,
-          ),
-          renderProperty(entry.property).run(env),
-          renderBannzeichenImprovementCost(options, entry.improvement_cost).run(env),
-        ],
-      },
-    ],
-    errata: translation.errata,
-    references: entry.src,
-  }
-})
+    return {
+      title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
+      className: "bannzeichen",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheck(entry.check).run(env),
+            renderEffect(translation.effect).run(env),
+            combineGeneratedTextWithStaticTranslation(
+              translate("AE Cost"),
+              cost,
+              translation.cost,
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Crafting Time (slow / fast)"),
+              craftingTime,
+              translation.crafting_time,
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration (slow / fast)"),
+              duration,
+              translation.duration,
+              rendering,
+            ),
+            renderProperty(entry.property).run(env),
+            renderBannzeichenImprovementCost(options, entry.improvement_cost).run(env),
+          ],
+        },
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)
 
 const renderMagicalRuneCraftingTimePart = (
   craftingTime: MagicalRuneCraftingTime,
@@ -1842,63 +1980,77 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
     >
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"MagicalRuneOption">
   }
->(({ getInstanceById, getChildInstancesForInstanceId }, locale, { id, content: entry }) => {
-  const { translate, translateMap, format } = locale
-  const translation = translateMap(entry.translations)
+>(
+  (
+    { getInstanceById, getChildInstancesForInstanceId },
+    locale,
+    { id, content: entry },
+    { rendering },
+  ) => {
+    const { translate, translateMap, format } = locale
+    const translation = translateMap(entry.translations)
 
-  if (translation === undefined) {
-    return undefined
-  }
+    if (translation === undefined) {
+      return undefined
+    }
 
-  const env = {
-    translate,
-    translateMap,
-    format,
-    getInstanceById,
-    localeCompare: locale.compare,
-    localeJoin: locale.join,
-    energyUnit: "ArcaneEnergy",
-    responsiveTextSize: ResponsiveTextSize.Full,
-  } satisfies Partial<EnvMap>
+    const env = {
+      translate,
+      translateMap,
+      format,
+      getInstanceById,
+      localeCompare: locale.compare,
+      localeJoin: locale.join,
+      energyUnit: "ArcaneEnergy",
+      responsiveTextSize: ResponsiveTextSize.Full,
+    } satisfies Partial<EnvMap>
 
-  const options = Lazy.of(() =>
-    getChildInstancesForInstanceId("MagicalRuneOption", id).map(item => item.content),
-  )
+    const options = Lazy.of(() =>
+      getChildInstancesForInstanceId("MagicalRuneOption", id).map(item => item.content),
+    )
 
-  const cost = renderMagicalRuneCost(options, entry.parameters.cost).run(env)
-  const craftingTime = renderMagicalRuneCraftingTime(entry.parameters.crafting_time).run(env)
-  const duration = renderMagicalRuneDuration(entry.parameters.duration).run(env)
+    const cost = renderMagicalRuneCost(options, entry.parameters.cost).run(env)
+    const craftingTime = renderMagicalRuneCraftingTime(entry.parameters.crafting_time).run(env)
+    const duration = renderMagicalRuneDuration(entry.parameters.duration).run(env)
 
-  return {
-    title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
-    className: "magical-rune",
-    body: [
-      {
-        type: "definitionList",
-        items: [
-          renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
-          renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(translate("AE Cost"), cost, translation.cost),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Crafting Time (slow / fast)"),
-            craftingTime,
-            translation.crafting_time === undefined
-              ? undefined
-              : renderSplitMagicalRuneParameterTranslation(translation.crafting_time).run(env),
-          ),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Duration (slow / fast)"),
-            duration,
-            translation.duration === undefined
-              ? undefined
-              : renderSplitMagicalRuneParameterTranslation(translation.duration).run(env),
-          ),
-          renderProperty(entry.property).run(env),
-          renderMagicalRuneImprovementCost(options, entry.improvement_cost).run(env),
-        ],
-      },
-    ],
-    errata: translation.errata,
-    references: entry.src,
-  }
-})
+    return {
+      title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
+      className: "magical-rune",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheckWithPenalty(entry.check, entry.check_penalty).run(env),
+            renderEffect(translation.effect).run(env),
+            combineGeneratedTextWithStaticTranslation(
+              translate("AE Cost"),
+              cost,
+              translation.cost,
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Crafting Time (slow / fast)"),
+              craftingTime,
+              translation.crafting_time === undefined
+                ? undefined
+                : renderSplitMagicalRuneParameterTranslation(translation.crafting_time).run(env),
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration (slow / fast)"),
+              duration,
+              translation.duration === undefined
+                ? undefined
+                : renderSplitMagicalRuneParameterTranslation(translation.duration).run(env),
+              rendering,
+            ),
+            renderProperty(entry.property).run(env),
+            renderMagicalRuneImprovementCost(options, entry.improvement_cost).run(env),
+          ],
+        },
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)

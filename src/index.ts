@@ -284,6 +284,12 @@ export type GetAllResolvedNewSkillApplications = (id: Skill_ID) => ResolvedNewSk
  */
 export type GetAllResolvedSkillUses = (id: Skill_ID) => ResolvedSkillUse[]
 
+export type RenderingOptions = {
+  renderDiffs: boolean
+  renderSpellEnhancements: boolean
+  renderLiturgicalChantEnhancements: boolean
+}
+
 /**
  * Get a JSON representation of the rules text for an entry in the database.
  */
@@ -299,6 +305,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   instance: string | { id: string; content: TSONDBTypes["entityMap"][E] },
   publicationOptions: PublicationOptions,
   responsiveTextSize: "Compressed" | "Full" = "Full",
+  renderingOptions?: Partial<RenderingOptions>,
 ): EntityDescription<E, string> | undefined => {
   const creator = registeredEntityDescriptionCreators[entityName] as TypedCreator<E>
 
@@ -330,6 +337,14 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
     },
     localeEnv,
     { entity: entityName, content: instanceContent, id: instanceId },
-    { publications: publicationOptions },
+    {
+      publications: publicationOptions,
+      rendering: {
+        renderDiffs: false,
+        renderSpellEnhancements: true,
+        renderLiturgicalChantEnhancements: true,
+        ...renderingOptions,
+      },
+    },
   )
 }
