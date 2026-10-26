@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.43.1](https://github.com/Optolith/entity-descriptions/compare/v0.43.0...v0.43.1) (2026-10-26)
+
+### Features
+
+* renderer options ([d4aa1df](https://github.com/Optolith/entity-descriptions/commit/d4aa1dffbf5f4112fb8a6c1b16a7bee9a9345ca3))
+
+### Bug Fixes
+
+* filter uses and new applications by included publications ([d97a88a](https://github.com/Optolith/entity-descriptions/commit/d97a88a1a45abff54527667ad6d0e40deac49902))
+
 ## [0.43.0](https://github.com/Optolith/entity-descriptions/compare/v0.42.2...v0.43.0) (2026-10-24)
 
 ### ⚠ BREAKING CHANGES
