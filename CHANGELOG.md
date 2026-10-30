@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.43.2](https://github.com/Optolith/entity-descriptions/compare/v0.43.1...v0.43.2) (2026-10-30)
+
+### Features
+
+* export skill check penalty renderer ([ee47ed7](https://github.com/Optolith/entity-descriptions/commit/ee47ed74d404725288aa9a5b7bef6b35252fd661))
+
 ## [0.43.1](https://github.com/Optolith/entity-descriptions/compare/v0.43.0...v0.43.1) (2026-10-26)
 
 ### Features
