@@ -61,7 +61,7 @@ const renderDerivedCharacteristicSkillCheckPenalty = (
   }
 }
 
-const renderSkillCheckPenalty = (
+export const renderSkillCheckPenalty = (
   penalty: SkillCheckPenalty,
 ): StdReader<string, "t" | "tm" | "rts" | "ibi", "DerivedCharacteristic"> => {
   switch (penalty.kind) {
