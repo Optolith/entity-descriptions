@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.44.0](https://github.com/Optolith/entity-descriptions/compare/v0.43.2...v0.44.0) (2026-11-01)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** upgrade to schema 0.114.0
+
+### build
+
+* **deps:** upgrade to schema 0.114.0 ([afb5515](https://github.com/Optolith/entity-descriptions/commit/afb5515baf95e878b6708b8d39bc475b21130610))
+
+### Bug Fixes
+
+* publications without translation for active locales should always be excluded ([b1339f7](https://github.com/Optolith/entity-descriptions/commit/b1339f70d09256322e59ca781335c977289e0f92))
+
 ## [0.43.2](https://github.com/Optolith/entity-descriptions/compare/v0.43.1...v0.43.2) (2026-10-30)
 
 ### Features
