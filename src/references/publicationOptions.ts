@@ -121,17 +121,19 @@ export const isPublicationIncluded = (
   publicationOptions: PublicationOptions,
   publicationId: Publication_ID,
   publication: Publication,
-): boolean =>
-  (publicationOptions.onlyCompletePublications === false ||
-    (!publication.isMissingImplementation &&
-      !(
-        (typeof publicationTranslationOrFunctionToRetrieveIt === "function"
-          ? publicationTranslationOrFunctionToRetrieveIt(publication.translations)
-          : publicationTranslationOrFunctionToRetrieveIt
-        )?.isMissingImplementation ?? true
-      ))) &&
-  (publicationOptions.publications.includes(publicationId) ||
-    isPublicationIncludedInGroup(publication, publicationOptions.showPublicationGroups))
+): boolean => {
+  const translation =
+    typeof publicationTranslationOrFunctionToRetrieveIt === "function"
+      ? publicationTranslationOrFunctionToRetrieveIt(publication.translations)
+      : publicationTranslationOrFunctionToRetrieveIt
+  return (
+    translation !== undefined &&
+    (publicationOptions.onlyCompletePublications === false ||
+      (!publication.isMissingImplementation && !translation.isMissingImplementation)) &&
+    (publicationOptions.publications.includes(publicationId) ||
+      isPublicationIncludedInGroup(publication, publicationOptions.showPublicationGroups))
+  )
+}
 
 /**
  * Checks if a publication is included based on the publication options.
