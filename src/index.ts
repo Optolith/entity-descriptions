@@ -67,6 +67,7 @@ import {
 import { getStateEntityDescription } from "./entities/state.js"
 import { getTalismanEntityDescription } from "./entities/talisman.js"
 import { getTradeSecretEntityDescription } from "./entities/tradeSecret.js"
+import { getPlantEntityDescription } from "./entities/plant.js"
 import type { EntityDescription } from "./entityDescription.js"
 import type { StdEnv } from "./env.js"
 import type {
@@ -232,6 +233,7 @@ const registeredEntityDescriptionCreators = {
   MusicalInstrument: getEquipmentEntityDescription,
   Newspaper: getEquipmentEntityDescription,
   OrienteeringAid: getEquipmentEntityDescription,
+  Plant: getPlantEntityDescription,
   Poison: getPoisonEntityDescription,
   RopeOrChain: getEquipmentEntityDescription,
   Stationery: getEquipmentEntityDescription,
