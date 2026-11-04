@@ -20,7 +20,11 @@ import type {
 } from "@optolith/database-schema/gen"
 import type { StdEnv, StdReader } from "../../../env.js"
 import type { PrerequisitePart } from "./part.js"
-import { printActivatablePrerequisite, type ActivatableNameEnv } from "./single/activatable.js"
+import {
+  printActivatablePrerequisite,
+  printProfessionActivatablePrerequisite,
+  type ActivatableNameEnv,
+} from "./single/activatable.js"
 import { printAnimistPowerPrerequisite } from "./single/animistPower.js"
 import { printAnySpecialAbilityOfGroupPrerequisite } from "./single/anySpecialAbilityOfGroup.js"
 import { printBlessedTraditionPrerequisite } from "./single/blessedTradition.js"
@@ -179,7 +183,7 @@ export const printProfessionPrerequisiteGroup = (
     case "Rule":
       return printRulePrerequisite(prerequisite.Rule)
     case "Activatable":
-      return printActivatablePrerequisite(prerequisite.Activatable).with(env => ({
+      return printProfessionActivatablePrerequisite(prerequisite.Activatable).with(env => ({
         ...env,
         displayedInProfession: true,
       }))
