@@ -398,7 +398,7 @@ export const getItemComponentEntityDescription = createEntityDescriptionCreator<
             value:
               translation.applicableItems ??
               renderApplicableItems(entry.content.applicableItems)
-                .with((innerEnv: Omit<typeof _env, "responsiveTextSize">) => ({
+                .with((innerEnv: typeof _env) => ({
                   ...innerEnv,
                   responsiveTextSize: ResponsiveTextSize.Full,
                 }))

@@ -337,6 +337,8 @@ export const renderAdventurePointsValue = (
           return MISSING_VALUE
         case "Advantages":
           return translate("Variable")
+        case "Patrons":
+          return MISSING_VALUE
         default:
           return assertExhaustive(derivedSelectOptions)
       }
