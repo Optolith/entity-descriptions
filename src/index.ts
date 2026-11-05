@@ -27,6 +27,7 @@ import { getEquipmentEntityDescription, getItemEntityDescription } from "./entit
 import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackage.js"
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
+import { getHerbalAidEntityDescription } from "./entities/plant.js"
 import { getInfluenceEntityDescription } from "./entities/influence.js"
 import { getItemComponentEntityDescription } from "./entities/itemComponent.js"
 import {
@@ -38,6 +39,7 @@ import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
 import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
 import { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
+import { getPlantEntityDescription } from "./entities/plant.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
 import {
   getProfessionEntityDescription,
@@ -67,7 +69,6 @@ import {
 import { getStateEntityDescription } from "./entities/state.js"
 import { getTalismanEntityDescription } from "./entities/talisman.js"
 import { getTradeSecretEntityDescription } from "./entities/tradeSecret.js"
-import { getPlantEntityDescription } from "./entities/plant.js"
 import type { EntityDescription } from "./entityDescription.js"
 import type { StdEnv } from "./env.js"
 import type {
@@ -222,6 +223,7 @@ const registeredEntityDescriptionCreators = {
   Elixir: getElixirEntityDescription,
   EquipmentOfBlessedOnes: getEquipmentEntityDescription,
   GemOrPreciousStone: getEquipmentEntityDescription,
+  HerbalAid: getHerbalAidEntityDescription,
   IlluminationLightSource: getEquipmentEntityDescription,
   IlluminationRefillOrSupply: getEquipmentEntityDescription,
   ItemComponent: getItemComponentEntityDescription,
