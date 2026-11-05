@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.45.0](https://github.com/Optolith/entity-descriptions/compare/v0.44.0...v0.45.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* effect type badges
+* **deps:** upgrade to schema 0.117.0
+* **deps:** upgrade to schema 0.118.0
+
+### build
+
+* **deps:** upgrade to schema 0.117.0 ([d14094c](https://github.com/Optolith/entity-descriptions/commit/d14094ccbc7bd4cf12285d70b95ee94173b11f89))
+* **deps:** upgrade to schema 0.118.0 ([51b4be4](https://github.com/Optolith/entity-descriptions/commit/51b4be4d03cee39372ecb9edd3cdd1e5250c89d8))
+
+### Features
+
+* effect type badges ([7151882](https://github.com/Optolith/entity-descriptions/commit/7151882e01d1a960e060759a0cb4f51c20e37e83))
+* more precise prerequisite renderer return types ([5dd48a9](https://github.com/Optolith/entity-descriptions/commit/5dd48a995fe6ce8d155e4bcd6d8ce395298813ca))
+
 ## [0.44.0](https://github.com/Optolith/entity-descriptions/compare/v0.43.2...v0.44.0) (2026-11-01)
 
 ### ⚠ BREAKING CHANGES
