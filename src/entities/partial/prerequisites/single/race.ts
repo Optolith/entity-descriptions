@@ -19,7 +19,7 @@ export const printRacePrerequisite = (
         "Race",
         prerequisite.id,
       ).thenW(name =>
-        translateR("Race").map((label): PrerequisitePart | undefined => ({
+        translateR("Race").map((label): PrerequisitePart => ({
           label: `${label} `,
           value: name ?? MISSING_VALUE,
           sentenceType: undefined,

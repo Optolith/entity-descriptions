@@ -1,3 +1,4 @@
+import { Reader } from "@elyukai/utils/reader"
 import type { RatedPrerequisite } from "@optolith/database-schema/gen"
 import type { StdReader } from "../../../../env.js"
 import { attributedCustomNameR } from "../../reader.js"
@@ -11,7 +12,7 @@ import type { PrerequisitePart } from "../part.js"
 export const printRatedPrerequisite = (
   prerequisite: RatedPrerequisite,
 ): StdReader<
-  PrerequisitePart | undefined,
+  PrerequisitePart,
   "t" | "tm" | "ibi",
   | "Attribute"
   | "Skill"
@@ -22,16 +23,18 @@ export const printRatedPrerequisite = (
   | "LiturgicalChant"
   | "Ceremony"
 > =>
-  prerequisite.display_option !== undefined
-    ? printDisplayOption(prerequisite.display_option)
-    : attributedCustomNameR(
-        "prerequisite",
-        (t: { name: string; abbreviation?: string }) => t.abbreviation ?? t.name,
-        prerequisite.id,
-      )
-        .map(name => name ?? MISSING_VALUE)
-        .map((name): PrerequisitePart | undefined => ({
-          value: prerequisite.value > 0 ? `${name} ${prerequisite.value.toFixed()}` : name,
-          sentenceType: undefined,
-          isMeta: false,
-        }))
+  printDisplayOption(prerequisite.display_option).thenW(displayOption =>
+    displayOption !== undefined
+      ? Reader.of(displayOption)
+      : attributedCustomNameR(
+          "prerequisite",
+          (t: { name: string; abbreviation?: string }) => t.abbreviation ?? t.name,
+          prerequisite.id,
+        )
+          .map(name => name ?? MISSING_VALUE)
+          .map((name): PrerequisitePart => ({
+            value: prerequisite.value > 0 ? `${name} ${prerequisite.value.toFixed()}` : name,
+            sentenceType: undefined,
+            isMeta: false,
+          })),
+  )

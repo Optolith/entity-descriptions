@@ -1,4 +1,4 @@
-import type { Errata, PublicationRefs } from "@optolith/database-schema/gen"
+import type { EffectType, Errata, PublicationRefs } from "@optolith/database-schema/gen"
 
 /**
  * A JSON representation of the rules text for a library entry that has not been
@@ -35,7 +35,7 @@ export type RawTextEntityDescription = {
   category?: RawEntityDescriptionCategory
   title: string
   subtitle?: string
-  badge?: RawEntityDescriptionBadge
+  badges?: RawEntityDescriptionBadge[]
   className: string
   body: (RawEntityDescriptionSection | undefined)[]
   errata?: Errata
@@ -60,10 +60,12 @@ export type RawTabularEntityDescription<Cols extends string> = {
 /**
  * A badge that can be displayed next to the title of a library entry.
  */
-export type RawEntityDescriptionBadge = {
-  type: "level" | "armedCombat" | "unarmedCombat"
-  value: string
-}
+export type RawEntityDescriptionBadge =
+  | {
+      type: "level" | "armedCombat" | "unarmedCombat"
+      value: string
+    }
+  | { type: "effectType"; raw: EffectType["kind"] }
 
 /**
  * A labeled or unlabeled section of a library entry text.

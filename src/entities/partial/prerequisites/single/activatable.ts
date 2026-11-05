@@ -89,11 +89,60 @@ export const printActivatableName = (
  */
 export const printActivatablePrerequisite = (
   prerequisite: ActivatablePrerequisite,
-): Reader<ActivatableNameEnv & StdEnv<"tm">, PrerequisitePart | undefined> =>
-  prerequisite.display_option !== undefined
-    ? printDisplayOption(prerequisite.display_option)
-    : printActivatableName(prerequisite.id, prerequisite.options, prerequisite.level).then(
-        nameComponents =>
+): Reader<ActivatableNameEnv & StdEnv<"tm">, PrerequisitePart> =>
+  printDisplayOption(prerequisite.display_option).thenW(displayOption =>
+    displayOption !== undefined
+      ? Reader.of(displayOption)
+      : printActivatableName(prerequisite.id, prerequisite.options, prerequisite.level).then(
+          nameComponents =>
+            (prerequisite.id.kind === "Advantage"
+              ? prerequisite.active
+                ? translateR("advantage")
+                : translateR("no advantage")
+              : prerequisite.id.kind === "Disadvantage"
+                ? prerequisite.active
+                  ? translateR("disadvantage")
+                  : translateR("no disadvantage")
+                : prerequisite.active
+                  ? translateR("special ability")
+                  : translateR("no special ability")
+            ).map((label): PrerequisitePart => ({
+              label: `${label} `,
+              value: nameComponents ?? MISSING_VALUE,
+              sentenceType: undefined,
+              isMeta: false,
+            })),
+        ),
+  )
+
+/**
+ * Get the translation of a blessed tradition prerequisite.
+ */
+export const printProfessionActivatablePrerequisite = (
+  prerequisite: ProfessionActivatablePrerequisite,
+): Reader<ActivatableNameEnv & StdEnv<"tm">, PrerequisitePart> =>
+  printDisplayOption(prerequisite.display_option).thenW(displayOption =>
+    displayOption !== undefined
+      ? Reader.of(displayOption)
+      : printActivatableName(
+          prerequisite.id,
+          prerequisite.options?.map(opt => {
+            switch (opt.kind) {
+              case "Identifier":
+                return opt.Identifier
+              case "Select":
+                return opt
+              case "Text":
+                return Case(
+                  "Text",
+                  mapObject(opt.Text.translations, t => t.text),
+                )
+              default:
+                return assertExhaustive(opt)
+            }
+          }),
+          prerequisite.level,
+        ).then(nameComponents =>
           (prerequisite.id.kind === "Advantage"
             ? prerequisite.active
               ? translateR("advantage")
@@ -105,56 +154,11 @@ export const printActivatablePrerequisite = (
               : prerequisite.active
                 ? translateR("special ability")
                 : translateR("no special ability")
-          ).map((label): PrerequisitePart | undefined => ({
+          ).map((label): PrerequisitePart => ({
             label: `${label} `,
             value: nameComponents ?? MISSING_VALUE,
             sentenceType: undefined,
             isMeta: false,
           })),
-      )
-
-/**
- * Get the translation of a blessed tradition prerequisite.
- */
-export const printProfessionActivatablePrerequisite = (
-  prerequisite: ProfessionActivatablePrerequisite,
-): Reader<ActivatableNameEnv & StdEnv<"tm">, PrerequisitePart | undefined> =>
-  prerequisite.display_option !== undefined
-    ? printDisplayOption(prerequisite.display_option)
-    : printActivatableName(
-        prerequisite.id,
-        prerequisite.options?.map(opt => {
-          switch (opt.kind) {
-            case "Identifier":
-              return opt.Identifier
-            case "Select":
-              return opt
-            case "Text":
-              return Case(
-                "Text",
-                mapObject(opt.Text.translations, t => t.text),
-              )
-            default:
-              return assertExhaustive(opt)
-          }
-        }),
-        prerequisite.level,
-      ).then(nameComponents =>
-        (prerequisite.id.kind === "Advantage"
-          ? prerequisite.active
-            ? translateR("advantage")
-            : translateR("no advantage")
-          : prerequisite.id.kind === "Disadvantage"
-            ? prerequisite.active
-              ? translateR("disadvantage")
-              : translateR("no disadvantage")
-            : prerequisite.active
-              ? translateR("special ability")
-              : translateR("no special ability")
-        ).map((label): PrerequisitePart | undefined => ({
-          label: `${label} `,
-          value: nameComponents ?? MISSING_VALUE,
-          sentenceType: undefined,
-          isMeta: false,
-        })),
-      )
+        ),
+  )

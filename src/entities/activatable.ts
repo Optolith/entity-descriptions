@@ -3,7 +3,12 @@ import { isNotEmpty, type NonEmptyArray } from "@elyukai/utils/array/nonEmpty"
 import { count } from "@elyukai/utils/array/reductions"
 import { deepEqual } from "@elyukai/utils/equality"
 import { constant, identity, on } from "@elyukai/utils/function"
-import { isNotNullish, mapNullable, mapNullableDefault } from "@elyukai/utils/nullable"
+import {
+  isNotNullish,
+  mapNullable,
+  mapNullableDefault,
+  nullableToArray,
+} from "@elyukai/utils/nullable"
 import { compareNumber, reduceCompare } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
@@ -1851,7 +1856,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
         mapNullable(baseEntry.usage_type, usageType =>
           renderCombatSpecialAbilityType(usageType).run(env),
         ),
-      badge:
+      badges: nullableToArray(
         mapNullable(
           entityName === "CombatStyleSpecialAbility" ||
             entityName === "AdvancedCombatSpecialAbility"
@@ -1868,7 +1873,8 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
             }
           },
         ) ??
-        mapNullable(baseEntry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+          mapNullable(baseEntry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      ),
       className: "special-ability",
       body: [
         mapNullable(translation.special_rules, specialRules => ({

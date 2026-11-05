@@ -9,8 +9,12 @@ import type { PrerequisitePart } from "./part.js"
  * Get the translation of a display option.
  */
 export const printDisplayOption = (
-  displayOption: DisplayOption,
+  displayOption: DisplayOption | undefined,
 ): StdReader<PrerequisitePart | undefined, "tm"> => {
+  if (displayOption === undefined) {
+    return Reader.of(undefined)
+  }
+
   switch (displayOption.kind) {
     case "Hide":
       return Reader.of(undefined)

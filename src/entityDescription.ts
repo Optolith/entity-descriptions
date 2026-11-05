@@ -1,3 +1,5 @@
+import type { EffectType } from "@optolith/database-schema/gen"
+
 /**
  * A JSON representation of the rules text for a library entry.
  */
@@ -25,7 +27,7 @@ export type TextEntityDescription<EntityName extends string> = {
   category?: EntityDescriptionCategory
   title: string
   subtitle?: string
-  badge?: EntityDescriptionBadge
+  badges?: EntityDescriptionBadge[]
   className: string
   body: EntityDescriptionSection[]
   errata?: { date: string; description: string }[]
@@ -51,10 +53,12 @@ export type TabularEntityDescription<EntityName extends string, Cols extends str
 /**
  * A badge that can be displayed next to the title of a library entry.
  */
-export type EntityDescriptionBadge = {
-  type: "level" | "armedCombat" | "unarmedCombat"
-  value: string
-}
+export type EntityDescriptionBadge =
+  | {
+      type: "level" | "armedCombat" | "unarmedCombat"
+      value: string
+    }
+  | { type: "effectType"; raw: EffectType["kind"] }
 
 /**
  * A labeled or unlabeled section of a library entry text.
