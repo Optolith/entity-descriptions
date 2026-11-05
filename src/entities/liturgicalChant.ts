@@ -1,4 +1,4 @@
-import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
+import { isNotNullish, mapNullable, nullableToArray } from "@elyukai/utils/nullable"
 import type { Compare } from "@elyukai/utils/ordering"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
@@ -289,7 +289,9 @@ export const getLiturgicalChantEntityDescription = createEntityDescriptionCreato
     return {
       title: translation.name,
       className: "liturgical-chant",
-      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      badges: nullableToArray(
+        mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      ),
       body: [
         {
           type: "definitionList",
@@ -410,7 +412,9 @@ export const getCeremonyEntityDescription = createEntityDescriptionCreator<
     return {
       title: translation.name,
       className: "ceremony",
-      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      badges: nullableToArray(
+        mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      ),
       body: [
         {
           type: "definitionList",

@@ -1,7 +1,7 @@
 import { ensureNonEmpty } from "@elyukai/utils/array/nonEmpty"
 import { on } from "@elyukai/utils/function"
 import { Lazy } from "@elyukai/utils/lazy"
-import { isNotNullish, mapNullable } from "@elyukai/utils/nullable"
+import { isNotNullish, mapNullable, nullableToArray } from "@elyukai/utils/nullable"
 import { type Compare, compareNullish, compareNumber } from "@elyukai/utils/ordering"
 import { Reader } from "@elyukai/utils/reader"
 import { romanize } from "@elyukai/utils/roman"
@@ -348,7 +348,9 @@ export const getSpellEntityDescription = createEntityDescriptionCreator<
     return {
       title: translation.name,
       className: "spell",
-      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      badges: nullableToArray(
+        mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      ),
       body: [
         {
           type: "definitionList",
@@ -464,7 +466,9 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
     return {
       title: translation.name,
       className: "ritual",
-      badge: mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      badges: nullableToArray(
+        mapNullable(entry.prerequisites, getDerivedFocusRuleBadgeFromPrerequisites)?.run(env),
+      ),
       body: [
         {
           type: "definitionList",
