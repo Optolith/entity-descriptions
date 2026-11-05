@@ -28,6 +28,7 @@ import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackag
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
 import { getHerbalAidEntityDescription } from "./entities/plant.js"
+import { getHerbalPreservationEntityDescription } from "./entities/plant.js"
 import { getInfluenceEntityDescription } from "./entities/influence.js"
 import { getItemComponentEntityDescription } from "./entities/itemComponent.js"
 import {
@@ -224,6 +225,7 @@ const registeredEntityDescriptionCreators = {
   EquipmentOfBlessedOnes: getEquipmentEntityDescription,
   GemOrPreciousStone: getEquipmentEntityDescription,
   HerbalAid: getHerbalAidEntityDescription,
+  HerbalPreservation: getHerbalPreservationEntityDescription,
   IlluminationLightSource: getEquipmentEntityDescription,
   IlluminationRefillOrSupply: getEquipmentEntityDescription,
   ItemComponent: getItemComponentEntityDescription,

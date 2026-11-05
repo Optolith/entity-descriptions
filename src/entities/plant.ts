@@ -4,6 +4,7 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   AlternativeName,
   HerbalPreservationLongevity,
+  HerbalPreservationLongevityValue,
   PlantDifficulty,
   PlantEffect,
   PlantLongevity,
@@ -412,16 +413,19 @@ const renderHerbalPreservationLongevity = (
 ): StdReader<string, "t" | "tm" | "fn" | "f" | "rts"> => {
   switch (longevity.kind) {
     case "Expression":
-      return renderMathOperationR(longevity.Expression.value, value => {
-        switch (value.kind) {
-          case "Constant":
-            return Reader.of(value.Constant.toFixed())
-          case "Dice":
-            return renderDiceR(value.Dice)
-          default:
-            return assertExhaustive(value)
-        }
-      })
+      return renderMathOperationR<HerbalPreservationLongevityValue, number | string, StdEnv<"t">>(
+        longevity.Expression.value,
+        value => {
+          switch (value.kind) {
+            case "Constant":
+              return Reader.asks((_: StdEnv<"t">) => value.Constant)
+            case "Dice":
+              return renderDiceR(value.Dice)
+            default:
+              return assertExhaustive(value)
+          }
+        },
+      )
         .thenW(value => formatTimeSpanR(longevity.Expression.unit, value))
         .then(text => replaceTextIfNeeded(longevity.Expression.translations, text))
     case "Indefinite":
@@ -572,25 +576,24 @@ export const getPlantEntityDescription = createEntityDescriptionCreator<
   }
 })
 
-
-
-
-
 const renderHerbalAidLongevity = (
   longevity: HerbalPreservationLongevity,
 ): StdReader<string, "f" | "t" | "tm" | "rts"> => {
   switch (longevity.kind) {
     case "Expression":
-      return renderMathOperationR(longevity.Expression.value, value => {
-        switch (value.kind) {
-          case "Constant":
-            return Reader.of(value.Constant.toFixed())
-          case "Dice":
-            return renderDiceR(value.Dice)
-          default:
-            return assertExhaustive(value)
-        }
-      })
+      return renderMathOperationR<HerbalPreservationLongevityValue, number | string, StdEnv<"t">>(
+        longevity.Expression.value,
+        value => {
+          switch (value.kind) {
+            case "Constant":
+              return Reader.asks((_: StdEnv<"t">) => value.Constant)
+            case "Dice":
+              return renderDiceR(value.Dice)
+            default:
+              return assertExhaustive(value)
+          }
+        },
+      )
         .thenW(value => formatTimeSpanR(longevity.Expression.unit, value))
         .then(text => replaceTextIfNeeded(longevity.Expression.translations, text))
     case "Indefinite":
@@ -607,11 +610,7 @@ const renderHerbalAidLongevity = (
  */
 export const getHerbalAidEntityDescription = createEntityDescriptionCreator<
   "HerbalAid",
-  StdEnv<
-  "f" | "fn" | "t" | "tm" | "ibi" | "lj" | "rts",
-  | "HerbalPreservation"
-  | "Weapon"
-  | "Armor">
+  StdEnv<"f" | "fn" | "t" | "tm" | "ibi" | "lj" | "rts", "HerbalPreservation" | "Weapon" | "Armor">
 >((_env, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
@@ -652,6 +651,46 @@ export const getHerbalAidEntityDescription = createEntityDescriptionCreator<
                 label: translate("Longevity"),
                 value: renderHerbalAidLongevity(entry.longevity),
               },
+        ],
+      },
+    ],
+    references: entry.src,
+  }
+})
+
+/**
+ * Get a JSON representation of the rules text for a herbal preservation.
+ */
+export const getHerbalPreservationEntityDescription = createEntityDescriptionCreator<
+  "HerbalPreservation",
+  StdEnv<"f" | "fn" | "t" | "tm" | "ibi" | "lj" | "rts", "HerbalPreservation">
+>((_env, locale, { content: entry }) => {
+  const { translate, translateMap } = locale
+  const translation = translateMap(entry.translations)
+
+  if (translation === undefined) {
+    return undefined
+  }
+
+  return {
+    title: translation.name,
+    className: "herbal-preservation",
+    body: [
+      {
+        type: "definitionList",
+        items: [
+          {
+            label: translate("Preparation"),
+            value: translation.preparation,
+          },
+          {
+            label: translate("Longevity"),
+            value: renderHerbalPreservationLongevity(entry.longevity),
+          },
+          {
+            label: translate("Alternative Effect"),
+            value: translation.alternative_effect,
+          },
         ],
       },
     ],
