@@ -93,6 +93,7 @@ import {
   printActivatableName,
   type ActivatableNameEnv,
   type GetResolvedSelectOptionById,
+  type GetResolvedSkillApplicationById,
   type RenderedDerivedSelectOptionIdentifier,
 } from "./partial/prerequisites/single/activatable.js"
 import { renderStandaloneCostMap } from "./partial/rated/activatable/cost.js"
@@ -1080,7 +1081,7 @@ const renderAdvancedSpecialAbilityName = (
   option?: AdvancedSpecialAbilityRestrictedOptionIdentifier[],
 ): StdReader<
   string,
-  "t" | "tm" | "ibi" | "rso",
+  "t" | "tm" | "ibi" | "rso" | "rsa",
   ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 > => {
   const normalizedId = normalizeId(entityName, id)
@@ -1143,7 +1144,7 @@ const renderAdvancedValueByOption = (
   }>,
 ): StdReader<
   [string, definitionList: RawDefinitionListEntityDescriptionSectionItem[]],
-  "t" | "tm" | "acibp" | "ibi" | "rso" | "lj" | "lc",
+  "t" | "tm" | "acibp" | "ibi" | "rso" | "rsa" | "lj" | "lc",
   ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier,
   never,
   "GeneralSelectOption"
@@ -1237,7 +1238,7 @@ const renderAdvancedValue = (
   advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
 ): StdReader<
   RawDefinitionListEntityDescriptionSectionItem["value"],
-  "t" | "tm" | "lj" | "lc" | "ibi" | "rso" | "acibp",
+  "t" | "tm" | "lj" | "lc" | "ibi" | "rso" | "rsa" | "acibp",
   ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier,
   never,
   "GeneralSelectOption"
@@ -1304,7 +1305,7 @@ const renderAdvancedValue = (
           string | undefined,
         ]
       | undefined,
-      "t" | "tm" | "lj" | "ibi" | "rso",
+      "t" | "tm" | "lj" | "ibi" | "rso" | "rsa",
       ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
     > => {
       switch (entry.kind) {
@@ -1407,6 +1408,7 @@ const renderDeriveFromExternalOptionTable = (
   localeCompare: LocaleCompare,
   getInstanceById: ActivatableNameEnv["getInstanceById"] & GetInstanceById<"Patron">,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getResolvedSkillApplicationById: GetResolvedSkillApplicationById,
   entityName: ActivatableIdentifier["kind"],
   advanced: AdvancedSpecialAbility<AdvancedIdentifierSpecialAbility>[],
 ): RawTableEntityDescriptionSection | undefined => {
@@ -1450,6 +1452,7 @@ const renderDeriveFromExternalOptionTable = (
             translateMap,
             getInstanceById,
             getResolvedSelectOptionById,
+            getResolvedSkillApplicationById,
           }),
         )
         .toSorted(localeCompare)
@@ -1745,7 +1748,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
     getAllResolvedSkillUses: GetAllResolvedSkillUses
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"GeneralSelectOption">
     translateMap: TranslateMap
-  } & StdEnv<"t" | "lc">
+  } & StdEnv<"t" | "lc" | "rsa">
 >(
   (
     {
@@ -1754,6 +1757,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       getResolvedSelectOptionById,
       getAllResolvedSelectOptions,
       getChildInstancesForInstanceId,
+      getResolvedSkillApplicationById,
     },
     locale,
     { entity: entityName, content: entry, id },
@@ -1774,6 +1778,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
       localeJoin: locale.join,
       getResolvedSelectOptionById,
       getChildInstancesForInstanceId,
+      getResolvedSkillApplicationById,
     } satisfies Partial<EnvMap>
 
     const baseEntry: BaseActivatable = entry
@@ -2037,6 +2042,7 @@ export const getActivatableEntityDescription = createEntityDescriptionCreator<
           locale.compare,
           getInstanceById,
           getResolvedSelectOptionById,
+          getResolvedSkillApplicationById,
           entityName,
           baseEntry.advanced ?? [],
         ),

@@ -1261,10 +1261,10 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       | RenderedDerivedSelectOptionIdentifier
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
-  } & StdEnv<"t" | "x">
+  } & StdEnv<"t" | "x" | "rsa">
 >(
   (
-    { getInstanceById, getResolvedSelectOptionById, settings },
+    { getInstanceById, getResolvedSelectOptionById, settings, getResolvedSkillApplicationById },
     locale,
     { content: entry },
     { rendering },
@@ -1282,6 +1282,7 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       format,
       getInstanceById,
       getResolvedSelectOptionById,
+      getResolvedSkillApplicationById,
       localeJoin: locale.join,
       localeCompare: locale.compare,
       energyUnit: "ArcaneEnergy",

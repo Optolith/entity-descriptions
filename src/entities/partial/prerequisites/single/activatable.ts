@@ -4,6 +4,8 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
+  ResolvedSkillApplication,
+  ResolvedSkillApplicationIdentifier,
 } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
@@ -12,6 +14,7 @@ import type {
   CommonnessSelectOptionIdentifier,
   ProfessionActivatablePrerequisite,
   RequirableSelectOptionIdentifier,
+  Skill_ID,
 } from "@optolith/database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import type { StdEnv } from "../../../../env.js"
@@ -30,6 +33,14 @@ export type GetResolvedSelectOptionById = (
   selectOptionId: ResolvedSelectOptionIdentifier,
 ) => ResolvedSelectOption | undefined
 
+/**
+ * Gets a resolved select option by its identifier.
+ */
+export type GetResolvedSkillApplicationById = (
+  skillId: Skill_ID,
+  id: ResolvedSkillApplicationIdentifier,
+) => ResolvedSkillApplication | undefined
+
 export type RenderedDerivedSelectOptionIdentifier = Exclude<
   (ResolvedSelectOptionIdentifier | CommonnessSelectOptionIdentifier)["kind"],
   "General"
@@ -39,7 +50,7 @@ export type RenderedDerivedSelectOptionIdentifier = Exclude<
  * Needed environment for printing the name of an activatable.
  */
 export type ActivatableNameEnv = StdEnv<
-  "t" | "rso" | "ibi" | "dip",
+  "t" | "rso" | "rsa" | "ibi" | "dip",
   ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 >
 
@@ -79,6 +90,7 @@ export const printActivatableName = (
               t => t.name,
               env.getInstanceById,
               env.getResolvedSelectOptionById,
+              env.getResolvedSkillApplicationById,
               env.displayedInProfession,
             ),
           ),

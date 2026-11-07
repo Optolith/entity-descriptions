@@ -6,7 +6,10 @@ import type {
   LocaleMeasurementAdjustments,
   Settings,
 } from "@optolith/database-schema/gen"
-import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  GetResolvedSkillApplicationById,
+} from "./entities/partial/prerequisites/single/activatable.js"
 import type { ModifiableParameter } from "./entities/partial/rated/activatable/nonModifiableSuffix.js"
 import type { Speed } from "./entities/partial/rated/activatable/speed.js"
 import type { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
@@ -48,6 +51,7 @@ export type EnvMap<
   getAllInstances: GetAllInstances<AE>
   getChildInstancesForInstanceId: GetAllChildInstancesForParent<CE>
   getResolvedSelectOptionById: GetResolvedSelectOptionById
+  getResolvedSkillApplicationById: GetResolvedSkillApplicationById
   publicationOptions: PublicationOptions
   displayedInProfession: boolean
   measurementAdjustments: Required<LocaleMeasurementAdjustments>
@@ -73,6 +77,7 @@ export type EnvMapAbbr = {
   ai: "getAllInstances"
   acibp: "getChildInstancesForInstanceId"
   rso: "getResolvedSelectOptionById"
+  rsa: "getResolvedSkillApplicationById"
   po: "publicationOptions"
   dip: "displayedInProfession"
   ma: "measurementAdjustments"

@@ -218,7 +218,7 @@ const renderAutomaticAdvantagesOrDisadvantages = <ID extends string, T extends s
   emptyString: T,
 ): StdReader<
   string | T,
-  "t" | "tm" | "lc" | "ibi" | "rso",
+  "t" | "tm" | "lc" | "ibi" | "rso" | "rsa",
   ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 > =>
   items === undefined || !isNotEmpty(items)
@@ -253,7 +253,7 @@ export const renderAutomaticAdvantagesAndDisadvantages = <T extends string | und
   emptyString: T,
 ): StdReader<
   string | T,
-  "t" | "tm" | "lc" | "ibi" | "rso",
+  "t" | "tm" | "lc" | "ibi" | "rso" | "rsa",
   ActivatableIdentifier["kind"] | "Aspect" | RenderedDerivedSelectOptionIdentifier
 > =>
   Reader.traverse(
@@ -318,7 +318,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
     getChildInstancesForInstanceId: GetAllChildInstancesForParent<"RaceVariant">
     getResolvedSelectOptionById: GetResolvedSelectOptionById
     settings: Settings
-  }
+  } & StdEnv<"rsa">
 >(
   (
     {
@@ -326,6 +326,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
       countInstances,
       getChildInstancesForInstanceId,
       getResolvedSelectOptionById,
+      getResolvedSkillApplicationById: getResolvedSkillApplication,
     },
     { translate, translateMap, join: localeJoin, compare: localeCompare },
     { id, content: entry },
@@ -348,6 +349,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
       localeJoin,
       localeCompare,
       getResolvedSelectOptionById,
+      getResolvedSkillApplicationById: getResolvedSkillApplication,
       getInstanceById,
     } satisfies Partial<EnvMap>
 
@@ -367,7 +369,7 @@ export const getRaceEntityDescription = createEntityDescriptionCreator<
             ...renderBaseValues(entry.base_values).run(env),
             ...Reader.sequence<
               StdEnv<
-                "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
+                "t" | "tm" | "lc" | "lj" | "ibi" | "rso" | "rsa",
                 | "Attribute"
                 | "Culture"
                 | ActivatableIdentifier["kind"]
