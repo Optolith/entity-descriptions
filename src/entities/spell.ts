@@ -527,8 +527,8 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     getInstanceById: GetInstanceById<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic"
     >
-  }
->(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
+  } & StdEnv<"t" | "x">
+>(({ getInstanceById, settings }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -571,10 +571,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
             rendering,
           ),
           renderProperty(entry.property).run(env),
-          {
-            label: translate("Improvement Cost"),
-            value: "B",
-          },
+          renderImprovementCost(settings.magicalActions.curseImprovementCost),
         ],
       },
     ],
@@ -670,8 +667,8 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
     getInstanceById: GetInstanceById<
       "Publication" | "Attribute" | "Property" | "DerivedCharacteristic" | "SkillModificationLevel"
     >
-  }
->(({ getInstanceById }, locale, { content: entry }, { rendering }) => {
+  } & StdEnv<"t" | "x">
+>(({ getInstanceById, settings }, locale, { content: entry }, { rendering }) => {
   const { translate, translateMap, format } = locale
   const translation = translateMap(entry.translations)
 
@@ -714,10 +711,7 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
             rendering,
           ),
           renderProperty(entry.property).run(env),
-          {
-            label: translate("Improvement Cost"),
-            value: "B",
-          },
+          renderImprovementCost(settings.magicalActions.dominationRitualImprovementCost),
         ],
       },
     ],
@@ -1267,97 +1261,101 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       | RenderedDerivedSelectOptionIdentifier
     >
     getResolvedSelectOptionById: GetResolvedSelectOptionById
-  }
->(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }, { rendering }) => {
-  const { translate, translateMap, format } = locale
-  const translation = translateMap(entry.translations)
+  } & StdEnv<"t" | "x">
+>(
+  (
+    { getInstanceById, getResolvedSelectOptionById, settings },
+    locale,
+    { content: entry },
+    { rendering },
+  ) => {
+    const { translate, translateMap, format } = locale
+    const translation = translateMap(entry.translations)
 
-  if (translation === undefined) {
-    return undefined
-  }
+    if (translation === undefined) {
+      return undefined
+    }
 
-  const env = {
-    translate,
-    translateMap,
-    format,
-    getInstanceById,
-    getResolvedSelectOptionById,
-    localeJoin: locale.join,
-    localeCompare: locale.compare,
-    energyUnit: "ArcaneEnergy",
-    responsiveTextSize: ResponsiveTextSize.Full,
-  } satisfies Partial<EnvMap>
+    const env = {
+      translate,
+      translateMap,
+      format,
+      getInstanceById,
+      getResolvedSelectOptionById,
+      localeJoin: locale.join,
+      localeCompare: locale.compare,
+      energyUnit: "ArcaneEnergy",
+      responsiveTextSize: ResponsiveTextSize.Full,
+    } satisfies Partial<EnvMap>
 
-  const castingTime = renderSlowSkillNonModifiableCastingTime(entry.parameters.casting_time).run(
-    env,
-  )
+    const castingTime = renderSlowSkillNonModifiableCastingTime(entry.parameters.casting_time).run(
+      env,
+    )
 
-  const cost = renderMagicalActionCost(entry.parameters.cost).run(env)
+    const cost = renderMagicalActionCost(entry.parameters.cost).run(env)
 
-  const range = renderNonModifiableRange(
-    entry.parameters.range.kind === "Fixed"
-      ? {
-          kind: "Fixed",
-          Fixed: { ...entry.parameters.range.Fixed, unit: { kind: "Steps" } },
-        }
-      : entry.parameters.range,
-    false,
-  ).run(env)
+    const range = renderNonModifiableRange(
+      entry.parameters.range.kind === "Fixed"
+        ? {
+            kind: "Fixed",
+            Fixed: { ...entry.parameters.range.Fixed, unit: { kind: "Steps" } },
+          }
+        : entry.parameters.range,
+      false,
+    ).run(env)
 
-  const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
+    const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
 
-  return {
-    title: translation.name,
-    className: "geode-ritual",
-    body: [
-      {
-        type: "definitionList",
-        items: [
-          renderSkillCheck(entry.check).run(env),
-          renderEffect(translation.effect).run(env),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Ritual Time"),
-            castingTime,
-            translation.casting_time,
-            rendering,
-          ),
-          combineGeneratedTextWithStaticTranslation(
-            translate("AE Cost"),
-            cost,
-            translation.cost,
-            rendering,
-          ),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Range"),
-            range,
-            translation.range,
-            rendering,
-          ),
-          combineGeneratedTextWithStaticTranslation(
-            translate("Duration"),
-            duration,
-            translation.duration,
-            rendering,
-          ),
-          renderTargetCategory(entry.target).run(env),
-          entry.prerequisites === undefined
-            ? undefined
-            : {
-                label: translate("Prerequisites"),
-                value: printGeodeRitualPrerequisites(entry.prerequisites).run(env),
-              },
-          renderProperty(entry.property).run(env),
-          {
-            label: translate("Improvement Cost"),
-            value: "B",
-          },
-        ],
-      },
-    ],
-    errata: translation.errata,
-    references: entry.src,
-  }
-})
+    return {
+      title: translation.name,
+      className: "geode-ritual",
+      body: [
+        {
+          type: "definitionList",
+          items: [
+            renderSkillCheck(entry.check).run(env),
+            renderEffect(translation.effect).run(env),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Ritual Time"),
+              castingTime,
+              translation.casting_time,
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("AE Cost"),
+              cost,
+              translation.cost,
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Range"),
+              range,
+              translation.range,
+              rendering,
+            ),
+            combineGeneratedTextWithStaticTranslation(
+              translate("Duration"),
+              duration,
+              translation.duration,
+              rendering,
+            ),
+            renderTargetCategory(entry.target).run(env),
+            entry.prerequisites === undefined
+              ? undefined
+              : {
+                  label: translate("Prerequisites"),
+                  value: printGeodeRitualPrerequisites(entry.prerequisites).run(env),
+                },
+            renderProperty(entry.property).run(env),
+            renderImprovementCost(settings.magicalActions.geodeRitualImprovementCost),
+          ],
+        },
+      ],
+      errata: translation.errata,
+      references: entry.src,
+    }
+  },
+)
 
 /**
  * Get a JSON representation of the rules text for a jester trick.
