@@ -434,7 +434,11 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
   } & StdEnv<"rso" | "rsa">
 >(
   (
-    { getInstanceById, getResolvedSelectOptionById, getResolvedSkillApplicationById: getResolvedSkillApplication },
+    {
+      getInstanceById,
+      getResolvedSelectOptionById,
+      getResolvedSkillApplicationById: getResolvedSkillApplication,
+    },
     locale,
     { content: entry },
   ) => {
