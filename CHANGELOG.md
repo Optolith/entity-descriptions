@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.46.0](https://github.com/Optolith/entity-descriptions/compare/v0.45.0...v0.46.0) (2026-11-07)
+
+### ⚠ BREAKING CHANGES
+
+* render skill applications as options
+* use magical action improvement costs from settings
+
+### Features
+
+* render skill applications as options ([5596dc1](https://github.com/Optolith/entity-descriptions/commit/5596dc1e6b63043019aac6e13c547d4d6cc66f43))
+* use magical action improvement costs from settings ([772077e](https://github.com/Optolith/entity-descriptions/commit/772077e38b7e74fafee38f2a6283a8e18293885f))
+
 ## [0.45.0](https://github.com/Optolith/entity-descriptions/compare/v0.44.0...v0.45.0) (2026-11-05)
 
 ### ⚠ BREAKING CHANGES
