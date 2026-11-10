@@ -3,6 +3,7 @@ import { sign } from "@elyukai/utils/string/number"
 import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   AlternativeName,
+  EffectType,
   HerbalPreservationLongevity,
   HerbalPreservationLongevityValue,
   PlantDifficulty,
@@ -43,6 +44,19 @@ import { MISSING_VALUE } from "./partial/unknown.js"
 type PlantProductTranslation = {
   note?: ResponsiveTextOptional
   replacement?: ResponsiveTextReplace
+}
+
+const renderEffectTypeIcons = (types: EffectType[] | undefined): string =>
+  types
+    ?.map(
+      ({ kind }) =>
+        `:effect-${kind.replace(/[A-Z]/gu, (letter, index) => `${index === 0 ? "" : "-"}${letter.toLowerCase()}`)}:`,
+    )
+    .join(" ") ?? ""
+
+const appendEffectTypeIcons = (text: string, types: EffectType[] | undefined): string => {
+  const icons = renderEffectTypeIcons(types)
+  return icons === "" ? text : `${text} ${icons}`
 }
 
 const renderPlantAlternativeNames = (
@@ -160,29 +174,47 @@ const renderPlantRecipes = (
       id: string,
       translations: LocaleMap<PlantProductTranslation> | undefined,
     ) => {
-      const productTranslation = (() => {
+      const product = (() => {
         switch (entity) {
-          case "HerbalAid":
-            return translateMap(getInstanceById("HerbalAid", id)?.translations)
-          case "Elixir":
-            return translateMap(getInstanceById("Elixir", id)?.translations)
-          case "Poison":
-            return translateMap(getInstanceById("Poison", id)?.translations)
+          case "HerbalAid": {
+            const herbalAid = getInstanceById("HerbalAid", id)
+            return {
+              translation: translateMap(herbalAid?.translations),
+              effectTypes: herbalAid?.types,
+            }
+          }
+          case "Elixir": {
+            const elixir = getInstanceById("Elixir", id)
+            return { translation: translateMap(elixir?.translations), effectTypes: undefined }
+          }
+          case "Poison": {
+            const poison = getInstanceById("Poison", id)
+            const effectTypes =
+              poison?.source_type.kind === "PlantPoison"
+                ? poison.source_type.PlantPoison.effect_types
+                : poison?.source_type.kind === "AlchemicalPoison"
+                  ? poison.source_type.AlchemicalPoison.effect_types
+                  : undefined
+            return {
+              translation: translateMap(poison?.translations),
+              effectTypes,
+            }
+          }
         }
       })()
-      if (productTranslation === undefined) {
+      if (product.translation === undefined) {
         return MISSING_VALUE
       }
 
-      const name = replaceTextIfNeeded(translations, productTranslation.name).run({
+      const name = replaceTextIfNeeded(translations, product.translation.name).run({
         translateMap,
         responsiveTextSize,
       })
       const linkedName = attributedInstance(name, entity, id, { context: '"plant-recipe"' })
-      return appendNoteIfNeeded(translations, linkedName).run({
-        translateMap,
-        responsiveTextSize,
-      })
+      return appendEffectTypeIcons(
+        appendNoteIfNeeded(translations, linkedName).run({ translateMap, responsiveTextSize }),
+        product.effectTypes,
+      )
     }
 
     for (const recipe of recipes) {
@@ -234,10 +266,17 @@ const renderPlantRecipes = (
         case "Indefinite": {
           const description =
             translateMap(recipe.Indefinite.translations)?.description ?? MISSING_VALUE
+          const descriptionWithEffectTypes = appendEffectTypeIcons(
+            description,
+            recipe.Indefinite.types,
+          )
           if (recipe.Indefinite.group === undefined) {
-            sections.push({ recipes: [description] })
+            sections.push({ recipes: [descriptionWithEffectTypes] })
           } else {
-            addToGroup(getPlantRecipeGroupLabel(recipe.Indefinite.group, translate), description)
+            addToGroup(
+              getPlantRecipeGroupLabel(recipe.Indefinite.group, translate),
+              descriptionWithEffectTypes,
+            )
           }
           break
         }
@@ -426,7 +465,9 @@ const renderPlantDistribution = (
 
 const renderPlantEffect = (effect: PlantEffect | undefined): StdReader<string, "t" | "tm"> =>
   translateMapR(effect?.translations).thenW(translation =>
-    translation === undefined ? translateR("none") : Reader.of(translation.description),
+    translation === undefined
+      ? translateR("none")
+      : Reader.of(appendEffectTypeIcons(translation.description, effect?.types)),
   )
 
 const renderPlantEffects = (
@@ -504,7 +545,7 @@ const renderPlantPreservation = (
   preservationId: string,
 ): StdReader<string, "t" | "tm" | "fn" | "f" | "ibi" | "rts", "HerbalPreservation"> => {
   const preservationR: StdReader<
-    { name: string; longevity: HerbalPreservationLongevity } | undefined,
+    { name: string; longevity: HerbalPreservationLongevity; effectTypes: EffectType[] } | undefined,
     "tm" | "ibi",
     "HerbalPreservation"
   > = Reader.asks(({ getInstanceById, translateMap }) => {
@@ -516,6 +557,7 @@ const renderPlantPreservation = (
     return {
       name: translateMap(preservation.translations)?.name ?? MISSING_VALUE,
       longevity: preservation.longevity,
+      effectTypes: preservation.types,
     }
   })
 
@@ -528,7 +570,7 @@ const renderPlantPreservation = (
       context: '"plant-preservation"',
     })
     return renderHerbalPreservationLongevity(preservation.longevity).map(
-      longevity => `${linkedName} ${longevity}`,
+      longevity => appendEffectTypeIcons(`${linkedName} ${longevity}`, preservation.effectTypes),
     )
   })
 }
