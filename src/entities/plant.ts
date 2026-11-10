@@ -20,6 +20,10 @@ import type {
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { StdEnv, StdReader } from "../env.js"
 import type { LocaleMap } from "../helpers/translate.js"
+import type {
+  RawEntityDescriptionSectionContent,
+  RawNestedDefinitionListEntityDescriptionSection,
+} from "../rawEntityDescription.js"
 import { renderDiceR } from "./partial/dice.js"
 import { attributedInstance } from "./partial/markdown.js"
 import { renderMathOperationR } from "./partial/mathOperation.js"
@@ -127,7 +131,11 @@ const getPlantRecipeGroupLabel = (
 
 const renderPlantRecipes = (
   recipes: PlantRecipe[] | undefined,
-): StdReader<string, "t" | "tm" | "ibi" | "rts", "HerbalAid" | "Elixir" | "Poison"> =>
+): StdReader<
+  string | RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>[],
+  "t" | "tm" | "ibi" | "rts",
+  "HerbalAid" | "Elixir" | "Poison"
+> =>
   Reader.asks(({ translate, translateMap, getInstanceById, responsiveTextSize }) => {
     if (recipes === undefined || recipes.length === 0) {
       return translate("No recipes known")
@@ -236,13 +244,33 @@ const renderPlantRecipes = (
       }
     }
 
-    return sections
-      .map(group =>
-        group.label === undefined
-          ? group.recipes.join(", ")
-          : `*${group.label}:* ${group.recipes.join(", ")}`,
-      )
-      .join("\n\n")
+    let hasRenderedGroups = false
+    const renderedSections: RawEntityDescriptionSectionContent<RawNestedDefinitionListEntityDescriptionSection>[] =
+      []
+    for (const group of sections) {
+      if (group.label === undefined) {
+        renderedSections.push({ type: "plain", text: group.recipes.join(", ") })
+        continue
+      }
+
+      if (hasRenderedGroups) {
+        continue
+      }
+
+      hasRenderedGroups = true
+      renderedSections.push({
+        type: "definitionList",
+        style: "nested",
+        items: sections
+          .filter(
+            (section): section is { label: string; recipes: string[] } =>
+              section.label !== undefined,
+          )
+          .map(section => ({ label: section.label, value: section.recipes.join(", ") })),
+      })
+    }
+
+    return renderedSections
   })
 
 const getPlantRarityLabel = (
@@ -303,7 +331,11 @@ const getPlantOccurrenceNames = (
 
 const renderPlantDistribution = (
   occurences: PlantOccurences,
-): StdReader<string, "t" | "tm" | "ibi" | "lj", "Biome" | "SubBiome" | "BotanicRegion"> =>
+): StdReader<
+  RawNestedDefinitionListEntityDescriptionSection[],
+  "t" | "tm" | "ibi" | "lj",
+  "Biome" | "SubBiome" | "BotanicRegion"
+> =>
   Reader.asks(({ translate, translateMap, getInstanceById, localeJoin }) => {
     const occurrences = occurences.items ?? []
     const biomeIds = new Set<string>()
@@ -380,7 +412,16 @@ const renderPlantDistribution = (
     const regionText =
       generalNote ?? (regions.length === 0 ? translate("none") : regions.join(", "))
 
-    return `\n\n*${translate("Landscape Type")}:* ${landscapeTypes}\n\n*${translate("Regions")}:* ${regionText}`
+    return [
+      {
+        type: "definitionList",
+        style: "nested",
+        items: [
+          { label: translate("Landscape Type"), value: landscapeTypes },
+          { label: translate("Regions"), value: regionText },
+        ],
+      },
+    ]
   })
 
 const renderPlantEffect = (effect: PlantEffect | undefined): StdReader<string, "t" | "tm"> =>
@@ -393,7 +434,7 @@ const renderPlantEffects = (
   inhalation: PlantEffect | undefined,
   ingestion: PlantEffect | undefined,
   recipes: PlantRecipe[] | undefined,
-): StdReader<string, "t" | "tm"> =>
+): StdReader<RawNestedDefinitionListEntityDescriptionSection[], "t" | "tm"> =>
   translateFnR.thenW(translate =>
     Reader.traverse(
       [renderPlantEffect(touch), renderPlantEffect(inhalation), renderPlantEffect(ingestion)],
@@ -404,7 +445,29 @@ const renderPlantEffects = (
           ? translate("No plant recipes known")
           : translate("See plant recipes")
 
-      return `\n\n*${translate("Raw")}:*\n\n*${translate("Plant Touch")}:* ${touchEffect}\n\n*${translate("Plant Inhalation")}:* ${inhalationEffect}\n\n*${translate("Plant Ingestion")}:* ${ingestionEffect}\n\n*${translate("Processed")}:* ${processed}`
+      return [
+        {
+          type: "definitionList",
+          style: "nested",
+          items: [
+            {
+              label: translate("Raw"),
+              value: [
+                {
+                  type: "definitionList",
+                  style: "hidden",
+                  items: [
+                    { label: translate("Plant Touch"), value: touchEffect },
+                    { label: translate("Plant Inhalation"), value: inhalationEffect },
+                    { label: translate("Plant Ingestion"), value: ingestionEffect },
+                  ],
+                },
+              ],
+            },
+            { label: translate("Processed"), value: processed },
+          ],
+        },
+      ]
     }),
   )
 
@@ -472,17 +535,32 @@ const renderPlantPreservation = (
 
 const renderPlantLongevity = (
   longevity: PlantLongevity | undefined,
-): StdReader<string, "t" | "tm" | "fn" | "ibi" | "f" | "rts", "HerbalPreservation"> =>
+): StdReader<
+  RawNestedDefinitionListEntityDescriptionSection[],
+  "t" | "tm" | "fn" | "ibi" | "f" | "rts",
+  "HerbalPreservation"
+> =>
   translateMapR(longevity?.translations).thenW(translation =>
     translateFnR.thenW(translate =>
       Reader.traverse(longevity?.preservations ?? [], renderPlantPreservation).map(
         preservations => {
           const raw = translation?.raw ?? translate("Raw plant longevity fallback")
-          const processed = [translation?.preserved, ...preservations].filter(
+          const processed = [...preservations, translation?.preserved].filter(
             (value): value is string => value !== undefined,
           )
 
-          return `\n\n*${translate("Raw")}:* ${raw}${processed.length === 0 ? "" : `\n\n*${translate("Processed")}:* ${processed.join(", ")}`}`
+          return [
+            {
+              type: "definitionList",
+              style: "nested",
+              items: [
+                { label: translate("Raw"), value: raw },
+                processed.length === 0
+                  ? undefined
+                  : { label: translate("Processed"), value: processed.join(", ") },
+              ],
+            },
+          ]
         },
       ),
     ),
@@ -559,7 +637,7 @@ export const getPlantEntityDescription = createEntityDescriptionCreator<
           },
           {
             label: translate("Recipes"),
-            value: renderPlantRecipes(entry.content.recipes).map(recipes => `\n${recipes}`),
+            value: renderPlantRecipes(entry.content.recipes),
           },
           {
             label: translate("Remedies and Traditions"),
@@ -572,6 +650,7 @@ export const getPlantEntityDescription = createEntityDescriptionCreator<
         ],
       },
     ],
+    badges: entry.content.types.map(type => ({ type: "effectType", raw: type.kind })),
     references: entry.content.src,
   }
 })
