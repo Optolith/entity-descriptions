@@ -29,6 +29,8 @@ import { getEquipmentEntityDescription, getItemEntityDescription } from "./entit
 import { getEquipmentPackageEntityDescription } from "./entities/equipmentPackage.js"
 import { getExperienceLevelEntityDescription } from "./entities/experienceLevel.js"
 import { getFocusRuleEntityDescription } from "./entities/focusRule.js"
+import { getHerbalAidEntityDescription } from "./entities/plant.js"
+import { getHerbalPreservationEntityDescription } from "./entities/plant.js"
 import { getInfluenceEntityDescription } from "./entities/influence.js"
 import { getItemComponentEntityDescription } from "./entities/itemComponent.js"
 import {
@@ -43,6 +45,7 @@ import type {
 } from "./entities/partial/prerequisites/single/activatable.js"
 import { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
+import { getPlantEntityDescription } from "./entities/plant.js"
 import { getPoisonEntityDescription } from "./entities/poison.js"
 import {
   getProfessionEntityDescription,
@@ -226,6 +229,8 @@ const registeredEntityDescriptionCreators = {
   Elixir: getElixirEntityDescription,
   EquipmentOfBlessedOnes: getEquipmentEntityDescription,
   GemOrPreciousStone: getEquipmentEntityDescription,
+  HerbalAid: getHerbalAidEntityDescription,
+  HerbalPreservation: getHerbalPreservationEntityDescription,
   IlluminationLightSource: getEquipmentEntityDescription,
   IlluminationRefillOrSupply: getEquipmentEntityDescription,
   ItemComponent: getItemComponentEntityDescription,
@@ -237,6 +242,7 @@ const registeredEntityDescriptionCreators = {
   MusicalInstrument: getEquipmentEntityDescription,
   Newspaper: getEquipmentEntityDescription,
   OrienteeringAid: getEquipmentEntityDescription,
+  Plant: getPlantEntityDescription,
   Poison: getPoisonEntityDescription,
   RopeOrChain: getEquipmentEntityDescription,
   Stationery: getEquipmentEntityDescription,

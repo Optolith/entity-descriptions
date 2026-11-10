@@ -116,6 +116,7 @@ export const getElixirEntityDescription = createEntityDescriptionCreator<
         ],
       },
     ],
+    badges: entry.effect_types?.map(effectType => ({ type: "effectType", raw: effectType.kind })),
     errata: translation.errata,
     references: entry.src,
   }
