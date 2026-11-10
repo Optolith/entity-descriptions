@@ -46,13 +46,14 @@ const renderOptions = (
 ) =>
   translation?.options === undefined
     ? Reader.asks(
-        (env: StdEnv<"rso" | "ibi", RenderedDerivedSelectOptionIdentifier>) =>
+        (env: StdEnv<"rso" | "rsa" | "ibi", RenderedDerivedSelectOptionIdentifier>) =>
           item.options?.map(
             option =>
               renderNameComponentsOptions(
                 true,
                 env.getInstanceById,
                 env.getResolvedSelectOptionById,
+                env.getResolvedSkillApplicationById,
                 id,
                 [option],
               ) ?? MISSING_VALUE,
@@ -65,9 +66,16 @@ const renderSingleCommonnessRatedAdvantageOrDisadvantageName = <
 >(
   entity: E,
   item: SingleCommonnessRatedAdvantageDisadvantage<string>,
-): StdReader<string, "tm" | "lc" | "rso" | "ibi", E | RenderedDerivedSelectOptionIdentifier> =>
+): StdReader<
+  string,
+  "tm" | "lc" | "rso" | "rsa" | "ibi",
+  E | RenderedDerivedSelectOptionIdentifier
+> =>
   translateMapR(item.translations).thenW(commonnessItemTranslation =>
-    customNameR<E, StdEnv<"tm" | "lc" | "rso" | "ibi", RenderedDerivedSelectOptionIdentifier>>(
+    customNameR<
+      E,
+      StdEnv<"tm" | "lc" | "rso" | "rsa" | "ibi", RenderedDerivedSelectOptionIdentifier>
+    >(
       (translation, instance) => {
         if (commonnessItemTranslation?.full !== undefined) {
           return Reader.of(
@@ -122,7 +130,11 @@ const renderSingleCommonnessRatedAdvantageOrDisadvantageName = <
 const renderCommonnessRatedAdvantageOrDisadvantageName = <E extends "Advantage" | "Disadvantage">(
   entity: E,
   item: CommonnessRatedAdvantageDisadvantage<string>,
-): StdReader<string, "tm" | "lc" | "rso" | "ibi", E | RenderedDerivedSelectOptionIdentifier> => {
+): StdReader<
+  string,
+  "tm" | "lc" | "rso" | "rsa" | "ibi",
+  E | RenderedDerivedSelectOptionIdentifier
+> => {
   switch (item.kind) {
     case "Single":
       return renderSingleCommonnessRatedAdvantageOrDisadvantageName(entity, item.Single)
@@ -220,7 +232,11 @@ export const renderCommonnessRatedAdvantagesOrDisadvantages = <
   items: CommonnessRatedAdvantageDisadvantage<string>[] | undefined,
   emptyString: T,
   appendedString?: string,
-): StdReader<string | T, "tm" | "lc" | "ibi" | "rso", E | RenderedDerivedSelectOptionIdentifier> =>
+): StdReader<
+  string | T,
+  "tm" | "lc" | "ibi" | "rso" | "rsa",
+  E | RenderedDerivedSelectOptionIdentifier
+> =>
   (items === undefined || !isNotEmpty(items)) && appendedString === undefined
     ? Reader.of(emptyString)
     : Reader.traverse(items ?? [], item =>
@@ -238,7 +254,7 @@ export const renderCommonnessRatedAdvantagesAndDisadvantages = <T extends string
   emptyString: T,
 ): StdReader<
   string | T,
-  "tm" | "lc" | "ibi" | "rso",
+  "tm" | "lc" | "ibi" | "rso" | "rsa",
   "Advantage" | "Disadvantage" | RenderedDerivedSelectOptionIdentifier
 > =>
   Reader.sequence(

@@ -1,11 +1,13 @@
 import type { TSONDBTypes } from "@optolith/database-schema"
 import type {
+  Cache,
   ResolvedNewSkillApplication,
   ResolvedSelectOption,
   ResolvedSkillUse,
 } from "@optolith/database-schema/cache"
 import type { ActivatableIdentifier, Settings, Skill_ID } from "@optolith/database-schema/gen"
 import type { ReadonlyTSONDB } from "tsondb/readonly"
+import { fromUniformCase } from "tsondb/schema/gen"
 import type { EntityDescriptionCreator } from "./creator.js"
 import { getActivatableEntityDescription } from "./entities/activatable.js"
 import { getAlternativeRuleEntityDescription } from "./entities/alternativeRule.js"
@@ -37,7 +39,10 @@ import {
   getLiturgicalChantEntityDescription,
 } from "./entities/liturgicalChant.js"
 import { getOptionalRuleEntityDescription } from "./entities/optionalRule.js"
-import type { GetResolvedSelectOptionById } from "./entities/partial/prerequisites/single/activatable.js"
+import type {
+  GetResolvedSelectOptionById,
+  GetResolvedSkillApplicationById,
+} from "./entities/partial/prerequisites/single/activatable.js"
 import { ResponsiveTextSize } from "./entities/partial/responsiveText.js"
 import { getPersonalityTraitEntityDescription } from "./entities/personalityTrait.js"
 import { getPlantEntityDescription } from "./entities/plant.js"
@@ -95,7 +100,7 @@ export type TypedCreatorData = {
   getAllResolvedSelectOptions: GetAllResolvedSelectOptions
   getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications
   getAllResolvedSkillUses: GetAllResolvedSkillUses
-} & StdEnv<"f" | "fd" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "rts" | "x">
+} & StdEnv<"f" | "fd" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "rts" | "x" | "rsa">
 
 type TypedCreator<E extends keyof TSONDBTypes["entityMap"]> = EntityDescriptionCreator<
   E,
@@ -303,10 +308,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
   database: ReadonlyTSONDB<TSONDBTypes>,
   localeEnv: LocaleEnvironment,
   settings: Settings,
-  getResolvedSelectOptionById: GetResolvedSelectOptionById,
-  getAllResolvedSelectOptions: GetAllResolvedSelectOptions,
-  getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications,
-  getAllResolvedSkillUses: GetAllResolvedSkillUses,
+  cache: Cache,
   entityName: E,
   instance: string | { id: string; content: TSONDBTypes["entityMap"][E] },
   publicationOptions: PublicationOptions,
@@ -324,6 +326,27 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
     return undefined
   }
 
+  const getResolvedSelectOptionById: GetResolvedSelectOptionById = (id, selectOptionId) =>
+    cache.activatableSelectOptions[id.kind]?.[fromUniformCase(id)]?.find(
+      opt =>
+        opt.id.kind === selectOptionId.kind &&
+        fromUniformCase(opt.id) === fromUniformCase(selectOptionId),
+    )
+
+  const getAllResolvedSelectOptions: GetAllResolvedSelectOptions = id =>
+    cache.activatableSelectOptions[id.kind]?.[fromUniformCase(id)] ?? []
+
+  const getAllResolvedNewSkillApplications: GetAllResolvedNewSkillApplications = id =>
+    cache.newApplicationsAndUses.newApplications[id] ?? []
+
+  const getAllResolvedSkillUses: GetAllResolvedSkillUses = id =>
+    cache.newApplicationsAndUses.uses[id] ?? []
+
+  const getResolvedSkillApplication: GetResolvedSkillApplicationById = (skillId, id) =>
+    cache.skillApplications[skillId]?.find(
+      app => app.id.kind === id.kind && fromUniformCase(app.id) === fromUniformCase(id),
+    )
+
   return creator(
     {
       getInstanceById: database.getInstanceOfEntityById.bind(database),
@@ -335,6 +358,7 @@ export const getEntityDescription = <E extends AvailableCreatorEntity>(
       getAllResolvedSelectOptions,
       getAllResolvedNewSkillApplications,
       getAllResolvedSkillUses,
+      getResolvedSkillApplicationById: getResolvedSkillApplication,
       ...localeEnv,
       localeJoin: localeEnv.join,
       localeCompare: localeEnv.compare,
