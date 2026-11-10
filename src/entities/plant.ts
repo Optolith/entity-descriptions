@@ -733,6 +733,7 @@ export const getHerbalAidEntityDescription = createEntityDescriptionCreator<
         ],
       },
     ],
+    badges: entry.types.map(effectType => ({ type: "effectType", raw: effectType.kind })),
     references: entry.src,
   }
 })
@@ -773,6 +774,7 @@ export const getHerbalPreservationEntityDescription = createEntityDescriptionCre
         ],
       },
     ],
+    badges: entry.types.map(effectType => ({ type: "effectType", raw: effectType.kind })),
     references: entry.src,
   }
 })
