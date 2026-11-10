@@ -25,8 +25,7 @@ import type {
   Weighted,
 } from "@optolith/database-schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
-import type { EnvMap, StdEnv, StdReader } from "../env.js"
-import type { GetAllChildInstancesForParent, GetInstanceById } from "../helpers/getTypes.js"
+import type { StdEnv, StdReader } from "../env.js"
 import type { TranslationKeysWithoutParams } from "../helpers/translate.js"
 import type {
   RawDefinitionListEntityDescriptionSectionItem,
@@ -43,10 +42,7 @@ import {
   attributedName,
   attributedNameFromSafeTranslation,
 } from "./partial/markdown.js"
-import type {
-  GetResolvedSelectOptionById,
-  RenderedDerivedSelectOptionIdentifier,
-} from "./partial/prerequisites/single/activatable.js"
+import type { RenderedDerivedSelectOptionIdentifier } from "./partial/prerequisites/single/activatable.js"
 import { getProfessionName } from "./partial/professions.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 import { attributedCustomNameR, localeSortR, translateR } from "./partial/reader.js"
@@ -439,27 +435,26 @@ const renderCulturalPackage = (
  */
 export const getCultureEntityDescription = createEntityDescriptionCreator<
   "Culture",
-  {
-    getInstanceById: GetInstanceById<
-      | "Publication"
-      | "Advantage"
-      | "Disadvantage"
-      | "Skill"
-      | "Language"
-      | "LanguageSpecialization"
-      | "Script"
-      | "SocialStatus"
-      | "ProfessionVariant"
-      | "MagicalTradition"
-      | "BlessedTradition"
-      | RenderedDerivedSelectOptionIdentifier
-    >
-    getChildInstancesForInstanceId: GetAllChildInstancesForParent<"ProfessionVersion">
-    getResolvedSelectOptionById: GetResolvedSelectOptionById
-  }
+  StdEnv<
+    "t" | "tm" | "lc" | "lj" | "rso" | "rsa" | "ibi" | "acibp",
+    | "Publication"
+    | "Advantage"
+    | "Disadvantage"
+    | "Skill"
+    | "Language"
+    | "LanguageSpecialization"
+    | "Script"
+    | "SocialStatus"
+    | "ProfessionVariant"
+    | "MagicalTradition"
+    | "BlessedTradition"
+    | RenderedDerivedSelectOptionIdentifier,
+    never,
+    "ProfessionVersion"
+  >
 >(
   (
-    { getInstanceById, getChildInstancesForInstanceId, getResolvedSelectOptionById },
+    env,
     { translate, translateMap, compare: localeCompare, join: localeJoin },
     { content: entry },
   ): RawEntityDescription | undefined => {
@@ -468,15 +463,6 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
     if (translation === undefined) {
       return undefined
     }
-
-    const env = {
-      translate,
-      translateMap,
-      localeCompare,
-      getInstanceById,
-      getResolvedSelectOptionById,
-      getChildInstancesForInstanceId,
-    } satisfies Partial<EnvMap>
 
     const { text: culturePackageText, apValue: culturalPackageApValue } = renderCulturalPackage(
       entry.cultural_package,
@@ -494,7 +480,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
               value: localeJoin(
                 entry.language
                   .map(lang => {
-                    const language = getInstanceById("Language", lang.id)
+                    const language = env.getInstanceById("Language", lang.id)
                     const languageTranslation = translateMap(language?.translations)
 
                     if (language === undefined || languageTranslation === undefined) {
@@ -513,7 +499,8 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                             ...(lang.specializations?.map(
                               specId =>
                                 translateMap(
-                                  getInstanceById("LanguageSpecialization", specId)?.translations,
+                                  env.getInstanceById("LanguageSpecialization", specId)
+                                    ?.translations,
                                 )?.name,
                             ) ?? []),
                           ]
@@ -534,7 +521,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
                   ? translate("none")
                   : (() => {
                       const processedScripts = entry.script.map((scriptId): [string, number] => {
-                        const script = getInstanceById("Script", scriptId)
+                        const script = env.getInstanceById("Script", scriptId)
                         const scriptTranslation = translateMap(script?.translations)
 
                         if (script === undefined || scriptTranslation === undefined) {
@@ -602,7 +589,7 @@ export const getCultureEntityDescription = createEntityDescriptionCreator<
               value: entry.social_status
                 .map(
                   status =>
-                    translateMap(getInstanceById("SocialStatus", status)?.translations)?.name ??
+                    translateMap(env.getInstanceById("SocialStatus", status)?.translations)?.name ??
                     MISSING_VALUE,
                 )
                 .toSorted(localeCompare)

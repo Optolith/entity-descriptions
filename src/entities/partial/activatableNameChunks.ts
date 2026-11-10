@@ -9,6 +9,7 @@ import { assertExhaustive } from "@elyukai/utils/typeSafety"
 import type {
   ResolvedSelectOption,
   ResolvedSelectOptionIdentifier,
+  ResolvedSkillApplicationIdentifier,
 } from "@optolith/database-schema/cache"
 import type {
   ActivatableIdentifier,
@@ -22,6 +23,7 @@ import type { LocaleMap, Translate, TranslateMap } from "../../helpers/translate
 import { attributedInstance, attributedNameFromText } from "./markdown.js"
 import type {
   GetResolvedSelectOptionById,
+  GetResolvedSkillApplicationById,
   RenderedDerivedSelectOptionIdentifier,
 } from "./prerequisites/single/activatable.js"
 import { MISSING_VALUE } from "./unknown.js"
@@ -525,11 +527,13 @@ export const renderNameComponentsOptions = (
   displayedInProfession: boolean,
   getInstanceById: GetInstanceById<RenderedDerivedSelectOptionIdentifier>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getResolvedSkillApplication: GetResolvedSkillApplicationById,
   id: ActivatableIdentifier,
   options:
     | (
         | ResolvedSelectOptionIdentifier
         | CommonnessSelectOptionIdentifier
+        | ResolvedSkillApplicationIdentifier
         | Case<"Text", LocaleMap<string> | string>
         | Case<"Select">
       )[]
@@ -537,7 +541,7 @@ export const renderNameComponentsOptions = (
 ): ActivatableNameChunk | [ActivatableNameChunk, ActivatableNameChunk] | undefined => {
   const arr =
     options
-      ?.map(optionId => {
+      ?.map((optionId, optionIndex) => {
         if (optionId.kind === "Select") {
           return undefined
         }
@@ -547,8 +551,19 @@ export const renderNameComponentsOptions = (
         const optTranslations: ResolvedSelectOption["content"]["translations"] | undefined = (
           optionId.kind === "SkillGroup"
             ? getInstanceById(optionId)
-            : (getResolvedSelectOptionById(id, optionId)?.content ??
-              (optionId.kind === "General" ? undefined : getInstanceById(optionId)))
+            : optionId.kind === "NewSkillApplication"
+              ? (() => {
+                  const skillId = options.find(
+                    (opt, optIndex): opt is Case<"Skill", string> =>
+                      optIndex < optionIndex && opt.kind === "Skill",
+                  )
+                  if (skillId === undefined) {
+                    return undefined
+                  }
+                  return getResolvedSkillApplication(skillId.Skill, optionId)?.content
+                })()
+              : (getResolvedSelectOptionById(id, optionId)?.content ??
+                (optionId.kind === "General" ? undefined : getInstanceById(optionId)))
         )?.translations
 
         return optTranslations === undefined
@@ -593,6 +608,7 @@ export const getNameComponents = <T>(
     | (
         | ResolvedSelectOptionIdentifier
         | CommonnessSelectOptionIdentifier
+        | ResolvedSkillApplicationIdentifier
         | Case<"Text", LocaleMap<string> | string>
         | Case<"Select">
       )[]
@@ -603,6 +619,7 @@ export const getNameComponents = <T>(
   getBaseName: (translation: T) => string,
   getInstanceById: GetInstanceById<RenderedDerivedSelectOptionIdentifier>,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getResolvedSkillApplication: GetResolvedSkillApplicationById,
   displayedInProfession: boolean,
 ): ActivatableNameComponents => {
   const nameBuilderRulesWithDefaults: Required<ActivatableNameBuilderRules> =
@@ -613,6 +630,7 @@ export const getNameComponents = <T>(
     displayedInProfession,
     getInstanceById,
     getResolvedSelectOptionById,
+    getResolvedSkillApplication,
     id,
     options,
   )

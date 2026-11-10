@@ -2,14 +2,10 @@ import { mapNullable } from "@elyukai/utils/nullable"
 import { sign } from "@elyukai/utils/string/number"
 import type { ActivatableIdentifier, RatedIdentifier } from "@optolith/database-schema/gen"
 import { combatDLItem, createEntityDescriptionCreator } from "../creator.js"
-import type { EnvMap } from "../env.js"
-import type { GetInstanceById } from "../helpers/getTypes.js"
+import type { StdEnv } from "../env.js"
 import { renderAlternativeNames, renderLaboratoryLevel } from "./partial/herbary.js"
 import { printPlainGeneralPrerequisites } from "./partial/prerequisites/index.js"
-import type {
-  GetResolvedSelectOptionById,
-  RenderedDerivedSelectOptionIdentifier,
-} from "./partial/prerequisites/single/activatable.js"
+import type { RenderedDerivedSelectOptionIdentifier } from "./partial/prerequisites/single/activatable.js"
 import { parensIf } from "./partial/rated/activatable/parensIf.js"
 
 /**
@@ -17,44 +13,33 @@ import { parensIf } from "./partial/rated/activatable/parensIf.js"
  */
 export const getElixirEntityDescription = createEntityDescriptionCreator<
   "Elixir",
-  {
-    getInstanceById: GetInstanceById<
-      | "Publication"
-      | "DerivedCharacteristic"
-      | ActivatableIdentifier["kind"]
-      | RatedIdentifier["kind"]
-      | "Race"
-      | "Culture"
-      | "State"
-      | "Enhancement"
-      | "PactCategory"
-      | "PactDomain"
-      | "SocialStatus"
-      | "Aspect"
-      | "Property"
-      | "PersonalityTrait"
-      | "Blessing"
-      | "Cantrip"
-      | RenderedDerivedSelectOptionIdentifier
-    >
-    getResolvedSelectOptionById: GetResolvedSelectOptionById
-  }
->(({ getInstanceById, getResolvedSelectOptionById }, locale, { content: entry }) => {
+  StdEnv<
+    "t" | "tm" | "lc" | "lj" | "rso" | "rsa" | "ibi",
+    | "Publication"
+    | "DerivedCharacteristic"
+    | ActivatableIdentifier["kind"]
+    | RatedIdentifier["kind"]
+    | "Race"
+    | "Culture"
+    | "State"
+    | "Enhancement"
+    | "PactCategory"
+    | "PactDomain"
+    | "SocialStatus"
+    | "Aspect"
+    | "Property"
+    | "PersonalityTrait"
+    | "Blessing"
+    | "Cantrip"
+    | RenderedDerivedSelectOptionIdentifier
+  >
+>((env, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
 
   if (translation === undefined) {
     return undefined
   }
-
-  const env = {
-    translate,
-    translateMap,
-    getInstanceById,
-    localeCompare: locale.compare,
-    localeJoin: locale.join,
-    getResolvedSelectOptionById,
-  } satisfies Partial<EnvMap>
 
   return {
     title: translation.name,

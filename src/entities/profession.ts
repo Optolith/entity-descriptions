@@ -83,6 +83,7 @@ import {
 } from "./partial/prerequisites/index.js"
 import {
   GetResolvedSelectOptionById,
+  type GetResolvedSkillApplicationById,
   type RenderedDerivedSelectOptionIdentifier,
 } from "./partial/prerequisites/single/activatable.js"
 import {
@@ -961,6 +962,7 @@ const getSpecialAbilityNameComponents = (
     | RenderedDerivedSelectOptionIdentifier
   >,
   getResolvedSelectOptionById: GetResolvedSelectOptionById,
+  getResolvedSkillApplication: GetResolvedSkillApplicationById,
   translate: Translate,
   translateMap: TranslateMap,
   option: SingleProfessionSpecialAbility,
@@ -1009,6 +1011,7 @@ const getSpecialAbilityNameComponents = (
     t => t.name,
     getInstanceById,
     getResolvedSelectOptionById,
+    getResolvedSkillApplication,
     true,
   )
 }
@@ -1039,8 +1042,9 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
       localeJoin,
       getInstanceById,
       getResolvedSelectOptionById,
+      getResolvedSkillApplicationById: getResolvedSkillApplication,
     }: StdEnv<
-      "t" | "tm" | "lc" | "lj" | "ibi" | "rso",
+      "t" | "tm" | "lc" | "lj" | "ibi" | "rso" | "rsa",
       | ProfessionSpecialAbilityIdentifier["kind"]
       | SkillWithEnhancementsIdentifier["kind"]
       | RenderedDerivedSelectOptionIdentifier
@@ -1050,6 +1054,7 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
           const chunk = getSpecialAbilityNameComponents(
             getInstanceById,
             getResolvedSelectOptionById,
+            getResolvedSkillApplication,
             translate,
             translateMap,
             specialAbility.Constant,
@@ -1062,6 +1067,7 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
             getSpecialAbilityNameComponents(
               getInstanceById,
               getResolvedSelectOptionById,
+              getResolvedSkillApplication,
               translate,
               translateMap,
               option,
@@ -1103,7 +1109,7 @@ const renderSpecialAbilityName = (specialAbility: ProfessionSpecialAbility) =>
 const renderSpecialAbilities = (specialAbilities: SpecialAbilities) =>
   Reader.sequence<
     StdEnv<
-      "f" | "t" | "tm" | "lj" | "lc" | "ibi" | "rso",
+      "f" | "t" | "tm" | "lj" | "lc" | "ibi" | "rso" | "rsa",
       | "Skill"
       | "SkillGroup"
       | ProfessionSpecialAbilityIdentifier["kind"]
@@ -1554,7 +1560,7 @@ const renderProfessionVariantText = (
     ? Reader.of(translation.full_text)
     : Reader.sequence<
         StdEnv<
-          "f" | "t" | "tm" | "lc" | "lj" | "ibi" | "rso" | "ai",
+          "f" | "t" | "tm" | "lc" | "lj" | "ibi" | "rso" | "rsa" | "ai",
           | RatedIdentifier["kind"]
           | MagicalActionIdentifier["kind"]
           | ActivatableIdentifier["kind"]
@@ -1795,7 +1801,7 @@ const renderProfessionVariants = (professionPackages: NonEmptyArray<PreparedProf
       )
 
 type ProfessionEnv = StdEnv<
-  "ibi" | "rso" | "ai" | "acibp" | "x",
+  "ibi" | "rso" | "rsa" | "ai" | "acibp" | "x",
   | "Publication"
   | "ExperienceLevel"
   | "Advantage"
@@ -1824,6 +1830,7 @@ const getRawProfessionVersionEntityDescription: FlatRawEntityDescriptionCreator<
     getAllInstances,
     getChildInstancesForInstanceId,
     getResolvedSelectOptionById,
+    getResolvedSkillApplicationById: getResolvedSkillApplication,
     settings,
   },
   locale,
@@ -1851,6 +1858,7 @@ const getRawProfessionVersionEntityDescription: FlatRawEntityDescriptionCreator<
     getAllInstances,
     getChildInstancesForInstanceId,
     getResolvedSelectOptionById,
+    getResolvedSkillApplicationById: getResolvedSkillApplication,
   } satisfies Partial<EnvMap>
 
   const professionPackages = prepareProfessionPackages(id).run(env)
