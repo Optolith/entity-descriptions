@@ -18,13 +18,23 @@ import type {
   BannzeichenDuration,
   BannzeichenImprovementCost,
   BannzeichenOption,
+  BannzeichenPerformanceParameters,
+  CursePerformanceParameters,
+  DominationRitualPerformanceParameters,
+  ElvenMagicalSongPerformanceParameters,
   FamiliarsTrickPerformanceParameters,
   FamiliarsTrickProperty,
+  GeodeRitualPerformanceParameters,
+  GoblinRitualPerformanceParameters,
+  JesterTrickPerformanceParameters,
+  MagicalDancePerformanceParameters,
+  MagicalMelodyPerformanceParameters,
   MagicalRuneCost,
   MagicalRuneCraftingTime,
   MagicalRuneDuration,
   MagicalRuneImprovementCost,
   MagicalRuneOption,
+  MagicalRunePerformanceParameters,
   MagicalTradition_ID,
   OldParameterBySpeed,
   Property_ID,
@@ -32,6 +42,7 @@ import type {
   SingleBannzeichenCost,
   SpellworkTraditions,
   Tribe_ID,
+  ZibiljaRitualPerformanceParameters,
 } from "@optolith/database-schema/gen"
 import { Case } from "tsondb/schema/gen"
 import { createEntityDescriptionCreator } from "../creator.js"
@@ -518,6 +529,14 @@ export const getRitualEntityDescription = createEntityDescriptionCreator<
   },
 )
 
+export const renderCursePerformanceParameters = (
+  parameters: CursePerformanceParameters,
+): StdReader<{ cost: string; duration: string }, "eu" | "f" | "lj" | "nms" | "rts" | "t" | "tm"> =>
+  Reader.asks(env => ({
+    cost: renderMagicalActionCost(parameters.cost).run(env),
+    duration: renderOneTimeDuration(parameters.duration).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for a curse.
  */
@@ -546,8 +565,7 @@ export const getCurseEntityDescription = createEntityDescriptionCreator<
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const cost = renderMagicalActionCost(entry.parameters.cost).run(env)
-  const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
+  const { cost, duration } = renderCursePerformanceParameters(entry.parameters).run(env)
 
   return {
     title: translation.name,
@@ -601,6 +619,13 @@ const renderMagicalActionSkill = (
     ),
   }))
 
+export const renderElvenMagicalSongPerformanceParameters = (
+  parameters: ElvenMagicalSongPerformanceParameters,
+): StdReader<{ cost: string }, "eu" | "f" | "lj" | "nms" | "rts" | "t" | "tm"> =>
+  Reader.asks(env => ({
+    cost: renderNonModifiableOneTimeCost(parameters.cost, false).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for an Elven magical song.
  */
@@ -630,7 +655,7 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const cost = renderNonModifiableOneTimeCost(entry.parameters.cost, false).run(env)
+  const { cost } = renderElvenMagicalSongPerformanceParameters(entry.parameters).run(env)
 
   return {
     title: translation.name,
@@ -658,6 +683,18 @@ export const getElvenMagicalSongEntityDescription = createEntityDescriptionCreat
   }
 })
 
+export const renderDominationRitualPerformanceParameters = (
+  parameters: DominationRitualPerformanceParameters,
+): StdReader<
+  { cost: string; duration: string },
+  "f" | "t" | "tm" | "rts" | "eu" | "ibi",
+  "SkillModificationLevel"
+> =>
+  Reader.asks(env => ({
+    cost: renderModifiableOneTimeCost(parameters.cost).run({ ...env, speed: Speed.Slow }),
+    duration: renderOneTimeDuration(parameters.duration).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for a domination ritual.
  */
@@ -681,13 +718,11 @@ export const getDominationRitualEntityDescription = createEntityDescriptionCreat
     translateMap,
     format,
     getInstanceById,
-    speed: Speed.Slow,
     energyUnit: "ArcaneEnergy",
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const cost = renderModifiableOneTimeCost(entry.parameters.cost).run(env)
-  const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
+  const { cost, duration } = renderDominationRitualPerformanceParameters(entry.parameters).run(env)
 
   return {
     title: translation.name,
@@ -740,6 +775,14 @@ const renderMusicTradition = (
     )?.join(", ") ?? MISSING_VALUE,
 })
 
+export const renderMagicalDanceOrMelodyPerformanceParameters = (
+  parameters: MagicalDancePerformanceParameters | MagicalMelodyPerformanceParameters,
+): StdReader<{ cost: string; duration: string }, "eu" | "f" | "lj" | "nms" | "rts" | "t" | "tm"> =>
+  Reader.asks(env => ({
+    duration: renderMusicDuration(parameters.duration).run(env),
+    cost: renderMagicalActionCost(parameters.cost).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for a magical dance.
  */
@@ -773,8 +816,9 @@ export const getMagicalDanceEntityDescription = createEntityDescriptionCreator<
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const duration = renderMusicDuration(entry.parameters.duration).run(env)
-  const cost = renderMagicalActionCost(entry.parameters.cost).run(env)
+  const { cost, duration } = renderMagicalDanceOrMelodyPerformanceParameters(entry.parameters).run(
+    env,
+  )
 
   return {
     title: translation.name,
@@ -850,8 +894,9 @@ export const getMagicalMelodyEntityDescription = createEntityDescriptionCreator<
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const duration = renderMusicDuration(entry.parameters.duration).run(env)
-  const cost = renderMagicalActionCost(entry.parameters.cost).run(env)
+  const { cost, duration } = renderMagicalDanceOrMelodyPerformanceParameters(entry.parameters).run(
+    env,
+  )
 
   return {
     title: translation.name,
@@ -1037,7 +1082,7 @@ export const getFamiliarsTrickEntityDescription = createEntityDescriptionCreator
   }
 })
 
-const renderAnimistPowerPerformanceParameters = (
+export const renderAnimistPowerPerformanceParameters = (
   params: AnimistPowerPerformanceParameters,
 ): StdReader<
   {
@@ -1241,6 +1286,27 @@ export const getAnimistPowerEntityDescription = createEntityDescriptionCreator<
   }
 })
 
+export const renderGeodeRitualPerformanceParameters = (
+  parameters: GeodeRitualPerformanceParameters,
+): StdReader<
+  { castingTime: string; cost: string; range: string; duration: string },
+  "eu" | "f" | "lj" | "nms" | "rts" | "t" | "tm"
+> =>
+  Reader.asks(env => ({
+    castingTime: renderSlowSkillNonModifiableCastingTime(parameters.casting_time).run(env),
+    cost: renderMagicalActionCost(parameters.cost).run(env),
+    range: renderNonModifiableRange(
+      parameters.range.kind === "Fixed"
+        ? {
+            kind: "Fixed",
+            Fixed: { ...parameters.range.Fixed, unit: { kind: "Steps" } },
+          }
+        : parameters.range,
+      false,
+    ).run(env),
+    duration: renderOneTimeDuration(parameters.duration).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for a Goede ritual.
  */
@@ -1289,23 +1355,9 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
       responsiveTextSize: ResponsiveTextSize.Full,
     } satisfies Partial<EnvMap>
 
-    const castingTime = renderSlowSkillNonModifiableCastingTime(entry.parameters.casting_time).run(
-      env,
-    )
-
-    const cost = renderMagicalActionCost(entry.parameters.cost).run(env)
-
-    const range = renderNonModifiableRange(
-      entry.parameters.range.kind === "Fixed"
-        ? {
-            kind: "Fixed",
-            Fixed: { ...entry.parameters.range.Fixed, unit: { kind: "Steps" } },
-          }
-        : entry.parameters.range,
-      false,
+    const { castingTime, cost, range, duration } = renderGeodeRitualPerformanceParameters(
+      entry.parameters,
     ).run(env)
-
-    const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
 
     return {
       title: translation.name,
@@ -1358,6 +1410,33 @@ export const getGeodeRitualEntityDescription = createEntityDescriptionCreator<
   },
 )
 
+export const renderJesterTrickPerformanceParameters = (
+  parameters: JesterTrickPerformanceParameters,
+): StdReader<
+  { castingTime: string; cost: string; range: string; duration: string },
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj"
+> =>
+  Reader.asks(env => {
+    const { value: actions, ...castingTimeRest } = parameters.casting_time
+    return {
+      castingTime: renderFastSkillNonModifiableCastingTime({
+        ...castingTimeRest,
+        actions,
+      }).run(env),
+      cost: renderNonModifiableOneTimeCost(parameters.cost, false).run(env),
+      range: renderNonModifiableRange(
+        parameters.range.kind === "Fixed"
+          ? {
+              kind: "Fixed",
+              Fixed: { ...parameters.range.Fixed, unit: { kind: "Steps" } },
+            }
+          : parameters.range,
+        false,
+      ).run(env),
+      duration: renderOneTimeDuration(parameters.duration).run(env),
+    }
+  })
+
 /**
  * Get a JSON representation of the rules text for a jester trick.
  */
@@ -1392,25 +1471,9 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const { value: actions, ...castingTimeRest } = entry.parameters.casting_time
-  const castingTime = renderFastSkillNonModifiableCastingTime({
-    ...castingTimeRest,
-    actions,
-  }).run(env)
-
-  const cost = renderNonModifiableOneTimeCost(entry.parameters.cost, false).run(env)
-
-  const range = renderNonModifiableRange(
-    entry.parameters.range.kind === "Fixed"
-      ? {
-          kind: "Fixed",
-          Fixed: { ...entry.parameters.range.Fixed, unit: { kind: "Steps" } },
-        }
-      : entry.parameters.range,
-    false,
+  const { castingTime, cost, range, duration } = renderJesterTrickPerformanceParameters(
+    entry.parameters,
   ).run(env)
-
-  const duration = renderOneTimeDuration(entry.parameters.duration).run(env)
 
   return {
     title: translation.name,
@@ -1456,6 +1519,48 @@ export const getJesterTrickEntityDescription = createEntityDescriptionCreator<
   }
 })
 
+export const renderGoblinRitualPerformanceParameters = (
+  parameters: GoblinRitualPerformanceParameters,
+): StdReader<
+  { castingTime: string; cost: string; range: string; duration: string },
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj" | "ibi",
+  "SkillModificationLevel"
+> =>
+  Reader.asks(env => {
+    switch (parameters.kind) {
+      case "OneTime": {
+        const { value, unit } = parameters.OneTime.casting_time
+        const renderedCastingTime =
+          unit.kind === "Actions"
+            ? renderFastSkillNonModifiableCastingTime({ actions: value }).run(env)
+            : renderSlowSkillNonModifiableCastingTime({ value, unit }).run(env)
+
+        return {
+          castingTime: renderedCastingTime,
+          cost: renderNonModifiableOneTimeCost(parameters.OneTime.cost, false).run(env),
+          range: renderRange(parameters.OneTime.range).run({ ...env, speed: Speed.Slow }),
+          duration: renderOneTimeDuration(parameters.OneTime.duration).run(env),
+        }
+      }
+      case "Sustained": {
+        const { value, unit } = parameters.Sustained.casting_time
+        const renderedCastingTime =
+          unit.kind === "Actions"
+            ? renderFastSkillNonModifiableCastingTime({ actions: value }).run(env)
+            : renderSlowSkillNonModifiableCastingTime({ value, unit }).run(env)
+
+        return {
+          castingTime: renderedCastingTime,
+          cost: renderNonModifiableSustainedCost(parameters.Sustained.cost).run(env),
+          range: renderRange(parameters.Sustained.range).run({ ...env, speed: Speed.Slow }),
+          duration: renderSustainedDuration(undefined).run(env),
+        }
+      }
+      default:
+        return assertExhaustive(parameters)
+    }
+  })
+
 /**
  * Get a JSON representation of the rules text for a goblin ritual.
  */
@@ -1491,42 +1596,9 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
     responsiveTextSize: ResponsiveTextSize.Full,
   } satisfies Partial<EnvMap>
 
-  const { castingTime, cost, range, duration } = (() => {
-    switch (entry.parameters.kind) {
-      case "OneTime": {
-        const parameters = entry.parameters.OneTime
-        const { value, unit } = parameters.casting_time
-        const renderedCastingTime =
-          unit.kind === "Actions"
-            ? renderFastSkillNonModifiableCastingTime({ actions: value }).run(env)
-            : renderSlowSkillNonModifiableCastingTime({ value, unit }).run(env)
-
-        return {
-          castingTime: renderedCastingTime,
-          cost: renderNonModifiableOneTimeCost(parameters.cost, false).run(env),
-          range: renderRange(parameters.range).run(env),
-          duration: renderOneTimeDuration(parameters.duration).run(env),
-        }
-      }
-      case "Sustained": {
-        const parameters = entry.parameters.Sustained
-        const { value, unit } = parameters.casting_time
-        const renderedCastingTime =
-          unit.kind === "Actions"
-            ? renderFastSkillNonModifiableCastingTime({ actions: value }).run(env)
-            : renderSlowSkillNonModifiableCastingTime({ value, unit }).run(env)
-
-        return {
-          castingTime: renderedCastingTime,
-          cost: renderNonModifiableSustainedCost(parameters.cost).run(env),
-          range: renderRange(parameters.range).run(env),
-          duration: renderSustainedDuration(undefined).run(env),
-        }
-      }
-      default:
-        return assertExhaustive(entry.parameters)
-    }
-  })()
+  const { castingTime, cost, range, duration } = renderGoblinRitualPerformanceParameters(
+    entry.parameters,
+  ).run(env)
 
   return {
     title: translation.name,
@@ -1571,6 +1643,21 @@ export const getGoblinRitualEntityDescription = createEntityDescriptionCreator<
     references: entry.src,
   }
 })
+
+export const renderZibiljaRitualPerformanceParameters = (
+  parameters: ZibiljaRitualPerformanceParameters,
+): StdReader<
+  { castingTime: string; cost: string; range: string; duration: string },
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj" | "ibi",
+  "SkillModificationLevel"
+> =>
+  renderSlowOneTimePerformanceParameters(
+    nestedCastingTime =>
+      renderCastingTime(renderSlowSkillNonModifiableCastingTime, nestedCastingTime).with(
+        nestedEnv => ({ ...nestedEnv, speed: Speed.Slow }),
+      ),
+    parameters,
+  )
 
 /**
  * Get a JSON representation of the rules text for a Zibilja ritual.
@@ -1619,11 +1706,7 @@ export const getZibiljaRitualEntityDescription = createEntityDescriptionCreator<
     },
   } satisfies Partial<EnvMap>
 
-  const { castingTime, cost, range, duration } = renderSlowOneTimePerformanceParameters(
-    nestedCastingTime =>
-      renderCastingTime(renderSlowSkillNonModifiableCastingTime, nestedCastingTime).with(
-        nestedEnv => ({ ...nestedEnv, speed: Speed.Slow }),
-      ),
+  const { castingTime, cost, range, duration } = renderZibiljaRitualPerformanceParameters(
     entry.parameters,
   ).run(env)
 
@@ -1834,6 +1917,19 @@ const renderSplitMagicalRuneParameterTranslation = (
     (fast, slow) => `${slow} / ${fast}`,
   )
 
+export const renderBannzeichenPerformanceParameters = (
+  options: Lazy<BannzeichenOption[]>,
+  parameters: BannzeichenPerformanceParameters,
+): StdReader<
+  { castingTime: string; cost: string; duration: string },
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj" | "lc"
+> =>
+  Reader.asks(env => ({
+    cost: renderBannzeichenCost(options, parameters.cost).run(env),
+    castingTime: renderBannzeichenCraftingTime(parameters.crafting_time).run(env),
+    duration: renderSlowFastCheckResultBasedDuration(parameters.duration).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for a Bannzeichen.
  */
@@ -1874,9 +1970,11 @@ export const getBannzeichenEntityDescription = createEntityDescriptionCreator<
       getChildInstancesForInstanceId("BannzeichenOption", id).map(item => item.content),
     )
 
-    const cost = renderBannzeichenCost(options, entry.parameters.cost).run(env)
-    const craftingTime = renderBannzeichenCraftingTime(entry.parameters.crafting_time).run(env)
-    const duration = renderSlowFastCheckResultBasedDuration(entry.parameters.duration).run(env)
+    const {
+      cost,
+      castingTime: craftingTime,
+      duration,
+    } = renderBannzeichenPerformanceParameters(options, entry.parameters).run(env)
 
     return {
       title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
@@ -1972,6 +2070,19 @@ const renderMagicalRuneImprovementCost = (
   }
 }
 
+export const renderMagicalRunePerformanceParameters = (
+  options: Lazy<MagicalRuneOption[]>,
+  parameters: MagicalRunePerformanceParameters,
+): StdReader<
+  { castingTime: string; cost: string; duration: string },
+  "t" | "tm" | "f" | "rts" | "eu" | "nms" | "lj" | "lc"
+> =>
+  Reader.asks(env => ({
+    cost: renderMagicalRuneCost(options, parameters.cost).run(env),
+    castingTime: renderMagicalRuneCraftingTime(parameters.crafting_time).run(env),
+    duration: renderMagicalRuneDuration(parameters.duration).run(env),
+  }))
+
 /**
  * Get a JSON representation of the rules text for a magical rune.
  */
@@ -2012,9 +2123,11 @@ export const getMagicalRuneEntityDescription = createEntityDescriptionCreator<
       getChildInstancesForInstanceId("MagicalRuneOption", id).map(item => item.content),
     )
 
-    const cost = renderMagicalRuneCost(options, entry.parameters.cost).run(env)
-    const craftingTime = renderMagicalRuneCraftingTime(entry.parameters.crafting_time).run(env)
-    const duration = renderMagicalRuneDuration(entry.parameters.duration).run(env)
+    const {
+      cost,
+      castingTime: craftingTime,
+      duration,
+    } = renderMagicalRunePerformanceParameters(options, entry.parameters).run(env)
 
     return {
       title: (translation.name_in_library ?? translation.name) + parensIf(translation.native_name),
