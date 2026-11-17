@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.46.2](https://github.com/Optolith/entity-descriptions/compare/v0.46.1...v0.46.2) (2026-11-12)
+
+### Features
+
+* **content:** export magical action performance parameter renderers ([e9c0e20](https://github.com/Optolith/entity-descriptions/commit/e9c0e20c6f208ccf2d340bdb668332cb886ba629))
+
 ## [0.46.1](https://github.com/Optolith/entity-descriptions/compare/v0.46.0...v0.46.1) (2026-11-07)
 
 ## [0.46.0](https://github.com/Optolith/entity-descriptions/compare/v0.45.0...v0.46.0) (2026-11-07)
