@@ -21,10 +21,20 @@ import type {
 import { createEntityDescriptionCreator } from "../creator.js"
 import type { StdEnv, StdReader } from "../env.js"
 import type { LocaleMap } from "../helpers/translate.js"
+import type { WrapInNestedReaders } from "../nestedReaders.js"
 import type {
   RawEntityDescriptionSectionContent,
   RawNestedDefinitionListEntityDescriptionSection,
+  RawTextEntityDescription,
 } from "../rawEntityDescription.js"
+import {
+  createArmorTableEntry,
+  createMeleeWeaponTableEntry,
+  createRangedWeaponTableEntry,
+  renderMeleeDamage,
+  renderRangedDamage,
+  type EquipmentEnv,
+} from "./equipment.js"
 import { renderDiceR } from "./partial/dice.js"
 import { attributedInstance } from "./partial/markdown.js"
 import { renderMathOperationR } from "./partial/mathOperation.js"
@@ -743,16 +753,21 @@ const renderHerbalAidLongevity = (
  */
 export const getHerbalAidEntityDescription = createEntityDescriptionCreator<
   "HerbalAid",
-  StdEnv<"f" | "fn" | "t" | "tm" | "ibi" | "lj" | "rts", "HerbalPreservation" | "Weapon" | "Armor">
+  EquipmentEnv<"HerbalPreservation" | "Weapon">,
+  string
 >((_env, locale, { content: entry }) => {
   const { translate, translateMap } = locale
   const translation = translateMap(entry.translations)
+  const { combatUse } = entry
 
   if (translation === undefined) {
     return undefined
   }
 
-  return {
+  const description: WrapInNestedReaders<
+    EquipmentEnv<"HerbalPreservation" | "Weapon">,
+    RawTextEntityDescription
+  > = {
     title: translation.name,
     className: "herbal-aid",
     body: [
@@ -790,6 +805,94 @@ export const getHerbalAidEntityDescription = createEntityDescriptionCreator<
     badges: entry.types.map(effectType => ({ type: "effectType", raw: effectType.kind })),
     references: entry.src,
   }
+
+  if (combatUse === undefined) {
+    return description
+  }
+
+  const combatUseTables = (() => {
+    switch (combatUse.kind) {
+      case "Weapon": {
+        const weapon = _env.getInstanceById("Weapon", combatUse.Weapon)
+        if (weapon === undefined) {
+          throw new Error(`Herbal aid references unknown weapon "${combatUse.Weapon}".`)
+        }
+
+        const equipmentTranslation = translateMap(weapon.translations)
+        const baseProperties = {
+          type: "tabular" as const,
+          title: translation.name,
+          className: "equipment",
+          errata: equipmentTranslation?.errata,
+          references: entry.src,
+        }
+
+        return [
+          ...Object.entries(weapon.melee_uses ?? {}).map(([combatTechniqueId, use]) =>
+            createMeleeWeaponTableEntry(
+              baseProperties,
+              translation.name,
+              "Weapon",
+              weapon,
+              equipmentTranslation ?? {},
+              combatTechniqueId,
+              use,
+              renderMeleeDamage,
+            ),
+          ),
+          ...Object.entries(weapon.ranged_uses ?? {}).map(([combatTechniqueId, use]) =>
+            createRangedWeaponTableEntry(
+              baseProperties,
+              translation.name,
+              "Weapon",
+              weapon,
+              equipmentTranslation ?? {},
+              combatTechniqueId,
+              use,
+              renderRangedDamage,
+            ),
+          ),
+        ]
+      }
+      case "Armor": {
+        const armor = _env.getInstanceById("Armor", combatUse.Armor)
+        if (armor === undefined) {
+          throw new Error(`Herbal aid references unknown armor "${combatUse.Armor}".`)
+        }
+
+        const equipmentTranslation = translateMap(armor.translations)
+        const baseProperties = {
+          type: "tabular" as const,
+          title: translation.name,
+          className: "equipment",
+          errata: equipmentTranslation?.errata,
+          references: entry.src,
+        }
+
+        return [
+          createArmorTableEntry(
+            baseProperties,
+            translation.name,
+            "Armor",
+            armor,
+            equipmentTranslation ?? {},
+            {
+              protection: armor.protection,
+              encumbrance: armor.encumbrance,
+              has_additional_penalties: armor.has_additional_penalties,
+              armorType: armor.armorType,
+              hit_zone: armor.hit_zone,
+              restrictedTo: armor.restrictedTo,
+            },
+          ),
+        ]
+      }
+      default:
+        return assertExhaustive(combatUse)
+    }
+  })()
+
+  return [description, ...combatUseTables]
 })
 
 /**
