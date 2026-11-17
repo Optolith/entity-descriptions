@@ -343,7 +343,7 @@ const getPlantOccurrenceNames = (
   let names: string[]
   switch (regions.kind) {
     case "AllBiomes":
-      names = [translate("all")]
+      names = [translate("everywhere")]
       break
     case "Biomes":
       names = regions.Biomes.map(
@@ -368,14 +368,14 @@ const getPlantOccurrenceNames = (
   return localeJoin(names, "conjunction")
 }
 
-const renderPlantDistribution = (
+const renderPlantOccurrences = (
   occurences: PlantOccurences,
 ): StdReader<
   RawNestedDefinitionListEntityDescriptionSection[],
-  "t" | "tm" | "ibi" | "lj",
+  "t" | "tm" | "ibi" | "lj" | "lc",
   "Biome" | "SubBiome" | "BotanicRegion"
 > =>
-  Reader.asks(({ translate, translateMap, getInstanceById, localeJoin }) => {
+  Reader.asks(({ translate, translateMap, getInstanceById, localeJoin, localeCompare }) => {
     const occurrences = occurences.items ?? []
     const biomeIds = new Set<string>()
     let hasAllBiomes = false
@@ -417,17 +417,21 @@ const renderPlantDistribution = (
       }
     }
 
-    const landscapeTypes =
+    const occurrenceTranslation = translateMap(occurences.translation)
+    const generatedLandscapeTypes =
       biomeIds.size > 0
         ? Array.from(
             biomeIds,
             id => translateMap(getInstanceById("Biome", id)?.translations)?.name ?? MISSING_VALUE,
-          ).join(", ")
+          )
+            .toSorted(localeCompare)
+            .join(", ")
         : hasSpecificBiome
           ? MISSING_VALUE
           : hasAllBiomes
             ? translate("all")
             : translate("none")
+    const landscapeTypes = occurrenceTranslation?.replacement ?? generatedLandscapeTypes
 
     const rarityOrder = ["Common", "Occasional", "RatherRare", "Rare", "VeryRare"]
     const regions = occurrences
@@ -436,20 +440,28 @@ const renderPlantDistribution = (
           rarityOrder.indexOf(left.rarity.kind) - rarityOrder.indexOf(right.rarity.kind),
       )
       .map(occurrence => {
-        const name = getPlantOccurrenceNames(
+        const translation = translateMap(occurrence.translation)
+        const generatedName = getPlantOccurrenceNames(
           occurrence,
           getInstanceById,
           translateMap,
           localeJoin,
           translate,
         )
+        const name = translation?.replacement ?? generatedName
         const rarity = getPlantRarityLabel(occurrence.rarity, translate)
-        const note = translateMap(occurrence.translation)?.note
+        const note = translation?.note
         return `${name} (${rarity}${note === undefined ? "" : `; ${note}`})`
       })
-    const generalNote = translateMap(occurences.translation)?.note
-    const regionText =
-      generalNote ?? (regions.length === 0 ? translate("none") : regions.join(", "))
+    const generatedRegions =
+      regions.length === 0
+        ? occurrenceTranslation?.note === undefined
+          ? translate("none")
+          : undefined
+        : regions.join(", ")
+    const regionText = [generatedRegions, occurrenceTranslation?.note]
+      .filter((text): text is string => text !== undefined)
+      .join("; ")
 
     return [
       {
@@ -569,8 +581,8 @@ const renderPlantPreservation = (
     const linkedName = attributedInstance(preservation.name, "HerbalPreservation", preservationId, {
       context: '"plant-preservation"',
     })
-    return renderHerbalPreservationLongevity(preservation.longevity).map(
-      longevity => appendEffectTypeIcons(`${linkedName} ${longevity}`, preservation.effectTypes),
+    return renderHerbalPreservationLongevity(preservation.longevity).map(longevity =>
+      appendEffectTypeIcons(`${linkedName} ${longevity}`, preservation.effectTypes),
     )
   })
 }
@@ -616,7 +628,7 @@ const renderPlantRemediesAndTraditions = (text: string) => Reader.of(text)
 export const getPlantEntityDescription = createEntityDescriptionCreator<
   "Plant",
   StdEnv<
-    "f" | "fn" | "t" | "tm" | "ibi" | "lj" | "rts",
+    "f" | "fn" | "t" | "tm" | "ibi" | "lj" | "lc" | "rts",
     | "Language"
     | "HerbalAid"
     | "Elixir"
@@ -650,7 +662,7 @@ export const getPlantEntityDescription = createEntityDescriptionCreator<
               },
           {
             label: translate("Distribution"),
-            value: renderPlantDistribution(entry.content.occurences),
+            value: renderPlantOccurrences(entry.content.occurences),
           },
           {
             label: translate("Search Difficulty"),
