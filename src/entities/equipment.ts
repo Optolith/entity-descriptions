@@ -30,6 +30,7 @@ import type {
   CostRange,
   DefaultEquipmentCategoryTypeRules,
   Encumbrance,
+  EntityMap,
   EquipmentCategory,
   EquipmentCategoryTranslation,
   EquipmentIdentifier,
@@ -372,7 +373,7 @@ const renderAmmunition = (
     ? "—"
     : (attributedName(translateMap, getInstanceById, "equipment", ammunition) ?? MISSING_VALUE)
 
-const renderMeleeDamage = (damage: MeleeDamage) => renderDiceAndFlatR(damage.dice, damage.flat)
+export const renderMeleeDamage = (damage: MeleeDamage) => renderDiceAndFlatR(damage.dice, damage.flat)
 
 /**
  * Render combat values of a ranged weapon.
@@ -422,7 +423,7 @@ export const renderRangedWeapon = <Damage>(
   }
 }
 
-const renderRangedDamage = (damage: RangedDamage) => {
+export const renderRangedDamage = (damage: RangedDamage) => {
   switch (damage.kind) {
     case "Default":
       return renderDiceAndFlatR(damage.Default.dice, damage.Default.flat)
@@ -1863,7 +1864,7 @@ const renderAdditionalPenalties = (
   }
 }
 
-const createArmorTableEntry = (
+export const createArmorTableEntry = (
   baseProperties: BaseProperties,
   name: string,
   entityName: EquipmentIdentifier["kind"],
@@ -2142,7 +2143,7 @@ const createSimpleTableEntryForCategory = <R extends { [K in SimpleTableEntryCol
   ],
 })
 
-type EquipmentEnv = StdEnv<
+export type EquipmentEnv<AdditionalEntities extends keyof EntityMap = never> = StdEnv<
   "f" | "fn" | "t" | "tm" | "lj" | "lc" | "ma" | "x" | "ibi" | "rts",
   | "Publication"
   | "Attribute"
@@ -2159,6 +2160,7 @@ type EquipmentEnv = StdEnv<
   | "Profession"
   | "Skill"
   | "Armor"
+  | AdditionalEntities
 >
 
 /**

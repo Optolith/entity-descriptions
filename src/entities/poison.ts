@@ -632,6 +632,18 @@ export const getPoisonEntityDescription = createEntityDescriptionCreator<
           ],
         },
       ],
+      badges:
+        entry.source_type.kind === "PlantPoison"
+          ? entry.source_type.PlantPoison.effect_types?.map(effectType => ({
+              type: "effectType",
+              raw: effectType.kind,
+            }))
+          : entry.source_type.kind === "AlchemicalPoison"
+            ? entry.source_type.AlchemicalPoison.effect_types.map(effectType => ({
+                type: "effectType",
+                raw: effectType.kind,
+              }))
+            : undefined,
       errata: translation.errata,
       references: entry.src,
     }
