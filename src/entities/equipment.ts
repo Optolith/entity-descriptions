@@ -373,7 +373,7 @@ const renderAmmunition = (
     ? "—"
     : (attributedName(translateMap, getInstanceById, "equipment", ammunition) ?? MISSING_VALUE)
 
-const renderMeleeDamage = (damage: MeleeDamage) => renderDiceAndFlatR(damage.dice, damage.flat)
+export const renderMeleeDamage = (damage: MeleeDamage) => renderDiceAndFlatR(damage.dice, damage.flat)
 
 /**
  * Render combat values of a ranged weapon.

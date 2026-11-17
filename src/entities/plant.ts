@@ -355,21 +355,28 @@ const getPlantOccurrenceNames = (
     case "AllBiomes":
       names = [translate("everywhere")]
       break
-    case "Biomes":
-      names = regions.Biomes.map(
-        id => translateMap(getInstanceById("Biome", id)?.translations)?.name ?? MISSING_VALUE,
-      )
-      break
-    case "SubBiomes":
-      names = regions.SubBiomes.map(
-        id => translateMap(getInstanceById("SubBiome", id)?.translations)?.name ?? MISSING_VALUE,
-      )
-      break
-    case "BotanicRegions":
-      names = regions.BotanicRegions.map(
-        id =>
-          translateMap(getInstanceById("BotanicRegion", id)?.translations)?.name ?? MISSING_VALUE,
-      )
+    case "Specific":
+      names = regions.Specific.flatMap(specificRegion => {
+        switch (specificRegion.kind) {
+          case "Biomes":
+            return specificRegion.Biomes.map(
+              id => translateMap(getInstanceById("Biome", id)?.translations)?.name ?? MISSING_VALUE,
+            )
+          case "SubBiomes":
+            return specificRegion.SubBiomes.map(
+              id =>
+                translateMap(getInstanceById("SubBiome", id)?.translations)?.name ?? MISSING_VALUE,
+            )
+          case "BotanicRegions":
+            return specificRegion.BotanicRegions.map(
+              id =>
+                translateMap(getInstanceById("BotanicRegion", id)?.translations)?.name ??
+                MISSING_VALUE,
+            )
+          default:
+            return assertExhaustive(specificRegion)
+        }
+      })
       break
     default:
       return assertExhaustive(regions)
@@ -396,29 +403,35 @@ const renderPlantOccurrences = (
         case "AllBiomes":
           hasAllBiomes = true
           break
-        case "Biomes":
+        case "Specific":
           hasSpecificBiome = true
-          for (const biomeId of occurrence.regions.Biomes) {
-            biomeIds.add(biomeId)
-          }
-          break
-        case "SubBiomes":
-          hasSpecificBiome = true
-          for (const subBiomeId of occurrence.regions.SubBiomes) {
-            const subBiome = getInstanceById("SubBiome", subBiomeId)
-            if (subBiome !== undefined) {
-              biomeIds.add(subBiome.parent)
-            }
-          }
-          break
-        case "BotanicRegions":
-          hasSpecificBiome = true
-          for (const regionId of occurrence.regions.BotanicRegions) {
-            const region = getInstanceById("BotanicRegion", regionId)
-            const subBiome =
-              region === undefined ? undefined : getInstanceById("SubBiome", region.parent)
-            if (subBiome !== undefined) {
-              biomeIds.add(subBiome.parent)
+          for (const specificRegion of occurrence.regions.Specific) {
+            switch (specificRegion.kind) {
+              case "Biomes":
+                for (const biomeId of specificRegion.Biomes) {
+                  biomeIds.add(biomeId)
+                }
+                break
+              case "SubBiomes":
+                for (const subBiomeId of specificRegion.SubBiomes) {
+                  const subBiome = getInstanceById("SubBiome", subBiomeId)
+                  if (subBiome !== undefined) {
+                    biomeIds.add(subBiome.parent)
+                  }
+                }
+                break
+              case "BotanicRegions":
+                for (const regionId of specificRegion.BotanicRegions) {
+                  const region = getInstanceById("BotanicRegion", regionId)
+                  const subBiome =
+                    region === undefined ? undefined : getInstanceById("SubBiome", region.parent)
+                  if (subBiome !== undefined) {
+                    biomeIds.add(subBiome.parent)
+                  }
+                }
+                break
+              default:
+                assertExhaustive(specificRegion)
             }
           }
           break
